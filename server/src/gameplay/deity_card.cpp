@@ -52,7 +52,7 @@ RichonlineDeityCardPlan plan_richonline_deity_card(std::uint16_t game,
         // Case7 has protection/status branches for both current and other
         // actors in66EB40; it cannot be treated as attachment-only.
         if(npc->id==7) continuation=RichonlineDeityCardContinuation::resolve_sleepwalking;
-    } else after.status.possession.reset();
+    } else richonline_detach_possession(after.status);
     response.push_back(static_cast<std::uint8_t>(target.actor));
     return {std::move(response),*consumption,target,after,npc,
         summon ? npc->affix_turns : std::uint8_t{0},continuation};

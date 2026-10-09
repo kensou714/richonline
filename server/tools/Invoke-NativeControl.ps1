@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory = $true)][string]$PipeName,
     [ValidateSet('status', 'config.get', 'database.backup', 'stop')][string]$Command = 'status',
-    [string]$ExpectedInstance = ''
+    [string]$ExpectedInstance = '',
+    [switch]$AllowActiveSessions
 )
 $ErrorActionPreference = 'Stop'
 
@@ -47,7 +48,8 @@ if ($Command -eq 'stop') {
     if ([string]::IsNullOrEmpty($ExpectedInstance)) { throw 'stop_expected_instance_required' }
     $current = Invoke-ControlRequest 'status'
     if ($current.instanceId -ne $ExpectedInstance) { throw 'stop_instance_mismatch' }
-    if ($null -eq $current.authenticatedSessions -or $current.authenticatedSessions -ne 0) {
+    if ($null -eq $current.authenticatedSessions -or
+        (!$AllowActiveSessions -and $current.authenticatedSessions -ne 0)) {
         throw 'stop_requires_zero_authenticated_sessions'
     }
 }

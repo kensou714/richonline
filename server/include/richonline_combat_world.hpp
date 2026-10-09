@@ -33,9 +33,10 @@ struct RichonlineCombatWorldFactoryResult {
     std::function<RichonlineCombatCapabilities(std::uint8_t,const RichonlineActorStatus&,bool)> capabilities;
     std::string target_policy;
 };
-// Shared NPC possession0/1/2/3 and7 do not create the building amplification
-// state at actor+1740/+1744. Their base attack/defense factors are applied once
-// by calculate_richonline_combat_damage; status timers are also applied there.
+// Base possession factors are applied once by the damage calculator.
+RichonlineCombatWorld::ResolvedTerms richonline_possession_combat_terms(
+    const RichonlineCombatActorView&,const RichonlineCombatSessionView&);
+// Compatibility provider for callers that explicitly require no strengthening.
 RichonlineCombatWorld::ResolvedTerms richonline_unamplified_possession_combat_terms(
     const RichonlineCombatActorView&,const RichonlineCombatSessionView&);
 // Resource load and validation happen before room start. Human words are the

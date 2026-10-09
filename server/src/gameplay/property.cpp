@@ -70,14 +70,14 @@ bool RichonlineBossProperty::temple_supported(const RichonlineLandingContext& ct
     const auto& rule=temple_rules_.at(static_cast<std::size_t>(building.level-1));
     if(!ctx.actor_status.possession) {
         const auto npc=friendly ? rule.friendly_summon : rule.enemy_summon;
-        return npc==-1 || (temple_aura_summons_ && (npc==4 || npc==6));
+        return npc==-1 || (temple_aura_summons_ && (npc==4 || npc==6)) ||
+            (npc>=0 && npc<4 && temple_higher_summons_[static_cast<std::size_t>(npc)]);
     }
     if(!temple_maximum_) return false;
     const auto npc=*ctx.actor_status.possession;
     const bool beneficial=npc==0 || npc==3 || (temple_aura_summons_ && npc==4);
     const bool harmful=npc==1 || npc==2 || npc==7 || (temple_aura_summons_ && npc==6);
-    return (beneficial || harmful) && (!(friendly ? beneficial : harmful) ||
-        (friendly ? rule.friendly_beneficial_effect : rule.enemy_harmful_effect)<=0);
+    return beneficial || harmful;
 }
 RichonlineLandingResult RichonlineBossProperty::temple_result(const RichonlineLandingContext& ctx,
     const Building& building,bool friendly,std::vector<Bytes> messages) const {
@@ -91,6 +91,8 @@ RichonlineLandingResult RichonlineBossProperty::temple_result(const RichonlineLa
         const auto days=friendly ? (extend ? rule.friendly_beneficial_days : rule.friendly_harmful_days) :
             (extend ? rule.enemy_harmful_days : rule.enemy_beneficial_days);
         result.temple_change=RichonlineTemplePossessionChange{ctx.actor_status,extend,days,*temple_maximum_};
+        if(extend) result.temple_change->strength=
+            friendly ? rule.friendly_beneficial_effect : rule.enemy_harmful_effect;
     } else {
         const auto summon=friendly ? rule.friendly_summon : rule.enemy_summon;
         if(summon!=-1) result.temple_change=RichonlineTemplePossessionChange{
@@ -173,10 +175,12 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
     }
     return result;
 }
-void RichonlineBossProperty::enable_temple_possession(std::uint8_t maximum_days,bool aura_summons) {
+void RichonlineBossProperty::enable_temple_possession(std::uint8_t maximum_days,bool aura_summons,
+    std::array<bool,4> higher_summons) {
     if(!maximum_days || maximum_days>127) throw CodecError("richonline_temple_maximum_invalid");
     temple_maximum_=maximum_days;
     temple_aura_summons_=aura_summons;
+    temple_higher_summons_=higher_summons;
 }
 void RichonlineBossProperty::enable_human_decisions(std::chrono::milliseconds timeout,Now now) {
     if (timeout.count() <= 0 || !now || deadline_) throw CodecError("richonline_property_timeout_invalid");
@@ -279,6 +283,30 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_combat(
             (next.level>0 && next.kind!=old.kind) || (next.level==0 && next.kind!=-1))
             throw CodecError("richonline_property_combat_transition_invalid");
     }
+    return result;
+}
+RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_house_card(
+    std::int16_t position,std::uint8_t actor) const {
+    PreparedCombat result;
+    result.expected_=combat_snapshot();
+    if(actor>=2 || result.expected_.decision_pending ||
+        result.expected_.revision==std::numeric_limits<std::uint64_t>::max())
+        throw CodecError("richonline_house_card_state_invalid");
+    result.after_=result.expected_.buildings;
+    const auto found=std::ranges::find_if(result.after_,[position](const auto& building) {
+        return std::ranges::find(building.footprint,position)!=building.footprint.end();
+    });
+    if(found==result.after_.end() || found->owner!=actor)
+        throw CodecError("richonline_house_card_target_not_owned");
+    if(found->level>=7) throw CodecError("richonline_house_card_maximum_level");
+    if(found->level>0) {
+        const auto index=static_cast<std::size_t>(found->kind-11);
+        const auto skill=actor==0 ? human_skills_.at(index) : construction_.synthetic_skills.at(index);
+        if(found->level>=construction_.scenario_caps.at(index) || found->level>=skill)
+            throw CodecError("richonline_house_card_building_cap");
+    }
+    if(found->level==0) found->kind=construction_.default_kind;
+    ++found->level;
     return result;
 }
 bool RichonlineBossProperty::combat_matches(const PreparedCombat& prepared) const noexcept {

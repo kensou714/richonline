@@ -32,12 +32,10 @@ void actual_map_subset_is_live_and_status_sensitive(const std::filesystem::path&
     check(!pool.empty(),"actual_bs_1_1_mine_pool_empty");
     for(const auto position:pool) {
         const auto& cell=topology.cell(position);
-        check(cell.walkable && cell.property_ref==-1 && !topology.portal_destination(position) &&
-            (cell.static_type==-1 || cell.static_type==5 || cell.static_type==6 || cell.static_type==7),
-            "candidate_not_closed_ground_reward_subset");
+        check(cell.walkable && !topology.portal_destination(position),"candidate_not_walkable_or_portal");
     }
-    check(std::ranges::find_if(pool,[&](auto p){return topology.cell(p).static_type==0;})==pool.end(),
-        "unsupported_type_zero_admitted");
+    check(std::ranges::find_if(pool,[&](auto p){return topology.cell(p).property_ref!=-1;})!=pool.end(),
+        "preflight_supported_property_excluded");
     check(std::ranges::find_if(pool,[&](auto p){return topology.cell(p).static_type==5;})!=pool.end() ||
         std::ranges::find_if(pool,[&](auto p){return topology.cell(p).static_type==6;})!=pool.end() ||
         std::ranges::find_if(pool,[&](auto p){return topology.cell(p).static_type==7;})!=pool.end(),
@@ -69,13 +67,8 @@ void rejected_continuations_and_contract(const std::filesystem::path& root) {
     const auto snapshot=state();
     for(const auto& cell:topology.cells()) {
         const auto result=policy.assess(cell.position,snapshot);
-        if(cell.walkable && cell.property_ref!=-1)
-            check(!result.allowed && result.reason=="property_continuation_excluded","property_tile_admitted");
         if(topology.portal_destination(cell.position))
             check(!result.allowed && result.reason=="portal_continuation_excluded","portal_tile_admitted");
-        if(cell.walkable && cell.property_ref==-1 &&
-            cell.static_type!=-1 && cell.static_type!=5 && cell.static_type!=6 && cell.static_type!=7)
-            check(!result.allowed && result.reason=="static_continuation_excluded","unimplemented_static_admitted");
     }
     rejects([&] {static_cast<void>(policy.assess(-1,snapshot));},"richonline_mine_landing_position_invalid");
     auto malformed=snapshot;malformed.actors[0]->slot=3;

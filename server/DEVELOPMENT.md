@@ -138,3 +138,12 @@
 - server及根目录GUI入口均通过真实WinForms消息循环/按钮自测，读取26个迁入账号，确认当前server/data、PID/实例及六类监听就绪，停止/重启/关闭清理正常。最新证据见`evidence/admin-gui/README.md`。
 - 全构建成功；完整独立回归`build/heibeibei13-confirmed-tests.log`为204/205通过、199.28秒。黑贝贝1-3长局及恢复的传送门断言均通过，但赵灵儿长局calendar35的Boss落点165报`richonline_boss_landing_unsupported`并断开；原trace保留在`build/scenario-evidence/zhao_scenarios/V_BS_1_1.emp.trace.jsonl`。
 - 此失败尚未定位并修复，当前候选不能声称完整205/205通过。GUI恢复已验收，玩法问题继续纳入通信协议goal，不替换或撤销其他会话改动。
+
+## 赵灵儿神庙6/7级修复与GUI重新验收
+
+- 上节失败已定位为无附身Boss自有神庙5升6的召唤预检：位置166、投影等级6、NPC3。固定回归先红后绿；没有删除原失败记录。已将6级福/衰神和7级财/穷神接入既有奖励、背包、账本、附身时钟与phase6续接，避免再次执行地产/升级。正值强化继续门禁。
+- 扩充NPC事务和两地图真实加密TCP回归，覆盖human/Boss、友方/敌方、升级接受/取消/重放、转盘超时、金额失败和破产。详细证据见`evidence/temple-no-effect/HIGHER-SUMMONS.md`；临时stderr已移除，调试journal仅删除本服务端章节。
+- 严格构建成功，完整CTest `build/temple-high-final-tests.log` 205/205通过、247.90秒；黑贝贝长局114.46秒、赵灵儿长局48.67秒。差异空白检查通过。
+- 当前`server/RichOnline.Server.exe`已更新，SHA256：`F36926A48D0999CE78F925C0BD47D8846CAF4276AA09C91ADBED5951FD9771B3`。安装清单`build-migration-backup/temple-high-candidate.json`，上版备份`build-migration-backup/temple-high-298c046be93e4ec89164cab1e48a7f9c/RichOnline.Server.before.exe`。替换时没有服务实例，未改写旧运行目录。
+- 更新后二个GUI入口再次通过真实WinForms消息循环和按钮自测：`build/gui-temple-high-server/gui-result.json`、`build/gui-temple-high-root/gui-result.json`均`ok:true`。读取26账号，当前server/data及六类监听就绪，启停、同库重启和关闭清理通过。保留用户已打开的管理器窗口；未进行真实游戏客户端UI验收。
+- Goal仍进行中：月份到期终局、其他BOSS章节、神庙正值强化及剩余未闭合分支还需继续。

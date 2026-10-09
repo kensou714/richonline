@@ -129,10 +129,23 @@ void malformed_ground_card_never_consumes_inventory(const std::filesystem::path&
     for(const Bytes& packet:std::vector<Bytes>{{165,0,0x68,0x45,0,0,1,0},
         {165,0,0x69,0x45,0,1,1,0},{165,0,0x69,0x45,0,0,0,0},{160,0,0x69,0x45,0,0}}) {
         Flow f(root);f.human_turn();const auto hand=f.cards->inventory();const auto ground=f.ground->snapshot();
-        bool rejected=false;try {f.send(packet);} catch(const CodecError&) {rejected=true;}
+        bool rejected=false;try {rejected=f.send(packet)==std::vector<Bytes>{{0x0b,0x40,0x34,0x12,1}};} catch(const CodecError&) {rejected=true;}
         check(rejected && f.cards->inventory()==hand && f.ground->snapshot()==ground,
             "invalid_ground_card_committed_partial_authority");
     }
+}
+void roadblock_placement_stop_and_recovery(const std::filesystem::path& root) {
+    Flow f(root);f.human_turn();auto hand=f.cards->inventory();hand[2]={1043,2};f.cards->commit_inventory(hand);
+    check(f.send({108,0,0x69,0x45,2,0,1,0})==std::vector<Bytes>{{0xbc,0x40,0x34,0x12,2,0,1,0}},
+        "roadblock_success_wire_wrong");
+    check(f.ground->snapshot().objects.at(1)==RichonlineGroundObject{11,0,255},"roadblock_authority_wrong");
+    const auto before=f.cards->inventory();
+    check(f.send({108,0,0x69,0x45,2,0,1,0})==std::vector<Bytes>{{0x0b,0x40,0x34,0x12,1}} &&
+        f.cards->inventory()==before,"roadblock_refusal_consumed_or_disconnected");
+    f.send(request(0x10,0x4569,0,4));
+    const auto done=f.send(request(0x11,0x4569,1));
+    check(op(done[0])==0x4013 && op(done[1])==0x4010 && f.ground->snapshot().objects.empty(),
+        "roadblock_not_removed_or_next_turn_missing");
 }
 }
 int main(int argc,char** argv) {
@@ -141,6 +154,7 @@ int main(int argc,char** argv) {
         banana_placement_and_extended_route(root);clear_card_preserves_roll_and_clears_all_dynamics(root);
         synthetic_actor_consumes_banana_once_on_return(root);
         extension_turns_endpoint_bank_into_intermediate_pause(root);malformed_ground_card_never_consumes_inventory(root);
+        roadblock_placement_stop_and_recovery(root);
         std::cout<<"PASS encrypted NEW165/160 shared ground and human/BOSS banana movement\n";
     } catch(const std::exception& error) {std::cerr<<"FAIL "<<error.what()<<'\n';return 1;}
 }

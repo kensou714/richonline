@@ -3,6 +3,7 @@
 #include "richonline_boss_landing.hpp"
 #include "richonline_npc_session.hpp"
 #include "original_game_values.hpp"
+#include "richonline_combat_bridge.hpp"
 #include "service.hpp"
 
 #include <winsock2.h>
@@ -101,8 +102,14 @@ struct Scenario {
     std::shared_ptr<RichonlineNpcSession> npcs;
     std::shared_ptr<RichonlineGameLedger> temple_ledger;
     bool temple_aura=false;
-    Scenario(const std::filesystem::path& resources,bool boss_owned,unsigned level) {
-        property=std::make_shared<RichonlineBossProperty>(resources,game_id,std::array<std::uint32_t,2>{20000,100000},
+    bool audit_strength=false;
+    std::array<RichonlineActorStatus,2> observed_status{};
+    bool normal_cards=false;
+    std::shared_ptr<RichonlineBossCards> normal_hand;
+    std::shared_ptr<RichonlineGroundObjects> normal_ground;
+    Scenario(const std::filesystem::path& resources,bool boss_owned,unsigned level,bool card_flow=false):normal_cards(card_flow) {
+        temple_ledger=std::make_shared<RichonlineGameLedger>(std::vector<RichonlineGameFunds>{{20000,0,150,{}},{100000,0,0,{}}});
+        property=std::make_shared<RichonlineBossProperty>(resources,game_id,temple_ledger,
             load_richonline_boss_stage(resources,"BS_1_1.emp"));
         property->configure_construction({7,7,7,7,7,7,7,7,7,7});
         property->enable_human_decisions(std::chrono::seconds{5},[this] {
@@ -127,9 +134,13 @@ struct Scenario {
         bool visitor_boss,std::int8_t npc=-1,bool friendly=false,int upgrade=-1,unsigned temple_level=0) {
         temple_npc=npc;temple_endpoint=endpoint;
         temple_aura=temple_level!=0;
+        audit_strength=temple_level!=0 && npc!=-1;
         auto stage=load_richonline_boss_stage(resources,map,category);
         if(friendly) stage.scenario_caps[5]=static_cast<std::int8_t>(upgrade<0?1:5);
-        if(temple_level) stage.scenario_caps[5]=5;
+        if(temple_level) {
+            stage.scenario_caps[5]=static_cast<std::uint8_t>(temple_level+(upgrade>=0?1:0));
+            stage.boss.building_skills[5]=7;
+        }
         const auto topology=load_richonline_road_topology(resources/"Map"/map);
         temple_ledger=std::make_shared<RichonlineGameLedger>(std::vector<RichonlineGameFunds>{{20000,0,150,{}},{100000,0,0,{}}});
         property=std::make_shared<RichonlineBossProperty>(resources,game_id,temple_ledger,stage);
@@ -149,11 +160,13 @@ struct Scenario {
             auto purchase=request(0x20,calendar,0,4);purchase.insert(purchase.end(),{1,0,0,0});property->decide(purchase);
         }
         if(temple_level) {
-            property->enable_temple_possession(10,true);
+            property->enable_temple_possession(10,true,{true,true,true,true});
             while(property->building(target.property_ref)->level<temple_level) {
+                const auto previous_level=property->building(target.property_ref)->level;
                 check(property->land({owner,endpoint,target.static_type,target.property_ref,3,owner==1,degree,false}).has_value(),
                     "fixture_temple_upgrade_missing");
                 if(owner==0) property->decide(request(0x38,calendar,1));
+                check(property->building(target.property_ref)->level>previous_level,"fixture_temple_upgrade_made_no_progress");
             }
         }
         auto initial=startup(false);
@@ -194,12 +207,44 @@ struct Scenario {
                     RichonlineBossTurnRules rules{0xa2,{-7,9},{{0xa3,0xb3,0xc3,0xd3},0,{}},
                         [](std::size_t) { return std::size_t{0}; },
                         [this](const RichonlineLandingContext& context) {
+                            observed_status[context.actor_slot]=context.actor_status;
+                            if(audit_strength && context.position!=temple_endpoint) {
+                                Bytes stop{0x13,0x40,0x34,0x12};
+                                append_le(stop,static_cast<std::uint16_t>(context.position),2);
+                                return RichonlineLandingResult{{std::move(stop)},RichonlineLandingProgress::complete};
+                            }
                             if (auto result=property->land(context)) return *result;
                             if(temple_aura && !context.synthetic_actor)
                                 return RichonlineBossLandingState(game_id,temple_ledger).land(context);
                             return resolve_richonline_empty_boss_landing(game_id,context);
                         },[this](View plain) { return property->decide(plain); }};
                     rules.poll=[this] { return property->poll(); };
+                    if(normal_cards) {
+                        normal_hand=std::make_shared<RichonlineBossCards>(
+                            std::make_shared<const RichonlineChanceResources>(RichonlineChanceResources::load(resources)),game_id,
+                            RichonlineBossCardPolicy{map,17,1038,{0,0}});
+                        RichonlineChanceInventory hand{};hand[0]={1051,3};hand[1]={1062,2};hand[2]={1043,2};hand[3]={1044,2};
+                        normal_hand->commit_inventory(hand);
+                        const auto topology=load_richonline_road_topology(resources/"Map"/map);
+                        std::vector<std::int16_t> roads;
+                        for(const auto& cell:topology.cells()) if(cell.walkable) roads.push_back(cell.position);
+                        normal_ground=std::make_shared<RichonlineGroundObjects>(std::move(roads));
+                        RichonlineCombatWorld world;
+                        world.width=static_cast<std::uint16_t>(topology.width());world.height=static_cast<std::uint16_t>(topology.height());
+                        world.resources={3000,4000,5000,1000,1500,3,2,1,2,2};
+                        world.step=[topology](std::int16_t p,std::uint8_t d){return topology.cell(p).neighbors.at(d);};
+                        world.targets=[](std::uint8_t,RichonlineCombatEffect,const auto&){return std::vector<std::int16_t>{232};};
+                        world.card_targets=world.targets;
+                        world.resolve_terms=[](const auto&,const auto&){return RichonlineCombatWorld::ResolvedTerms{{},{},0,0};};
+                        world.building=[this](const auto& b,auto effect){return property->combat_building_effect(b,effect);};
+                        rules.combat=std::make_shared<RichonlineCombatBridge>(game_id,temple_ledger,normal_hand,normal_ground,property,std::move(world),RichonlineBossCombatPolicy{});
+                        rules.combat_random=[] {return RichonlineBossAttackRandomness{{0,0,0,0},[](std::size_t){return std::size_t{0};}};};
+                        rules.combat_capabilities=[](std::uint8_t,const auto&){return RichonlineCombatCapabilities{true,false,false,false,true};};
+                        rules.terminal=[](const auto&)->RichonlineTurnTerminalResult {throw CodecError("normal_card_unexpected_terminal");};
+                        rules.npc_landing_preflight=[](const auto&){};
+                        rules.cards=normal_hand;rules.ground=normal_ground;rules.ledger=temple_ledger;rules.property=property;
+                        rules.ground_card_visible=[](std::uint8_t,std::int16_t,std::int16_t){return true;};
+                    }
                     if(temple_npc!=-1 || temple_aura) {
                         const auto chance=std::make_shared<const RichonlineChanceResources>(RichonlineChanceResources::load(resources));
                         auto cards=std::make_shared<RichonlineBossCards>(chance,game_id,
@@ -211,6 +256,8 @@ struct Scenario {
                             {load_richonline_npc_affix(resources,0),load_richonline_npc_affix(resources,1)},"fixture-zero-transfer",
                             [](std::uint8_t,std::int8_t,const auto&){return std::int16_t{0};}};
                         if(temple_aura) {
+                            policy.badluck=RichonlineNpcBadluckPolicy{load_richonline_npc_affix(resources,2),"fixture-empty-loss",
+                                [](const auto&) {return std::array<std::int8_t,4>{-1,-1,-1,-1};}};
                             policy.temple_aura_affix=std::array{load_richonline_npc_affix(resources,4),load_richonline_npc_affix(resources,6)};
                             rules.npc_aura=RichonlineNpcAuraRules::load(resources);
                             auto raw=std::make_shared<RichonlineRawAuthority>(2,game_id);
@@ -223,9 +270,11 @@ struct Scenario {
                         npcs=std::make_shared<RichonlineNpcSession>(game_id,map,RichonlineNpcRules::load(resources),chance,
                             std::make_shared<const RichonlineChanceEventTable>(RichonlineChanceEventTable::load(resources)),
                             ledger,cards,ground,policy);
-                        property->enable_temple_possession(static_cast<std::uint8_t>(load_original_game_values(resources/"Data/GValue.kpd").require(37)),temple_aura);
+                        property->enable_temple_possession(static_cast<std::uint8_t>(load_original_game_values(resources/"Data/GValue.kpd").require(37)),temple_aura,
+                            {true,true,policy.badluck.has_value(),true});
                         rules.npcs=npcs;rules.cards=cards;rules.ledger=ledger;
                         rules.npc_landing_preflight=[this](const RichonlineLandingContext& context) {
+                            if(audit_strength && context.position!=temple_endpoint) return;
                             if(temple_aura && !context.synthetic_actor && !property->validate_landing(context)) {
                                 RichonlineBossLandingState(game_id,temple_ledger).validate_landing(context);return;
                             }
@@ -278,6 +327,43 @@ void opening(Scenario& scenario,Peer& peer,bool boss_owned) {
 void stop_ack(Peer& peer,std::uint8_t endpoint) {
     check(peer.receive()==Bytes({0x13,0x40,0x34,0x12,endpoint,0}),"owned_landing_stop_ack_missing");
 }
+void normal_cards_complete_over_tcp(const std::filesystem::path& resources) {
+    Scenario scenario(resources,false,0,true);Peer peer(scenario.service->bound_port());opening(scenario,peer,false);
+    peer.send(request(0x11,calendar+1,235));stop_ack(peer,235);turn(peer,0);peer.quiet();
+    const auto boss=scenario.temple_ledger->snapshot(1);
+    scenario.temple_ledger->adjust(1,boss,{19-static_cast<std::int64_t>(boss.funds.cash),19,0,0});
+    const auto human=scenario.temple_ledger->snapshot(0);
+    peer.send(Bytes{114,0,0x69,0x45,0,0,1,0});
+    check(peer.receive()==Bytes({0xc2,0x40,0x34,0x12,0,0,1,0}),"tax_card_TCP_wire_wrong");peer.quiet();
+    check(scenario.temple_ledger->snapshot(0).funds.cash==human.funds.cash+1 &&
+        *scenario.temple_ledger->snapshot(0).funds.deposit==1 && scenario.temple_ledger->snapshot(1).funds.cash==18 &&
+        *scenario.temple_ledger->snapshot(1).funds.deposit==18,"tax_card_must_truncate_each_account_separately");
+    const auto taxed=scenario.temple_ledger->snapshot(1);
+    scenario.temple_ledger->adjust(1,taxed,{-18,-18,0,0});
+    peer.send(Bytes{114,0,0x69,0x45,0,0,1,0});
+    check(peer.receive()==Bytes({0xc2,0x40,0x34,0x12,0,0,1,0}),"zero_tax_card_failed_or_bankrupt");
+    for(const std::uint8_t tile:{std::uint8_t{216},std::uint8_t{215}}) {
+        peer.send(Bytes{123,0,0x69,0x45,1,0,tile,0});
+        check(peer.receive()==Bytes({0xcb,0x40,0x34,0x12,1,0,tile,0}),"house_card_TCP_footprint_wire_wrong");
+    }
+    peer.send(Bytes{108,0,0x69,0x45,2,0,234,0});
+    check(peer.receive()==Bytes({0xbc,0x40,0x34,0x12,2,0,234,0}),"roadblock_card_TCP_wire_wrong");
+    peer.send(Bytes{109,0,0x69,0x45,3,0,232,0});
+    check(peer.receive()==Bytes({0xbd,0x40,0x34,0x12,3,0,232,0}),"mine_card_TCP_wire_wrong");
+    for(const Bytes packet:std::vector<Bytes>{{108,0,0x69,0x45,2,0,234,0},{109,0,0x69,0x45,3,0,232,0},
+        {114,0,0x69,0x45,0,0,0,0},{123,0,0x69,0x45,1,0,0,0}}) {
+        peer.send(packet);check(peer.receive()==Bytes({0x0b,0x40,0x34,0x12,1}),"normal_card_refusal_disconnected");
+    }
+    peer.send(request(0x10,calendar+2,0,4));movement(peer,233);peer.quiet();scenario.stop();
+    check(scenario.normal_ground->snapshot().objects.at(234)==RichonlineGroundObject{11,0,255} &&
+        scenario.normal_ground->snapshot().objects.at(232)==RichonlineGroundObject{12,0,3},"ground_card_TCP_authority_wrong");
+    check(scenario.property->building(216)==RichonlineBossProperty::Building{11,2} &&
+        scenario.temple_ledger->snapshot(0).funds.cash==human.funds.cash+1,"house_card_charged_cash_or_lost_kind");
+    const auto hand=scenario.normal_hand->inventory();
+    check(hand[0]==RichonlineChanceCardSlot{1051,1} && hand[1]==RichonlineChanceCardSlot{} &&
+        hand[2]==RichonlineChanceCardSlot{1043,1} && hand[3]==RichonlineChanceCardSlot{1044,1},
+        "normal_card_success_or_refusal_consumption_wrong");
+}
 void boss_owned_property_completes_over_tcp(const std::filesystem::path& resources,unsigned initial_level) {
     Scenario scenario(resources,true,initial_level); Peer peer(scenario.service->bound_port());
     opening(scenario,peer,true);
@@ -295,8 +381,8 @@ void boss_owned_property_completes_over_tcp(const std::filesystem::path& resourc
 enum class Decision { accept, cancel, timeout };
 void opponent_prebuilt_temple_completes_over_tcp(const std::filesystem::path& resources,
     const char* map,std::uint32_t category,std::int16_t endpoint,bool visitor_boss,std::int8_t npc=-1,
-    bool friendly=false,int upgrade=-1) {
-    Scenario scenario(resources,map,category,endpoint,visitor_boss,npc,friendly,upgrade);
+    bool friendly=false,int upgrade=-1,unsigned temple_level=0) {
+    Scenario scenario(resources,map,category,endpoint,visitor_boss,npc,friendly,upgrade,temple_level);
     const auto before=scenario.property->combat_snapshot(); const auto cash=scenario.property->cash();
     Peer peer(scenario.service->bound_port());
     peer.send_frame(encode_game_admission(scenario.admission,ClientVersion::richonline));
@@ -340,7 +426,40 @@ void opponent_prebuilt_temple_completes_over_tcp(const std::filesystem::path& re
             "own_temple_upgrade_reply_wrong");
     }
     turn(peer,static_cast<std::uint8_t>(visitor_boss?0:1));
-    if(!visitor_boss) check(read_le(View(peer.receive()).first(2))==0x4011,"temple_following_boss_move_missing");
+    std::optional<Bytes> next_move;
+    if(!visitor_boss) {
+        next_move=peer.receive();check(read_le(View(*next_move).first(2))==0x4011,"temple_following_boss_move_missing");
+    }
+    if(temple_level) {
+        const auto topology=load_richonline_road_topology(resources/"Map"/map);
+        const auto visitor=static_cast<std::uint8_t>(visitor_boss?1:0);
+        const auto counter=static_cast<std::uint16_t>(calendar+(visitor_boss?1:2));
+        const auto finish_move=[&](const Bytes& movement,std::uint16_t identity,bool human) {
+            check(read_le(View(movement).first(2))==0x4011,"strength_followup_move_missing");
+            const auto start=static_cast<std::int16_t>(read_le(View(movement).subspan(4,2)));
+            const auto direction=static_cast<std::uint8_t>(movement[11]&3U);
+            const auto end=topology.cell(start).neighbors[direction];check(end.has_value(),"strength_followup_route_invalid");
+            peer.send(request(0x11,identity,static_cast<std::uint16_t>(*end)));
+            Bytes stop{0x13,0x40,0x34,0x12};append_le(stop,static_cast<std::uint16_t>(*end),2);
+            check(peer.receive()==stop,"strength_followup_stop_wrong");
+            const auto& cell=topology.cell(*end);
+            if(human && std::count_if(cell.neighbors.begin(),cell.neighbors.end(),[](const auto& n){return n.has_value();})>2) {
+                std::uint8_t chosen=0;
+                while(chosen<4 && (!cell.neighbors[chosen] || chosen==(direction+2U)%4U)) ++chosen;
+                check(chosen<4,"strength_followup_junction_missing");
+                peer.send(request(0x34,identity,chosen));
+                check(peer.receive()==Bytes({0x35,0x40,0x34,0x12,chosen}),"strength_followup_junction_wrong");
+            }
+        };
+        if(visitor_boss) {peer.send(request(0x10,counter+1,0,4));next_move=peer.receive();}
+        finish_move(*next_move,static_cast<std::uint16_t>(counter+1),visitor_boss);
+        turn(peer,visitor);
+        if(!visitor_boss) peer.send(request(0x10,counter+2,0,4));
+        const auto second_move=peer.receive();
+        finish_move(second_move,static_cast<std::uint16_t>(counter+2),!visitor_boss);
+        turn(peer,static_cast<std::uint8_t>(1-visitor));
+        if(!visitor_boss) check(read_le(View(peer.receive()).first(2))==0x4011,"strength_third_boss_move_missing");
+    }
     peer.quiet();scenario.stop();
     auto expected_buildings=before.buildings;
     const auto topology=load_richonline_road_topology(resources/"Map"/map);
@@ -352,14 +471,24 @@ void opponent_prebuilt_temple_completes_over_tcp(const std::filesystem::path& re
         const auto level=scenario.property->building(topology.cell(endpoint).property_ref)->level;
         const auto affix=load_richonline_npc_affix(resources,npc);
         const bool beneficial=npc==3 || npc==0;
+        const auto maximum=load_original_game_values(resources/"Data/GValue.kpd").require(37);
         const int remaining=beneficial!=friendly ? (level<4 ? static_cast<int>(affix)-level-1 : 0) :
-            static_cast<int>(affix)+(level<4 ? 0 : level-3);
+            std::min(static_cast<int>(affix)+(level<4 ? 0 : level-3),maximum);
         RichonlineActorStatus status;if(remaining>0)status.possession=npc;
         const auto visitor=static_cast<std::uint8_t>(visitor_boss?1:0);
-        check(scenario.npcs->actor_begin(visitor,1,status).duplicate,"temple_tcp_same_turn_was_ticked_again");
-        for(int next=1;next<=remaining;++next)
-            check(scenario.npcs->actor_begin(visitor,static_cast<std::uint64_t>(next+1),status).expired.has_value()==(next==remaining),
+        if(temple_level) {
+            status=scenario.observed_status[visitor];
+            check(status.possession==npc && status.possession_strength1740==20 && status.possession_multiplier1744==0.2F,
+                "encrypted_temple_strength_not_in_authoritative_continuation");
+        }
+        const auto identity=temple_level?2U:1U;
+        const auto turns_remaining=remaining-(temple_level?1:0);
+        check(scenario.npcs->actor_begin(visitor,identity,status).duplicate,"temple_tcp_same_turn_was_ticked_again");
+        for(int next=1;next<=turns_remaining;++next)
+            check(scenario.npcs->actor_begin(visitor,static_cast<std::uint64_t>(next)+identity,status).expired.has_value()==(next==turns_remaining),
                 "temple_tcp_duration_not_committed_by_turn_owner");
+        if(temple_level) check(!status.possession && status.possession_strength1740==0 && status.possession_multiplier1744==0.2F,
+            "encrypted_temple_strength_expiry_wrong");
     }
 }
 void human_owned_property_waits_and_retires_replay(const std::filesystem::path& resources,bool upgrade,Decision decision) {
@@ -420,6 +549,19 @@ void temple_summon_and_aura_over_tcp(const std::filesystem::path& resources,cons
         if(!visitor_boss) {peer.quiet();peer.send(request(0x38,source_counter,static_cast<std::uint32_t>(upgrade)));}
         check(peer.receive()==Bytes({0x3e,0x40,0x34,0x12,static_cast<std::uint8_t>(upgrade)}),"summon_upgrade_reply_wrong");
     }
+    const auto final_level=level+(upgrade==1?1U:0U);
+    const bool summoned=final_level>=5;
+    const auto npc=static_cast<std::int8_t>(final_level>=7?(friendly?0:1):final_level==6?(friendly?3:2):(friendly?4:6));
+    if(summoned && npc==3 && !visitor_boss)
+        check(peer.receive()==Bytes({0x23,0x40,0x34,0x12,0x0e,4,0x0f,4}),"temple_fortune_reward_wrong");
+    if(summoned && npc==2 && !visitor_boss)
+        check(peer.receive()==Bytes({0x24,0x40,0x34,0x12,0xff,0xff,0xff,0xff}),"temple_badluck_reply_wrong");
+    if(summoned && (npc==0 || npc==1)) {
+        if(!visitor_boss) {
+            peer.quiet();peer.send(request(0x22,source_counter,1));
+        }
+        check(peer.receive()==Bytes({0x22,0x40,0x34,0x12,0,0,0}),"temple_money_reply_wrong");
+    }
     turn(peer,static_cast<std::uint8_t>(1-visitor));
     if(visitor_boss) peer.send(request(0x10,source_counter+1,0,4));
     const auto movement=peer.receive();check(read_le(View(movement).first(2))==0x4011,"summon_next_move_missing");
@@ -440,13 +582,11 @@ void temple_summon_and_aura_over_tcp(const std::filesystem::path& resources,cons
     turn(peer,visitor);
     if(visitor_boss) check(read_le(View(peer.receive()).first(2))==0x4011,"summon_second_boss_move_missing");
     peer.quiet();scenario.stop();
-    const bool summoned=level==5 || upgrade==1;
-    const auto npc=static_cast<std::int8_t>(friendly?4:6);
     const auto radius=RichonlineNpcAuraRules::load(resources).radius;
     const auto width=static_cast<std::int32_t>(topology.width());
     const bool in_range=!visitor_boss || (std::abs(endpoint%width-*other_end%width)<=radius &&
         std::abs(endpoint/width-*other_end/width)<=radius);
-    const auto amount=summoned && in_range?800U:0U;
+    const auto amount=summoned && (npc==4 || npc==6) && in_range?800U:0U;
     check(scenario.temple_ledger->snapshot(0).funds.cash==(friendly?before.funds.cash+amount:before.funds.cash-amount) &&
         scenario.temple_ledger->snapshot(1)==boss_before,"summon_tcp_aura_balance_wrong");
     RichonlineActorStatus status;if(summoned)status.possession=npc;
@@ -460,6 +600,7 @@ void temple_summon_and_aura_over_tcp(const std::filesystem::path& resources,cons
 int main(int argc,char** argv) {
     try {
         check(argc==2,"resource_path_required"); const Network network; const std::filesystem::path resources(argv[1]);
+        normal_cards_complete_over_tcp(resources);
         for (const unsigned level : {0U,1U,5U}) boss_owned_property_completes_over_tcp(resources,level);
         for (const bool upgrade : {false,true})
             for (const auto decision : {Decision::accept,Decision::cancel,Decision::timeout})
@@ -473,11 +614,19 @@ int main(int argc,char** argv) {
             opponent_prebuilt_temple_completes_over_tcp(resources,"BS_1_3.emp",0,164,false,npc,true,upgrade);
         opponent_prebuilt_temple_completes_over_tcp(resources,"BS_1_3.emp",0,164,true,1,true,1);
         for(const bool boss:{false,true}) for(const bool friendly:{false,true}) {
-            temple_summon_and_aura_over_tcp(resources,"BS_1_3.emp",0,164,boss,friendly,5,-1);
-            temple_summon_and_aura_over_tcp(resources,"V_BS_1_1.emp",2,165,boss,friendly,5,-1);
+            for(const unsigned level:{5U,6U,7U}) {
+                temple_summon_and_aura_over_tcp(resources,"BS_1_3.emp",0,164,boss,friendly,level,-1);
+                temple_summon_and_aura_over_tcp(resources,"V_BS_1_1.emp",2,165,boss,friendly,level,-1);
+            }
         }
-        for(const int upgrade:{0,1})
-            temple_summon_and_aura_over_tcp(resources,"BS_1_3.emp",0,164,false,true,4,upgrade);
+        for(const int upgrade:{0,1}) for(const unsigned level:{4U,5U,6U})
+            temple_summon_and_aura_over_tcp(resources,"BS_1_3.emp",0,164,false,true,level,upgrade);
+        temple_summon_and_aura_over_tcp(resources,"V_BS_1_1.emp",2,166,true,true,5,1);
+        for(const bool boss:{false,true}) for(const bool friendly:{false,true}) {
+            const auto npc=static_cast<std::int8_t>(friendly?3:1);
+            opponent_prebuilt_temple_completes_over_tcp(resources,"BS_1_3.emp",0,164,boss,npc,friendly,-1,7);
+            opponent_prebuilt_temple_completes_over_tcp(resources,"V_BS_1_1.emp",2,165,boss,npc,friendly,-1,7);
+        }
         std::cout<<"PASS encrypted TCP owned property216 BOSS build/upgrade/cap and human wait/accept/cancel/timeout/replay\n";
     } catch (const std::exception& error) { std::cerr<<"FAIL "<<error.what()<<'\n'; return 1; }
 }

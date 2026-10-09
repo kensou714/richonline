@@ -35,7 +35,7 @@ std::uint32_t distance(std::int16_t first,std::int16_t second,std::uint32_t widt
     return static_cast<std::uint32_t>(std::abs(ax-bx)+std::abs(ay-by));
 }
 }
-RichonlineCombatWorld::ResolvedTerms richonline_unamplified_possession_combat_terms(
+RichonlineCombatWorld::ResolvedTerms richonline_possession_combat_terms(
     const RichonlineCombatActorView& actor,const RichonlineCombatSessionView&) {
     if(actor.status.possession) switch(*actor.status.possession) {
     case 0: // NEW694C90: defense0.5, resolved by the damage calculator.
@@ -48,7 +48,20 @@ RichonlineCombatWorld::ResolvedTerms richonline_unamplified_possession_combat_te
         break;
     default:throw CodecError("richonline_combat_world_possession_extension_required");
     }
-    return {{},{},0,0};
+    RichonlineCombatWorld::ResolvedTerms result{{},{},0,0};
+    if(actor.status.possession_strength1740>0) {
+        if(!std::isfinite(actor.status.possession_multiplier1744))
+            throw CodecError("richonline_combat_modifier_invalid");
+        result.attack.possession_amplification=actor.status.possession_multiplier1744;
+        result.defense.possession_amplification=actor.status.possession_multiplier1744;
+    }
+    return result;
+}
+RichonlineCombatWorld::ResolvedTerms richonline_unamplified_possession_combat_terms(
+    const RichonlineCombatActorView& actor,const RichonlineCombatSessionView& state) {
+    if(actor.status.possession_strength1740>0)
+        throw CodecError("richonline_combat_world_possession_extension_required");
+    return richonline_possession_combat_terms(actor,state);
 }
 RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::filesystem::path& resources,
     const RichonlineRoadTopology& topology,const RichonlineBossStage& stage,
@@ -120,8 +133,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         }
         return targets;
     };
-    result.world.card_targets=[topology,mine_radius=policy.range.manhattan_radius,
-        mine_supported=policy.mine_landing_supported]
+    result.world.card_targets=[topology,mine_supported=policy.mine_landing_supported]
         (std::uint8_t actor,RichonlineCombatEffect effect,const RichonlineCombatSessionView& state) {
         if(actor!=0 || !state.actors[actor]) throw CodecError("richonline_combat_world_human_card_actor_invalid");
         const auto origin=state.actors[actor]->position;
@@ -129,8 +141,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         std::vector<std::int16_t> targets;
         for(const auto& cell:topology.cells()) {
             if(effect==RichonlineCombatEffect::mine) {
-                if(!cell.walkable || distance(origin,cell.position,topology.width())>mine_radius ||
-                    !mine_supported(cell.position,state)) continue;
+                if(!cell.walkable || !mine_supported(cell.position,state)) continue;
             } else if(effect!=RichonlineCombatEffect::missile && effect!=RichonlineCombatEffect::nuclear &&
                 effect!=RichonlineCombatEffect::safe_nuclear)
                 throw CodecError("richonline_combat_world_human_card_effect_invalid");
@@ -145,7 +156,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
     result.world.resolve_terms=[modifiers,equipment,extra=policy.extra_terms]
         (const RichonlineCombatActorView& actor,const RichonlineCombatSessionView& state) {
         if(actor.slot>=equipment.size()) throw CodecError("richonline_combat_world_actor_invalid");
-        auto terms=extra?extra(actor,state):richonline_unamplified_possession_combat_terms(actor,state);
+        auto terms=extra?extra(actor,state):richonline_possession_combat_terms(actor,state);
         if(terms.attack.building_multiplier!=1.0F || terms.defense.building_multiplier!=1.0F)
             throw CodecError("richonline_combat_world_building_term_duplicated");
         const auto attributes=modifiers->equipment(equipment[actor.slot],actor.funds.funds.cash);

@@ -33,7 +33,8 @@ public:
     RichonlineCombatBridgeResult boss_turn(std::span<const RichonlineCombatActorRef>,std::uint8_t boss,
         const RichonlineBossAttackRandomness&);
     RichonlineCombatBridgeResult human_card(std::span<const RichonlineCombatActorRef>,
-        const RichonlineTargetCardRequest&,std::uint16_t expected_calendar);
+        const RichonlineTargetCardRequest&,std::uint16_t expected_calendar,bool recover_refusal=false,
+        const std::function<void(const std::string&)>& log={});
     RichonlineCombatBridgeResult finish_round(std::span<const RichonlineCombatActorRef>,std::uint64_t day);
     bool has_mine(std::int16_t position) const;
     RichonlineCombatBridgeResult stepped_mine(std::span<const RichonlineCombatActorRef>,std::int16_t root);

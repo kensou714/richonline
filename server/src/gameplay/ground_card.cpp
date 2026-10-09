@@ -4,7 +4,7 @@
 namespace richnet {
 namespace {
 void validate_request(const RichonlineGroundCardRequest& request) {
-    if(request.kind!=RichonlineGroundCard::banana507)
+    if(request.kind!=RichonlineGroundCard::banana507 && request.kind!=RichonlineGroundCard::roadblock1043)
         throw CodecError("richonline_ground_card_kind_invalid");
     if(request.inventory_slot<0 || request.inventory_slot>=8 || request.inventory_bank!=0 || request.position<0)
         throw CodecError("richonline_ground_card_request_fields_invalid");
@@ -43,10 +43,21 @@ RichonlineGroundCardRequest decode_richonline_ground_card165(View plain) {
     return request;
 }
 
+RichonlineGroundCardRequest decode_richonline_roadblock108(View plain) {
+    if(plain.size()!=8 || read_le(plain.first(2))!=108)
+        throw CodecError("richonline_roadblock_request_invalid");
+    const RichonlineGroundCardRequest request{RichonlineGroundCard::roadblock1043,
+        static_cast<std::uint16_t>(read_le(plain.subspan(2,2))),
+        static_cast<std::int8_t>(plain[4]),static_cast<std::int8_t>(plain[5]),
+        static_cast<std::int16_t>(read_le(plain.subspan(6,2)))};
+    validate_request(request);
+    return request;
+}
+
 Bytes encode_richonline_banana40f5(std::uint16_t game_id,const RichonlineGroundCardRequest& request) {
     validate_request(request);
     Bytes result;
-    append_le(result,0x40f5,2);
+    append_le(result,request.kind==RichonlineGroundCard::roadblock1043 ? 0x40bc : 0x40f5,2);
     append_le(result,game_id,2);
     result.push_back(static_cast<std::uint8_t>(request.inventory_slot));
     result.push_back(static_cast<std::uint8_t>(request.inventory_bank));
@@ -71,7 +82,10 @@ RichonlineGroundCardPlan plan_richonline_banana_card(const RichonlineGroundCardR
     if(--after_inventory[slot].count==0) after_inventory[slot]={};
     auto after_ground=ground.objects;
     // NEW679760 leaves the dynamic object's two metadata bytes at -1.
-    after_ground.emplace(request.position,RichonlineGroundObject{30,255,255});
+    const auto object=request.kind==RichonlineGroundCard::roadblock1043 ?
+        RichonlineGroundObject{11,static_cast<std::uint8_t>(context.active_actor),255} :
+        RichonlineGroundObject{30,255,255};
+    after_ground.emplace(request.position,object);
     return {request,ground,std::move(after_ground),inventory,std::move(after_inventory),
         encode_richonline_banana40f5(context.game_id,request)};
 }

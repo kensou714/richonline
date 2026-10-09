@@ -76,7 +76,7 @@ void request_fields_are_revalidated_when_called_directly() {
     rejects([&]{ static_cast<void>(plan_richonline_banana_card(invalid,context(),hand(),ground())); },"richonline_ground_card_request_fields_invalid");
     auto off_map=context();off_map.target_is_map_cell=false;
     rejects([&]{ static_cast<void>(plan_richonline_banana_card(request(),off_map,hand(),ground())); },"richonline_ground_card_target_not_walkable");
-    auto kind=request();kind.kind=static_cast<RichonlineGroundCard>(1043);
+    auto kind=request();kind.kind=static_cast<RichonlineGroundCard>(1042);
     rejects([&]{ static_cast<void>(plan_richonline_banana_card(kind,context(),hand(),ground())); },"richonline_ground_card_kind_invalid");
     for(const std::int8_t type:{std::int8_t{2},std::int8_t{3},std::int8_t{28},std::int8_t{58},std::int8_t{61}}) {
         auto invalid=context();invalid.target_static_type=type;

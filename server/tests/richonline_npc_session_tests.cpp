@@ -204,10 +204,14 @@ void summon_and_dismiss(const std::filesystem::path& root) {
         "self_summon_fortune_sequence_incomplete");
     check(f.ground->snapshot().objects.empty() && f.statuses[0].possession==3 &&
         f.cards->inventory()[0].card_id==1038 && f.cards->inventory()[1].card_id==1039,"summon_consumption_must_precede_two_rewards");
+    auto strength=f.session->prepare_temple_change(0,{f.statuses[0],true,0,10,{},20});
+    check(f.session->commit_status_change(strength,f.statuses[0]),"dismiss_strength_setup_failed");
     f.cards->commit_inventory(f.cards->prepare_add(1048));
     const auto dismissed=f.session->deity_card(Bytes{113,0,7,0,2,0,0,0xef},f.context(),7,f.statuses[0],true,{},{});
     check(dismissed.messages==std::vector<Bytes>{{0xc1,0x40,0x34,0x12,2,0,0}} && !f.statuses[0].possession &&
         f.cards->inventory()[2].card_id==-1,"dismiss_did_not_consume_and_detach");
+    check(f.statuses[0].possession_strength1740==0 && f.statuses[0].possession_multiplier1744==0.2F,
+        "dismiss_card_left_positive_strength");
     f.session->actor_begin(0,2,f.statuses[0]);
     Fixture money(root);money.cards->commit_inventory(money.cards->prepare_add(1047));money.ground->place(114,{0,7,8});
     const auto pending=money.session->deity_card(Bytes{112,0,7,0,0,0,0,0},money.context(),7,money.statuses[0],true,visible,first);
@@ -389,6 +393,63 @@ void temple_aura_attachment(const std::filesystem::path& root) {
         rejects([&]{invalid.reset();});
     }
 }
+void higher_temple_summon_transactions(const std::filesystem::path& root) {
+    for(const auto actor:std::array<std::uint8_t,2>{0,1}) for(const auto npc:std::array<std::int8_t,4>{0,1,2,3}) {
+        Fixture f(root,0);
+        f.policy.badluck=RichonlineNpcBadluckPolicy{load_richonline_npc_affix(root,2),"fixture-first-slot",
+            [](const auto&) {return std::array<std::int8_t,4>{0,-1,-1,-1};}};
+        f.reset();f.cards->commit_inventory(f.cards->prepare_add(1038));f.ground->place(114,{3,7,8});
+        const auto ground=f.ground->snapshot();const auto cards=f.cards->inventory();
+        const auto funds0=f.ledger->snapshot(0),funds1=f.ledger->snapshot(1);
+        const auto result=f.session->temple_summon(f.context(actor),7,npc,f.statuses[actor]);
+        check(!result.sent_stop4013 && result.continuation==RichonlineNpcContinuation::landing_phase6 &&
+            f.statuses[actor].possession==npc && f.ground->snapshot()==ground,"temple_summon_repeated_stop_or_consumed_ground");
+        if(npc<=1 && actor==0) {
+            check(result.messages.empty() && result.wait==RichonlineNpcWait::roulette34,"temple_money_skipped_local_roulette");
+            rejects([&]{f.session->handle(Bytes{34,0,8,0,1,0},actor,f.statuses[actor]);});
+            rejects([&]{f.session->resolve_roulette(1,f.statuses[1]);});
+            const auto paid=f.session->handle(Bytes{34,0,7,0,1,0},actor,f.statuses[actor]);
+            check(paid.continuation==RichonlineNpcContinuation::landing_phase6 && paid.messages==
+                std::vector<Bytes>{{0x22,0x40,0x34,0x12,0,0,0}},"temple_roulette_resumed_wrong_phase");
+            rejects([&]{f.session->handle(Bytes{34,0,7,0,1,0},actor,f.statuses[actor]);});
+        } else {
+            check(result.wait==RichonlineNpcWait::none,"temple_immediate_summon_waited");
+            const std::vector<Bytes> expected=npc<=1?std::vector<Bytes>{{0x22,0x40,0x34,0x12,0,0,0}}:
+                actor==1?std::vector<Bytes>{}:npc==2?std::vector<Bytes>{{0x24,0x40,0x34,0x12,0,0xff,0xff,0xff}}:
+                std::vector<Bytes>{{0x23,0x40,0x34,0x12,0x0e,4,0x0f,4}};
+            check(result.messages==expected,"temple_summon_wire_wrong");
+        }
+        if(actor==0 && npc==2) check(f.cards->inventory()[0].card_id==-1,"temple_badluck_did_not_remove_card");
+        else if(actor==0 && npc==3) check(f.cards->inventory()!=cards,"temple_fortune_did_not_reward");
+        else check(f.cards->inventory()==cards,"temple_boss_changed_human_inventory");
+        check(f.ledger->snapshot(0).funds==funds0.funds && f.ledger->snapshot(1).funds==funds1.funds,
+            "zero_transfer_temple_changed_money");
+        rejects([&]{f.session->temple_summon(f.context(actor),7,npc,f.statuses[actor]);});
+        check(f.session->actor_begin(actor,1,f.statuses[actor]).duplicate,"temple_summon_reset_turn_identity");
+        const auto turns=load_richonline_npc_affix(root,npc);
+        for(unsigned next=1;next<=turns;++next)
+            check(f.session->actor_begin(actor,1+next,f.statuses[actor]).expired.has_value()==(next==turns),
+                "temple_summon_expiry_wrong");
+    }
+    Fixture failed(root);
+    failed.policy.money_amount=[](std::uint8_t,std::int8_t,const auto&)->std::int16_t {throw CodecError("fixture_money_failure");};
+    failed.reset();const auto inventory=failed.cards->inventory();const auto ground=failed.ground->snapshot();
+    const auto funds=failed.ledger->snapshot(0);
+    rejects([&]{failed.session->temple_summon(failed.context(1),7,0,failed.statuses[1]);});
+    check(!failed.statuses[1].possession && failed.cards->inventory()==inventory && failed.ground->snapshot()==ground &&
+        failed.ledger->snapshot(0)==funds && failed.session->actor_begin(1,1,failed.statuses[1]).duplicate,
+        "temple_failed_money_plan_committed_state");
+    failed.session->temple_summon(failed.context(),7,0,failed.statuses[0]);
+    rejects([&]{failed.session->resolve_roulette(0,failed.statuses[0]);});
+    check(failed.session->awaiting_roulette() && failed.ledger->snapshot(0)==funds,"temple_failed_roulette_lost_pending");
+    Fixture timeout(root,0);timeout.session->temple_summon(timeout.context(),7,1,timeout.statuses[0]);
+    check(timeout.session->resolve_roulette(0,timeout.statuses[0]).continuation==RichonlineNpcContinuation::landing_phase6,
+        "temple_timeout_resumed_wrong_phase");
+    Fixture bankrupt(root,140);bankrupt.session->temple_summon(bankrupt.context(),7,0,bankrupt.statuses[0]);
+    const auto settlement=bankrupt.session->resolve_roulette(0,bankrupt.statuses[0]);
+    check(settlement.wait==RichonlineNpcWait::settlement && settlement.bankrupt_actor==1 &&
+        bankrupt.session->awaiting_settlement(),"temple_depleted_donor_skipped_settlement");
+}
 void external_status_change_and_detach(const std::filesystem::path& root) {
     Fixture kept(root);kept.ground->place(114,{3,0xff,0xff});
     kept.session->landing(kept.context(),7,kept.statuses[0]);
@@ -440,6 +501,58 @@ void external_status_change_and_detach(const std::filesystem::path& root) {
     pending.session->resolve_roulette(0,pending.statuses[0]);pending.session->detach(0,pending.statuses[0]);
     pending.session->actor_begin(0,2,pending.statuses[0]);
 }
+void temple_strength_lifecycle(const std::filesystem::path& root) {
+    for(const auto npc:std::array<std::int8_t,7>{0,1,2,3,4,6,7}) {
+        RichonlineActorStatus status;status.possession=npc;
+        richonline_set_possession_strength(status,20);
+        const float expected=npc==4 || npc==6 ? 1.2F : npc==7 ? 0.0F : 0.2F;
+        check(status.possession_strength1740==20 && status.possession_multiplier1744==expected,
+            "strength_setter_wrong_NPC_formula");
+        richonline_detach_possession(status);
+        check(!status.possession && status.possession_strength1740==0 && status.possession_multiplier1744==expected,
+            "detach_did_not_clear_only_positive_strength");
+        status.possession=3;richonline_set_possession_strength(status,-20);richonline_detach_possession(status);
+        check(status.possession_strength1740==-20 && status.possession_multiplier1744==-0.2F,
+            "detach_cleared_nonpositive_strength");
+    }
+    Fixture f(root);f.policy.temple_aura_affix=std::array<std::uint8_t,2>{3,5};f.reset();
+    auto attach=f.session->prepare_temple_change(0,{f.statuses[0],false,0,10,4});
+    check(f.session->commit_status_change(attach,f.statuses[0]),"strength_aura_attach_failed");
+    auto change=RichonlineTemplePossessionChange{f.statuses[0],true,0,10,{},20};
+    auto plan=f.session->prepare_temple_change(0,change);auto copied=plan;
+    check(f.statuses[0].possession_strength1740==0,"strength_mutated_before_commit");
+    check(f.session->commit_status_change(plan,f.statuses[0]) && f.statuses[0].possession_multiplier1744==1.2F,
+        "strength_not_committed_with_clock");
+    auto forbidden=f.statuses[0];forbidden.possession_strength1740=10;
+    rejects([&]{f.session->prepare_status_change(0,f.statuses[0],forbidden);});
+    forbidden=f.statuses[0];forbidden.possession_multiplier1744=0.1F;
+    rejects([&]{f.session->prepare_status_change(0,f.statuses[0],forbidden);});
+    check(!f.session->commit_status_change(copied,f.statuses[0]),"strength_plan_replayed");
+    f.ground->place(114,{3,7,8});f.session->landing(f.context(),7,f.statuses[0]);
+    check(f.statuses[0].possession==3 && f.statuses[0].possession_strength1740==20 &&
+        f.statuses[0].possession_multiplier1744==1.2F,"replacement_attachment_reset_strength");
+    auto stale=f.session->prepare_temple_change(0,{f.statuses[0],true,0,10,{},10});
+    f.session->actor_begin(0,2,f.statuses[0]);
+    check(!f.session->commit_status_change(stale,f.statuses[0]) && f.statuses[0].possession_multiplier1744==1.2F,
+        "strength_plan_survived_clock_generation_change");
+    auto replace=f.session->prepare_temple_change(0,{f.statuses[0],true,0,10,{},10});
+    check(f.session->commit_status_change(replace,f.statuses[0]) && f.statuses[0].possession_strength1740==10 &&
+        f.statuses[0].possession_multiplier1744==0.1F,"strength_accumulated_instead_of_overwritten");
+    auto unchanged=f.session->prepare_temple_change(0,{f.statuses[0],true,0,10,{},-1});
+    const auto before=f.statuses[0];
+    check(f.session->commit_status_change(unchanged,f.statuses[0]) && f.statuses[0]==before,
+        "nonpositive_temple_effect_reset_strength");
+    for(std::uint64_t turn=3;turn<=6;++turn) f.session->actor_begin(0,turn,f.statuses[0]);
+    check(!f.statuses[0].possession && f.statuses[0].possession_strength1740==0 &&
+        f.statuses[0].possession_multiplier1744==0.1F,"strength_survived_possession_expiry");
+    f.ground->place(114,{3,7,8});f.session->landing(f.context(),7,f.statuses[0]);
+    auto strengthen=f.session->prepare_temple_change(0,{f.statuses[0],true,0,10,{},20});
+    check(f.session->commit_status_change(strengthen,f.statuses[0]),"detach_strength_setup_failed");
+    auto detached=f.statuses[0];detached.possession.reset();
+    auto detach=f.session->prepare_status_change(0,f.statuses[0],detached);
+    check(f.session->commit_status_change(detach,f.statuses[0]) && f.statuses[0].possession_strength1740==0 &&
+        f.statuses[0].possession_multiplier1744==0.2F,"external_detach_left_strength_active");
+}
 }
 int main(int argc,char** argv) {
     try {check(argc==2,"NEW_resource_root_required");const std::filesystem::path root(argv[1]);
@@ -452,6 +565,8 @@ int main(int argc,char** argv) {
         sleep_deity_protection_and_ownership(root);
         external_status_change_and_detach(root);
         temple_aura_attachment(root);
+        higher_temple_summon_transactions(root);
+        temple_strength_lifecycle(root);
         std::cout<<"PASS NEW production NPC hooks: shared cards/funds/status, phase continuations, roulette waits, own-turn expiry and closed spawning\n";
     }catch(const std::exception& error){std::cerr<<"FAIL "<<error.what()<<'\n';return 1;}
 }

@@ -176,7 +176,7 @@ RichonlinePossessionTick tick_richonline_possession(const RichonlinePossessionCl
     if(clock.last_actor_turn==identity) return {clock,status,{},true};
     RichonlinePossessionTick result{clock,status,{},false}; result.clock.last_actor_turn=identity;
     if(result.clock.npc && (--result.clock.turns==0 || result.clock.turns>127)) {
-        result.expired=result.clock.npc; result.clock.npc.reset(); result.status.possession.reset();
+        result.expired=result.clock.npc; result.clock.npc.reset(); richonline_detach_possession(result.status);
         result.clock.turns=0;
     }
     return result;

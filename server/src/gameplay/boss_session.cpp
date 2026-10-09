@@ -141,6 +141,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     rules.portal_landing=portal_landing;
     rules.research_turn_started=[property](std::uint8_t actor){property->advance_research(actor);};
     rules.cards=std::move(cards);
+    rules.property=property;
     if (rules.cards && policy.hibernate_raw_actor)
         rules.hibernate=std::make_shared<const RichonlineHibernateTurnPolicy>(
             RichonlineHibernateTurnPolicy{chance,RichonlineHibernateRules::load(resources),policy.hibernate_raw_actor});
@@ -259,7 +260,8 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             npc_policy.temple_aura_affix=std::array{load_richonline_npc_affix(resources,4),
                 load_richonline_npc_affix(resources,6)};
         }
-        property->enable_temple_possession(static_cast<std::uint8_t>(maximum),aura);
+        property->enable_temple_possession(static_cast<std::uint8_t>(maximum),aura,
+            {true,true,npc_policy.badluck.has_value(),true});
         // NEW112 sends no viewport or god position. The client checks its own
         // viewport; this explicit server policy chooses among present map gods.
         rules.npc_summon_candidates=[ground](const RichonlineLandingContext&) {

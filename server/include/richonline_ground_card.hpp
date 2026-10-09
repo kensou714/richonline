@@ -7,7 +7,7 @@
 #include "richonline_npc_spawn.hpp"
 
 namespace richnet {
-enum class RichonlineGroundCard : std::uint16_t { banana507 = 507 };
+enum class RichonlineGroundCard : std::uint16_t { banana507 = 507, roadblock1043 = 1043 };
 
 struct RichonlineGroundCardRequest {
     RichonlineGroundCard kind;
@@ -36,6 +36,7 @@ struct RichonlineGroundCardPlan {
 };
 
 RichonlineGroundCardRequest decode_richonline_ground_card165(View plain);
+RichonlineGroundCardRequest decode_richonline_roadblock108(View plain);
 Bytes encode_richonline_banana40f5(std::uint16_t game_id,
     const RichonlineGroundCardRequest& request);
 

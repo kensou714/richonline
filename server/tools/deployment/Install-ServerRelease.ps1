@@ -5,7 +5,8 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[A-Fa-f0-9]{64}$')][string]$ArchiveSha256,
     [Parameter(Mandatory)][ValidatePattern('^[a-f0-9]{7,40}$')][string]$ReleaseId,
     [Parameter(Mandatory)][string]$PublicAddress,
-    [string]$Root = 'D:\richonline'
+    [string]$Root = 'D:\richonline',
+    [switch]$AllowActiveSessions
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -44,7 +45,7 @@ function Invoke-ControlResult {
     param([string]$operation, [string]$expectedInstance = '')
     # Windows PowerShell can emit a VoidTaskResult from async writes in older releases.
     if ($expectedInstance) {
-        $parsed = @(& $control -PipeName $pipeName -Command $operation -ExpectedInstance $expectedInstance | ConvertFrom-Json)
+        $parsed = @(& $control -PipeName $pipeName -Command $operation -ExpectedInstance $expectedInstance -AllowActiveSessions:$AllowActiveSessions | ConvertFrom-Json)
     } else {
         $parsed = @(& $control -PipeName $pipeName -Command $operation | ConvertFrom-Json)
     }
@@ -65,7 +66,9 @@ $oldTaskXml = if ($oldTask) { Export-ScheduledTask -TaskName $taskName } else { 
 if ($oldTaskXml) { [IO.File]::WriteAllText((Join-Path $backup 'scheduled-task.xml'), $oldTaskXml) }
 if ($previous) {
     $state = Invoke-ControlResult status
-    if ($state.authenticatedSessions -ne 0) { throw 'Active players are connected; deployment refuses to stop their sessions.' }
+    if ($null -eq $state.authenticatedSessions) { throw 'Cannot determine authenticated session count.' }
+    if ($state.authenticatedSessions -ne 0 -and !$AllowActiveSessions) { throw 'Active players are connected; deployment refuses to stop their sessions.' }
+    if ($state.authenticatedSessions -ne 0) { Write-Warning 'Maintenance deployment will disconnect active players after database backup.' }
     Invoke-ControlResult database.backup | Out-Null
     Invoke-ControlResult stop $state.instanceId | Out-Null
     $deadline = (Get-Date).AddSeconds(20)

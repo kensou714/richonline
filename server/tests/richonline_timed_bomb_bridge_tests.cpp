@@ -231,7 +231,7 @@ void banana_and_bomb_share_one_ground_commit(const std::filesystem::path& root) 
 }
 void bomb_free_segment_consumes_banana_and_rejects_stale_ground(const std::filesystem::path& root) {
     Fixture fixture(root);fixture.refs[0].position=230;fixture.refs[1].position=239;
-    fixture.ground->place(231,{30,255,255});const auto funds=fixture.ledger->snapshot(0);
+    fixture.ground->place(231,{11,0,255});const auto funds=fixture.ledger->snapshot(0);
     auto bridge=fixture.bridge();const std::array steps{RichonlineTimedBombStepContext{0,2,231,true,false,raw()},
         RichonlineTimedBombStepContext{0,2,232,true,false,raw()}};
     auto stale=bridge.prepare_timed_bomb_segment(fixture.refs,0,steps,9,policy);

@@ -94,33 +94,35 @@ std::uint32_t calculate_richonline_combat_damage(std::uint32_t base,
     if (!base || base>maximum || flat_attack<0 || flat_defense<0)
         throw CodecError("richonline_combat_damage_terms_invalid");
     float factor=1.0F;
-    const auto multiply=[&](float v) {
-        if (!std::isfinite(v) || v<0) throw CodecError("richonline_combat_modifier_invalid");
+    const auto multiply=[&](float v,bool deity=false) {
+        if (!std::isfinite(v) || (!deity && v<0)) throw CodecError("richonline_combat_modifier_invalid");
         factor*=v; // NEW stores to float after each x87 term.
         if (!std::isfinite(factor)) throw CodecError("richonline_combat_damage_overflow");
     };
     const auto check=[](const RichonlineCombatModifiers& modifiers) {
-        if (!std::isfinite(modifiers.possession_amplification) || modifiers.possession_amplification<0 ||
-            modifiers.possession_amplification>0.5F) throw CodecError("richonline_combat_modifier_invalid");
+        if (!std::isfinite(modifiers.possession_amplification)) throw CodecError("richonline_combat_modifier_invalid");
     };
     check(attack);check(defense);
     if (attacker_enabled) {
-        if (attacker.possession==3) multiply(1.5F+attack.possession_amplification);
-        else if (attacker.possession==2) multiply(0.5F-attack.possession_amplification);
+        if (attacker.possession==3) multiply(1.5F+attack.possession_amplification,true);
+        else if (attacker.possession==2) multiply(0.5F-attack.possession_amplification,true);
         multiply(attack.building_multiplier);
         if (attacker.attack_turns) multiply(attacker.attack_multiplier);
         multiply(attack.secondary_status_multiplier);
         multiply(1.0F+static_cast<float>(attack.equipment_percentage)/100.0F);
         multiply(attack.special_multiplier);
     }
-    if (defender.possession==0) multiply(0.5F-defense.possession_amplification);
-    else if (defender.possession==1) multiply(1.5F+defense.possession_amplification);
+    if (defender.possession==0) multiply(0.5F-defense.possession_amplification,true);
+    else if (defender.possession==1) multiply(1.5F+defense.possession_amplification,true);
     multiply(defense.building_multiplier);
     if (defender.damage_turns) multiply(defender.damage_multiplier);
     multiply(defense.secondary_status_multiplier);
     multiply(1.0F-static_cast<float>(defense.equipment_percentage)/100.0F);
     multiply(defense.special_multiplier);
-    const auto rounded=rounded_damage(static_cast<double>(static_cast<float>(base))*factor);
+    const double scaled=static_cast<double>(static_cast<float>(base))*factor+0.5;
+    if(!std::isfinite(scaled) || scaled>maximum || scaled<std::numeric_limits<std::int32_t>::min())
+        throw CodecError("richonline_combat_damage_overflow");
+    const auto rounded=static_cast<std::int32_t>(scaled);
     const auto amount=static_cast<std::int64_t>(rounded)+(attacker_enabled?flat_attack:0)-flat_defense;
     if (amount>maximum) throw CodecError("richonline_combat_damage_overflow");
     return static_cast<std::uint32_t>(std::max<std::int64_t>(1,amount));

@@ -39,3 +39,10 @@
 - server 入口：`build/gui-verification-20261010-bec56811266840a99071baa53cb15c59/gui-result.json`；根目录入口：`build/gui-root-verification-20261010-cda576438149486b8ef9970d91a605b6/gui-result.json`。两者 `ok:true`，26账号可读取，启动、停止、同库重启和关闭窗口清理全部通过。
 - 根目录入口实际服务 PID 42816，实例 `42816-331184339582600`，数据目录为当前 `server/data`；全部六类监听报告就绪。自测结束后没有遗留服务子进程。
 - 最新完整服务端回归 `build/heibeibei13-confirmed-tests.log` 为204/205通过、199.28秒。唯一失败为赵灵儿长局calendar35、Boss落点165的 `richonline_boss_landing_unsupported`；同局trace显示该地产198此前已归Boss且神庙升到5级。原因尚未确认，不能用早期全绿或单项重试替代该失败记录。GUI可用与此玩法回归分别记录。
+
+## 神庙修复后的最新候选
+
+- 上述赵灵儿失败已定位并修复，见`../temple-no-effect/HIGHER-SUMMONS.md`。
+- 最新完整回归`build/temple-high-final-tests.log`：205/205通过、247.90秒。
+- GUI所用服务端现为`F36926A48D0999CE78F925C0BD47D8846CAF4276AA09C91ADBED5951FD9771B3`；GUI本身哈希保持不变。安装和备份清单为`build-migration-backup/temple-high-candidate.json`，最初迁移时的`candidate.json`保留为历史记录。
+- 安装后两个入口再次通过：`build/gui-temple-high-server/gui-result.json`及`build/gui-temple-high-root/gui-result.json`均`ok:true`，26账号、当前数据目录、六类监听、启停/重启/关闭清理验证成功。证据使用实际WinForms消息循环与按钮，不是游戏客户端UI验收。

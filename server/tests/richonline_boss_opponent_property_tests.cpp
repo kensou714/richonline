@@ -162,6 +162,43 @@ void prebuilt_temple_without_possession_completes(const std::filesystem::path& r
     check(properties.cash()==cash && properties.combat_snapshot().buildings==before.buildings && !properties.poll(),
         "prebuilt_temple_no_effect_mutated_state");
 }
+void zhao_boss_temple_five_to_six_continues(const std::filesystem::path& root) {
+    auto stage=load_richonline_boss_stage(root,"V_BS_1_1.emp",2);
+    stage.scenario_caps[5]=7;
+    stage.boss.building_skills[5]=7;
+    const auto topology=load_richonline_road_topology(root/"Map"/stage.map_name);
+    const auto& cell=topology.cell(166);
+    const auto degree=static_cast<std::uint8_t>(std::count_if(cell.neighbors.begin(),cell.neighbors.end(),
+        [](const auto& next){return next.has_value();}));
+    RichonlineBossProperty properties(root,0x1234,{20000,100000},stage);
+    properties.enable_temple_possession(10,true,{true,true,true,true});
+    RichonlineLandingContext visit{1,166,cell.static_type,cell.property_ref,3,true,degree,false};
+    check(properties.land(visit).has_value(),"zhao_temple_purchase_missing");
+    while(properties.building(cell.property_ref)->level<5)
+        check(properties.land(visit).has_value(),"zhao_temple_setup_upgrade_failed");
+    check(properties.validate_landing(visit),"zhao_boss_temple5_upgrade6_preflight_rejected");
+    const auto upgraded=properties.land(visit);
+    check(upgraded && upgraded->temple_change && upgraded->temple_change->summon==3 &&
+        properties.building(cell.property_ref)->level==6,"zhao_boss_temple6_fortune_continuation_missing");
+    visit.actor_status.possession=3;
+    check(properties.validate_landing(visit),"zhao_attached_temple6_strength_preflight_rejected");
+    const auto strengthened=properties.land(visit);
+    check(strengthened && strengthened->temple_change && strengthened->temple_change->extend &&
+        strengthened->temple_change->strength==20 && properties.building(cell.property_ref)->level==7,
+        "zhao_attached_temple7_strength_continuation_missing");
+    for(const auto npc:std::array<std::int8_t,7>{0,1,2,3,4,6,7}) {
+        visit.actor_status.possession=npc;
+        const auto friendly=properties.land(visit);
+        const bool beneficial=npc==0 || npc==3 || npc==4;
+        check(friendly && friendly->temple_change && friendly->temple_change->extend==beneficial &&
+            friendly->temple_change->strength==(beneficial?20:0),"temple7_friendly_strength_wrong");
+        auto opponent=visit;opponent.actor_slot=0;opponent.synthetic_actor=false;
+        properties.enable_human_decisions(std::chrono::seconds{5},[]{return RichonlineBossProperty::Clock::time_point{};});
+        const auto enemy=properties.land(opponent);
+        check(enemy && enemy->temple_change && enemy->temple_change->extend!=beneficial &&
+            enemy->temple_change->strength==(beneficial?0:20),"temple7_enemy_strength_wrong");
+    }
+}
 }
 int main(int argc,char** argv) {
     try {
@@ -170,6 +207,7 @@ int main(int argc,char** argv) {
         player_visits_boss_properties(root);
         boss_visits_licensed_player_buildings(root);
         own_temple_upgrade_continuations(root);
+        zhao_boss_temple_five_to_six_continues(root);
         prebuilt_temple_without_possession_completes(root,"BS_1_3.emp",0,164,149,true);
         prebuilt_temple_without_possession_completes(root,"V_BS_1_1.emp",2,165,198,false);
         std::cout << "PASS NEW BOSS opponent property no-rent phase and unresolved-effect boundaries\n";

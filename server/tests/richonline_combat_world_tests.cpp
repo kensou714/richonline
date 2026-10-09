@@ -47,7 +47,9 @@ void actual_resources_topology_and_server_targets(const std::filesystem::path& r
     const auto human_projectiles=result.world.card_targets(0,RichonlineCombatEffect::missile,state);
     check(human_projectiles.size()==f.topology.cells().size() && human_projectiles.size()>projectiles.size(),
         "human_resource_whole_map_not_boss_range");
-    check(result.world.card_targets(0,RichonlineCombatEffect::mine,state)==mines,"human_mine_explicit_server_range");
+    const auto human_mines=result.world.card_targets(0,RichonlineCombatEffect::mine,state);
+    check(human_mines.size()>mines.size() && std::ranges::find(human_mines,231)==human_mines.end(),
+        "human_mine_whole_map_with_live_support_filter");
     check(std::ranges::find(mines,232)!=mines.end() && std::ranges::find(mines,231)==mines.end(),
         "mine_self_or_pure_support_filter");
     check(std::ranges::find(projectiles,231)!=projectiles.end() && projectiles.size()>mines.size(),"projectile_all_tiles_policy");
@@ -129,11 +131,42 @@ void equipment_cash_building_and_extensions(const std::filesystem::path& root) {
     rejects([&] { make_richonline_combat_world(root,f.topology,f.stage,{},invalid,f.property,world_policy()); },
         "richonline_combat_world_map_policy_unimplemented");
 }
+void authoritative_strength_and_inherited_multiplier(const std::filesystem::path& root) {
+    Fixture f(root);const auto world=make_richonline_combat_world(root,f.topology,f.stage,{},map_policy(),f.property,world_policy());
+    auto state=f.state();auto& status=state.actors[0]->status;
+    status.possession=4;richonline_set_possession_strength(status,20);status.possession=3;
+    const auto damage=[&](bool attack,std::int32_t flat=0) {
+        const auto human=world.world.resolve_terms(*state.actors[0],state);
+        const auto boss=world.world.resolve_terms(*state.actors[1],state);
+        return attack ? calculate_richonline_combat_damage(1000,status,state.actors[1]->status,
+            human.attack,boss.defense,true,flat,0) : calculate_richonline_combat_damage(1000,state.actors[1]->status,
+            status,boss.attack,human.defense,true,flat,0);
+    };
+    check(damage(true)==2700,"combat_ignored_inherited_strength");
+    status.possession=0;
+    check(damage(false)==1 && damage(false,1000)==301,"combat_clamped_before_signed_rounding_and_flat_terms");
+    status.possession=2;
+    check(damage(true)==1 && damage(true,1000)==301,"negative_attack_deity_term_rejected");
+    auto terms=world.world.resolve_terms(*state.actors[0],state);
+    RichonlineActorStatus defender;defender.possession=0;
+    check(calculate_richonline_combat_damage(1000,status,defender,terms.attack,terms.defense,true,0,0)==490,
+        "two_negative_deity_terms_clamped_individually");
+    terms.attack.building_multiplier=-1.0F;
+    rejects([&]{calculate_richonline_combat_damage(1000,status,defender,terms.attack,terms.defense,true,0,0);},
+        "richonline_combat_modifier_invalid");
+    richonline_detach_possession(status);status.possession=3;
+    check(damage(true)==1500,"inactive_retained_multiplier_applied_after_detach");
+    richonline_set_possession_strength(status,20);
+    check(damage(true)==1700,"combat_new_strength_did_not_replace_inherited_multiplier");
+    rejects([&]{richonline_unamplified_possession_combat_terms(*state.actors[0],state);},
+        "richonline_combat_world_possession_extension_required");
+}
 }
 int main(int argc,char** argv) {
     try {
         check(argc==2,"resource_path_required");actual_resources_topology_and_server_targets(argv[1]);
         equipment_cash_building_and_extensions(argv[1]);each_npc_possession_has_exact_combat_terms(argv[1]);
+        authoritative_strength_and_inherited_multiplier(argv[1]);
         std::cout<<"PASS NEW combat world actual resources, geometry, targets and capabilities\n";
     } catch(const std::exception& error) { std::cerr<<error.what()<<'\n';return 1; }
 }

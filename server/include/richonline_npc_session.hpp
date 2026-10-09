@@ -80,6 +80,10 @@ public:
         const RichonlineActorStatus& before,const RichonlineActorStatus& after) const;
     PreparedStatusChange prepare_temple_change(std::uint8_t actor,
         const RichonlineTemplePossessionChange&) const;
+    // Temple phase7 has already sent its stop/building replies. Summons0..3
+    // resume phase6 after rewards or the authoritative money roulette.
+    RichonlineNpcSessionResult temple_summon(const RichonlineLandingContext&,
+        std::uint16_t calendar,std::int8_t npc,RichonlineActorStatus&);
     bool matches_status_change(const PreparedStatusChange&,const RichonlineActorStatus&) const noexcept;
     bool commit_status_change(PreparedStatusChange&,RichonlineActorStatus&) noexcept;
     void detach(std::uint8_t actor,RichonlineActorStatus& authoritative_status);

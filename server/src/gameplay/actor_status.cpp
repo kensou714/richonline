@@ -2,6 +2,7 @@
 #include "original_options.hpp"
 #include <charconv>
 #include <limits>
+#include <bit>
 
 namespace richnet {
 namespace {
@@ -24,6 +25,20 @@ void check_state(const RichonlineActorStatus& state) {
         state.attack_turns,state.damage_turns}) if(n>127) throw CodecError("richonline_status_state_invalid");
     if(state.one_step && state.six_steps) throw CodecError("richonline_status_state_invalid");
 }
+}
+void richonline_detach_possession(RichonlineActorStatus& status) noexcept {
+    status.possession.reset();
+    if(status.possession_strength1740>0) status.possession_strength1740=0;
+}
+void richonline_set_possession_strength(RichonlineActorStatus& status,std::int32_t effect) noexcept {
+    status.possession_strength1740=effect;
+    status.possession_multiplier1744=0.0F;
+    if(status.possession==0 || status.possession==1 || status.possession==2 || status.possession==3)
+        status.possession_multiplier1744=static_cast<float>(effect)/100.0F;
+    else if(status.possession==4 || status.possession==6) {
+        const auto sum=std::bit_cast<std::int32_t>(static_cast<std::uint32_t>(effect)+100U);
+        status.possession_multiplier1744=static_cast<float>(sum)/100.0F;
+    }
 }
 RichonlineStatusRules RichonlineStatusRules::parse(std::string_view text) {
     if(text.size()>4U*1024U*1024U || text.find('\0')!=text.npos) throw CodecError("richonline_status_rules_invalid");
@@ -89,7 +104,7 @@ RichonlineChanceStatusResult plan_richonline_chance_status(const RichonlineChanc
             after.damage_turns=timer(params[1]); break;
         case 16:
             detached=after.possession.has_value(); removed=after.timed_bomb.has_value();
-            after.possession.reset(); after.timed_bomb.reset(); after.timed_bomb_owner.reset(); break;
+            richonline_detach_possession(after); after.timed_bomb.reset(); after.timed_bomb_owner.reset(); break;
         default: throw CodecError("richonline_status_category_invalid");
     }
     Bytes packet; append_le(packet,0x4096,2); append_le(packet,game,2); append_le(packet,static_cast<std::uint16_t>(id),2);

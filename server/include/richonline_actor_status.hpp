@@ -21,8 +21,12 @@ struct RichonlineActorStatus {
     // Actor1492 is signed: -1 is a real neutral owner. A carried bomb requires
     // both fields; absence must never silently attribute its damage to slot0.
     std::optional<std::int8_t> timed_bomb_owner;
+    std::int32_t possession_strength1740=0;
+    float possession_multiplier1744=0.0F;
     bool operator==(const RichonlineActorStatus&) const = default;
 };
+void richonline_detach_possession(RichonlineActorStatus&) noexcept;
+void richonline_set_possession_strength(RichonlineActorStatus&,std::int32_t effect) noexcept;
 // 7CD440 checks Prop1071 availability and activation before category10. This
 // result belongs to shared inventory/card logic, not the chance module's RNG.
 struct RichonlineSleepProtection {

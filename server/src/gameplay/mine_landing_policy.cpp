@@ -15,12 +15,7 @@ RichonlineMineLandingAdmission RichonlineMineLandingPolicy::assess(std::int16_t 
         throw CodecError("richonline_mine_landing_position_invalid");
     const auto& cell=topology_.cell(position);
     if(!cell.walkable) return {false,"not_walkable"};
-    if(cell.property_ref!=-1) return {false,"property_continuation_excluded"};
     if(topology_.portal_destination(position)) return {false,"portal_continuation_excluded"};
-    switch(cell.static_type) {
-    case -1:case 5:case 6:case 7:break;
-    default:return {false,"static_continuation_excluded"};
-    }
     if(std::ranges::any_of(state.dynamic_npcs,[position](const auto& object) {return object.position==position;}) ||
         std::ranges::any_of(state.mines.mines,[position](const auto& object) {return object.position==position;}))
         return {false,"ground_occupied"};

@@ -275,7 +275,7 @@ RichonlineSleepDeityPlan plan_richonline_sleep_deity(std::uint8_t affix,
         if(card.card_id!=1071 || card.count<=0) throw CodecError("richonline_sleep_deity_protection_missing");
         if(--card.count==0) card={};
     }
-    if(blocked) after_status.possession.reset();
+    if(blocked) richonline_detach_possession(after_status);
     return {inventory,after,status,after_status,blocked ? std::uint8_t{0} : affix,blocked,protection.consumed_inventory_slot};
 }
 }

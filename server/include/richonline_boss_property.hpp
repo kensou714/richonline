@@ -25,7 +25,8 @@ public:
     std::optional<RichonlineLandingResult> land(const RichonlineLandingContext& context);
     void enable_human_decisions(std::chrono::milliseconds timeout,Now now);
     // Enable only when the turn owner has an authoritative NPC clock coordinator.
-    void enable_temple_possession(std::uint8_t maximum_days,bool aura_summons=false);
+    void enable_temple_possession(std::uint8_t maximum_days,bool aura_summons=false,
+        std::array<bool,4> higher_summons={});
     void configure_construction(std::array<std::int8_t,10> human_skills,
         std::shared_ptr<RichonlineBossCards> cards = {});
     RichonlineLandingResult decide(View request);
@@ -63,6 +64,7 @@ public:
         RichonlineBossBlastBuildingEffect) const;
     PreparedCombat prepare_combat(const CombatSnapshot&,
         std::span<const RichonlineCombatBuildingView> after) const;
+    PreparedCombat prepare_house_card(std::int16_t position,std::uint8_t actor) const;
     bool combat_matches(const PreparedCombat&) const noexcept;
     // Prevalidated scalar-only apply. Invoke inside the session/ledger atomic
     // callback; false makes no mutation. Does not emit client-side damage again.
@@ -93,6 +95,7 @@ private:
     std::array<OriginalPyramidRule,7> temple_rules_{};
     std::optional<std::uint8_t> temple_maximum_{};
     bool temple_aura_summons_=false;
+    std::array<bool,4> temple_higher_summons_{};
     std::optional<RichonlineLandingContext> pending_temple_context_{};
     bool temple_supported(const RichonlineLandingContext&,const Building&,bool friendly) const;
     RichonlineLandingResult temple_result(const RichonlineLandingContext&,const Building&,

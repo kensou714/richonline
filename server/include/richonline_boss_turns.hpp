@@ -15,6 +15,7 @@
 
 namespace richnet {
 class RichonlineBossCards;
+class RichonlineBossProperty;
 class RichonlineGameBank;
 class RichonlineGameLedger;
 class RichonlineNpcSession;
@@ -66,6 +67,7 @@ struct RichonlineTemplePossessionChange {
     std::int32_t days;
     std::uint8_t maximum;
     std::optional<std::int8_t> summon{};
+    std::int32_t strength=0;
 };
 struct RichonlineLandingResult {
     std::vector<Bytes> messages;
@@ -146,6 +148,7 @@ struct RichonlineBossTurnRules {
     std::shared_ptr<const RichonlineFireTrapRules> fire_traps{};
     std::shared_ptr<const RichonlinePoisonRules> poison{};
     std::function<RichonlineRawActorState(std::uint8_t)> poison_raw_actor{};
+    std::shared_ptr<RichonlineBossProperty> property{};
 };
 // 双角色移动，支持显式配置的移动卡状态；动态物件与其他控制状态另行接入。
 // 每个落点都必须显式处理；未知事件不得直接推进回合。

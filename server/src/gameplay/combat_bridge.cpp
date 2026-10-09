@@ -1,4 +1,5 @@
 #include "richonline_combat_bridge.hpp"
+#include "richonline_controlled_dice.hpp"
 #include <algorithm>
 #include <type_traits>
 
@@ -115,14 +116,23 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::finish_round(std::span<cons
     return apply(refs,before,prepare_richonline_combat_mine_day(before.combat,world_,day,true));
 }
 RichonlineCombatBridgeResult RichonlineCombatBridge::human_card(std::span<const RichonlineCombatActorRef> refs,
-    const RichonlineTargetCardRequest& request,std::uint16_t calendar) {
+    const RichonlineTargetCardRequest& request,std::uint16_t calendar,bool recover_refusal,
+    const std::function<void(const std::string&)>& log) {
     const auto before=snapshot(refs);
-    const auto prepared=cards_->prepare_target_effect(request);
-    if(!prepared) throw CodecError("richonline_combat_human_card_not_owned");
-    const auto card=prepared->source_inventory[static_cast<std::size_t>(request.inventory_slot)].card_id;
-    const RichonlineBossCards::PreparedConsumption consumption{prepared->source_inventory,prepared->remaining_inventory,
-        request.inventory_slot,card};
-    return apply(refs,before,prepare_richonline_combat_human_card(before.combat,world_,0,request,calendar,consumption));
+    std::optional<RichonlineCombatTurnPlan> plan;
+    try {
+        const auto prepared=cards_->prepare_target_effect(request);
+        if(!prepared) throw CodecError("richonline_combat_human_card_not_owned");
+        const auto card=prepared->source_inventory[static_cast<std::size_t>(request.inventory_slot)].card_id;
+        const RichonlineBossCards::PreparedConsumption consumption{prepared->source_inventory,prepared->remaining_inventory,
+            request.inventory_slot,card};
+        plan=prepare_richonline_combat_human_card(before.combat,world_,0,request,calendar,consumption);
+    } catch(const CodecError& error) {
+        if(!recover_refusal) throw;
+        if(log) log(std::string("richonline_attack_card_refused reason=")+error.what());
+        return {{encode_richonline_dice_recovery400b(game_)},{}};
+    }
+    return apply(refs,before,std::move(*plan));
 }
 bool RichonlineCombatBridge::has_mine(std::int16_t position) const {
     const auto snapshot=ground_->snapshot();const auto found=snapshot.objects.find(position);
@@ -212,11 +222,11 @@ RichonlineCombatBridge::PreparedTimedBombSegment RichonlineCombatBridge::prepare
     RichonlineTimedBombContinuationPolicy policy) const {
     auto before=snapshot(refs);
     auto plan=prepare_richonline_timed_bomb_segment(before.combat,world_,mover,steps,policy);
-    // NEW7F5D90 consumes a banana after bomb handling. Only acknowledged
+    // NEW7F5D90 consumes roadblocks and bananas after bomb handling. Only acknowledged
     // completed steps reach this atomic ground update; later route objects stay.
     for(std::size_t index=0;index<plan.accepted_steps;++index)
         std::erase_if(plan.combat.after.dynamic_npcs,[position=steps[index].actual_position](const auto& npc) {
-            return npc.position==position && npc.type==30;
+            return npc.position==position && (npc.type==30 || npc.type==11);
         });
     return PreparedTimedBombSegment(std::make_shared<PreparedTimedBombSegment::Data>(
         PreparedTimedBombSegment::Data{this,std::move(before),std::move(plan),calendar}));

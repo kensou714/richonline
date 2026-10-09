@@ -212,10 +212,40 @@ void special_map_prebuilt_properties_preserve_initial_state(const std::filesyste
     }
     check(properties.cash()==std::array<std::uint32_t,2>{12000,150000},"initialization_charged_prebuilt_property");
 }
+void house_card_caps_and_stale_commit(const std::filesystem::path& root) {
+    for(const auto category:{0U,2U}) {
+        const auto name=category==2 ? "V_BS_1_1.emp" : "BS_1_1.emp";
+        const auto stage=load_richonline_boss_stage(root,name,category);
+        const auto topology=load_richonline_road_topology(root/"Map"/name);
+        RichonlineBossProperty properties(root,0x1234,{20000,100000},stage);
+        const auto context=selected_landing(topology,static_cast<std::int16_t>(category==2 ? 114 : 232));
+        check(properties.land(context).has_value(),"house_card_fixture_purchase_failed");
+        const auto funds=properties.cash();
+        auto first=properties.prepare_house_card(context.property_ref,1);
+        auto stale=properties.prepare_house_card(context.property_ref,1);
+        check(properties.commit_combat(first) && !properties.commit_combat(stale),"house_card_stale_commit_accepted");
+        const std::uint8_t cap=category==2 ? 6 : 5;
+        for(std::uint8_t level=2;level<=cap;++level) {
+            auto upgrade=properties.prepare_house_card(context.property_ref,1);
+            check(properties.commit_combat(upgrade) &&
+                properties.building(context.property_ref)==RichonlineBossProperty::Building{11,level},
+                "house_card_upgrade_or_kind_wrong");
+        }
+        try {
+            properties.prepare_house_card(context.property_ref,1);
+            throw std::runtime_error("house_card_exceeded_scenario_cap");
+        } catch(const CodecError& error) {
+            check(std::string(error.what())=="richonline_house_card_building_cap","house_card_wrong_cap_error");
+        }
+        check(properties.cash()==funds && properties.building(context.property_ref)->level==cap,
+            "house_card_charged_money_or_mutated_on_refusal");
+    }
+}
 }
 int main(int argc,char** argv) {
     try {
         check(argc == 2,"resource_path_required"); const std::filesystem::path root(argv[1]);
+        house_card_caps_and_stale_commit(root);
         boss_owned_empty_land_builds_instead_of_disconnect(root);
         affordable_buy(root,100000); affordable_buy(root,101);
         no_wait_when_insufficient(root,100); no_wait_when_insufficient(root,99);

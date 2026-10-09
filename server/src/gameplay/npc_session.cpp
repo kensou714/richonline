@@ -80,12 +80,19 @@ RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_status_
     check_actor(actor,before);admit_clock_change(actor);
     if(after.possession && after.possession!=before.possession)
         throw CodecError("richonline_npc_session_external_attachment_forbidden");
+    if(after.possession_multiplier1744!=before.possession_multiplier1744 ||
+        (after.possession_strength1740!=before.possession_strength1740 &&
+            !(!after.possession && before.possession_strength1740>0 && after.possession_strength1740==0)))
+        throw CodecError("richonline_npc_session_external_strength_forbidden");
     if(before.possession!=after.possession && pending_ && pending_->actor==actor)
         throw CodecError("richonline_npc_session_detach_pending");
     PreparedStatusChange result;result.owner_=this;result.actor_=actor;result.generation_=clock_generations_[actor];
     result.before_status_=before;result.after_status_=after;
     result.before_clock_=clocks_[actor];result.after_clock_=result.before_clock_;
-    if(!after.possession) {result.after_clock_.npc.reset();result.after_clock_.turns=0;}
+    if(!after.possession) {
+        richonline_detach_possession(result.after_status_);
+        result.after_clock_.npc.reset();result.after_clock_.turns=0;
+    }
     return result;
 }
 RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_temple_change(std::uint8_t actor,
@@ -93,6 +100,7 @@ RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_temple_
     check_actor(actor,change.expected);
     if(pending_) throw CodecError("richonline_npc_temple_out_of_phase");
     if(change.summon) {
+        if(change.strength) throw CodecError("richonline_npc_temple_strength_invalid");
         if(change.expected.possession || !policy_.temple_aura_affix ||
             (*change.summon!=4 && *change.summon!=6))
             throw CodecError("richonline_npc_temple_summon_unsupported");
@@ -106,10 +114,12 @@ RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_temple_
         plan.requires_idle_=true;return plan;
     }
     if(!change.expected.possession) throw CodecError("richonline_npc_temple_out_of_phase");
+    if(!change.extend && change.strength) throw CodecError("richonline_npc_temple_strength_invalid");
     const auto duration=plan_richonline_temple_duration(clocks_[actor].turns,change.extend,change.days,change.maximum);
     auto after=change.expected;
-    if(!duration) after.possession.reset();
+    if(!duration) richonline_detach_possession(after);
     auto plan=prepare_status_change(actor,change.expected,after);
+    if(duration && change.extend && change.strength>0) richonline_set_possession_strength(plan.after_status_,change.strength);
     plan.after_clock_.turns=duration.value_or(0);
     plan.requires_idle_=true;
     return plan;
@@ -122,13 +132,53 @@ bool RichonlineNpcSession::matches_status_change(const PreparedStatusChange& pla
         !(plan.requires_idle_ && pending_) &&
         !(plan.before_status_.possession!=plan.after_status_.possession && pending_ && pending_->actor==plan.actor_);
 }
+RichonlineNpcSessionResult RichonlineNpcSession::temple_summon(const RichonlineLandingContext& context,
+    std::uint16_t calendar,std::int8_t npc,RichonlineActorStatus& status) {
+    check_actor(context.actor_slot,status);
+    if(pending_ || context.game_mode!=3 || context.position<0 || context.actor_status!=status ||
+        status.possession || context.synthetic_actor!=(context.actor_slot==1) || npc<0 || npc>3 || !supported_npc(npc))
+        throw CodecError("richonline_npc_temple_summon_unsupported");
+    admit_clock_change(context.actor_slot);
+    auto next_status=status;next_status.possession=npc;
+    auto next_clock=clocks_[context.actor_slot];next_clock.npc=npc;next_clock.turns=affix_turns(npc);
+    auto next_inventory=cards_->inventory();
+    RichonlineNpcSessionResult result{{},RichonlineNpcContinuation::landing_phase6,RichonlineNpcWait::none,false,{}};
+    std::optional<RichonlineDeityMoneyPlan> money;
+    if(npc==3) {
+        auto fortune=plan_richonline_fortune({game_,context.actor_slot,context.position,context.synthetic_actor,
+            RichonlineNpcOrigin::temple,{}},rules_,*resources_,*events_,map_,policy_.fortune_cards,
+            next_inventory,next_status,ledger_->snapshot(context.actor_slot));
+        result.messages=std::move(fortune.messages);next_inventory=fortune.inventory_after;
+    } else if(npc==2) {
+        const auto slots=context.synthetic_actor ? std::array<std::int8_t,4>{-1,-1,-1,-1} :
+            policy_.badluck->lost_slots(next_inventory);
+        auto badluck=plan_richonline_badluck(game_,RichonlineDeityMoneyOrigin::temple,context.synthetic_actor,
+            slots,*resources_,next_inventory,next_status,*events_);
+        result.messages=std::move(badluck.messages);next_inventory=badluck.inventory_after;
+    } else if(context.synthetic_actor) {
+        const std::array before{ledger_->snapshot(0),ledger_->snapshot(1)};
+        money=plan_richonline_deity_money({game_,context.actor_slot,RichonlineDeityMoneyOrigin::temple,policy_.actor44},
+            policy_.money_amount(context.actor_slot,npc,before),next_status,before);
+        result.messages.push_back(money->response4022);
+        result.wait=money->awaits_settlement ? RichonlineNpcWait::settlement : RichonlineNpcWait::none;
+        result.bankrupt_actor=money->bankrupt_actor;
+    } else result.wait=RichonlineNpcWait::roulette34;
+    if(money && !commit_richonline_deity_money(*ledger_,*money,[]{return true;}))
+        throw CodecError("richonline_npc_session_ledger_rejected");
+    cards_->commit_inventory(next_inventory);status=next_status;
+    clocks_[context.actor_slot]=next_clock;++clock_generations_[context.actor_slot];
+    if(result.wait!=RichonlineNpcWait::none)
+        pending_=PendingMoney{context.actor_slot,calendar,npc,RichonlineDeityMoneyOrigin::temple,
+            result.wait==RichonlineNpcWait::settlement};
+    return result;
+}
 bool RichonlineNpcSession::commit_status_change(PreparedStatusChange& plan,RichonlineActorStatus& authoritative) noexcept {
     if(!matches_status_change(plan,authoritative)) return false;
     authoritative=plan.after_status_;clocks_[plan.actor_]=plan.after_clock_;
     ++clock_generations_[plan.actor_];plan.committed_=true;return true;
 }
 void RichonlineNpcSession::detach(std::uint8_t actor,RichonlineActorStatus& status) {
-    auto after=status;after.possession.reset();auto plan=prepare_status_change(actor,status,after);
+    auto after=status;richonline_detach_possession(after);auto plan=prepare_status_change(actor,status,after);
     if(!commit_status_change(plan,status)) throw CodecError("richonline_npc_session_status_change_stale");
 }
 RichonlineNpcSpawnResult RichonlineNpcSession::initial() {
