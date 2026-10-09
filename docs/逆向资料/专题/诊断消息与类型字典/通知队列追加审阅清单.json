@@ -1,0 +1,109 @@
+{
+  "functions": [
+    {
+      "va": "0x7d5c50",
+      "status": "局部语义已审阅",
+      "conclusion": "G+18子对象构造：30ms计时器及仅清基址的G+20队列；运行初始化另改3000。",
+      "evidence": "证据/notification_init.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x64f2a0",
+      "status": "局部语义已审阅",
+      "conclusion": "只审阅64F5C4..64F5DC：G+18阈值3000，G+20队列模数8；其他初始化保留原证未在本组分析。",
+      "evidence": "证据/notification_lifecycle.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x64f780",
+      "status": "局部语义已审阅",
+      "conclusion": "只审阅末尾64F856调用通知消费；其他游戏更新分支未在本组闭环。",
+      "evidence": "证据/notification_lifecycle.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x64fbd0",
+      "status": "局部语义已审阅",
+      "conclusion": "局部消费队列：非空且计时到期才出队一条，构造{8,x,未赋值,y}通知UI槽0。",
+      "evidence": "证据/notification_lifecycle.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x697e10",
+      "status": "局部语义已审阅",
+      "conclusion": "按模数分配8字节记录数组并清索引/计数；本调用参数8故容量7条。",
+      "evidence": "证据/notification_lifecycle.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x697f30",
+      "status": "局部语义已审阅",
+      "conclusion": "不判空的pop：推进读索引、减count、拷贝旧槽两个DWORD。",
+      "evidence": "证据/notification_lifecycle.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x7bae60",
+      "status": "局部语义已审阅",
+      "conclusion": "只审阅7BAE8F的add ecx,18h和7BAE92构造调用；其他G字段归参与者专题或仍未知。",
+      "evidence": "证据/notification_lifecycle.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x7d5ca0",
+      "status": "局部语义已审阅",
+      "conclusion": "以this+8调用队列析构桥接。",
+      "evidence": "证据/notification_lifecycle.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x7d7f50",
+      "status": "局部语义已审阅",
+      "conclusion": "仅清DWORD[this]为0，不初始化队列其它字段。",
+      "evidence": "证据/notification_lifecycle.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x6952d0",
+      "status": "局部语义已审阅",
+      "conclusion": "比较DWORD[this+16]==DWORD[this+12]判空。",
+      "evidence": "证据/notification_timing.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x7d7f80",
+      "status": "局部语义已审阅",
+      "conclusion": "将ECX原传给7D80B0析构。",
+      "evidence": "证据/notification_timing.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x7d80b0",
+      "status": "局部语义已审阅",
+      "conclusion": "基址非空则delete[]后置空；不改变计数与索引。",
+      "evidence": "证据/notification_timing.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x81bc80",
+      "status": "局部语义已审阅",
+      "conclusion": "将阈值参数传81BCB0，返回this。",
+      "evidence": "证据/notification_timing.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x81bcb0",
+      "status": "局部语义已审阅",
+      "conclusion": "写DWORD阈值并用GetTickCount初始化last。",
+      "evidence": "证据/notification_timing.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    },
+    {
+      "va": "0x81bd10",
+      "status": "局部语义已审阅",
+      "conclusion": "要求now>last且unsigned差达到阈值；到期再次取tick写回，每次最多返回一次成功。",
+      "evidence": "证据/notification_timing.json",
+      "unknown": "UI槽0通知含义、重复初始化生命周期、并发与分配失败未闭环；未实机验证。"
+    }
+  ]
+}

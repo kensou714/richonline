@@ -1,0 +1,699 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "baseline_reference": "全量分析/版本核验_第二批.json",
+  "scope": "当前IDA数据库；保存函数指令覆盖范围含尾块，非指令数据/外部依赖另核",
+  "functions": [
+    {
+      "va": "0x681380",
+      "end_va": "0x6814b3",
+      "name": "sub_681380",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_681380(void *this, int a2)",
+        "{",
+        "  int result; // eax",
+        "  _BYTE v3[12]; // [esp+Ch] [ebp-40h] BYREF",
+        "  _BYTE v4[12]; // [esp+18h] [ebp-34h] BYREF",
+        "  _BYTE Src[12]; // [esp+24h] [ebp-28h] BYREF",
+        "  int v6[3]; // [esp+30h] [ebp-1Ch] BYREF",
+        "  _DWORD v7[2]; // [esp+3Ch] [ebp-10h] BYREF",
+        "  int v8; // [esp+44h] [ebp-8h]",
+        "  void *v9; // [esp+48h] [ebp-4h]",
+        "",
+        "  v9 = this;",
+        "  v8 = a2;",
+        "  v7[0] = 0;",
+        "  v6[0] = CDialog::OnInitDialog();",
+        "  result = *(char *)(a2 + 2);",
+        "  switch ( *(_BYTE *)(a2 + 2) )",
+        "  {",
+        "    case 0:",
+        "      result = sub_6008CE(a1: (int)v6, a2: (int)v7);",
+        "      if ( result != 0 )",
+        "      {",
+        "        sub_608876();",
+        "        Src[2] = 1;",
+        "        result = sub_609D34(Src, Size: 4u, a3: v6[0]);",
+        "      }",
+        "      break;",
+        "    case 1:",
+        "      result = sub_60E9EC(a1: (int)v6, a2: (int)v7);",
+        "      if ( result != 0 )",
+        "      {",
+        "        sub_608876();",
+        "        v4[2] = 2;",
+        "        result = sub_609D34(Src: v4, Size: 4u, a3: v6[0]);",
+        "      }",
+        "      break;",
+        "    case 2:",
+        "      result = sub_5FF7F8(a1: (int)v6, a2: (int)v7, a3: *(char *)(v8 + 3));",
+        "      if ( result != 0 )",
+        "      {",
+        "        sub_608876();",
+        "        v3[2] = 6;",
+        "        result = sub_609D34(Src: v3, Size: 4u, a3: v6[0]);",
+        "      }",
+        "      break;",
+        "    case 3:",
+        "    case 4:",
+        "    case 5:",
+        "      return result;",
+        "    case 6:",
+        "      result = sub_609A1E(a1: (int)v6, a2: (int)v7);",
+        "      break;",
+        "    default:",
+        "      result = v6[0];",
+        "      break;",
+        "  }",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x681380",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x681381",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x681383",
+          "text": "sub     esp, 48h"
+        },
+        {
+          "va": "0x681386",
+          "text": "push    edi"
+        },
+        {
+          "va": "0x681387",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x681388",
+          "text": "lea     edi, [ebp+var_48]"
+        },
+        {
+          "va": "0x68138b",
+          "text": "mov     ecx, 12h"
+        },
+        {
+          "va": "0x681390",
+          "text": "mov     eax, 0CCCCCCCCh"
+        },
+        {
+          "va": "0x681395",
+          "text": "rep stosd"
+        },
+        {
+          "va": "0x681397",
+          "text": "pop     ecx"
+        },
+        {
+          "va": "0x681398",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x68139b",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x68139e",
+          "text": "mov     [ebp+var_8], eax"
+        },
+        {
+          "va": "0x6813a1",
+          "text": "mov     [ebp+var_10], 0"
+        },
+        {
+          "va": "0x6813a8",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x6813ab",
+          "text": "call    CDialog::OnInitDialog(void)"
+        },
+        {
+          "va": "0x6813b0",
+          "text": "mov     [ebp+var_1C], eax"
+        },
+        {
+          "va": "0x6813b3",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x6813b6",
+          "text": "movsx   edx, byte ptr [ecx+2]"
+        },
+        {
+          "va": "0x6813ba",
+          "text": "mov     [ebp+var_48], edx"
+        },
+        {
+          "va": "0x6813bd",
+          "text": "cmp     [ebp+var_48], 6; switch 7 cases"
+        },
+        {
+          "va": "0x6813c1",
+          "text": "ja      def_6813CA; jumptable 006813CA default case, cases 3-5"
+        },
+        {
+          "va": "0x6813c7",
+          "text": "mov     eax, [ebp+var_48]"
+        },
+        {
+          "va": "0x6813ca",
+          "text": "jmp     ds:jpt_6813CA[eax*4]; switch jump"
+        },
+        {
+          "va": "0x6813d1",
+          "text": "lea     ecx, [ebp+var_10]; jumptable 006813CA case 0"
+        },
+        {
+          "va": "0x6813d4",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x6813d5",
+          "text": "lea     edx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x6813d8",
+          "text": "push    edx"
+        },
+        {
+          "va": "0x6813d9",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x6813dc",
+          "text": "call    sub_6008CE"
+        },
+        {
+          "va": "0x6813e1",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x6813e3",
+          "text": "jnz     short loc_6813EA"
+        },
+        {
+          "va": "0x6813e5",
+          "text": "jmp     def_6813CA; jumptable 006813CA default case, cases 3-5"
+        },
+        {
+          "va": "0x6813ea",
+          "text": "lea     ecx, [ebp+Src]"
+        },
+        {
+          "va": "0x6813ed",
+          "text": "call    sub_608876"
+        },
+        {
+          "va": "0x6813f2",
+          "text": "mov     [ebp+var_26], 1"
+        },
+        {
+          "va": "0x6813f6",
+          "text": "mov     eax, [ebp+var_1C]"
+        },
+        {
+          "va": "0x6813f9",
+          "text": "push    eax; int"
+        },
+        {
+          "va": "0x6813fa",
+          "text": "push    4; Size"
+        },
+        {
+          "va": "0x6813fc",
+          "text": "lea     ecx, [ebp+Src]"
+        },
+        {
+          "va": "0x6813ff",
+          "text": "push    ecx; Src"
+        },
+        {
+          "va": "0x681400",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x681403",
+          "text": "call    sub_609D34"
+        },
+        {
+          "va": "0x681408",
+          "text": "jmp     def_6813CA; jumptable 006813CA default case, cases 3-5"
+        },
+        {
+          "va": "0x68140d",
+          "text": "lea     edx, [ebp+var_10]; jumptable 006813CA case 1"
+        },
+        {
+          "va": "0x681410",
+          "text": "push    edx"
+        },
+        {
+          "va": "0x681411",
+          "text": "lea     eax, [ebp+var_1C]"
+        },
+        {
+          "va": "0x681414",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x681415",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x681418",
+          "text": "call    sub_60E9EC"
+        },
+        {
+          "va": "0x68141d",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x68141f",
+          "text": "jnz     short loc_681423"
+        },
+        {
+          "va": "0x681421",
+          "text": "jmp     short def_6813CA; jumptable 006813CA default case, cases 3-5"
+        },
+        {
+          "va": "0x681423",
+          "text": "lea     ecx, [ebp+var_34]"
+        },
+        {
+          "va": "0x681426",
+          "text": "call    sub_608876"
+        },
+        {
+          "va": "0x68142b",
+          "text": "mov     [ebp+var_32], 2"
+        },
+        {
+          "va": "0x68142f",
+          "text": "mov     ecx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x681432",
+          "text": "push    ecx; int"
+        },
+        {
+          "va": "0x681433",
+          "text": "push    4; Size"
+        },
+        {
+          "va": "0x681435",
+          "text": "lea     edx, [ebp+var_34]"
+        },
+        {
+          "va": "0x681438",
+          "text": "push    edx; Src"
+        },
+        {
+          "va": "0x681439",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x68143c",
+          "text": "call    sub_609D34"
+        },
+        {
+          "va": "0x681441",
+          "text": "jmp     short def_6813CA; jumptable 006813CA default case, cases 3-5"
+        },
+        {
+          "va": "0x681443",
+          "text": "mov     eax, [ebp+var_8]; jumptable 006813CA case 2"
+        },
+        {
+          "va": "0x681446",
+          "text": "movsx   ecx, byte ptr [eax+3]"
+        },
+        {
+          "va": "0x68144a",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x68144b",
+          "text": "lea     edx, [ebp+var_10]"
+        },
+        {
+          "va": "0x68144e",
+          "text": "push    edx"
+        },
+        {
+          "va": "0x68144f",
+          "text": "lea     eax, [ebp+var_1C]"
+        },
+        {
+          "va": "0x681452",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x681453",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x681456",
+          "text": "call    sub_5FF7F8"
+        },
+        {
+          "va": "0x68145b",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x68145d",
+          "text": "jnz     short loc_681461"
+        },
+        {
+          "va": "0x68145f",
+          "text": "jmp     short def_6813CA; jumptable 006813CA default case, cases 3-5"
+        },
+        {
+          "va": "0x681461",
+          "text": "lea     ecx, [ebp+var_40]"
+        },
+        {
+          "va": "0x681464",
+          "text": "call    sub_608876"
+        },
+        {
+          "va": "0x681469",
+          "text": "mov     [ebp+var_3E], 6"
+        },
+        {
+          "va": "0x68146d",
+          "text": "mov     ecx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x681470",
+          "text": "push    ecx; int"
+        },
+        {
+          "va": "0x681471",
+          "text": "push    4; Size"
+        },
+        {
+          "va": "0x681473",
+          "text": "lea     edx, [ebp+var_40]"
+        },
+        {
+          "va": "0x681476",
+          "text": "push    edx; Src"
+        },
+        {
+          "va": "0x681477",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x68147a",
+          "text": "call    sub_609D34"
+        },
+        {
+          "va": "0x68147f",
+          "text": "jmp     short def_6813CA; jumptable 006813CA default case, cases 3-5"
+        },
+        {
+          "va": "0x681481",
+          "text": "lea     eax, [ebp+var_10]; jumptable 006813CA case 6"
+        },
+        {
+          "va": "0x681484",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x681485",
+          "text": "lea     ecx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x681488",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x681489",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x68148c",
+          "text": "call    sub_609A1E"
+        },
+        {
+          "va": "0x681491",
+          "text": "push    edx; jumptable 006813CA default case, cases 3-5"
+        },
+        {
+          "va": "0x681492",
+          "text": "mov     ecx, ebp; Esp"
+        },
+        {
+          "va": "0x681494",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x681495",
+          "text": "lea     edx, stru_6814B3; Fd"
+        },
+        {
+          "va": "0x68149b",
+          "text": "call    _RTC_CheckStackVars(x,x)"
+        },
+        {
+          "va": "0x6814a0",
+          "text": "pop     eax"
+        },
+        {
+          "va": "0x6814a1",
+          "text": "pop     edx"
+        },
+        {
+          "va": "0x6814a2",
+          "text": "pop     edi"
+        },
+        {
+          "va": "0x6814a3",
+          "text": "add     esp, 48h"
+        },
+        {
+          "va": "0x6814a6",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x6814a8",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x6814ad",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x6814af",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x6814b0",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x6813ab",
+          "target": "0x6023cc",
+          "implementation": "0x63e5b0",
+          "thunks": [
+            "0x6023cc"
+          ]
+        },
+        {
+          "site": "0x6813dc",
+          "target": "0x6008ce",
+          "implementation": "0x7c3220",
+          "thunks": [
+            "0x6008ce"
+          ]
+        },
+        {
+          "site": "0x6813ed",
+          "target": "0x608876",
+          "implementation": "0x693be0",
+          "thunks": [
+            "0x608876"
+          ]
+        },
+        {
+          "site": "0x681403",
+          "target": "0x609d34",
+          "implementation": "0x64fa50",
+          "thunks": [
+            "0x609d34"
+          ]
+        },
+        {
+          "site": "0x681418",
+          "target": "0x60e9ec",
+          "implementation": "0x7c54b0",
+          "thunks": [
+            "0x60e9ec"
+          ]
+        },
+        {
+          "site": "0x681426",
+          "target": "0x608876",
+          "implementation": "0x693be0",
+          "thunks": [
+            "0x608876"
+          ]
+        },
+        {
+          "site": "0x68143c",
+          "target": "0x609d34",
+          "implementation": "0x64fa50",
+          "thunks": [
+            "0x609d34"
+          ]
+        },
+        {
+          "site": "0x681456",
+          "target": "0x5ff7f8",
+          "implementation": "0x7c6640",
+          "thunks": [
+            "0x5ff7f8"
+          ]
+        },
+        {
+          "site": "0x681464",
+          "target": "0x608876",
+          "implementation": "0x693be0",
+          "thunks": [
+            "0x608876"
+          ]
+        },
+        {
+          "site": "0x68147a",
+          "target": "0x609d34",
+          "implementation": "0x64fa50",
+          "thunks": [
+            "0x609d34"
+          ]
+        },
+        {
+          "site": "0x68148c",
+          "target": "0x609a1e",
+          "implementation": "0x7cb050",
+          "thunks": [
+            "0x609a1e"
+          ]
+        },
+        {
+          "site": "0x68149b",
+          "target": "0x6127bd",
+          "implementation": "0x91f700",
+          "thunks": [
+            "0x6127bd"
+          ]
+        },
+        {
+          "site": "0x6814a8",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x6010b7",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x681380",
+          "size": 307,
+          "idb_hex": "558bec83ec4857518d7db8b912000000b8ccccccccf3ab59894dfc8b45088945f8c745f0000000008b4dfce81c10f8ff8945e48b4df80fbe51028955b8837db8060f87ca0000008b45b8ff24851c1568008d4df0518d55e4528b4dfce8edf4f7ff85c07505e9a70000008d4dd8e88474f8ffc645da018b45e4506a048d4dd8518b4dfce82c89f8ffe9840000008d55f0528d45e4508b4dfce8cfd5f8ff85c07502eb6e8d4dcce84b74f8ffc645ce028b4de4516a048d55cc528b4dfce8f388f8ffeb4e8b45f80fbe4803518d55f0528d45e4508b4dfce89de3f7ff85c07502eb308d4dc0e80d74f8ffc645c2068b4de4516a048d55c0528b4dfce8b588f8ffeb108d45f0508d4de4518b4dfce88d85f8ff528bcd508d15b3146800e81d13f9ff585a5f83c4483bece8c9a0f8ff8be55dc20400",
+          "disk_hex": "558bec83ec4857518d7db8b912000000b8ccccccccf3ab59894dfc8b45088945f8c745f0000000008b4dfce81c10f8ff8945e48b4df80fbe51028955b8837db8060f87ca0000008b45b8ff24851c1568008d4df0518d55e4528b4dfce8edf4f7ff85c07505e9a70000008d4dd8e88474f8ffc645da018b45e4506a048d4dd8518b4dfce82c89f8ffe9840000008d55f0528d45e4508b4dfce8cfd5f8ff85c07502eb6e8d4dcce84b74f8ffc645ce028b4de4516a048d55cc528b4dfce8f388f8ffeb4e8b45f80fbe4803518d55f0528d45e4508b4dfce89de3f7ff85c07502eb308d4dc0e80d74f8ffc645c2068b4de4516a048d55c0528b4dfce8b588f8ffeb108d45f0508d4de4518b4dfce88d85f8ff528bcd508d15b3146800e81d13f9ff585a5f83c4483bece8c9a0f8ff8be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    }
+  ],
+  "thunks": [
+    {
+      "va": "0x6023cc",
+      "size": 5,
+      "idb_hex": "e9dfc10300",
+      "disk_hex": "e9dfc10300",
+      "matching": true,
+      "target": "0x63e5b0"
+    },
+    {
+      "va": "0x6008ce",
+      "size": 5,
+      "idb_hex": "e94d291c00",
+      "disk_hex": "e94d291c00",
+      "matching": true,
+      "target": "0x7c3220"
+    },
+    {
+      "va": "0x608876",
+      "size": 5,
+      "idb_hex": "e965b30800",
+      "disk_hex": "e965b30800",
+      "matching": true,
+      "target": "0x693be0"
+    },
+    {
+      "va": "0x609d34",
+      "size": 5,
+      "idb_hex": "e9175d0400",
+      "disk_hex": "e9175d0400",
+      "matching": true,
+      "target": "0x64fa50"
+    },
+    {
+      "va": "0x60e9ec",
+      "size": 5,
+      "idb_hex": "e9bf6a1b00",
+      "disk_hex": "e9bf6a1b00",
+      "matching": true,
+      "target": "0x7c54b0"
+    },
+    {
+      "va": "0x5ff7f8",
+      "size": 5,
+      "idb_hex": "e9436e1c00",
+      "disk_hex": "e9436e1c00",
+      "matching": true,
+      "target": "0x7c6640"
+    },
+    {
+      "va": "0x609a1e",
+      "size": 5,
+      "idb_hex": "e92d161c00",
+      "disk_hex": "e92d161c00",
+      "matching": true,
+      "target": "0x7cb050"
+    },
+    {
+      "va": "0x6127bd",
+      "size": 5,
+      "idb_hex": "e93ecf3000",
+      "disk_hex": "e93ecf3000",
+      "matching": true,
+      "target": "0x91f700"
+    },
+    {
+      "va": "0x60b576",
+      "size": 5,
+      "idb_hex": "e955413100",
+      "disk_hex": "e955413100",
+      "matching": true,
+      "target": "0x91f6d0"
+    }
+  ]
+}

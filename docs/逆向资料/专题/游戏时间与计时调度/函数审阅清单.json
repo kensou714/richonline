@@ -1,0 +1,418 @@
+{
+  "scope": "限定时钟用途、效果生命周期与RAW探测语义；不代表全部玩法或依赖已恢复",
+  "functions": [
+    {
+      "va": "0x623ee0",
+      "status": "局部分支已审阅",
+      "conclusion": "资源加载线程末端调用641EE0；不是主帧Sleep循环。",
+      "unknown": "仅复核641EE0调用边；其他加载失败、格式与生命周期见既有专题。",
+      "evidence": "证据/functions.json#0x623ee0"
+    },
+    {
+      "va": "0x625070",
+      "status": "局部分支已审阅",
+      "conclusion": "条件资格通过后调用6AA530获取随机候选，随后交6A6EB0。",
+      "unknown": "其他界面与房间状态分支未在本专题重审。",
+      "evidence": "证据/functions.json#0x625070"
+    },
+    {
+      "va": "0x625d70",
+      "status": "局部语义已审阅",
+      "conclusion": "A76694非零时先绘制提示，再以DWORD差值>=1350清零。",
+      "unknown": "起点所有写者、真实显示帧和网络状态关联未证。",
+      "evidence": "证据/functions.json#0x625d70"
+    },
+    {
+      "va": "0x641ee0",
+      "status": "局部分支已审阅",
+      "conclusion": "AVT资源坐标加载，最外层每条记录末Sleep1；保存一个异常清理尾块。",
+      "unknown": "资源容量与格式完整语义留给资源专题；本篇仅排除其为游戏tick。",
+      "evidence": "证据/functions.json#0x641ee0"
+    },
+    {
+      "va": "0x6aa530",
+      "status": "局部分支已审阅",
+      "conclusion": "每次srand(timeGetTime)，按资格/选项分九组rand取模并调用6AA450。",
+      "unknown": "表长零、文本内容、随机分布与6AA450内部未审。",
+      "evidence": "证据/functions.json#0x6aa530"
+    },
+    {
+      "va": "0x6ab5f0",
+      "status": "局部分支已审阅",
+      "conclusion": "重置UI相关链后清+2736/+2740并把GetTickCount写+2744。",
+      "unknown": "字段消费者与产品名称未闭合，不能命名为游戏pending。",
+      "evidence": "证据/functions.json#0x6ab5f0"
+    },
+    {
+      "va": "0x6bc110",
+      "status": "局部语义已审阅",
+      "conclusion": "槽构造以memset清零完整36字节，含寿命、起点与附属指针。",
+      "unknown": "字段清零不代表全部业务语义已恢复。",
+      "evidence": "证据/functions.json#0x6bc110"
+    },
+    {
+      "va": "0x6bc140",
+      "status": "局部语义已审阅",
+      "conclusion": "槽析构释放非空this+32并清零。",
+      "unknown": "缓冲内资源句柄归外部管理，不据此声称全部纹理释放。",
+      "evidence": "证据/functions.json#0x6bc140"
+    },
+    {
+      "va": "0x6bc190",
+      "status": "局部语义已审阅",
+      "conclusion": "管理对象构造仅清this+20数组指针。",
+      "unknown": "其余字段由登记入口设置。",
+      "evidence": "证据/functions.json#0x6bc190"
+    },
+    {
+      "va": "0x6bc1b0",
+      "status": "局部语义已审阅",
+      "conclusion": "非空数组经6BDF90(flags3)逐槽析构与释放后清this+20。",
+      "unknown": "重复登记与异常分配恢复的运行路径未验证。",
+      "evidence": "证据/functions.json#0x6bc1b0"
+    },
+    {
+      "va": "0x6bc220",
+      "status": "局部语义已审阅",
+      "conclusion": "登记分配数/扫描数/活跃数/附属长度/模式/三回调，构造36字节槽数组并清寿命。",
+      "unknown": "未验证扫描数<=分配数和分配失败；运行库分配内部未展开。",
+      "evidence": "证据/functions.json#0x6bc220"
+    },
+    {
+      "va": "0x6bc3a0",
+      "status": "局部语义已审阅",
+      "conclusion": "顺序启动6BC3D0再更新回收6BC560，ECX为同一管理对象。",
+      "unknown": "外部调用频率和暂停门控未穷尽。",
+      "evidence": "证据/functions.json#0x6bc3a0"
+    },
+    {
+      "va": "0x6bc3d0",
+      "status": "局部语义已审阅",
+      "conclusion": "模式0单槽、模式1多槽启动；回调后写起点并增活跃数。",
+      "unknown": "其他模式不启动；回调非零寿命契约失败的运行现象未测。",
+      "evidence": "证据/functions.json#0x6bc3d0"
+    },
+    {
+      "va": "0x6bc560",
+      "status": "局部语义已审阅",
+      "conclusion": "活跃计数>0时先更新，再按清标志或DWORD elapsed>=duration回收并减计数。",
+      "unknown": "跨完整DWORD周期和并发修改未实测。",
+      "evidence": "证据/functions.json#0x6bc560"
+    },
+    {
+      "va": "0x6bc670",
+      "status": "局部语义已审阅",
+      "conclusion": "对扫描上限内仍活跃槽调用第三回调。",
+      "unknown": "回调内部绘图由单独函数与图像专题解释。",
+      "evidence": "证据/functions.json#0x6bc670"
+    },
+    {
+      "va": "0x6bc700",
+      "status": "局部语义已审阅",
+      "conclusion": "登记分配80槽、扫描50槽、附属0字节、模式0和启动/更新/绘制回调。",
+      "unknown": "回调地址经参数E9原证解析；美术效果正式名称未恢复。",
+      "evidence": "证据/functions.json#0x6bc700"
+    },
+    {
+      "va": "0x6bc770",
+      "status": "局部语义已审阅",
+      "conclusion": "同一管理对象先启动/更新/回收，再绘制剩余活跃槽。",
+      "unknown": "包装器的全部间接调用者与帧间暂停未穷尽。",
+      "evidence": "证据/functions.json#0x6bc770"
+    },
+    {
+      "va": "0x6bc7a0",
+      "status": "局部语义已审阅",
+      "conclusion": "随机x、dx/dy和2000..11000毫秒寿命，y为0。",
+      "unknown": "随机源的运行时播种时机和视觉效果名未证。",
+      "evidence": "证据/functions.json#0x6bc7a0"
+    },
+    {
+      "va": "0x6bc860",
+      "status": "局部语义已审阅",
+      "conclusion": "每次调用x/y加增量，再按三个浮点界限清寿命。",
+      "unknown": "真实每帧调用次数与全局边界写者未穷尽。",
+      "evidence": "证据/functions.json#0x6bc860"
+    },
+    {
+      "va": "0x6bc8e0",
+      "status": "局部语义已审阅",
+      "conclusion": "缓存纹理24并按槽x/y加0.5后转整数调用6DC470绘制。",
+      "unknown": "浮点转整运行库极值行为与纹理正式名称未展开。",
+      "evidence": "证据/functions.json#0x6bc8e0"
+    },
+    {
+      "va": "0x6bc990",
+      "status": "局部语义已审阅",
+      "conclusion": "登记分配5槽、扫描5槽、附属4字节、模式0和启动/更新/绘制回调。",
+      "unknown": "回调地址经参数E9原证解析；美术效果正式名称未恢复。",
+      "evidence": "证据/functions.json#0x6bc990"
+    },
+    {
+      "va": "0x6bca00",
+      "status": "局部语义已审阅",
+      "conclusion": "同一管理对象先启动/更新/回收，再绘制剩余活跃槽。",
+      "unknown": "包装器的全部间接调用者与帧间暂停未穷尽。",
+      "evidence": "证据/functions.json#0x6bca00"
+    },
+    {
+      "va": "0x6bca30",
+      "status": "局部语义已审阅",
+      "conclusion": "初始化纹理352/353和移动字段；now-A8249C<=8000写寿命1，否则寿命写当前tick并更新全局起点。",
+      "unknown": "保存tick作duration为原实现；尺寸取模与真实持续时间未用实机验证。",
+      "evidence": "证据/functions.json#0x6bca30"
+    },
+    {
+      "va": "0x6bcb30",
+      "status": "局部语义已审阅",
+      "conclusion": "x>=6919F0返回边界时清寿命，之后仍执行x+=dx。",
+      "unknown": "边界关联地图资源；浮点异常值和调用频率未测。",
+      "evidence": "证据/functions.json#0x6bcb30"
+    },
+    {
+      "va": "0x6bcba0",
+      "status": "局部语义已审阅",
+      "conclusion": "读取附属纹理句柄，槽坐标减视口短整数偏移并加0.5，转整数调用6DC470。",
+      "unknown": "坐标getter/绘图内部已有图像资料，本篇不扩展全链。",
+      "evidence": "证据/functions.json#0x6bcba0"
+    },
+    {
+      "va": "0x6bcc50",
+      "status": "局部语义已审阅",
+      "conclusion": "登记分配3槽、扫描3槽、附属8字节、模式0和启动/更新/绘制回调。",
+      "unknown": "回调地址经参数E9原证解析；美术效果正式名称未恢复。",
+      "evidence": "证据/functions.json#0x6bcc50"
+    },
+    {
+      "va": "0x6bccc0",
+      "status": "局部语义已审阅",
+      "conclusion": "同一管理对象先启动/更新/回收，再绘制剩余活跃槽。",
+      "unknown": "包装器的全部间接调用者与帧间暂停未穷尽。",
+      "evidence": "证据/functions.json#0x6bccc0"
+    },
+    {
+      "va": "0x6bccf0",
+      "status": "局部语义已审阅",
+      "conclusion": "初始化纹理394..396和移动字段；now-A824A0<=8000写寿命1，否则寿命写当前tick并更新全局起点。",
+      "unknown": "保存tick作duration为原实现；尺寸取模与真实持续时间未用实机验证。",
+      "evidence": "证据/functions.json#0x6bccf0"
+    },
+    {
+      "va": "0x6bce60",
+      "status": "局部语义已审阅",
+      "conclusion": "x<-附属纹理宽度时清寿命，之后仍执行x-=dx。",
+      "unknown": "附属指针和纹理尺寸有效性依赖初始化。",
+      "evidence": "证据/functions.json#0x6bce60"
+    },
+    {
+      "va": "0x6bcec0",
+      "status": "局部语义已审阅",
+      "conclusion": "读取附属纹理句柄，槽坐标减视口短整数偏移并加0.5，转整数调用6DC470。",
+      "unknown": "坐标getter/绘图内部已有图像资料，本篇不扩展全链。",
+      "evidence": "证据/functions.json#0x6bcec0"
+    },
+    {
+      "va": "0x6bcf70",
+      "status": "局部语义已审阅",
+      "conclusion": "登记分配3槽、扫描3槽、附属4字节、模式0和启动/更新/绘制回调。",
+      "unknown": "回调地址经参数E9原证解析；美术效果正式名称未恢复。",
+      "evidence": "证据/functions.json#0x6bcf70"
+    },
+    {
+      "va": "0x6bcfe0",
+      "status": "局部语义已审阅",
+      "conclusion": "同一管理对象先启动/更新/回收，再绘制剩余活跃槽。",
+      "unknown": "包装器的全部间接调用者与帧间暂停未穷尽。",
+      "evidence": "证据/functions.json#0x6bcfe0"
+    },
+    {
+      "va": "0x6bd010",
+      "status": "局部语义已审阅",
+      "conclusion": "初始化纹理352/353和移动字段；now-A824A4<=5000写寿命1，否则寿命写当前tick并更新全局起点。",
+      "unknown": "保存tick作duration为原实现；尺寸取模与真实持续时间未用实机验证。",
+      "evidence": "证据/functions.json#0x6bd010"
+    },
+    {
+      "va": "0x6bd110",
+      "status": "局部语义已审阅",
+      "conclusion": "x>=6919F0返回边界时清寿命，之后仍执行x+=dx。",
+      "unknown": "边界关联地图资源；浮点异常值和调用频率未测。",
+      "evidence": "证据/functions.json#0x6bd110"
+    },
+    {
+      "va": "0x6bd180",
+      "status": "局部语义已审阅",
+      "conclusion": "读取附属纹理句柄，槽坐标减视口短整数偏移并加0.5，转整数调用6DC470。",
+      "unknown": "坐标getter/绘图内部已有图像资料，本篇不扩展全链。",
+      "evidence": "证据/functions.json#0x6bd180"
+    },
+    {
+      "va": "0x6bd230",
+      "status": "局部语义已审阅",
+      "conclusion": "登记分配3槽、扫描3槽、附属8字节、模式0和启动/更新/绘制回调。",
+      "unknown": "回调地址经参数E9原证解析；美术效果正式名称未恢复。",
+      "evidence": "证据/functions.json#0x6bd230"
+    },
+    {
+      "va": "0x6bd2a0",
+      "status": "局部语义已审阅",
+      "conclusion": "同一管理对象先启动/更新/回收，再绘制剩余活跃槽。",
+      "unknown": "包装器的全部间接调用者与帧间暂停未穷尽。",
+      "evidence": "证据/functions.json#0x6bd2a0"
+    },
+    {
+      "va": "0x6bd2d0",
+      "status": "局部语义已审阅",
+      "conclusion": "初始化纹理503..505和移动字段；now-A824A8<=5000写寿命1，否则寿命写当前tick并更新全局起点。",
+      "unknown": "保存tick作duration为原实现；尺寸取模与真实持续时间未用实机验证。",
+      "evidence": "证据/functions.json#0x6bd2d0"
+    },
+    {
+      "va": "0x6bd440",
+      "status": "局部语义已审阅",
+      "conclusion": "x<-附属纹理宽度时清寿命，之后仍执行x-=dx。",
+      "unknown": "附属指针和纹理尺寸有效性依赖初始化。",
+      "evidence": "证据/functions.json#0x6bd440"
+    },
+    {
+      "va": "0x6bd4a0",
+      "status": "局部语义已审阅",
+      "conclusion": "读取附属纹理句柄，槽坐标减视口短整数偏移并加0.5，转整数调用6DC470。",
+      "unknown": "坐标getter/绘图内部已有图像资料，本篇不扩展全链。",
+      "evidence": "证据/functions.json#0x6bd4a0"
+    },
+    {
+      "va": "0x6bd550",
+      "status": "局部语义已审阅",
+      "conclusion": "登记分配5槽、扫描5槽、附属0字节、模式0和启动/更新/绘制回调。",
+      "unknown": "回调地址经参数E9原证解析；美术效果正式名称未恢复。",
+      "evidence": "证据/functions.json#0x6bd550"
+    },
+    {
+      "va": "0x6bd5c0",
+      "status": "局部语义已审阅",
+      "conclusion": "同一管理对象先启动/更新/回收，再绘制剩余活跃槽。",
+      "unknown": "包装器的全部间接调用者与帧间暂停未穷尽。",
+      "evidence": "证据/functions.json#0x6bd5c0"
+    },
+    {
+      "va": "0x6bd5f0",
+      "status": "局部语义已审阅",
+      "conclusion": "初始化纹理1655和移动字段；now-A824AC<=1000写寿命1，否则寿命写当前tick并更新全局起点。",
+      "unknown": "保存tick作duration为原实现；尺寸取模与真实持续时间未用实机验证。",
+      "evidence": "证据/functions.json#0x6bd5f0"
+    },
+    {
+      "va": "0x6bd780",
+      "status": "局部语义已审阅",
+      "conclusion": "缓存1655纹理高度；height+y<=0清寿命，随后y-=dy。",
+      "unknown": "实际高度与美术资源未做显示验收。",
+      "evidence": "证据/functions.json#0x6bd780"
+    },
+    {
+      "va": "0x6bd880",
+      "status": "局部语义已审阅",
+      "conclusion": "缓存纹理1655，槽坐标减视口偏移后直接转整数绘制，没有加0.5。",
+      "unknown": "纹理正式名称和画面表现未实测。",
+      "evidence": "证据/functions.json#0x6bd880"
+    },
+    {
+      "va": "0x6bdf90",
+      "status": "局部语义已审阅",
+      "conclusion": "vector deleting destructor：bit1遍历数组槽析构，bit0决定释放数组头或单对象。",
+      "unknown": "运行库异常析构内部另见异常尾块专题。",
+      "evidence": "证据/functions.json#0x6bdf90"
+    },
+    {
+      "va": "0x6be030",
+      "status": "局部语义已审阅",
+      "conclusion": "只把槽+24 DWORD清零。",
+      "unknown": "不同时改活跃计数或释放附属对象。",
+      "evidence": "证据/functions.json#0x6be030"
+    },
+    {
+      "va": "0x6be050",
+      "status": "局部语义已审阅",
+      "conclusion": "仅返回槽+24是否非零。",
+      "unknown": "调用者需保证槽指针有效。",
+      "evidence": "证据/functions.json#0x6be050"
+    },
+    {
+      "va": "0x6be070",
+      "status": "局部语义已审阅",
+      "conclusion": "只清this+8 DWORD。",
+      "unknown": "未据此断言整个管理对象或槽数组重置。",
+      "evidence": "证据/functions.json#0x6be070"
+    },
+    {
+      "va": "0x71fc00",
+      "status": "局部分支已审阅",
+      "conclusion": "既有周期更新之后，以共享全局DWORD差值>=200节流ID17控件调用，成功时取新now重置起点。",
+      "unknown": "控件产品语义、虚函数全部副作用和全局所有写者未闭合。",
+      "evidence": "证据/functions.json#0x71fc00"
+    },
+    {
+      "va": "0x740000",
+      "status": "局部分支已审阅",
+      "conclusion": "选项5132..5134转为0..2调用6AA530并拷候选字符串；不是周期tick。",
+      "unknown": "字符串容量、其他按钮和虚函数副作用未审全。",
+      "evidence": "证据/functions.json#0x740000"
+    },
+    {
+      "va": "0x81bc30",
+      "status": "局部语义已审阅",
+      "conclusion": "time/localtime更新this+0与+4处36字节tm，日历时间而非游戏tick。",
+      "unknown": "日期文字业务已在事件文字记录器和断线专题审阅。",
+      "evidence": "证据/functions.json#0x81bc30"
+    },
+    {
+      "va": "0x81ed10",
+      "status": "局部语义已审阅",
+      "conclusion": "缓存QPF，QPC*1000经64位乘法/有符号除法返回毫秒EDX:EAX。",
+      "unknown": "API失败、频率零、乘法溢出和缓存并发未保护且未实测。",
+      "evidence": "证据/functions.json#0x81ed10"
+    },
+    {
+      "va": "0x81edd0",
+      "status": "局部语义已审阅",
+      "conclusion": "初始化ICMP类型8、code0、校验/序号字段及进程ID低16位，并填探测数据。",
+      "unknown": "异常长度参数有效性依赖调用者固定52字节。",
+      "evidence": "证据/functions.json#0x81edd0"
+    },
+    {
+      "va": "0x81ee60",
+      "status": "局部语义已审阅",
+      "conclusion": "以IP头长定位ICMP，检类型0及进程ID；返回完整64位now-stamp，失败9999。",
+      "unknown": "仅检查h+8却读取到h+19；回应合法性、校验和与短包残留未全面验证。",
+      "evidence": "证据/functions.json#0x81ee60"
+    },
+    {
+      "va": "0x81ef20",
+      "status": "局部语义已审阅",
+      "conclusion": "累加WORD及可选末BYTE，两次折叠进位并取反返回16位校验和。",
+      "unknown": "网络字节序与长度异常样本未实机验证。",
+      "evidence": "证据/functions.json#0x81ef20"
+    },
+    {
+      "va": "0x81efb0",
+      "status": "局部语义已审阅",
+      "conclusion": "初始化RAW ICMP及收发超时、两线程；a2门控Sleep，之后强停并关闭线程句柄。",
+      "unknown": "未见套接字/WSA清理；socket无符号非负检查失效，线程返回未门控。",
+      "evidence": "证据/functions.json#0x81efb0"
+    },
+    {
+      "va": "0x81f1a0",
+      "status": "局部语义已审阅",
+      "conclusion": "按轮次/目标发52字节探测，记录64位毫秒戳，每轮全部目标后Sleep10。",
+      "unknown": "sendto错误未影响控制流；强停可能跳过局部分配释放。",
+      "evidence": "证据/functions.json#0x81f1a0"
+    },
+    {
+      "va": "0x81f360",
+      "status": "局部语义已审阅",
+      "conclusion": "循环顶部unsigned64差值与符号扩展窗口比较；接收有效延迟后更新计数/max/min/整数均值。",
+      "unknown": "目标下标只signed上界，短包及负下标未实测；recv阻塞不受循环顶部即时复查。",
+      "evidence": "证据/functions.json#0x81f360"
+    }
+  ]
+}

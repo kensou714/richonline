@@ -1,0 +1,8 @@
+{
+  "functions": [
+    {"va":"0x7d7fb0","status":"已分析","conclusion":"只清队列存储指针，其他字段留待初始化","unknown":["初始化前调用可达性未证"],"evidence_path":"第四批_队列生命周期证据.json"},
+    {"va":"0x7d7fe0","status":"已分析","conclusion":"this原样调用队列存储释放函数7D8110","unknown":["整体对象生命周期见其他专题"],"evidence_path":"第四批_队列生命周期证据.json"},
+    {"va":"0x7d8110","status":"已分析","conclusion":"非空存储指针delete[]后置0，不清其他容器字段","unknown":["析构后使用可达性未证"],"evidence_path":"第四批_队列释放证据.json"},
+    {"va":"0x7bb140","status":"局部已分析","conclusion":"核对G+20线程终止及关闭早于队列成员释放；其他成员下游未闭合","unknown":["线程持锁和强制退出效果未验证"],"evidence_path":"第四批_队列生命周期证据.json"}
+  ]
+}

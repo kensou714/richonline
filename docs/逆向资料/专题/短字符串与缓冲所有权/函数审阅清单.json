@@ -1,0 +1,304 @@
+{
+  "scope": "静态函数契约、局部消费与邻近导出分别记录，不等价全程序完成",
+  "counts": {
+    "静态契约已审阅": 28,
+    "邻近或运行库仅导出": 9,
+    "局部消费契约已审阅": 5
+  },
+  "functions": [
+    {
+      "va": "0x62dcc0",
+      "status": "静态契约已审阅",
+      "conclusion": "向62E920传size及额外0；allocator包装不检查输入溢出。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_allocation.json"
+    },
+    {
+      "va": "0x91bd30",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_allocation.json"
+    },
+    {
+      "va": "0x62e920",
+      "status": "静态契约已审阅",
+      "conclusion": "只消费size调用operator new，额外调用栈参数未在本函数消费。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_consumers.json"
+    },
+    {
+      "va": "0x691ab0",
+      "status": "局部消费契约已审阅",
+      "conclusion": "28字节栈字符串构造与释放消费，调用期间保留对象；中间业务依赖未核。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_consumers.json"
+    },
+    {
+      "va": "0x79d3d0",
+      "status": "局部消费契约已审阅",
+      "conclusion": "整源对象复制包装，pos=0、count=FFFFFFFF立即数；外层this保留。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_consumers.json"
+    },
+    {
+      "va": "0x88ee20",
+      "status": "局部消费契约已审阅",
+      "conclusion": "字符串子串构造包装；初始化后复制源pos/count；完整外层业务未核。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_consumers.json"
+    },
+    {
+      "va": "0x62be70",
+      "status": "静态契约已审阅",
+      "conclusion": "char_traits单字节赋值，*dest=*src。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x62be90",
+      "status": "静态契约已审阅",
+      "conclusion": "最大长度检查、容量与trim分流；返回AL为请求长度非零。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x62bf70",
+      "status": "静态契约已审阅",
+      "conclusion": "按容量<16返回S+4，否则返回DWORD[S+4]，与62BB80同型。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x62bfc0",
+      "status": "静态契约已审阅",
+      "conclusion": "释放传入指针；第二容量参数未被使用，不释放ECX。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x62ca90",
+      "status": "静态契约已审阅",
+      "conclusion": "检测Src处于[data,data+length)半开区间；无尾NUL包含。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x91be10",
+      "status": "局部消费契约已审阅",
+      "conclusion": "构造invalid string position并抛out_of_range；异常对象依赖未展开。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x91f6d0",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x91fb00",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x91fc60",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_dependencies.json"
+    },
+    {
+      "va": "0x62c850",
+      "status": "静态契约已审阅",
+      "conclusion": "取62DD00值，无符号值>1时减一，本实例最大长度FFFFFFFE。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_growth.json"
+    },
+    {
+      "va": "0x62c8c0",
+      "status": "静态契约已审阅",
+      "conclusion": "舍入或1.5倍容量扩容；首次异常按精确长度重试，双失败清旧缓冲重抛。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_growth.json"
+    },
+    {
+      "va": "0x91bda0",
+      "status": "局部消费契约已审阅",
+      "conclusion": "构造长度错误并抛length_error；异常对象依赖未展开。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_growth.json"
+    },
+    {
+      "va": "0x62dd00",
+      "status": "静态契约已审阅",
+      "conclusion": "返回FFFFFFFF常量；不是可分配内存量。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_limit.json"
+    },
+    {
+      "va": "0x62b620",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b650",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b6a0",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b720",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b760",
+      "status": "邻近或运行库仅导出",
+      "conclusion": "保存完整函数块与调用原证，未作完整语义审阅。",
+      "unknown": "调用依赖及外层完整语义不在本专题完成范围。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b7b0",
+      "status": "静态契约已审阅",
+      "conclusion": "字符串复制构造；初始化短缓冲，再调用源对象子串复制。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b830",
+      "status": "静态契约已审阅",
+      "conclusion": "NUL文本构造；初始化后strlen计字节长度再赋值。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b8a0",
+      "status": "静态契约已审阅",
+      "conclusion": "释放/reset包装，调用62BAD0(1,0)，不释放S自身；MFC自动名失真。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b8e0",
+      "status": "静态契约已审阅",
+      "conclusion": "保留当前ECX转入62BB80取得data；伪码缺失隐式this。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62b910",
+      "status": "静态契约已审阅",
+      "conclusion": "目标与源子串复制；源pos检查、count裁剪、自赋值双删除、外部复制。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62ba10",
+      "status": "静态契约已审阅",
+      "conclusion": "三参数CRT memcpy包装；不自行检查长度或所有权。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62ba40",
+      "status": "静态契约已审阅",
+      "conclusion": "返回S+20长度字段；MFC自动标识不作库身份依据。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62ba60",
+      "status": "静态契约已审阅",
+      "conclusion": "strlen输入后62BC50显式字节长度赋值，ECX目标保留。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bab0",
+      "status": "静态契约已审阅",
+      "conclusion": "strlen包装，遇首NUL结束；无编码转换。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bad0",
+      "status": "静态契约已审阅",
+      "conclusion": "可选释放堆缓冲并缩回S+4，容量15，重写长度和尾NUL。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bb80",
+      "status": "静态契约已审阅",
+      "conclusion": "按容量<16返回S+4，否则返回DWORD[S+4]。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bbd0",
+      "status": "静态契约已审阅",
+      "conclusion": "转入allocator无动作包装并返回this，不写本组长度容量。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bc10",
+      "status": "静态契约已审阅",
+      "conclusion": "无动作实例包装，返回ECX。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bc30",
+      "status": "静态契约已审阅",
+      "conclusion": "无动作带参数实例包装，返回ECX并弹参数。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bc50",
+      "status": "静态契约已审阅",
+      "conclusion": "裸字节赋值；源在现有data半开区间时改走内部子串，否则扩容复制。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bd10",
+      "status": "静态契约已审阅",
+      "conclusion": "pos检查、count裁剪、移动尾部并缩长度；实际CRT重叠能力另审。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62bde0",
+      "status": "静态契约已审阅",
+      "conclusion": "转入CRT memcpy_0标名入口；不凭标名推标准库重叠契约。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    },
+    {
+      "va": "0x62be10",
+      "status": "静态契约已审阅",
+      "conclusion": "写S+20长度并向真实data+length写单个零字节，不检查容量。",
+      "unknown": "没有实机/异常注入验证；本结论限定所列对象和函数。",
+      "evidence": "证据/string_seeds.json"
+    }
+  ]
+}

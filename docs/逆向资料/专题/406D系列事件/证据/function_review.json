@@ -1,0 +1,1267 @@
+{
+  "scope": "本专题局部静态审阅；非全依赖闭环或实机验证",
+  "sources": [
+    "handlers.json",
+    "core.json",
+    "finance_core.json",
+    "additional_core.json",
+    "animation9.json",
+    "animation9_dependencies.json",
+    "shared_boundaries.json",
+    "ui30_reused.json",
+    "insurance_dependencies.json",
+    "bridges_reused.json"
+  ],
+  "counts": {
+    "复用已审阅": 42,
+    "局部语义已审阅": 36,
+    "部分分析": 11,
+    "桥接复用": 24
+  },
+  "functions": [
+    {
+      "va": "0x627c20",
+      "name_from_idb": "sub_627C20",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "商品单例getter：A766E0空则分配0x14C并构造；尾块含构造异常operator delete清理。",
+      "unknown": "全加载器和所有商品类型复用商店资料。"
+    },
+    {
+      "va": "0x631260",
+      "name_from_idb": "sub_631260",
+      "evidence": [
+        "证据/animation9.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "动画9复制slot/tile/days，图(10,2,26)，x685/step16/state0，音效111。",
+      "unknown": "所有声音及绘图底层依赖未闭合。"
+    },
+    {
+      "va": "0x631370",
+      "name_from_idb": "sub_631370",
+      "evidence": [
+        "证据/animation9.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "结束补应用住院状态、停音效，调用7CCB90(slot,days-1)，不直接排6080。",
+      "unknown": "最终回合推进来源未闭合。"
+    },
+    {
+      "va": "0x631460",
+      "name_from_idb": "sub_631460",
+      "evidence": [
+        "证据/animation9.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "三阶段入院动画，抵达位置等待1000ms后写住院状态；退出屏幕返回1。",
+      "unknown": "帧门控底层及实际帧率未实机验证。"
+    },
+    {
+      "va": "0x63e0e0",
+      "name_from_idb": "sub_63E0E0",
+      "evidence": [
+        "证据/animation9_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "返回G+0xC14镜头相关子对象地址。",
+      "unknown": "子对象全部字段未本篇展开。"
+    },
+    {
+      "va": "0x63e160",
+      "name_from_idb": "sub_63E160",
+      "evidence": [
+        "证据/additional_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "读取模式对象DWORD+24并转IDA误名COleDocument::GetNextItem谓词；不是四谓词OR。",
+      "unknown": "底层模式枚举和全部上游来源未本篇展开。"
+    },
+    {
+      "va": "0x63e1c0",
+      "name_from_idb": "unknown_libname_755",
+      "evidence": [
+        "证据/shared_boundaries.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "只返回R+112字符缓冲地址；406F作为角色名格式化。",
+      "unknown": "队列全生命周期以基础对象专题为准；data指针非自动深复制。"
+    },
+    {
+      "va": "0x63e210",
+      "name_from_idb": "sub_63E210",
+      "evidence": [
+        "证据/animation9_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "返回G+0x65C模式/地图子对象地址。",
+      "unknown": "子对象全部字段未本篇展开。"
+    },
+    {
+      "va": "0x63e230",
+      "name_from_idb": "sub_63E230",
+      "evidence": [
+        "证据/animation9_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "返回DWORD[G+0xE00+4*slot]角色指针。",
+      "unknown": "子对象全部字段未本篇展开。"
+    },
+    {
+      "va": "0x63e410",
+      "name_from_idb": "sub_63E410",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "返回R+1464，407F将当前角色位置传给动画9。",
+      "unknown": "位置图坐标映射复用地图资料。"
+    },
+    {
+      "va": "0x63e5b0",
+      "name_from_idb": "sub_63E5B0",
+      "evidence": [
+        "证据/shared_boundaries.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "以G+0x640队列为this调用63F940，返回当前游标。",
+      "unknown": "队列全生命周期以基础对象专题为准；data指针非自动深复制。"
+    },
+    {
+      "va": "0x63e7d0",
+      "name_from_idb": "sub_63E7D0",
+      "evidence": [
+        "证据/shared_boundaries.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "只返回BYTE[G+0xE30+slot]参与有效标志；不是窗格IsAutoHideMode。",
+      "unknown": "队列全生命周期以基础对象专题为准；data指针非自动深复制。"
+    },
+    {
+      "va": "0x63e990",
+      "name_from_idb": "sub_63E990",
+      "evidence": [
+        "证据/additional_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "读取模式对象DWORD+24并转629E10谓词。",
+      "unknown": "底层模式枚举和全部上游来源未本篇展开。"
+    },
+    {
+      "va": "0x63eca0",
+      "name_from_idb": "sub_63ECA0",
+      "evidence": [
+        "证据/insurance_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "保险模式许可是两个底层谓词OR，ECX=G+65C。",
+      "unknown": "完整模式定义复用股票/地图资料，本篇不猜枚举名。"
+    },
+    {
+      "va": "0x63edf0",
+      "name_from_idb": "sub_63EDF0",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "对同一模式对象依次调用63EE90/63EED0/63E160/63E990并OR，短路返回BOOL。",
+      "unknown": "底层模式枚举和全部上游来源未本篇展开。"
+    },
+    {
+      "va": "0x63ee90",
+      "name_from_idb": "sub_63EE90",
+      "evidence": [
+        "证据/additional_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "读取模式对象DWORD+24并转629DF0谓词。",
+      "unknown": "底层模式枚举和全部上游来源未本篇展开。"
+    },
+    {
+      "va": "0x63eed0",
+      "name_from_idb": "sub_63EED0",
+      "evidence": [
+        "证据/additional_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "模式对象DWORD+24经63EDD0成立且DWORD+108经629DF0成立才返回true。",
+      "unknown": "底层模式枚举和全部上游来源未本篇展开。"
+    },
+    {
+      "va": "0x63ef50",
+      "name_from_idb": "sub_63EF50",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "只比较signed BYTE[R+1494]!=-1并返回BOOL；不写状态。",
+      "unknown": "A8709C初始化未知；除住院1494外不强命名所有状态。"
+    },
+    {
+      "va": "0x63ef80",
+      "name_from_idb": "sub_63EF80",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "只比较signed BYTE[R+1495]!=-1并返回BOOL；不写状态。",
+      "unknown": "A8709C初始化未知；除住院1494外不强命名所有状态。"
+    },
+    {
+      "va": "0x63efb0",
+      "name_from_idb": "sub_63EFB0",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "只比较signed BYTE[R+1497]!=-1并返回BOOL；不写状态。",
+      "unknown": "A8709C初始化未知；除住院1494外不强命名所有状态。"
+    },
+    {
+      "va": "0x63f080",
+      "name_from_idb": "sub_63F080",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6000构造：写WORD6000，清DWORD+8/+12/+16；动画号和等待由调用者写。",
+      "unknown": "消费者及网络方向分别审阅。"
+    },
+    {
+      "va": "0x63f4a0",
+      "name_from_idb": "sub_63F4A0",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "只比较signed BYTE[R+1493]!=-1并返回BOOL；不写状态。",
+      "unknown": "A8709C初始化未知；除住院1494外不强命名所有状态。"
+    },
+    {
+      "va": "0x63f620",
+      "name_from_idb": "sub_63F620",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "只返回DWORD[R+1504]现金；不是总财富getter。",
+      "unknown": "环满覆盖与金融溢出未动态验证。"
+    },
+    {
+      "va": "0x63f650",
+      "name_from_idb": "sub_63F650",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "只返回DWORD[R+1508]存款。",
+      "unknown": "商品全生命周期复用商店资料；不重复计首次覆盖。"
+    },
+    {
+      "va": "0x63f6e0",
+      "name_from_idb": "sub_63F6E0",
+      "evidence": [
+        "证据/insurance_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "6061构造：写WORD6061、BYTE+6=1、BYTE+7/+8/+9=0；库存目标由调用者补。",
+      "unknown": "记录完整消费者未在本篇闭合。"
+    },
+    {
+      "va": "0x63f940",
+      "name_from_idb": "unknown_libname_766",
+      "evidence": [
+        "证据/shared_boundaries.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "只返回队列Q+12 DWORD游标；不是G+12等待时长。",
+      "unknown": "队列全生命周期以基础对象专题为准；data指针非自动深复制。"
+    },
+    {
+      "va": "0x64f710",
+      "name_from_idb": "sub_64F710",
+      "evidence": [
+        "证据/shared_boundaries.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "比较WORD消息身份与G+83844；不同弹Error GmsvID，再返回比较值。",
+      "unknown": "队列全生命周期以基础对象专题为准；data指针非自动深复制。"
+    },
+    {
+      "va": "0x64fa50",
+      "name_from_idb": "sub_64FA50",
+      "evidence": [
+        "证据/shared_boundaries.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "复制调用者指定结构字节到局部记录，交队列插入器；返回新记录后一物理槽。",
+      "unknown": "队列全生命周期以基础对象专题为准；data指针非自动深复制。"
+    },
+    {
+      "va": "0x64fb10",
+      "name_from_idb": "sub_64FB10",
+      "evidence": [
+        "证据/shared_boundaries.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "写DWORD[G+12]=duration、DWORD[G+16]=GetTickCount，控制基础队列暂停。",
+      "unknown": "队列全生命周期以基础对象专题为准；data指针非自动深复制。"
+    },
+    {
+      "va": "0x6653e0",
+      "name_from_idb": "sub_6653E0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "406D 考古宝藏收入；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x6655d0",
+      "name_from_idb": "sub_6655D0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "406E 传家宝收入；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x6657d0",
+      "name_from_idb": "sub_6657D0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "406F 并列最高存款奖励；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x665a90",
+      "name_from_idb": "sub_665A90",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4070 闯马路罚款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x665cb0",
+      "name_from_idb": "sub_665CB0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4071 钱包遗失；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x665ef0",
+      "name_from_idb": "sub_665EF0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4072 豪雨停留；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x6660c0",
+      "name_from_idb": "sub_6660C0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4073 垃圾罚款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x6662e0",
+      "name_from_idb": "sub_6662E0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4074 缴保险金；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x666500",
+      "name_from_idb": "sub_666500",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4075 狗只罚款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x666720",
+      "name_from_idb": "sub_666720",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4076 冒贷；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x666950",
+      "name_from_idb": "sub_666950",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4077 海外投资损失；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x666b90",
+      "name_from_idb": "sub_666B90",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4078 全部卡片道具变卖；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x666dd0",
+      "name_from_idb": "sub_666DD0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "4079 污水罚款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x666ff0",
+      "name_from_idb": "sub_666FF0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "407A 噪声罚款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x667230",
+      "name_from_idb": "sub_667230",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "407B 赌博罚款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x667470",
+      "name_from_idb": "sub_667470",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "407C 涂鸦罚款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x667690",
+      "name_from_idb": "sub_667690",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "407D 慈善捐款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x6678d0",
+      "name_from_idb": "sub_6678D0",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "407E 虐待动物罚款；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。"
+    },
+    {
+      "va": "0x667b10",
+      "name_from_idb": "sub_667B10",
+      "evidence": [
+        "证据/handlers.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "407F 掉水沟就医；字段、事件顺序和条件见01逐项记录。",
+      "unknown": "读取下界非完整网络长度；服务端权威结算及外部最终推进未闭合。",
+      "prior_scope": "音频专题已有提示动作分支；本轮新增医院动画与保险链，不重复累计为首次整函数恢复。"
+    },
+    {
+      "va": "0x67d750",
+      "name_from_idb": "sub_67D750",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6000消费：按signed WORD动画号启动对象；等待时取指定或配置时长再加100。",
+      "unknown": "UI/资源完整绘制和网络闭环未在本篇覆盖。"
+    },
+    {
+      "va": "0x67d880",
+      "name_from_idb": "sub_67D880",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6002消费：先角色状态映射，后条件UI9/声音/本地UI刷新；显示门控通过才应用等待。",
+      "unknown": "UI/资源完整绘制和网络闭环未在本篇覆盖。"
+    },
+    {
+      "va": "0x67da40",
+      "name_from_idb": "sub_67DA40",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6003消费：按显示/隐藏字节操作UI，传data指针，按等待字节写G计时；不读取+20长度。",
+      "unknown": "UI/资源完整绘制和网络闭环未在本篇覆盖。"
+    },
+    {
+      "va": "0x67fa90",
+      "name_from_idb": "sub_67FA90",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6060消费：按signed BYTE角色槽应用收入/支出、现金/存款；模式通过且扣后现金<=0时等待500。",
+      "unknown": "UI/资源完整绘制和网络闭环未在本篇覆盖。"
+    },
+    {
+      "va": "0x693220",
+      "name_from_idb": "sub_693220",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "角色cash+deposit严格大于amount，本组在资金队列消费前比较。",
+      "unknown": "等额/不足的外部推进未闭合。"
+    },
+    {
+      "va": "0x693260",
+      "name_from_idb": "sub_693260",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6002构造：写WORD6002、BYTE+5=0、BYTE+6=1、DWORD+8=0。",
+      "unknown": "消费者及网络方向分别审阅。"
+    },
+    {
+      "va": "0x6932b0",
+      "name_from_idb": "sub_6932B0",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6003构造：写WORD6003、清BYTE+4..+6及DWORD+8/+12/+16/+20。",
+      "unknown": "消费者及网络方向分别审阅。"
+    },
+    {
+      "va": "0x693320",
+      "name_from_idb": "sub_693320",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6060构造：写WORD6060，清BYTE+3..+6；其余字段由调用者补齐。",
+      "unknown": "消费者及网络方向分别审阅。"
+    },
+    {
+      "va": "0x693420",
+      "name_from_idb": "sub_693420",
+      "evidence": [
+        "证据/insurance_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "6001构造：写WORD6001、BYTE+4/+5=0、DWORD+8=0；声音号由调用者写。",
+      "unknown": "记录完整消费者未在本篇闭合。"
+    },
+    {
+      "va": "0x693be0",
+      "name_from_idb": "sub_693BE0",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "6080构造：写WORD6080及BYTE+3=-1；阶段+2由调用者写。",
+      "unknown": "消费者及网络方向分别审阅。"
+    },
+    {
+      "va": "0x693ce0",
+      "name_from_idb": "sub_693CE0",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "this+36累计amount；本组ECX=G+C5C，即G+C80。",
+      "unknown": "累计项完整生命周期与UI名称未追完。"
+    },
+    {
+      "va": "0x6940b0",
+      "name_from_idb": "sub_6940B0",
+      "evidence": [
+        "证据/additional_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "返回DWORD[*this+1128*id+60]商品价格；不检查id。",
+      "unknown": "全加载器和所有商品类型复用商店资料。"
+    },
+    {
+      "va": "0x694390",
+      "name_from_idb": "sub_694390",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "角色R+1496单BYTE setter；4072将A8709C低BYTE传入。",
+      "unknown": "A8709C初始化未知；除住院1494外不强命名所有状态。"
+    },
+    {
+      "va": "0x6943c0",
+      "name_from_idb": "sub_6943C0",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "unsigned slot<8且group0 signed WORD物品ID!=-1才返回true。",
+      "unknown": "商品全生命周期复用商店资料；不重复计首次覆盖。"
+    },
+    {
+      "va": "0x6944a0",
+      "name_from_idb": "sub_6944A0",
+      "evidence": [
+        "证据/insurance_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "6007构造：写WORD6007、BYTE+5=0、DWORD+8=0；不能归为6002。",
+      "unknown": "记录完整消费者未在本篇闭合。"
+    },
+    {
+      "va": "0x694bc0",
+      "name_from_idb": "sub_694BC0",
+      "evidence": [
+        "证据/additional_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "只返回动画管理器DWORD[this+40*id+36]默认时长。",
+      "unknown": "动画管理器生命周期复用角色与精灵动画。"
+    },
+    {
+      "va": "0x69b040",
+      "name_from_idb": "sub_69B040",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "扣款动作选择：amount<1000*scale取15，>=5000*scale取13，否则14。",
+      "unknown": "声音/角色资源实际播放未实机验证。"
+    },
+    {
+      "va": "0x69b080",
+      "name_from_idb": "sub_69B080",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "收入动作选择：amount<1000*scale取18，>=5000*scale取16，否则17。",
+      "unknown": "声音/角色资源实际播放未实机验证。"
+    },
+    {
+      "va": "0x69b110",
+      "name_from_idb": "sub_69B110",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "就医提示选择：days<6返回12，否则返回10。",
+      "unknown": "声音/角色资源实际播放未实机验证。"
+    },
+    {
+      "va": "0x719290",
+      "name_from_idb": "sub_719290",
+      "evidence": [
+        "证据/ui30_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "UI30关闭窗口并清当前图像资源；不处理新闻入参或排stage2。",
+      "unknown": "文本控件所有权与图索引范围未闭合。"
+    },
+    {
+      "va": "0x7192f0",
+      "name_from_idb": "sub_7192F0",
+      "evidence": [
+        "证据/ui30_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "UI30读取type/index/text三DWORD，选新闻图并转文本控件虚表+144；不排stage2。",
+      "unknown": "文本控件所有权与图索引范围未闭合。"
+    },
+    {
+      "va": "0x7a5c30",
+      "name_from_idb": "sub_7A5C30",
+      "evidence": [
+        "证据/additional_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "按动画id惰性创建并调启动虚函数，记录tick；active=0才加入列表；尾块清理构造异常分配。",
+      "unknown": "动画管理器生命周期复用角色与精灵动画。"
+    },
+    {
+      "va": "0x7a6a40",
+      "name_from_idb": "sub_7A6A40",
+      "evidence": [
+        "证据/animation9.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "动画9工厂：分配56字节并构造；尾块包含构造异常operator delete清理。",
+      "unknown": "基类构造和分配失败处理不独立展开。"
+    },
+    {
+      "va": "0x7aa350",
+      "name_from_idb": "sub_7AA350",
+      "evidence": [
+        "证据/animation9.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "动画9构造：调用基类构造后写虚表A2C040；派生状态由启动函数设置。",
+      "unknown": "基类构造和分配失败处理不独立展开。"
+    },
+    {
+      "va": "0x7b6f60",
+      "name_from_idb": "sub_7B6F60",
+      "evidence": [
+        "证据/animation9_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "tile转换格坐标，按64/48中心点减两组视口半宽高，更新镜头坐标。",
+      "unknown": "格坐标映射、镜头限制和绘图全树未闭合。"
+    },
+    {
+      "va": "0x7c0540",
+      "name_from_idb": "sub_7C0540",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "两遍筛选有效且存款并列最高角色；8DWORD临时表、BYTE mask，最大初值0。",
+      "unknown": "外部role_count<=8约束及负存款来源未证。"
+    },
+    {
+      "va": "0x7ccb90",
+      "name_from_idb": "sub_7CCB90",
+      "evidence": [
+        "证据/animation9_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "模式/库存1049/许可三条件，保险2500*参数；6003/6001/6007/6060/6061依次入队。",
+      "unknown": "6007/6061后续及异常天数未闭合；不是stage2发送器。"
+    },
+    {
+      "va": "0x7e17c0",
+      "name_from_idb": "sub_7E17C0",
+      "evidence": [
+        "证据/animation9_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "tile转换格坐标，扣镜头偏移并加64/48，输出屏幕x/y。",
+      "unknown": "格坐标映射、镜头限制和绘图全树未闭合。"
+    },
+    {
+      "va": "0x7f01f0",
+      "name_from_idb": "sub_7F01F0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0210",
+      "name_from_idb": "sub_7F0210",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0230",
+      "name_from_idb": "sub_7F0230",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0250",
+      "name_from_idb": "sub_7F0250",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0270",
+      "name_from_idb": "sub_7F0270",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0290",
+      "name_from_idb": "sub_7F0290",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f02b0",
+      "name_from_idb": "sub_7F02B0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f02d0",
+      "name_from_idb": "sub_7F02D0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f02f0",
+      "name_from_idb": "sub_7F02F0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0310",
+      "name_from_idb": "sub_7F0310",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0330",
+      "name_from_idb": "sub_7F0330",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0350",
+      "name_from_idb": "sub_7F0350",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0370",
+      "name_from_idb": "sub_7F0370",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0390",
+      "name_from_idb": "sub_7F0390",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f03b0",
+      "name_from_idb": "sub_7F03B0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f03d0",
+      "name_from_idb": "sub_7F03D0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f03f0",
+      "name_from_idb": "sub_7F03F0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0410",
+      "name_from_idb": "sub_7F0410",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f0430",
+      "name_from_idb": "sub_7F0430",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f1430",
+      "name_from_idb": "sub_7F1430",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f1470",
+      "name_from_idb": "sub_7F1470",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f1490",
+      "name_from_idb": "sub_7F1490",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f16f0",
+      "name_from_idb": "sub_7F16F0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f1ab0",
+      "name_from_idb": "sub_7F1AB0",
+      "evidence": [
+        "证据/bridges_reused.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "桥接复用",
+      "conclusion": "分派桥接只把消息指针及this转给handler；注册跳板另核。",
+      "unknown": "桥接自身不携带网络长度/方向证明。"
+    },
+    {
+      "va": "0x7f36f0",
+      "name_from_idb": "sub_7F36F0",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "16槽浮动金额环追加金额/方向/偏移/tick，旧项偏移+=16，尾模16递增。",
+      "unknown": "环满覆盖与金融溢出未动态验证。"
+    },
+    {
+      "va": "0x7f7ff0",
+      "name_from_idb": "sub_7F7FF0",
+      "evidence": [
+        "证据/animation9_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "住院状态应用：写R+1494天数、1493=-1、1496=0，先调用位置/角色清理链。",
+      "unknown": "交通/位置清理函数树未完整展开。"
+    },
+    {
+      "va": "0x7f83f0",
+      "name_from_idb": "sub_7F83F0",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "现金先减，负值由存款补；耗尽钳0并返回1；可先提交负向浮动提示。",
+      "unknown": "环满覆盖与金融溢出未动态验证。"
+    },
+    {
+      "va": "0x7f85c0",
+      "name_from_idb": "sub_7F85C0",
+      "evidence": [
+        "证据/insurance_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "ID优先查group0八槽；可选group1八槽要求附加BYTE0，输出slot/group。",
+      "unknown": "group1启用谓词尚未完整展开。"
+    },
+    {
+      "va": "0x7f86a0",
+      "name_from_idb": "sub_7F86A0",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "按group0/1/2选择R+1520/+282/+330，取6*slot处signed WORD物品ID；非法group返回-1。",
+      "unknown": "商品全生命周期复用商店资料；不重复计首次覆盖。"
+    },
+    {
+      "va": "0x7f8710",
+      "name_from_idb": "sub_7F8710",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "按group0/1/2选择R+1522/+284/+332，取6*slot处signed WORD数量；非法group返回-1。",
+      "unknown": "商品全生命周期复用商店资料；不重复计首次覆盖。"
+    },
+    {
+      "va": "0x7f8920",
+      "name_from_idb": "sub_7F8920",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "group0数量WORD减实参；signed<=0则数量0/ID=-1；本地角色刷新UI12。",
+      "unknown": "商品全生命周期复用商店资料；不重复计首次覆盖。"
+    },
+    {
+      "va": "0x7f9d20",
+      "name_from_idb": "sub_7F9D20",
+      "evidence": [
+        "证据/core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "角色DWORD[R+1512]点券+=amount；flag非0时转R+244浮动金额环。",
+      "unknown": "商品全生命周期复用商店资料；不重复计首次覆盖。"
+    },
+    {
+      "va": "0x7f9f10",
+      "name_from_idb": "sub_7F9F10",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "存款减amount后负值钳0；flag非0转R+244负向浮动提示。",
+      "unknown": "环满覆盖与金融溢出未动态验证。"
+    },
+    {
+      "va": "0x7fa050",
+      "name_from_idb": "sub_7FA050",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "角色现金R+1504+=amount；flag非0转R+244正向浮动提示。",
+      "unknown": "环满覆盖与金融溢出未动态验证。"
+    },
+    {
+      "va": "0x7fa0a0",
+      "name_from_idb": "sub_7FA0A0",
+      "evidence": [
+        "证据/finance_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "角色存款R+1508+=amount；flag非0转R+244正向浮动提示。",
+      "unknown": "环满覆盖与金融溢出未动态验证。"
+    },
+    {
+      "va": "0x7fea80",
+      "name_from_idb": "sub_7FEA80",
+      "evidence": [
+        "证据/additional_core.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "复用已审阅",
+      "conclusion": "商品配置对象构造：清根指针、计数及多个缓存/数组指针；未加载商品。",
+      "unknown": "全加载器和所有商品类型复用商店资料。"
+    },
+    {
+      "va": "0x800a50",
+      "name_from_idb": "sub_800A50",
+      "evidence": [
+        "证据/insurance_dependencies.json"
+      ],
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "检查ID>=0且<=上界、配置记录有效、类型0及许可谓词。",
+      "unknown": "许可谓词和资源上界初始化未完整展开。"
+    }
+  ]
+}

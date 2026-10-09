@@ -1,0 +1,663 @@
+{
+  "scope": "40C2—40C5与40C6 type3直接依赖；非全客户端完成度",
+  "functions": [
+    {
+      "va": "0x631950",
+      "status": "已审阅",
+      "conclusion": "动画11复制三个DWORD、请求图像、设置位置状态并播放声音112。",
+      "unknown": "计时对象的精确帧频另查；未播放。",
+      "evidence": [
+        "证据/jail_animation.json"
+      ]
+    },
+    {
+      "va": "0x631a50",
+      "status": "已审阅",
+      "conclusion": "结束时必要则补入狱状态；停止音效，再按duration-1检查保险。",
+      "unknown": "保险地图模式与附属状态需相邻专题。",
+      "evidence": [
+        "证据/jail_animation.json"
+      ]
+    },
+    {
+      "va": "0x631b40",
+      "status": "已审阅",
+      "conclusion": "0/1/2状态移动，等待1000ms后改角色状态，再离场返回完成。",
+      "unknown": "实测绘制与渲染性能未验证。",
+      "evidence": [
+        "证据/jail_animation.json"
+      ]
+    },
+    {
+      "va": "0x63e410",
+      "status": "已审阅",
+      "conclusion": "返回DWORD[P+1464]位置。",
+      "unknown": "位置编号的地图节点语义留地图专题。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x63e440",
+      "status": "已审阅",
+      "conclusion": "返回this+4 DWORD；请求端ECX=G+0xC44。",
+      "unknown": "不据MFC自动函数名解释业务。",
+      "evidence": [
+        "证据/pending.json"
+      ]
+    },
+    {
+      "va": "0x63e560",
+      "status": "已审阅",
+      "conclusion": "参数槽等于DWORD[G+8]，判断本机。",
+      "unknown": "不等同current判断。",
+      "evidence": [
+        "证据/factories.json"
+      ]
+    },
+    {
+      "va": "0x63efe0",
+      "status": "已审阅",
+      "conclusion": "把BYTE[P+1472+另一槽]清0。",
+      "unknown": "状态的完整自然名未恢复。",
+      "evidence": [
+        "证据/continuation.json"
+      ]
+    },
+    {
+      "va": "0x63f010",
+      "status": "已审阅",
+      "conclusion": "signed BYTE[P+1472+参数槽]>0。",
+      "unknown": "没有此处完整槽范围校验。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x63f080",
+      "status": "已审阅",
+      "conclusion": "构造6000，清+8/+12/+16 DWORD。",
+      "unknown": "未初始化的padding无协议意义。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x63f470",
+      "status": "已审阅",
+      "conclusion": "参数槽与DWORD[G+3624]即current比较。",
+      "unknown": "不是本机槽谓词。",
+      "evidence": [
+        "证据/continuation.json"
+      ]
+    },
+    {
+      "va": "0x63f620",
+      "status": "已审阅",
+      "conclusion": "返回DWORD[P+1504]现金。",
+      "unknown": "账本上层同步见服务端专题。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x63f650",
+      "status": "已审阅",
+      "conclusion": "返回DWORD[P+1508]存款。",
+      "unknown": "账本上层同步见服务端专题。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x63f680",
+      "status": "已审阅",
+      "conclusion": "DWORD[P+1504]直接设为参数。",
+      "unknown": "没有余额夹取。",
+      "evidence": [
+        "证据/continuation.json"
+      ]
+    },
+    {
+      "va": "0x63f6e0",
+      "status": "已审阅",
+      "conclusion": "6061构造：数量1、group/添加/扣除标志0。",
+      "unknown": "卡ID和角色等必须由调用者补充。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x63f730",
+      "status": "已审阅",
+      "conclusion": "构造6063，只写首WORD。",
+      "unknown": "其他字节由调用者补充。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x63f760",
+      "status": "已审阅",
+      "conclusion": "DWORD[G+3624]==DWORD[G+8]，current是否本机。",
+      "unknown": "不替代任意目标本机判断。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x64f710",
+      "status": "复用已审阅",
+      "conclusion": "核对WORD[G+83844]，不符弹Error GmsvID并返回false。",
+      "unknown": "没有本处长度校验。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x64fb10",
+      "status": "复用已审阅",
+      "conclusion": "写G+12等待时长与G+16 GetTickCount。",
+      "unknown": "不修改本地事件队列对象的同偏移。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x66fee0",
+      "status": "已审阅",
+      "conclusion": "40C2：目标现金/存款分别idiv10后按正商转移；扣卡、本地操作恢复。",
+      "unknown": "金额消费者内部全部副作用复用4090；无实机回归。",
+      "evidence": [
+        "证据/handlers.json"
+      ]
+    },
+    {
+      "va": "0x670330",
+      "status": "已审阅",
+      "conclusion": "40C3：双方现金add32后sar1，以两个606A直接设值。",
+      "unknown": "溢出和奇数余量的游戏产品规则尚无运行证据。",
+      "evidence": [
+        "证据/handlers.json"
+      ]
+    },
+    {
+      "va": "0x6706b0",
+      "status": "已审阅",
+      "conclusion": "40C4：读取目标group0槽，先扣发起卡，再防盗或转移卡。",
+      "unknown": "添加满槽时没有本处回滚保证；上层槽校验另查。",
+      "evidence": [
+        "证据/handlers.json"
+      ]
+    },
+    {
+      "va": "0x670bd0",
+      "status": "已审阅",
+      "conclusion": "40C5：免罪、嫁祸、进监狱、复仇顺序及6006条件。",
+      "unknown": "每日计数递减和真实通信闭环未执行。",
+      "evidence": [
+        "证据/handlers.json"
+      ]
+    },
+    {
+      "va": "0x6712b0",
+      "status": "局部已审阅",
+      "conclusion": "40C6共用头部与type3成功/取消分支；取消恢复6006静态不可达。",
+      "unknown": "type0/1/2金钱分支仅保存原证；无运行卡死结论。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x67d750",
+      "status": "已审阅",
+      "conclusion": "6000按动画ID启动payload，等待取显式值或配置再加100。",
+      "unknown": "payload长度字段未在这里消费。",
+      "evidence": [
+        "证据/consumers.json"
+      ]
+    },
+    {
+      "va": "0x67d7f0",
+      "status": "复用已审阅",
+      "conclusion": "6001提交声音ID及循环/记忆标志，+6非零才本地等待。",
+      "unknown": "音频开关与失败需音频专题；未试听。",
+      "evidence": [
+        "证据/consumers.json"
+      ]
+    },
+    {
+      "va": "0x67dbe0",
+      "status": "复用已审阅",
+      "conclusion": "6006开关加current三个状态资格门决定712610参数。",
+      "unknown": "不清pending；控件树未穷尽。",
+      "evidence": [
+        "证据/consumers.json"
+      ]
+    },
+    {
+      "va": "0x67dc90",
+      "status": "复用已审阅",
+      "conclusion": "6007动作表映射角色状态，P+40门后UI23/声音与可选等待。",
+      "unknown": "具体角色语音资源ID未全部展开。",
+      "evidence": [
+        "证据/consumers.json"
+      ]
+    },
+    {
+      "va": "0x67fa90",
+      "status": "复用已审阅",
+      "conclusion": "6060增减现金/存款标志分派；减现金有条件500ms等待。",
+      "unknown": "下游账户函数详细行为复用4090原证。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x67fbe0",
+      "status": "复用已审阅",
+      "conclusion": "6061优先添加后扣除，以记录角色选择P。",
+      "unknown": "库存满槽与合成副作用详见40C1；未实机测试。",
+      "evidence": [
+        "证据/consumers.json"
+      ]
+    },
+    {
+      "va": "0x67fd10",
+      "status": "复用已审阅",
+      "conclusion": "6063设置记录角色状态，本机时刷新UI0。",
+      "unknown": "完整状态枚举未自然命名。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x6800f0",
+      "status": "已审阅",
+      "conclusion": "606A现金优先直接赋值；存款分支可刷新UI35。",
+      "unknown": "本组只触发现金分支。",
+      "evidence": [
+        "证据/consumers.json"
+      ]
+    },
+    {
+      "va": "0x6801e0",
+      "status": "局部已审阅",
+      "conclusion": "606B的+5分支对两方互相调用63EFE0清标志。",
+      "unknown": "+4建立分支的694E10完整副作用本批未审。",
+      "evidence": [
+        "证据/consumers.json"
+      ]
+    },
+    {
+      "va": "0x681d30",
+      "status": "已审阅",
+      "conclusion": "608C在原受害者本机打开UI27、pending20；远端只提示。",
+      "unknown": "UI27控件树与实际交互未运行。",
+      "evidence": [
+        "证据/defense.json"
+      ]
+    },
+    {
+      "va": "0x693260",
+      "status": "复用已审阅",
+      "conclusion": "6002构造，+5=0/+6=1/+8=0。",
+      "unknown": "消费链复用4090/6002专题。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x6932b0",
+      "status": "复用已审阅",
+      "conclusion": "6003构造，显示隐藏等待及四DWORD清零。",
+      "unknown": "调用者字符串生命周期单独负责。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x693320",
+      "status": "复用已审阅",
+      "conclusion": "6060构造，+3..+6操作标志清零。",
+      "unknown": "不是6004。",
+      "evidence": [
+        "证据/shared_and_reply.json"
+      ]
+    },
+    {
+      "va": "0x693420",
+      "status": "已审阅",
+      "conclusion": "6001构造，+4/+5与时长DWORD清零。",
+      "unknown": "+6由调用者写入。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x693950",
+      "status": "已审阅",
+      "conclusion": "构造6004，只写首WORD。",
+      "unknown": "等待参数由调用者补充。",
+      "evidence": [
+        "证据/pending.json"
+      ]
+    },
+    {
+      "va": "0x693980",
+      "status": "已审阅",
+      "conclusion": "构造6006，只写首WORD。",
+      "unknown": "+2操作开关由调用者补充。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x6939e0",
+      "status": "已审阅",
+      "conclusion": "pending WORD置-1、duration DWORD置0。",
+      "unknown": "不清整个嫁祸缓存，也不等于网络请求取消。",
+      "evidence": [
+        "证据/pending.json"
+      ]
+    },
+    {
+      "va": "0x6944a0",
+      "status": "已审阅",
+      "conclusion": "6007构造；等待+5与DWORD+8清零。",
+      "unknown": "动作和角色必须补充。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x6946e0",
+      "status": "已审阅",
+      "conclusion": "606B构造；建立/清除标志均0。",
+      "unknown": "双方槽必须补充。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x6948d0",
+      "status": "已审阅",
+      "conclusion": "606A构造；现金/存款标志均0。",
+      "unknown": "角色与新余额必须补充。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x694bc0",
+      "status": "复用已审阅",
+      "conclusion": "按动画记录40字节步长取+36时长。",
+      "unknown": "调用者必须保证ID合法。",
+      "evidence": [
+        "证据/continuation.json"
+      ]
+    },
+    {
+      "va": "0x694bf0",
+      "status": "复用已审阅",
+      "conclusion": "音效ID=动作号+1000*(角色字段+1)。",
+      "unknown": "全部角色资源映射留音频专题。",
+      "evidence": [
+        "证据/continuation.json"
+      ]
+    },
+    {
+      "va": "0x717650",
+      "status": "局部已审阅",
+      "conclusion": "取消UI27回调经门控提交-1并清pending。",
+      "unknown": "前置状态号及输入事件语义未完整命名。",
+      "evidence": [
+        "证据/choices_and_end.json"
+      ]
+    },
+    {
+      "va": "0x717760",
+      "status": "局部已审阅",
+      "conclusion": "选中回调取7278E0选择值并提交7BC100。",
+      "unknown": "virtual+152行为及选择存储完整实现留UI专题。",
+      "evidence": [
+        "证据/choices_and_end.json"
+      ]
+    },
+    {
+      "va": "0x7a5c30",
+      "status": "复用已审阅",
+      "conclusion": "按动画号惰性工厂创建、启动虚函数、更新时间与活动节点。",
+      "unknown": "管理器完整更新释放复用角色与精灵动画；含异常尾块。",
+      "evidence": [
+        "证据/continuation.json"
+      ]
+    },
+    {
+      "va": "0x7a6030",
+      "status": "局部已审阅",
+      "conclusion": "create[11]注册60A360，定位进监狱动画工厂。",
+      "unknown": "其他46类注册未在本组重新解释业务。",
+      "evidence": [
+        "证据/factories.json"
+      ]
+    },
+    {
+      "va": "0x7a6b60",
+      "status": "已审阅",
+      "conclusion": "分配0x38字节、调用7AA3D0，含异常清理尾块。",
+      "unknown": "分配失败时后续使用由管理器负责。",
+      "evidence": [
+        "证据/jail_animation.json"
+      ]
+    },
+    {
+      "va": "0x7aa3d0",
+      "status": "已审阅",
+      "conclusion": "基类构造后安装虚表A2C060。",
+      "unknown": "基类内部复用动画专题。",
+      "evidence": [
+        "证据/jail_animation.json"
+      ]
+    },
+    {
+      "va": "0x7b9ad0",
+      "status": "已审阅",
+      "conclusion": "GValue的ITEM indx/value经atoi写A87080+4*indx，含异常尾块。",
+      "unknown": "启动完整调用顺序复用现有专题；未执行配置加载。",
+      "evidence": [
+        "证据/game_values.json"
+      ]
+    },
+    {
+      "va": "0x7bb430",
+      "status": "已审阅",
+      "conclusion": "写pending WORD、duration DWORD、GetTickCount。",
+      "unknown": "第四参数未在本函数形成额外语义。",
+      "evidence": [
+        "证据/pending.json"
+      ]
+    },
+    {
+      "va": "0x7bc100",
+      "status": "已审阅",
+      "conclusion": "构造0076，-2才搜索替代槽，提交6B并关闭UI27。",
+      "unknown": "传输成功与服务端验证不由本函数证明。",
+      "evidence": [
+        "证据/factories.json"
+      ]
+    },
+    {
+      "va": "0x7ccb90",
+      "status": "局部已审阅",
+      "conclusion": "动画结束保险：模式/卡1049/适用性通过，按2500*参数排收益和扣卡。",
+      "unknown": "完整地图模式与数值溢出策略没有动态证据。",
+      "evidence": [
+        "证据/choices_and_end.json"
+      ]
+    },
+    {
+      "va": "0x7cd090",
+      "status": "已审阅",
+      "conclusion": "type3或金额门通过且1056可用时缓存上下文、排608C并返回0。",
+      "unknown": "本批只完整追type3，金额后续分支另查。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x7cd1c0",
+      "status": "已审阅",
+      "conclusion": "查target免罪1057；提示/声音；current目标选6002否则6007，再扣卡。",
+      "unknown": "两个动作消费者详细差异复用对应专题。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x7cd890",
+      "status": "已审阅",
+      "conclusion": "防盗1074检查、提示声音、6063与扣防盗卡。",
+      "unknown": "没有在此恢复发起卡。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x7d6050",
+      "status": "已审阅",
+      "conclusion": "只写0076首WORD。",
+      "unknown": "提交包其他字段由7BC100补充。",
+      "evidence": [
+        "证据/jail_animation.json"
+      ]
+    },
+    {
+      "va": "0x7d7640",
+      "status": "已审阅",
+      "conclusion": "只写608C首WORD，两字节本地记录。",
+      "unknown": "不是0x002B事件。",
+      "evidence": [
+        "证据/continuation.json"
+      ]
+    },
+    {
+      "va": "0x7e1080",
+      "status": "已审阅",
+      "conclusion": "遍历地图允许道具列表查ID。",
+      "unknown": "列表装载和模式选择外部负责。",
+      "evidence": [
+        "证据/jail_animation.json"
+      ]
+    },
+    {
+      "va": "0x7f09d0",
+      "status": "已审阅",
+      "conclusion": "cdecl桥接(G,p)，ECX=G、p压栈，callee retn4、桥接retn。",
+      "unknown": "只证明ABI，不把桥接当完整业务实现。",
+      "evidence": [
+        "证据/handlers.json"
+      ]
+    },
+    {
+      "va": "0x7f09f0",
+      "status": "已审阅",
+      "conclusion": "cdecl桥接(G,p)，ECX=G、p压栈，callee retn4、桥接retn。",
+      "unknown": "只证明ABI，不把桥接当完整业务实现。",
+      "evidence": [
+        "证据/handlers.json"
+      ]
+    },
+    {
+      "va": "0x7f0a10",
+      "status": "已审阅",
+      "conclusion": "cdecl桥接(G,p)，ECX=G、p压栈，callee retn4、桥接retn。",
+      "unknown": "只证明ABI，不把桥接当完整业务实现。",
+      "evidence": [
+        "证据/handlers.json"
+      ]
+    },
+    {
+      "va": "0x7f0a30",
+      "status": "已审阅",
+      "conclusion": "cdecl桥接(G,p)，ECX=G、p压栈，callee retn4、桥接retn。",
+      "unknown": "只证明ABI，不把桥接当完整业务实现。",
+      "evidence": [
+        "证据/handlers.json"
+      ]
+    },
+    {
+      "va": "0x7f0a50",
+      "status": "已审阅",
+      "conclusion": "cdecl桥接(G,p)，ECX=G、p压栈，callee retn4、桥接retn。",
+      "unknown": "只证明ABI，不把桥接当完整业务实现。",
+      "evidence": [
+        "证据/pending.json"
+      ]
+    },
+    {
+      "va": "0x7f1c30",
+      "status": "已审阅",
+      "conclusion": "cdecl桥接(G,p)，ECX=G、p压栈，callee retn4、桥接retn。",
+      "unknown": "只证明ABI，不把桥接当完整业务实现。",
+      "evidence": [
+        "证据/defense.json"
+      ]
+    },
+    {
+      "va": "0x7f8160",
+      "status": "局部已审阅",
+      "conclusion": "入狱状态：移动至地图节点、附属清理、写1495/1493/1496。",
+      "unknown": "7F7990和地图节点函数的全部副作用未穷尽。",
+      "evidence": [
+        "证据/choices_and_end.json"
+      ]
+    },
+    {
+      "va": "0x7f85c0",
+      "status": "已审阅",
+      "conclusion": "先查group0八槽；地图许可时再查group1八槽且附加字节为0。",
+      "unknown": "库存数量校验并非本函数职责，group2不搜索。",
+      "evidence": [
+        "证据/defense.json",
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x7f86a0",
+      "status": "已审阅",
+      "conclusion": "按group0/1/2取六字节槽的signed WORD ID，其余返回-1。",
+      "unknown": "slot范围未检查。",
+      "evidence": [
+        "证据/consumers.json"
+      ]
+    },
+    {
+      "va": "0x7fa270",
+      "status": "局部已审阅",
+      "conclusion": "本组ECX=P(target)，参数(current,-1)，写1648/1649/1651。",
+      "unknown": "内部条件与字段自然语义仍需7D6370/地图专题。",
+      "evidence": [
+        "证据/dependencies.json"
+      ]
+    },
+    {
+      "va": "0x7fb200",
+      "status": "已审阅",
+      "conclusion": "动作号映射状态表，50..56选项已按初始化写值核。",
+      "unknown": "调用者索引范围不在本函数检查。",
+      "evidence": [
+        "证据/continuation.json"
+      ]
+    },
+    {
+      "va": "0x800a50",
+      "status": "已审阅",
+      "conclusion": "道具ID范围、记录非空、状态0、地图允许列表共同判定。",
+      "unknown": "记录构建与完整道具模式策略复用道具专题。",
+      "evidence": [
+        "证据/defense.json"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,510 @@
+{
+  "schema_version": 1,
+  "subject": "本地0x6080阶段0的局部控制流",
+  "function": "0x7c3220",
+  "caller": "0x681380",
+  "current_disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "source": "continue_stages.json",
+  "dependency_sources": [
+    "stage0_dependencies.json",
+    "stage0_support.json"
+  ],
+  "coverage": "局部全部switch分支已整理；子处理器和网络响应未闭环",
+  "namespace": {
+    "dynamic_type": "signed byte [map+60 pointer + 4*position]",
+    "auxiliary": "signed byte [map+60 pointer + 4*position + 1]",
+    "static_property_reference": "signed WORD [map+48 pointer + 8*position + 2]；本函数读取后未使用"
+  },
+  "return_semantics": {
+    "zero": "本次681380不自动插入6080阶段1；不能推断等待网络",
+    "one": "调用者继续插入本地6080阶段1，不保证既排入事件已同步完成"
+  },
+  "preconditions": [
+    {
+      "condition": "动态条目首字节==-1",
+      "action": "立即返回1；不清game+83834/83835"
+    },
+    {
+      "condition": "存在动态条目",
+      "action": "清game+83834/83835，读取type与aux"
+    },
+    {
+      "condition": "map_mode==4 && game[3672+actor]!=0",
+      "action": "8：清理A/B、8074C0、返回1；26：8074C0、返回1；12/27：共用事件13返回0；其余清理A/B返回1"
+    }
+  ],
+  "common_prefix": [
+    {
+      "types": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        18
+      ],
+      "condition": "actor[1488]!=-1",
+      "message": "6050，4字节，+2=slot"
+    },
+    {
+      "types": [
+        1,
+        2,
+        6,
+        7,
+        18
+      ],
+      "condition": "无其他条件",
+      "message": "6002，12字节，+2=2,+4=slot,+6=1,+8=1350"
+    }
+  ],
+  "cleanup": {
+    "A": {
+      "function": "0x7e28b0",
+      "status": "分类辅助未闭环；不保证所有类型都写-1"
+    },
+    "B": {
+      "function": "0x7e2810",
+      "status": "按type更新8字节资源池记录和计数；业务名称未确认"
+    }
+  },
+  "branches": [
+    {
+      "types": [
+        0
+      ],
+      "entry": "0x7c34a0",
+      "messages": [
+        "0x6051(12):+8=132,+10=101",
+        "0x6083(2)"
+      ],
+      "return_condition": "0",
+      "gap": "继续来源6083待核"
+    },
+    {
+      "types": [
+        1
+      ],
+      "entry": "0x7c350f",
+      "messages": [
+        "0x6051(12):+8=135,+10=102",
+        "0x6083(2)"
+      ],
+      "return_condition": "0",
+      "gap": "继续来源6083待核"
+    },
+    {
+      "types": [
+        2
+      ],
+      "entry": "0x7c357e",
+      "messages": [
+        "0x6051(12):+8=145,+10=107",
+        "条件0x6003(24):文本146"
+      ],
+      "return_condition": "模式3且槽标志非零时1；否则0",
+      "gap": "UI消费者待核"
+    },
+    {
+      "types": [
+        3
+      ],
+      "entry": "0x7c3680",
+      "messages": [
+        "0x6051(12):+8=148,+10=108",
+        "条件0x6003(24):文本149"
+      ],
+      "return_condition": "模式3且槽标志非零时1；否则0",
+      "gap": "UI消费者待核"
+    },
+    {
+      "types": [
+        4
+      ],
+      "entry": "0x7c3797",
+      "messages": [
+        "0x6051(12):+8=138,+10=104"
+      ],
+      "return_condition": "1",
+      "gap": "消费者待核"
+    },
+    {
+      "types": [
+        5
+      ],
+      "entry": "0x7c37f8",
+      "messages": [
+        "0x6051(12):+8=140,+10=105"
+      ],
+      "return_condition": "1",
+      "gap": "消费者待核"
+    },
+    {
+      "types": [
+        6
+      ],
+      "entry": "0x7c3859",
+      "messages": [
+        "0x6051(12):+8=142,+10=106"
+      ],
+      "return_condition": "1",
+      "gap": "消费者待核"
+    },
+    {
+      "types": [
+        7
+      ],
+      "entry": "0x7c38ba",
+      "messages": [
+        "0x6051(12):+8=152,+10=109",
+        "行动者+1696非零：6001编号316、6003文本359、6050",
+        "否则7CD440及6050或6063状态6"
+      ],
+      "return_condition": "1",
+      "gap": "物品1071与地图许可子树部分审阅"
+    },
+    {
+      "types": [
+        8
+      ],
+      "entry": "0x7c3af5",
+      "messages": [
+        "清理A/B",
+        "7FB150成立：6000事件29",
+        "否则6000事件8、6063状态2",
+        "63ECA0成立：6000事件9",
+        "否则63EDF0成立：6067数值"
+      ],
+      "return_condition": "事件9路径0；其余1",
+      "gap": "模式谓词与UI29/8/9待核"
+    },
+    {
+      "types": [
+        9
+      ],
+      "entry": "0x7c3da6",
+      "messages": [
+        "排除状态：+1488==7或+1499非零",
+        "清理A/B、6001编号113",
+        "非模式3槽标志：6003文本24/31、6062、6002"
+      ],
+      "return_condition": "1",
+      "gap": "资源映射69B0E0待核"
+    },
+    {
+      "types": [
+        10
+      ],
+      "entry": "0x7c3fc2",
+      "messages": [
+        "清理A/B、6001编号115",
+        "非模式3槽标志：6003文本167、6062半值、6002"
+      ],
+      "return_condition": "1",
+      "gap": "资源映射69B0C0待核；不是静态商店"
+    },
+    {
+      "types": [
+        12,
+        27
+      ],
+      "entry": "0x7c41a5",
+      "global_payload_lifetime": "只有61106B构造受A8A684守卫执行一次；0x7C421B至0x7C424A每次重填[0,type,116,pos,slot]五个DWORD",
+      "messages": [
+        "6002编号25",
+        "6000事件13载荷[0,type,116,pos,slot]",
+        "608F(2)"
+      ],
+      "return_condition": "0",
+      "gap": "608F与UI13继续来源待核"
+    },
+    {
+      "types": [
+        15
+      ],
+      "entry": "0x7c42cd",
+      "messages": [
+        "清理A/B",
+        "6001编号113",
+        "6003文本302",
+        "607A(2)"
+      ],
+      "return_condition": "1",
+      "gap": "607A消费者待核"
+    },
+    {
+      "types": [
+        16
+      ],
+      "entry": "0x7c43cf",
+      "messages": [
+        "清理A/B",
+        "6001编号115",
+        "6003文本303",
+        "game+83809=低字节A870B0"
+      ],
+      "return_condition": "1",
+      "gap": "状态字节业务含义待核"
+    },
+    {
+      "types": [
+        17
+      ],
+      "entry": "0x7c44bf",
+      "messages": [
+        "清理A/B",
+        "1696非零：6001编号316、6003文本359",
+        "否则6001编号113、6003文本306、行动者+1500=低字节A870B4"
+      ],
+      "return_condition": "1",
+      "gap": "状态作用消费者待核"
+    },
+    {
+      "types": [
+        18
+      ],
+      "entry": "0x7c46cd",
+      "messages": [
+        "6051(12):+8=309,+10=109"
+      ],
+      "return_condition": "1",
+      "gap": "消费者待核"
+    },
+    {
+      "types": [
+        19
+      ],
+      "entry": "0x7c472e",
+      "messages": [
+        "清理A/B",
+        "7C00D0(1)",
+        "6001编号113",
+        "6003文本308",
+        "6000事件31"
+      ],
+      "return_condition": "1",
+      "gap": "7C00D0与UI31待核"
+    },
+    {
+      "types": [
+        20
+      ],
+      "entry": "0x7c485a",
+      "messages": [
+        "清理A/B",
+        "6001编号106",
+        "6063状态2",
+        "6003文本324"
+      ],
+      "return_condition": "1",
+      "gap": "消费者待核"
+    },
+    {
+      "types": [
+        21
+      ],
+      "entry": "0x7c4978",
+      "messages": [
+        "读72字节资源记录+68",
+        "清理A/B",
+        "6001编号105",
+        "6060(+3=1,+5=1)",
+        "6003文本325"
+      ],
+      "return_condition": "1",
+      "gap": "数值消费者待核"
+    },
+    {
+      "types": [
+        22,
+        23,
+        24
+      ],
+      "entry": "0x7c4ab9",
+      "messages": [
+        "读72字节资源记录+68",
+        "清理A",
+        "6001编号113",
+        "6063状态4",
+        "6060(+3=1,+5=1)",
+        "6009(+4=500)"
+      ],
+      "return_condition": "1",
+      "gap": "数值消费者待核"
+    },
+    {
+      "types": [
+        25
+      ],
+      "entry": "0x7c4bd5",
+      "messages": [
+        "清理A",
+        "1696非零：6001编号316、6003文本359",
+        "否则6001编号113、6003文本326、行动者+1500=低字节A870B4"
+      ],
+      "return_condition": "1",
+      "gap": "状态作用消费者待核"
+    },
+    {
+      "types": [
+        26
+      ],
+      "entry": "0x7c4dd1",
+      "messages": [
+        "7CC970(动态条目+1,a2,a3)"
+      ],
+      "return_condition": "7CC970返回非零则1，否则0",
+      "gap": "7CE420仅导出；金额不闭环"
+    },
+    {
+      "types": [
+        28
+      ],
+      "entry": "0x7c4df5",
+      "messages": [
+        "清理A",
+        "6000事件8载荷[1,slot,pos]",
+        "6063状态2",
+        "607C(资源[28]+68)",
+        "6009(+4=500)"
+      ],
+      "return_condition": "signed32(现金+存款)>资源金额则1，否则0",
+      "gap": "比较后续恢复待核"
+    },
+    {
+      "types": [
+        32
+      ],
+      "entry": "0x7c4f6f",
+      "messages": [],
+      "return_condition": "0",
+      "gap": "无排入消息；外部继续来源待核"
+    },
+    {
+      "types": [
+        33
+      ],
+      "entry": "0x7c4f73",
+      "messages": [
+        "清理A"
+      ],
+      "return_condition": "0",
+      "gap": "无排入消息；外部继续来源待核"
+    },
+    {
+      "types": [
+        11,
+        13,
+        14,
+        29,
+        30,
+        31
+      ],
+      "entry": "0x7c4f89",
+      "messages": [],
+      "return_condition": "1",
+      "gap": "另包括switch界外值；不是通用服务端忽略策略"
+    }
+  ],
+  "constructors": [
+    {
+      "opcode": "0x6000",
+      "constructor": "0x63f080",
+      "prefix_size": 20,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6001",
+      "constructor": "0x693420",
+      "prefix_size": 12,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6002",
+      "constructor": "0x693260",
+      "prefix_size": 12,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6003",
+      "constructor": "0x6932b0",
+      "prefix_size": 24,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6009",
+      "constructor": "0x694760",
+      "prefix_size": 8,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6050",
+      "constructor": "0x693570",
+      "prefix_size": 4,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6051",
+      "constructor": "0x694810",
+      "prefix_size": 12,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6060",
+      "constructor": "0x693320",
+      "prefix_size": 12,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6061",
+      "constructor": "0x63f6e0",
+      "prefix_size": 10,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6062",
+      "constructor": "0x694460",
+      "prefix_size": 8,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6063",
+      "constructor": "0x63f730",
+      "prefix_size": 4,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6067",
+      "constructor": "0x7d6e60",
+      "prefix_size": 12,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x607a",
+      "constructor": "0x694a30",
+      "prefix_size": 2,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x607c",
+      "constructor": "0x7d6ea0",
+      "prefix_size": 8,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x6083",
+      "constructor": "0x694840",
+      "prefix_size": 2,
+      "namespace": "本地队列；非网络"
+    },
+    {
+      "opcode": "0x608f",
+      "constructor": "0x7d6ed0",
+      "prefix_size": 2,
+      "namespace": "本地队列；非网络"
+    }
+  ]
+}

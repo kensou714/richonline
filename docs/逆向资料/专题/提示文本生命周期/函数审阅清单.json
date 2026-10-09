@@ -1,0 +1,390 @@
+{
+  "scope": "UI4提示文本生命周期；不含实机和全局线程证明",
+  "functions": [
+    {
+      "va": "0x64fa50",
+      "status": "局部语义已审阅",
+      "conclusion": "按Size浅拷贝至288B局部，再按值交队列；不复制指针目标。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x64fb10",
+      "status": "局部语义已审阅",
+      "conclusion": "等待字段写G+12，tick写G+16。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x67da40",
+      "status": "局部语义已审阅",
+      "conclusion": "消费6003的UI号、显示/隐藏位、+16通知和等待；不读取+20。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x6e4640",
+      "status": "局部语义已审阅",
+      "conclusion": "持管理器临界区，对已存在UI对象同步调虚表+16；未见文本所有权操作。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x6faef0",
+      "status": "局部语义已审阅",
+      "conclusion": "调用基类构造再写UI4虚表A24610。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x70b700",
+      "status": "局部语义已审阅",
+      "conclusion": "找ID1后未判空调+144，再调自身+164；只有局部通知链已核。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x8e0650",
+      "status": "局部语义已审阅",
+      "conclusion": "清20KiB暂存区，优先调用上下文+52回调，否则CP_ACP转换；回调容量不能当真实上限。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x8e1800",
+      "status": "局部语义已审阅",
+      "conclusion": "相同内容沿用副本；内容变化释放旧值，分配并逐WCHAR复制后重建测宽。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x8e22c0",
+      "status": "局部语义已审阅",
+      "conclusion": "根控件先询问上下文+80创建回调再落默认工厂，成功挂根链。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x8e2c10",
+      "status": "局部语义已审阅",
+      "conclusion": "按ID查根、子项与兄弟，失败返回0。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x8f8040",
+      "status": "局部语义已审阅",
+      "conclusion": "先8E0650转码，再同步调控件虚表+148，未保存窄字符串指针。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x90b800",
+      "status": "局部语义已审阅",
+      "conclusion": "标准label构造写A3131C虚表并初始化文本子对象与布局字段。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x90bff0",
+      "status": "局部语义已审阅",
+      "conclusion": "把宽文本复制目标指定为label+88，再调用两项布局更新。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/initial.json"
+    },
+    {
+      "va": "0x64f250",
+      "status": "局部语义已审阅",
+      "conclusion": "懒分配C10h共享对象并复用ABABBC，未见清零或同步。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x66fc80",
+      "status": "局部路径已核",
+      "conclusion": "本专题只核6003文本来自A7C140、Size24、+20=128；完整送神逻辑见40C1专题。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x67f680",
+      "status": "局部语义已审阅",
+      "conclusion": "RTC确认栈文本128B；格式化后直接同步通知UI4，没有将此栈地址入6003队列。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6932b0",
+      "status": "局部语义已审阅",
+      "conclusion": "构造6003并清+4/+5/+6与+8/+12/+16/+20，不为文本分配内存。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6980f0",
+      "status": "局部路径已核",
+      "conclusion": "核对固定288B队列元素搬运及入队，不存在按6003深拷贝文本分支。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6e1d90",
+      "status": "局部语义已审阅",
+      "conclusion": "UI基类构造写虚表及少数初值，不初始化整个对象。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6e1e40",
+      "status": "局部路径已核",
+      "conclusion": "加载资源根并保存对象+4；本文只核UI4资源加载链。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6e2cd0",
+      "status": "局部路径已核",
+      "conclusion": "只核上下文创建与6E2E60注册先于界面资源加载。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6e2e60",
+      "status": "局部语义已审阅",
+      "conclusion": "核对15项回调注册及转码回调6E5F90；本函数没有注册+80。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6e3b40",
+      "status": "局部路径已核",
+      "conclusion": "只核对象创建、资源加载与显示链；失败与prev/dvs完整行为见界面专题。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6e5f90",
+      "status": "局部语义已审阅",
+      "conclusion": "经64F250/81BAB0获得共享转换结果，再wcscpy到调用者目标；未使用容量参数。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6e6080",
+      "status": "局部路径已核",
+      "conclusion": "只核管理器槽4工厂绑定，不把其他槽算语义完成。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6e6f40",
+      "status": "局部语义已审阅",
+      "conclusion": "槽4工厂分配48h，成功调用6FAEF0，失败返回0。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x81bab0",
+      "status": "局部语义已审阅",
+      "conclusion": "CP_ACP转换到对象+1040，容量1024 WCHAR，未检查结果。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e0080",
+      "status": "局部语义已审阅",
+      "conclusion": "上下文构造清+52/+80，部分宽缓冲清零仅800h；不替代运行期8E0650清零。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e06f0",
+      "status": "仅导出",
+      "conclusion": "仅导出：type字符串映射，沿用界面专题。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e0ed0",
+      "status": "局部路径已核",
+      "conclusion": "只核基类清理入口与文本/子控件所有权相关操作，全部焦点和图像状态未展开。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e1620",
+      "status": "局部路径已核",
+      "conclusion": "文本副本建立后分配测宽数组并再次转码；完整富文本布局未复原。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e23f0",
+      "status": "局部语义已审阅",
+      "conclusion": "子控件先询问上下文+80再落默认工厂，设置父/子/兄弟链。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e24d0",
+      "status": "局部路径已核",
+      "conclusion": "核对type1分配250h并调用标准label构造；其余类型只保存原证。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e4ad0",
+      "status": "仅导出",
+      "conclusion": "仅导出：UI根资源解析器，沿用界面专题，不据导出提升覆盖。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e4dc0",
+      "status": "仅导出",
+      "conclusion": "仅导出：子资源递归解析器，沿用界面专题。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8e8660",
+      "status": "局部语义已审阅",
+      "conclusion": "非零参数写上下文+52转换回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x8ea2b0",
+      "status": "局部语义已审阅",
+      "conclusion": "遍历根控件调+120释放，随后释放ACC3C4节点池与上下文。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x902060",
+      "status": "局部语义已审阅",
+      "conclusion": "非NULL时先label析构再operator delete释放对象。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x90b8f0",
+      "status": "局部语义已审阅",
+      "conclusion": "释放label+88/+96，回收+92节点，重置文本子对象后进入基类析构。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/lifecycle.json"
+    },
+    {
+      "va": "0x6bfa00",
+      "status": "局部语义已审阅",
+      "conclusion": "EnterCriticalSection包装。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/locks.json"
+    },
+    {
+      "va": "0x6bfa40",
+      "status": "局部语义已审阅",
+      "conclusion": "LeaveCriticalSection包装。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/locks.json"
+    },
+    {
+      "va": "0x8e8540",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+0回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e8560",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+4回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e8580",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+8回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e85a0",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+12回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e85c0",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+36回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e85e0",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+60回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e8620",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+44回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e8680",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+56回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e86a0",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+16回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e86c0",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+20回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e86e0",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+24回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e8700",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+28回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e8720",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+64回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    },
+    {
+      "va": "0x8e8740",
+      "status": "局部语义已审阅",
+      "conclusion": "仅在参数非零时将参数写入上下文+32回调字段；不写+80创建回调。",
+      "unknown": "未实机；完整线程、异常分配、全生产者与间接写者图未闭合。",
+      "evidence": "证据/registration_setters.json"
+    }
+  ]
+}

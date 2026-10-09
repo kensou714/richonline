@@ -1,0 +1,48 @@
+{
+  "scope": "人工恢复的局部布局；研究名不是原始C++类型名；不写回IDB",
+  "database_sha256": "cb35f69f3d49c2093897d4ea2cb547a1e38b213f3a8df0af52b859f9e661de77",
+  "version_reference": "../../全量分析/版本核验_第二批.json",
+  "structures": [
+    {
+      "research_name": "游戏记录环形容器",
+      "base_expression": "G+0x640",
+      "known_span": 20,
+      "sizeof": null,
+      "fields": [
+        {"offset": 0, "width": 4, "role": "记录数组基址", "writers": ["0x697fc0"], "readers": ["0x698050", "0x6980f0", "0x7d8010"]},
+        {"offset": 4, "width": 4, "role": "物理槽数N", "writers": ["0x697fc0"], "readers": ["0x698640", "0x698680", "0x6986b0"]},
+        {"offset": 8, "width": 4, "role": "当前记录数", "writers": ["0x697fc0", "0x698050", "0x6980f0", "0x7d8010"], "readers": ["0x6980f0"]},
+        {"offset": 12, "width": 4, "role": "头物理下标", "writers": ["0x697fc0", "0x6980f0", "0x7d8010"], "readers": ["0x698640", "0x7d7f20"]},
+        {"offset": 16, "width": 4, "role": "尾物理下标，下一尾插槽", "writers": ["0x697fc0", "0x698050", "0x6980f0"], "readers": ["0x698640", "0x7d7f20"]}
+      ],
+      "invariants": ["每记录288字节", "合法操作下容量N-1", "当前初始化N=256", "取出前由调用者判空"],
+      "evidence": ["第二批_环形记录证据.json", "第二批_环形记录调用者证据.json", "第二批_消费门控证据.json"]
+    },
+    {
+      "research_name": "游戏业务对象的消费控制字段",
+      "base_expression": "G",
+      "sizeof": null,
+      "fields": [
+        {"offset": 12, "width": 4, "role": "等待时长毫秒", "writers": ["0x64fb10", "0x64fb50", "0x64fb70"], "readers": ["0x64fb70"]},
+        {"offset": 16, "width": 4, "role": "等待开始Tick", "writers": ["0x64fb10"], "readers": ["0x64fb70"]},
+        {"offset": 152, "width": 4, "role": "6021抑制阶段开始Tick", "writers": ["0x67e410", "0x7bae60"], "readers": ["0x650460"]},
+        {"offset": 1600, "width": 20, "role": "已恢复的环形容器字段区；非完整成员sizeof", "writers": ["0x64f2a0"], "readers": ["0x64f870", "0x64fa50", "0x7bb290"]},
+        {"offset": 83831, "width": 1, "role": "消费抑制位", "writers": ["0x67e410", "0x7bae60"], "readers": ["0x691bd0"]}
+      ],
+      "unknown": ["全部别名写入者", "完整类型与对象sizeof", "实际线程访问互斥", "初始化失败与销毁时序"],
+      "evidence": ["第三批_消费抑制位证据.json", "第三批_抑制状态后继证据.json", "第二批_门控设置证据.json"]
+    },
+    {
+      "research_name": "游戏队列记录",
+      "storage_size": 288,
+      "fields": [{"offset": 0, "width": 2, "role": "记录编号，消费时按有符号short扩展", "readers": ["0x64f870", "0x7bb290"]}],
+      "unknown": ["剩余字段随编号变化", "288是存储跨度，不是每种线上报文长度", "本地短记录也进入同一容器"],
+      "evidence": ["第二批_环形记录调用者证据.json", "第二批_队列消费者证据.json"]
+    }
+  ],
+  "globals": [
+    {"va": "0xa87b88", "known_span": 288, "role": "当前分派共享记录副本", "writers": ["0x7bb290"], "lifetime": "本次完整记录复制到下次复制之间，处理器保留指针语义未证", "evidence": "第二批_队列消费者证据.json"},
+    {"va": "0xa8e0e0", "role": "按完整消息编号索引的函数表基址", "element_width": 4, "declared_count": null, "known_registered_entries": 310, "writers": ["0x7ee330"], "readers": ["0x7bb290"], "note": "首业务编号0x4000实际槽VA为0xa9e0e0，不能把基址当首业务槽", "evidence": "第二批_分派映射.json"},
+    {"va": "0xa6723c", "width": 4, "role": "主状态选择值", "writers": ["0x629dc0"], "readers": ["0x624ca0", "0x62a0f0"], "note": "其他直接或间接写入尚未完整枚举", "evidence": "第三批_主状态选择证据.json"}
+  ]
+}

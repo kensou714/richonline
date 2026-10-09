@@ -1,0 +1,988 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "baseline_reference": "全量分析/版本核验_第二批.json",
+  "scope": "当前IDA数据库；保存函数指令覆盖范围含尾块，非指令数据/外部依赖另核",
+  "functions": [
+    {
+      "va": "0x91fbb0",
+      "end_va": "0x91fc06",
+      "name": "sub_91FBB0",
+      "status": "仅导出",
+      "pseudocode": [
+        "void __usercall sub_91FBB0(int a1@<ecx>, int a2@<ebx>, int a3@<ebp>, int a4@<edi>, int a5@<esi>)",
+        "{",
+        "  _DWORD v5[10]; // [esp-28h] [ebp-28h] BYREF",
+        "",
+        "  if ( a1 != __security_cookie )",
+        "  {",
+        "    v5[9] = a3;",
+        "    v5[8] = -1;",
+        "    v5[7] = &stru_A31A90;",
+        "    v5[6] = j___except_handler3;",
+        "    v5[5] = NtCurrentTeb()->NtTib.ExceptionList;",
+        "    v5[2] = a2;",
+        "    v5[1] = a5;",
+        "    v5[0] = a4;",
+        "    v5[3] = v5;",
+        "    v5[8] = 0;",
+        "    j____security_error_handler(a1: 1, a2: 0);",
+        "  }",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x91fbb0",
+          "text": "cmp     ecx, ___security_cookie"
+        },
+        {
+          "va": "0x91fbb6",
+          "text": "jnz     short loc_91FBB9"
+        },
+        {
+          "va": "0x91fbb8",
+          "text": "retn"
+        },
+        {
+          "va": "0x91fbb9",
+          "text": "jmp     loc_91FBD0"
+        },
+        {
+          "va": "0x91fbbe",
+          "text": "db 12h dup(0CCh)"
+        },
+        {
+          "va": "0x91fbd0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x91fbd1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x91fbd3",
+          "text": "push    0FFFFFFFFh"
+        },
+        {
+          "va": "0x91fbd5",
+          "text": "push    offset stru_A31A90"
+        },
+        {
+          "va": "0x91fbda",
+          "text": "push    offset j___except_handler3"
+        },
+        {
+          "va": "0x91fbdf",
+          "text": "mov     eax, large fs:0"
+        },
+        {
+          "va": "0x91fbe5",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x91fbe6",
+          "text": "mov     large fs:0, esp"
+        },
+        {
+          "va": "0x91fbed",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x91fbf0",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x91fbf1",
+          "text": "push    esi"
+        },
+        {
+          "va": "0x91fbf2",
+          "text": "push    edi"
+        },
+        {
+          "va": "0x91fbf3",
+          "text": "mov     [ebp-18h], esp"
+        },
+        {
+          "va": "0x91fbf6",
+          "text": "mov     dword ptr [ebp-4], 0"
+        },
+        {
+          "va": "0x91fbfd",
+          "text": "push    0"
+        },
+        {
+          "va": "0x91fbff",
+          "text": "push    1"
+        },
+        {
+          "va": "0x91fc01",
+          "text": "call    j____security_error_handler"
+        },
+        {
+          "va": "0x91fc12",
+          "text": "mov     eax, 1"
+        },
+        {
+          "va": "0x91fc17",
+          "text": "retn"
+        },
+        {
+          "va": "0x91fc18",
+          "text": "mov     esp, [ebp-18h]"
+        },
+        {
+          "va": "0x91fc1b",
+          "text": "mov     dword ptr [ebp-4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x91fc22",
+          "text": "push    3; uExitCode"
+        },
+        {
+          "va": "0x91fc24",
+          "text": "call    ds:ExitProcess; KERNEL32"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x91fc01",
+          "target": "0x5ffdc0",
+          "implementation": "0x930e70",
+          "thunks": [
+            "0x5ffdc0"
+          ]
+        },
+        {
+          "site": "0x91fc24",
+          "target": "0xad3b78",
+          "implementation": "0xad3b78",
+          "thunks": []
+        }
+      ],
+      "references": [
+        {
+          "source": "0x60849d",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x91fbb0",
+          "end_va": "0x91fc06",
+          "is_main": true
+        },
+        {
+          "start_va": "0x91fc12",
+          "end_va": "0x91fc2a",
+          "is_main": false
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x91fbb0",
+          "size": 15,
+          "idb_hex": "3b0d3093a6007501c3e912000000cc",
+          "disk_hex": "3b0d3093a6007501c3e912000000cc",
+          "matching": true
+        },
+        {
+          "va": "0x91fbbf",
+          "size": 17,
+          "matching": true,
+          "idb_hex": "cccccccccccccccccccccccccccccccccc",
+          "disk_hex": "cccccccccccccccccccccccccccccccccc",
+          "kind": "原始填充字节，非指令导出",
+          "source": "cleanup_evidence.json#/records/238/main_bytes",
+          "note": "IDA聚合db 12h dup CCh项已导首字节91FBBE；此项补齐其余17字节。"
+        },
+        {
+          "va": "0x91fbd0",
+          "size": 54,
+          "idb_hex": "558bec6aff68901aa300685293600064a100000000506489250000000083ec085356578965e8c745fc000000006a006a01e8ba01ceff",
+          "disk_hex": "558bec6aff68901aa300685293600064a100000000506489250000000083ec085356578965e8c745fc000000006a006a01e8ba01ceff",
+          "matching": true
+        },
+        {
+          "va": "0x91fc12",
+          "size": 24,
+          "idb_hex": "b801000000c38b65e8c745fcffffffff6a03ff15783bad00",
+          "disk_hex": "b801000000c38b65e8c745fcffffffff6a03ff15783bad00",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x92cbf0",
+      "end_va": "0x92cd3a",
+      "name": "___FrameUnwindToState",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __cdecl __FrameUnwindToState(int a1, int a2, int a3, int a4)",
+        "{",
+        "  _DWORD *v4; // ecx",
+        "  _DWORD *v5; // edx",
+        "  int result; // eax",
+        "  int v7; // [esp+14h] [ebp-20h]",
+        "  int v8; // [esp+18h] [ebp-1Ch]",
+        "",
+        "  v8 = *(_DWORD *)(a1 + 8);",
+        "  v4 = (_DWORD *)(j___getptd() + 132);",
+        "  ++*v4;",
+        "  while ( v8 != a4 )",
+        "  {",
+        "    if ( v8 <= -1 || v8 >= *(_DWORD *)(a3 + 4) )",
+        "      sub_612245();",
+        "    v7 = *(_DWORD *)(*(_DWORD *)(a3 + 8) + 8 * v8);",
+        "    if ( *(_DWORD *)(*(_DWORD *)(a3 + 8) + 8 * v8 + 4) != 0 )",
+        "    {",
+        "      *(_DWORD *)(a1 + 8) = v7;",
+        "      _CallSettingFrame(a1: *(_DWORD *)(*(_DWORD *)(a3 + 8) + 8 * v8 + 4), a2: a1, a3: 259);",
+        "    }",
+        "    v8 = v7;",
+        "  }",
+        "  if ( *(int *)(j___getptd() + 132) > 0 )",
+        "  {",
+        "    v5 = (_DWORD *)(j___getptd() + 132);",
+        "    --*v5;",
+        "  }",
+        "  result = v8;",
+        "  if ( v8 != a4 )",
+        "    sub_612245();",
+        "  *(_DWORD *)(a1 + 8) = v8;",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x92cbf0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x92cbf1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x92cbf3",
+          "text": "push    0FFFFFFFFh"
+        },
+        {
+          "va": "0x92cbf5",
+          "text": "push    offset stru_A33140"
+        },
+        {
+          "va": "0x92cbfa",
+          "text": "push    offset j___except_handler3"
+        },
+        {
+          "va": "0x92cbff",
+          "text": "mov     eax, large fs:0"
+        },
+        {
+          "va": "0x92cc05",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x92cc06",
+          "text": "mov     large fs:0, esp"
+        },
+        {
+          "va": "0x92cc0d",
+          "text": "add     esp, 0FFFFFFE8h"
+        },
+        {
+          "va": "0x92cc10",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x92cc11",
+          "text": "push    esi"
+        },
+        {
+          "va": "0x92cc12",
+          "text": "push    edi"
+        },
+        {
+          "va": "0x92cc13",
+          "text": "mov     [ebp+ms_exc.old_esp], esp"
+        },
+        {
+          "va": "0x92cc16",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x92cc19",
+          "text": "mov     ecx, [eax+8]"
+        },
+        {
+          "va": "0x92cc1c",
+          "text": "mov     [ebp+var_1C], ecx"
+        },
+        {
+          "va": "0x92cc1f",
+          "text": "call    j___getptd"
+        },
+        {
+          "va": "0x92cc24",
+          "text": "add     eax, 84h"
+        },
+        {
+          "va": "0x92cc29",
+          "text": "mov     [ebp+var_24], eax"
+        },
+        {
+          "va": "0x92cc2c",
+          "text": "mov     edx, [ebp+var_24]"
+        },
+        {
+          "va": "0x92cc2f",
+          "text": "mov     eax, [edx]"
+        },
+        {
+          "va": "0x92cc31",
+          "text": "add     eax, 1"
+        },
+        {
+          "va": "0x92cc34",
+          "text": "mov     ecx, [ebp+var_24]"
+        },
+        {
+          "va": "0x92cc37",
+          "text": "mov     [ecx], eax"
+        },
+        {
+          "va": "0x92cc39",
+          "text": "mov     [ebp+ms_exc.registration.TryLevel], 0"
+        },
+        {
+          "va": "0x92cc40",
+          "text": "mov     edx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x92cc43",
+          "text": "cmp     edx, [ebp+arg_C]"
+        },
+        {
+          "va": "0x92cc46",
+          "text": "jz      loc_92CCDA"
+        },
+        {
+          "va": "0x92cc4c",
+          "text": "cmp     [ebp+var_1C], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x92cc50",
+          "text": "jle     short loc_92CC5F"
+        },
+        {
+          "va": "0x92cc52",
+          "text": "mov     eax, [ebp+arg_8]"
+        },
+        {
+          "va": "0x92cc55",
+          "text": "mov     ecx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x92cc58",
+          "text": "cmp     ecx, [eax+4]"
+        },
+        {
+          "va": "0x92cc5b",
+          "text": "jge     short loc_92CC5F"
+        },
+        {
+          "va": "0x92cc5d",
+          "text": "jmp     short loc_92CC64"
+        },
+        {
+          "va": "0x92cc5f",
+          "text": "call    sub_612245"
+        },
+        {
+          "va": "0x92cc64",
+          "text": "mov     edx, [ebp+arg_8]"
+        },
+        {
+          "va": "0x92cc67",
+          "text": "mov     eax, [edx+8]"
+        },
+        {
+          "va": "0x92cc6a",
+          "text": "mov     ecx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x92cc6d",
+          "text": "mov     edx, [eax+ecx*8]"
+        },
+        {
+          "va": "0x92cc70",
+          "text": "mov     [ebp+var_20], edx"
+        },
+        {
+          "va": "0x92cc73",
+          "text": "mov     [ebp+ms_exc.registration.TryLevel], 1"
+        },
+        {
+          "va": "0x92cc7a",
+          "text": "mov     eax, [ebp+arg_8]"
+        },
+        {
+          "va": "0x92cc7d",
+          "text": "mov     ecx, [eax+8]"
+        },
+        {
+          "va": "0x92cc80",
+          "text": "mov     edx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x92cc83",
+          "text": "cmp     dword ptr [ecx+edx*8+4], 0"
+        },
+        {
+          "va": "0x92cc88",
+          "text": "jz      short loc_92CCAF"
+        },
+        {
+          "va": "0x92cc8a",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x92cc8d",
+          "text": "mov     ecx, [ebp+var_20]"
+        },
+        {
+          "va": "0x92cc90",
+          "text": "mov     [eax+8], ecx"
+        },
+        {
+          "va": "0x92cc93",
+          "text": "push    103h"
+        },
+        {
+          "va": "0x92cc98",
+          "text": "mov     edx, [ebp+arg_0]"
+        },
+        {
+          "va": "0x92cc9b",
+          "text": "push    edx"
+        },
+        {
+          "va": "0x92cc9c",
+          "text": "mov     eax, [ebp+arg_8]"
+        },
+        {
+          "va": "0x92cc9f",
+          "text": "mov     ecx, [eax+8]"
+        },
+        {
+          "va": "0x92cca2",
+          "text": "mov     edx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x92cca5",
+          "text": "mov     eax, [ecx+edx*8+4]"
+        },
+        {
+          "va": "0x92cca9",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x92ccaa",
+          "text": "call    _CallSettingFrame(x,x,x)"
+        },
+        {
+          "va": "0x92ccaf",
+          "text": "mov     [ebp+ms_exc.registration.TryLevel], 0"
+        },
+        {
+          "va": "0x92ccb6",
+          "text": "jmp     short loc_92CCCF"
+        },
+        {
+          "va": "0x92ccb8",
+          "text": "mov     ecx, [ebp+ms_exc.exc_ptr]"
+        },
+        {
+          "va": "0x92ccbb",
+          "text": "push    ecx; _EXCEPTION_POINTERS *"
+        },
+        {
+          "va": "0x92ccbc",
+          "text": "call    FrameUnwindFilter(_EXCEPTION_POINTERS *)"
+        },
+        {
+          "va": "0x92ccc1",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x92ccc4",
+          "text": "retn"
+        },
+        {
+          "va": "0x92ccc5",
+          "text": "mov     esp, [ebp+ms_exc.old_esp]"
+        },
+        {
+          "va": "0x92ccc8",
+          "text": "mov     [ebp+ms_exc.registration.TryLevel], 0"
+        },
+        {
+          "va": "0x92cccf",
+          "text": "mov     edx, [ebp+var_20]"
+        },
+        {
+          "va": "0x92ccd2",
+          "text": "mov     [ebp+var_1C], edx"
+        },
+        {
+          "va": "0x92ccd5",
+          "text": "jmp     loc_92CC40"
+        },
+        {
+          "va": "0x92ccda",
+          "text": "mov     [ebp+ms_exc.registration.TryLevel], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x92cce1",
+          "text": "call    loc_92CCE8"
+        },
+        {
+          "va": "0x92cce6",
+          "text": "jmp     short loc_92CD11"
+        },
+        {
+          "va": "0x92cce8",
+          "text": "call    j___getptd"
+        },
+        {
+          "va": "0x92cced",
+          "text": "cmp     dword ptr [eax+84h], 0"
+        },
+        {
+          "va": "0x92ccf4",
+          "text": "jle     short loc_92CD10"
+        },
+        {
+          "va": "0x92ccf6",
+          "text": "call    j___getptd"
+        },
+        {
+          "va": "0x92ccfb",
+          "text": "add     eax, 84h"
+        },
+        {
+          "va": "0x92cd00",
+          "text": "mov     [ebp+var_28], eax"
+        },
+        {
+          "va": "0x92cd03",
+          "text": "mov     eax, [ebp+var_28]"
+        },
+        {
+          "va": "0x92cd06",
+          "text": "mov     ecx, [eax]"
+        },
+        {
+          "va": "0x92cd08",
+          "text": "sub     ecx, 1"
+        },
+        {
+          "va": "0x92cd0b",
+          "text": "mov     edx, [ebp+var_28]"
+        },
+        {
+          "va": "0x92cd0e",
+          "text": "mov     [edx], ecx"
+        },
+        {
+          "va": "0x92cd10",
+          "text": "retn"
+        },
+        {
+          "va": "0x92cd11",
+          "text": "mov     eax, [ebp+var_1C]"
+        },
+        {
+          "va": "0x92cd14",
+          "text": "cmp     eax, [ebp+arg_C]"
+        },
+        {
+          "va": "0x92cd17",
+          "text": "jnz     short loc_92CD1B"
+        },
+        {
+          "va": "0x92cd19",
+          "text": "jmp     short loc_92CD20"
+        },
+        {
+          "va": "0x92cd1b",
+          "text": "call    sub_612245"
+        },
+        {
+          "va": "0x92cd20",
+          "text": "mov     ecx, [ebp+arg_0]"
+        },
+        {
+          "va": "0x92cd23",
+          "text": "mov     edx, [ebp+var_1C]"
+        },
+        {
+          "va": "0x92cd26",
+          "text": "mov     [ecx+8], edx"
+        },
+        {
+          "va": "0x92cd29",
+          "text": "mov     ecx, [ebp+ms_exc.registration.Next]"
+        },
+        {
+          "va": "0x92cd2c",
+          "text": "mov     large fs:0, ecx"
+        },
+        {
+          "va": "0x92cd33",
+          "text": "pop     edi"
+        },
+        {
+          "va": "0x92cd34",
+          "text": "pop     esi"
+        },
+        {
+          "va": "0x92cd35",
+          "text": "pop     ebx"
+        },
+        {
+          "va": "0x92cd36",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x92cd38",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x92cd39",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x92cc1f",
+          "target": "0x602da9",
+          "implementation": "0x930960",
+          "thunks": [
+            "0x602da9"
+          ]
+        },
+        {
+          "site": "0x92cc5f",
+          "target": "0x612245",
+          "implementation": "0x9312b0",
+          "thunks": [
+            "0x612245"
+          ]
+        },
+        {
+          "site": "0x92ccaa",
+          "target": "0x612975",
+          "implementation": "0x931190",
+          "thunks": [
+            "0x612975"
+          ]
+        },
+        {
+          "site": "0x92ccbc",
+          "target": "0x92cd90",
+          "implementation": "0x92cd90",
+          "thunks": []
+        },
+        {
+          "site": "0x92cce8",
+          "target": "0x602da9",
+          "implementation": "0x930960",
+          "thunks": [
+            "0x602da9"
+          ]
+        },
+        {
+          "site": "0x92ccf6",
+          "target": "0x602da9",
+          "implementation": "0x930960",
+          "thunks": [
+            "0x602da9"
+          ]
+        },
+        {
+          "site": "0x92cd1b",
+          "target": "0x612245",
+          "implementation": "0x9312b0",
+          "thunks": [
+            "0x612245"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x5ffeb0",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x92cbf0",
+          "end_va": "0x92cd3a",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x92cbf0",
+          "size": 330,
+          "idb_hex": "558bec6aff684031a300685293600064a100000000506489250000000083c4e85356578965e88b45088b4808894de4e88561cdff05840000008945dc8b55dc8b0283c0018b4ddc8901c745fc000000008b55e43b55140f848e000000837de4ff7e0d8b45108b4de43b48047d02eb05e8e155ceff8b55108b42088b4de48b14c88955e0c745fc010000008b45108b48088b55e4837cd1040074258b45088b4de089480868030100008b5508528b45108b48088b55e48b44d10450e8c65cceffc745fc00000000eb178b4dec51e8cf00000083c404c38b65e8c745fc000000008b55e08955e4e966ffffffc745fcffffffffe802000000eb29e8bc60cdff83b884000000007e1ae8ae60cdff05840000008945d88b45d88b0883e9018b55d8890ac38b45e43b45147502eb05e82555ceff8b4d088b55e48951088b4df064890d000000005f5e5b8be55dc3",
+          "disk_hex": "558bec6aff684031a300685293600064a100000000506489250000000083c4e85356578965e88b45088b4808894de4e88561cdff05840000008945dc8b55dc8b0283c0018b4ddc8901c745fc000000008b55e43b55140f848e000000837de4ff7e0d8b45108b4de43b48047d02eb05e8e155ceff8b55108b42088b4de48b14c88955e0c745fc010000008b45108b48088b55e4837cd1040074258b45088b4de089480868030100008b5508528b45108b48088b55e48b44d10450e8c65cceffc745fc00000000eb178b4dec51e8cf00000083c404c38b65e8c745fc000000008b55e08955e4e966ffffffc745fcffffffffe802000000eb29e8bc60cdff83b884000000007e1ae8ae60cdff05840000008945d88b45d88b0883e9018b55d8890ac38b45e43b45147502eb05e82555ceff8b4d088b55e48951088b4df064890d000000005f5e5b8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x931190",
+      "end_va": "0x9311dc",
+      "name": "__CallSettingFrame@12",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __stdcall _CallSettingFrame(int a1, int a2, int a3)",
+        "{",
+        "  void (*v3)(void); // eax",
+        "  int v4; // ecx",
+        "",
+        "  v3 = (void (*)(void))j___NLG_Notify1(a1: a3);",
+        "  v3();",
+        "  v4 = a3;",
+        "  if ( a3 == 256 )",
+        "    v4 = 2;",
+        "  return j___NLG_Notify1(a1: v4);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x931190",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x931191",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x931193",
+          "text": "sub     esp, 4"
+        },
+        {
+          "va": "0x931196",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x931197",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x931198",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x93119b",
+          "text": "add     eax, 0Ch"
+        },
+        {
+          "va": "0x93119e",
+          "text": "mov     [ebp+var_4], eax"
+        },
+        {
+          "va": "0x9311a1",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x9311a4",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x9311a5",
+          "text": "push    [ebp+arg_8]"
+        },
+        {
+          "va": "0x9311a8",
+          "text": "mov     ecx, [ebp+arg_8]"
+        },
+        {
+          "va": "0x9311ab",
+          "text": "mov     ebp, [ebp+var_4]"
+        },
+        {
+          "va": "0x9311ae",
+          "text": "call    j___NLG_Notify1"
+        },
+        {
+          "va": "0x9311b3",
+          "text": "push    esi"
+        },
+        {
+          "va": "0x9311b4",
+          "text": "push    edi"
+        },
+        {
+          "va": "0x9311b5",
+          "text": "call    eax"
+        },
+        {
+          "va": "0x9311b7",
+          "text": "pop     edi"
+        },
+        {
+          "va": "0x9311b8",
+          "text": "pop     esi"
+        },
+        {
+          "va": "0x9311b9",
+          "text": "mov     ebx, ebp"
+        },
+        {
+          "va": "0x9311bb",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x9311bc",
+          "text": "mov     ecx, [ebp+arg_8]"
+        },
+        {
+          "va": "0x9311bf",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x9311c0",
+          "text": "mov     ebp, ebx"
+        },
+        {
+          "va": "0x9311c2",
+          "text": "cmp     ecx, 100h"
+        },
+        {
+          "va": "0x9311c8",
+          "text": "jnz     short _NLG_Continue"
+        },
+        {
+          "va": "0x9311ca",
+          "text": "mov     ecx, 2"
+        },
+        {
+          "va": "0x9311cf",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x9311d0",
+          "text": "call    j___NLG_Notify1"
+        },
+        {
+          "va": "0x9311d5",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x9311d6",
+          "text": "pop     ecx"
+        },
+        {
+          "va": "0x9311d7",
+          "text": "pop     ebx"
+        },
+        {
+          "va": "0x9311d8",
+          "text": "leave"
+        },
+        {
+          "va": "0x9311d9",
+          "text": "retn    0Ch"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x9311ae",
+          "target": "0x6009c8",
+          "implementation": "0x920459",
+          "thunks": [
+            "0x6009c8"
+          ]
+        },
+        {
+          "site": "0x9311d0",
+          "target": "0x6009c8",
+          "implementation": "0x920459",
+          "thunks": [
+            "0x6009c8"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x612975",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x931190",
+          "end_va": "0x9311dc",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x931190",
+          "size": 76,
+          "idb_hex": "558bec83ec0453518b450c83c00c8945fc8b450855ff75108b4d108b6dfce815f8ccff5657ffd05f5e8bdd5d8b4d10558beb81f9000100007505b90200000051e8f3f7ccff5d595bc9c20c00",
+          "disk_hex": "558bec83ec0453518b450c83c00c8945fc8b450855ff75108b4d108b6dfce815f8ccff5657ffd05f5e8bdd5d8b4d10558beb81f9000100007505b90200000051e8f3f7ccff5d595bc9c20c00",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    }
+  ],
+  "thunks": [
+    {
+      "va": "0x5ffdc0",
+      "size": 5,
+      "idb_hex": "e9ab103300",
+      "disk_hex": "e9ab103300",
+      "matching": true,
+      "target": "0x930e70"
+    },
+    {
+      "va": "0x602da9",
+      "size": 5,
+      "idb_hex": "e9b2db3200",
+      "disk_hex": "e9b2db3200",
+      "matching": true,
+      "target": "0x930960"
+    },
+    {
+      "va": "0x612245",
+      "size": 5,
+      "idb_hex": "e966f03100",
+      "disk_hex": "e966f03100",
+      "matching": true,
+      "target": "0x9312b0"
+    },
+    {
+      "va": "0x612975",
+      "size": 5,
+      "idb_hex": "e916e83100",
+      "disk_hex": "e916e83100",
+      "matching": true,
+      "target": "0x931190"
+    },
+    {
+      "va": "0x6009c8",
+      "size": 5,
+      "idb_hex": "e98cfa3100",
+      "disk_hex": "e98cfa3100",
+      "matching": true,
+      "target": "0x920459"
+    }
+  ]
+}

@@ -1,0 +1,1222 @@
+{
+  "sources": [
+    "core.json",
+    "lifecycle.json",
+    "buffers.json",
+    "record_writers.json",
+    "event_producers.json",
+    "cleanup_and_encoding.json",
+    "resource_parser.json",
+    "shutdown.json",
+    "shutdown_bridge.json",
+    "date.json"
+  ],
+  "counts": {
+    "局部语义已审阅": 69,
+    "部分分析": 34
+  },
+  "functions": [
+    {
+      "va": "0x623ad0",
+      "sources": [
+        "lifecycle.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "启动局部：加载ChsTb，取得输出单例并以1024初始化门限；其余平台初始化未闭合。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x623b40",
+      "sources": [
+        "shutdown_bridge.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "退出桥接经61280D跳板到81D9B0。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x623b60",
+      "sources": [
+        "lifecycle.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "启动局部：Role资源成功后以Data/LogFixStr.kpd装载格式器；外围图形/声音依赖未闭合。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x624080",
+      "sources": [
+        "shutdown.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "总关闭局部：释放A766AC格式器后经623B40到通用清理；其它子系统析构仅保留原证。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x627160",
+      "sources": [
+        "cleanup_and_encoding.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "字符转换对象单例ABABB8；仅分配0x18968字节，初始化在其它路径。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6271b0",
+      "sources": [
+        "core.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "ABABC4单例getter；分配44字节，调用输出器构造81BD80。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x627380",
+      "sources": [
+        "buffers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "A766AC单例getter，分配276字节并调用7DCBE0构造。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x629a20",
+      "sources": [
+        "cleanup_and_encoding.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "格式器删除包装：先7DCC10析构，flag低位1时释放对象。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x629fc0",
+      "sources": [
+        "date.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "日期年getter：tm_year(this+24)+1900。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x629ff0",
+      "sources": [
+        "date.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "日期月getter：tm_mon(this+20)+1。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x62a020",
+      "sources": [
+        "date.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "日期日getter：返回tm_mday(this+16)。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x62a0a0",
+      "sources": [
+        "date.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "日期单例ABABC0：首次分配40字节，不在getter中初始化tm。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x62a0f0",
+      "sources": [
+        "cleanup_and_encoding.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "返回全局A6723C DWORD；649A30用其<12作为原文写日志的资格门，未在此命名业务枚举。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x649a30",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "300像素分行界面文字，A6723C<12时原文送128；12字节记录+4为原输入字符串。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x64b880",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "430像素分行界面文字、512项门后送128；12字节记录+4为原输入字符串。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x64f000",
+      "sources": [
+        "cleanup_and_encoding.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "读取字符转换对象+100708 DWORD，等于1表示启用本次映射分支。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x64f1a0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+0 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x64f1d0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6afb60",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件38生产者：把输入a2写记录+4并force0送Sys；UI文本索引773,884,711,515,517,516,514,513，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6afef0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件31生产者：把输入a2写记录+4并force0送Sys；UI文本索引120,814,550,540,541，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0080",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件39生产者：把输入a2写记录+4并force0送Sys；UI文本索引120,814,547,548,549，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0220",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件30生产者：把输入a2写记录+4并force0送Sys；UI文本索引537,710,733,536,538，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b03d0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件40生产者：把输入a2写记录+4并force0送Sys；UI文本索引684，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0490",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件41生产者：把输入a2写记录+4并force0送Sys；UI文本索引576，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0550",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件42生产者：把输入a2写记录+4并force0送Sys；UI文本索引120,558，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0640",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件43生产者：把输入a2写记录+4并force0送Sys；UI文本索引643,634,632,633,635,636，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b07d0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件44生产者：把输入a2写记录+4并force0送Sys；UI文本索引533,534，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b08d0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件45生产者：把输入a2写记录+4并force0送Sys；UI文本索引518，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b09b0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件46生产者：把输入a2写记录+4并force0送Sys；UI文本索引523,524，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0ad0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件47生产者：把输入a2写记录+4并force0送Sys；UI文本索引120,655,656，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0bf0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件48生产者：把输入a2写记录+4并force0送Sys；UI文本索引120,660，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0ce0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件49生产者：把输入a2写记录+4并force0送Sys；UI文本索引661，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0da0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件50生产者：把输入a2写记录+4并force0送Sys；UI文本索引120,564，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0e90",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件51生产者：把输入a2写记录+4并force0送Sys；UI文本索引569，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b0f50",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件52生产者：把输入a2写记录+4并force0送Sys；UI文本索引688，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b1370",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件53生产者：把输入a2写记录+4并force0送Sys；UI文本索引599，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b1430",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件32生产者：把输入a2写记录+4并force0送Sys；UI文本索引620，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b14f0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件33生产者：把输入a2写记录+4并force0送Sys；UI文本索引621，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b15c0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件61生产者：把输入a2写记录+4并force0送Sys；UI文本索引751,750，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b1730",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件63生产者：把输入a2写记录+4并force0送Sys；UI文本索引777，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b17f0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件54生产者：把输入a2写记录+4并force0送Sys；UI文本索引592，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b18e0",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件55生产者：把输入a2写记录+4并force0送Sys；UI文本索引586,613,614，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b1a40",
+      "sources": [
+        "event_producers.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "事件56生产者：把输入a2写记录+4并force0送Sys；UI文本索引593，外围业务部分分析。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8420",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8450",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8480",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b84b0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b84e0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8510",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8540",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8570",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b85a0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b85d0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8600",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8630",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8660",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8690",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b86c0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b86f0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8720",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8770",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b87a0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b87d0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8800",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8830",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8860",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b8890",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x6b88c0",
+      "sources": [
+        "record_writers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "本地记录+4 DWORD写入器；只赋传入参数，不清其它字段，原MFC名称不作语义。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x7dcbe0",
+      "sources": [
+        "lifecycle.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "276字节格式器构造仅清+260表指针和+272 loaded。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x7dcc10",
+      "sources": [
+        "lifecycle.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "先构造12字节事件1并格式化，然后释放+260固定文本表并清指针。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x7dccc0",
+      "sources": [
+        "core.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "LogFixStr装载：size/count/STRING indx/win32，loaded=1后发事件0；未校验索引与分配乘积。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x7dcfe0",
+      "sources": [
+        "core.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "65个有输出事件：0..63走Sys，128走Game；sprintf写this起点，非空再输出。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x7de2d0",
+      "sources": [
+        "core.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "固定文本getter：DWORD[this+260]+index*DWORD[this+264]，无索引边界检查。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x818f10",
+      "sources": [
+        "cleanup_and_encoding.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "双字节范围谓词：A140..A3FE、A440..C67E或C940..F9FE。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x8190b0",
+      "sources": [
+        "cleanup_and_encoding.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "原地双字节转换：高位字符且范围命中时按对象映射表替换；映射初始化未闭合。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x8191d0",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "文本解析器构造清流/数据/三游标，非整对象清零。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x819220",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "文本解析器析构转交8193F0。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x819250",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "解析器mode1读文件、mode2复制内存，保存长度与游标；本组mode2且转换标志0。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x8193f0",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "清流及游标，释放解析器复制的数据块。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x819470",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "找节标记：跳//整行，比较方括号内容；本组ALL/STRING。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x819660",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "从当前节起点找键，跳空白与注释，见下一节终止；等号后跳前导空白但保留LF。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x8198e0",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "行复制：高位双字节原样、反引号+n转LF；写NUL后才断言count+1不超过容量。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81ad50",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "KPD临时对象析构转交81AD80释放解包及压缩块。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81ad80",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "分别释放this+0解压块与this+4压缩块，并置0。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81b4c0",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "KPD读文件、key反变换及压缩数据装入；fread长度返回未核，成功打开即沿此路径返回1。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81b7f0",
+      "sources": [
+        "resource_parser.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "分配解压内存并调用KetLzoDecompress，算法及失败传播仅记录调用边界。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81bc30",
+      "sources": [
+        "date.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "当前time写this+0；localtime结果36字节tm复制到this+4，作为文件目录日期来源。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81bd80",
+      "sources": [
+        "lifecycle.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "44字节输出器构造：+12/+28缓冲构造，+0/+4 FILE指针清0。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81be00",
+      "sources": [
+        "lifecycle.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "输出器析构：先补写两路缓冲，fclose两个非空FILE，再释放两缓冲。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81bea0",
+      "sources": [
+        "lifecycle.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "按日期创建Log/Game及Log/Sys子目录，以at打开game.txt/sys.txt，配置门限与512增长块。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81c190",
+      "sources": [
+        "core.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "channel0/+12与channel1/+28缓冲；门限或force触发fwrite后清used，FILE空也清。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81c2b0",
+      "sources": [
+        "lifecycle.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "补写两个非空FILE的非空缓冲；不清used，不能视为可反复调用的写后清空接口。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d6a0",
+      "sources": [
+        "shutdown.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "缓冲data getter：返回this+12 DWORD。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d6c0",
+      "sources": [
+        "shutdown.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "缓冲used getter：返回this+0 DWORD。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d6e0",
+      "sources": [
+        "buffers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "缓冲reset仅把this+0 used清0。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d710",
+      "sources": [
+        "buffers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "16字节缓冲构造只清this+12 data。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d730",
+      "sources": [
+        "buffers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "缓冲析构转交81D7C0清理。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d760",
+      "sources": [
+        "buffers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "缓冲初始化：used0、capacity参数、growth参数、分配data；当前调用容量1024增长512。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d7c0",
+      "sources": [
+        "buffers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "非空data调用delete后置0；不重写used/capacity/growth。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d810",
+      "sources": [
+        "buffers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "追加原始字节；空间不足按growth块扩容并复制旧capacity字节，返回新数据起点。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81d9b0",
+      "sources": [
+        "shutdown.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "通用单例清理：ABABC4经81DB00销毁并清0；其他单例仅保存外围证据。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x81db00",
+      "sources": [
+        "cleanup_and_encoding.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "输出器删除包装：81BE00析构后按flag低位释放对象。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    },
+    {
+      "va": "0x9243e0",
+      "sources": [
+        "buffers.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "锁定FILE后调用fwrite再解锁，返回fwrite结果；上层不检查返回值。",
+      "unknown": "外部依赖及动态运行未完整闭合。"
+    }
+  ],
+  "producer_map": [
+    {
+      "va": "0x649a30",
+      "event": 128,
+      "ui_resource_ids": [],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x64b880",
+      "event": 128,
+      "ui_resource_ids": [],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6afb60",
+      "event": 38,
+      "ui_resource_ids": [
+        773,
+        884,
+        711,
+        515,
+        517,
+        516,
+        514,
+        513
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6afef0",
+      "event": 31,
+      "ui_resource_ids": [
+        120,
+        814,
+        550,
+        540,
+        541
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0080",
+      "event": 39,
+      "ui_resource_ids": [
+        120,
+        814,
+        547,
+        548,
+        549
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0220",
+      "event": 30,
+      "ui_resource_ids": [
+        537,
+        710,
+        733,
+        536,
+        538
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b03d0",
+      "event": 40,
+      "ui_resource_ids": [
+        684
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0490",
+      "event": 41,
+      "ui_resource_ids": [
+        576
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0550",
+      "event": 42,
+      "ui_resource_ids": [
+        120,
+        558
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0640",
+      "event": 43,
+      "ui_resource_ids": [
+        643,
+        634,
+        632,
+        633,
+        635,
+        636
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b07d0",
+      "event": 44,
+      "ui_resource_ids": [
+        533,
+        534
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b08d0",
+      "event": 45,
+      "ui_resource_ids": [
+        518
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b09b0",
+      "event": 46,
+      "ui_resource_ids": [
+        523,
+        524
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0ad0",
+      "event": 47,
+      "ui_resource_ids": [
+        120,
+        655,
+        656
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0bf0",
+      "event": 48,
+      "ui_resource_ids": [
+        120,
+        660
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0ce0",
+      "event": 49,
+      "ui_resource_ids": [
+        661
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0da0",
+      "event": 50,
+      "ui_resource_ids": [
+        120,
+        564
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0e90",
+      "event": 51,
+      "ui_resource_ids": [
+        569
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b0f50",
+      "event": 52,
+      "ui_resource_ids": [
+        688
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b1370",
+      "event": 53,
+      "ui_resource_ids": [
+        599
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b1430",
+      "event": 32,
+      "ui_resource_ids": [
+        620
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b14f0",
+      "event": 33,
+      "ui_resource_ids": [
+        621
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b15c0",
+      "event": 61,
+      "ui_resource_ids": [
+        751,
+        750
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b1730",
+      "event": 63,
+      "ui_resource_ids": [
+        777
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b17f0",
+      "event": 54,
+      "ui_resource_ids": [
+        592
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b18e0",
+      "event": 55,
+      "ui_resource_ids": [
+        586,
+        613,
+        614
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    },
+    {
+      "va": "0x6b1a40",
+      "event": 56,
+      "ui_resource_ids": [
+        593
+      ],
+      "force": 0,
+      "scope": "日志调用链已审阅；外围UI业务未闭合"
+    }
+  ]
+}

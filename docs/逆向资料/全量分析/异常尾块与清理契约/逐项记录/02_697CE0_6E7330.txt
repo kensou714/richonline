@@ -1,0 +1,292 @@
+// 异常尾块逐项记录 / 02_697CE0_6E7330.txt
+// 来源：cleanup_evidence.json与cleanup_contracts.json；仅静态证据。
+//
+// [017] 主函数 0x697ce0；尾块 0xa11d10-0xa11d22（18字节）；PE/IDB=一致。
+//       分类：字符串兼容布局对象的清理跳板（自动MFC名称不可信）。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa55b34，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa55b3c；UnwindMap动作（state->入口）：
+//         0->0xa11d10。
+//       state 0 -> -1；0xa11d10：字符串兼容布局对象的清理跳板（自动MFC名称不可信）；对象/槽证据=mov     ecx, [ebp+var_10]; this。
+//       主state写点：0x697d0f；0x697d28。
+//       历史来源：
+//         专题/基础对象与分派/第二批_环形记录证据.json#/functions/5
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x697ce0：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x697ce0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa11d10；62B8A0传(释放标志1,长度0)至62BAD0；capacity>=16时释放堆指针，随后恢复capacity15和length0。
+//     主函数设置证据=0x697d0f；完全展开链=0->-1。
+//     未闭合=精确模板typedef及字符串字符编码未由清理函数证明。
+//
+// [018] 主函数 0x6bf380；尾块 0xa124b0-0xa124c8（24字节）；PE/IDB=一致。
+//       分类：全局静态初始化guard位回滚（可混有其他清理动作）。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa56438，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa56440；UnwindMap动作（state->入口）：
+//         0->0xa124b0。
+//       state 0 -> -1；0xa124b0：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_A82FCC。
+//       主state写点：0x6bf3e1；0x6bf3ff。
+//       历史来源：
+//         专题/4036系列事件/证据/ui40_state_and_send.json#/functions/2
+//         专题/4050系列事件/证据/helpers.json#/functions/3
+//         专题/地图初始化同步/证据/map_sync_ready_send.json#/functions/1
+//         专题/股票与交易流程/证据/stock_core.json#/functions/26
+//         专题/银行与资金/证据/bank_send_boundary.json#/functions/2
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6bf380：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x6bf380；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa124b0；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x6bf3e1；完全展开链=0->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//
+// [019] 主函数 0x6e2f70；尾块 0xa12fb8-0xa12fe3（43字节）；PE/IDB=一致。
+//       分类：operator delete[]异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=3，UnwindMap=0xa57594，唯一动作入口3个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa575ac；UnwindMap动作（state->入口）：
+//         0->0xa12fb8, 1->0xa12fc0, 2->0xa12fcb。
+//       state 0 -> -1；0xa12fb8：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_74]。
+//       state 1 -> 0；0xa12fc0：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_1B4]。
+//       state 2 -> 1；0xa12fcb：operator delete[]异常清理动作；对象/槽证据=mov     eax, [ebp+var_1C4]。
+//       主state写点：0x6e2fd0；0x6e2ff1；0x6e301e；0x6e3056；0x6e30b9；0x6e355d；0x6e356c。
+//       历史来源：
+//         专题/界面系统/ida_ui_chain_raw.json#/functions/0x6e2f70
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e2f70：3个状态动作项、3个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x6e2f70；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa12fb8；81AD50->81AD80分别释放对象+0/+4非空指针并清零。
+//     主函数设置证据=0x6e2fd0,0x6e355d；完全展开链=0->-1。
+//     未闭合=双指针对象业务类型未闭合。
+//     state 1 -> 0；动作0xa12fc0；819220->8193F0释放+4指针，并清零+0/+8Ch/+90h/+94h。
+//     主函数设置证据=0x6e301e,0x6e30b9；完全展开链=1->0->-1。
+//     未闭合=业务类型和各已清零字段的正式名未闭合。
+//     state 2 -> 1；动作0xa12fcb；从[ebp+var_1C4]取指针后调用operator delete[]；动作返回，不向下一动作自然贯穿。
+//     主函数设置证据=0x6e3056；完全展开链=2->1->0->-1。
+//     未闭合=元素类型与数组构造过程需结合主函数调用目标确认。
+//
+// [020] 主函数 0x6e3b40；尾块 0xa12fe3-0xa12ff8（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa575c8，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa575d0；UnwindMap动作（state->入口）：
+//         0->0xa12fe3。
+//       state 0 -> -1；0xa12fe3：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_70]。
+//       主state写点：0x6e3bff；0x6e3c26。
+//       历史来源：
+//         专题/4036系列事件/证据/consumers.json#/functions/2
+//         专题/4090系列事件/证据/ui_mode.json#/functions/5
+//         专题/商店与购买流程/证据/shop_ui_contract.json#/functions/1
+//         专题/界面系统/ida_ui_chain_raw.json#/functions/0x6e3b40
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e3b40：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x6e3b40；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa12fe3；从[ebp+var_70]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x6e3bff；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [021] 主函数 0x6e6d00；尾块 0xa13010-0xa13025（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa57610，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa57618；UnwindMap动作（state->入口）：
+//         0->0xa13010。
+//       state 0 -> -1；0xa13010：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e6d40；0x6e6d67。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e6d00
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e6d00：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e6d00；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa13010；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e6d40；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [022] 主函数 0x6e6d90；尾块 0xa13025-0xa1303a（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa57634，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5763c；UnwindMap动作（state->入口）：
+//         0->0xa13025。
+//       state 0 -> -1；0xa13025：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e6dd0；0x6e6df7。
+//       历史来源：
+//         专题/4036系列事件/证据/followups.json#/functions/3
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e6d90
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e6d90：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e6d90；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa13025；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e6dd0；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [023] 主函数 0x6e6e20；尾块 0xa1303a-0xa1304f（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa57658，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa57660；UnwindMap动作（state->入口）：
+//         0->0xa1303a。
+//       state 0 -> -1；0xa1303a：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e6e5d；0x6e6e84。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e6e20
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e6e20：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e6e20；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa1303a；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e6e5d；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [024] 主函数 0x6e6eb0；尾块 0xa1304f-0xa13064（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5767c，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa57684；UnwindMap动作（state->入口）：
+//         0->0xa1304f。
+//       state 0 -> -1；0xa1304f：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e6eed；0x6e6f14。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e6eb0
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e6eb0：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e6eb0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa1304f；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e6eed；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [025] 主函数 0x6e6f40；尾块 0xa13064-0xa13079（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa576a0，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa576a8；UnwindMap动作（state->入口）：
+//         0->0xa13064。
+//       state 0 -> -1；0xa13064：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e6f7d；0x6e6fa4。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e6f40
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e6f40：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e6f40；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa13064；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e6f7d；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [026] 主函数 0x6e6fd0；尾块 0xa13079-0xa1308e（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa576c4，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa576cc；UnwindMap动作（state->入口）：
+//         0->0xa13079。
+//       state 0 -> -1；0xa13079：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e700d；0x6e7034。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e6fd0
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e6fd0：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e6fd0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa13079；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e700d；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [027] 主函数 0x6e7060；尾块 0xa1308e-0xa130a3（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa576e8，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa576f0；UnwindMap动作（state->入口）：
+//         0->0xa1308e。
+//       state 0 -> -1；0xa1308e：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e709d；0x6e70c4。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e7060
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e7060：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e7060；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa1308e；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e709d；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [028] 主函数 0x6e70f0；尾块 0xa130a3-0xa130b8（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5770c，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa57714；UnwindMap动作（state->入口）：
+//         0->0xa130a3。
+//       state 0 -> -1；0xa130a3：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e7130；0x6e7157。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e70f0
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e70f0：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e70f0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa130a3；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e7130；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [029] 主函数 0x6e7180；尾块 0xa130b8-0xa130cd（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa57730，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa57738；UnwindMap动作（state->入口）：
+//         0->0xa130b8。
+//       state 0 -> -1；0xa130b8：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e71bd；0x6e71e4。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e7180
+//         专题/股票与交易流程/证据/stock_core.json#/functions/35
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e7180：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e7180；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa130b8；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e71bd；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [030] 主函数 0x6e7210；尾块 0xa130cd-0xa130e2（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa57754，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5775c；UnwindMap动作（state->入口）：
+//         0->0xa130cd。
+//       state 0 -> -1；0xa130cd：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e724d；0x6e7274。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e7210
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e7210：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e7210；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa130cd；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e724d；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [031] 主函数 0x6e72a0；尾块 0xa130e2-0xa130f7（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa57778，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa57780；UnwindMap动作（state->入口）：
+//         0->0xa130e2。
+//       state 0 -> -1；0xa130e2：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e72e0；0x6e7307。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e72a0
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e72a0：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e72a0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa130e2；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e72e0；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [032] 主函数 0x6e7330；尾块 0xa130f7-0xa1310c（21字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5779c，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa577a4；UnwindMap动作（state->入口）：
+//         0->0xa130f7。
+//       state 0 -> -1；0xa130f7：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_14]; Microsoft VisualC 2-14/net runtime。
+//       主state写点：0x6e736d；0x6e7394。
+//       历史来源：
+//         专题/界面系统/第二批/ida_ui_batch2_raw.json#/functions/0x6e7330
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x6e7330：new结果写var_14，设置state0后执行非空判断和构造调用，成功状态重置-1；异常只执行一项delete。
+//     IDA尾块父函数：0x6e7330；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa130f7；从[ebp+var_14]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。 主构造时序已逐项核验，new自身抛出及NULL正常分支不触发此动作。
+//     主函数设置证据=0x6e736d；完全展开链=0->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//

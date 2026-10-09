@@ -1,0 +1,44 @@
+// 32位MSVC RTTI结构链
+// ============================================================================
+// 本EXE为PE32，所有指针4B、小端；以下只描述本批signature=0的经典x86结构。
+// x64的image-relative字段及signature=1格式不能直接套用这些偏移。
+//
+// 从对象到类型
+//   O+0保存vftable地址V；V-4处DWORD指向CompleteObjectLocator C。
+//   V本身从第一项代码指针开始；V-4不是第一项虚函数。
+//   C+0  DWORD signature；C+4 offset；C+8 cdOffset。
+//   C+12 TypeDescriptor*；C+16 ClassHierarchyDescriptor*；本批COL占20B。
+//   offset用于完整对象到当前虚表所在子对象的调整；不是任意字段偏移。
+//   cdOffset对应构造位移信息；本批14项均0，没有据此恢复虚继承算法。
+//
+// 类型描述器T
+//   T+0  type_info vftable指针，本批20项均A31BBC。
+//   T+4  spare/cache DWORD，磁盘初值0；运行态值未必始终0。
+//   T+8  以NUL结束的ASCII装饰类型名，例如.?AVout_of_range@std@@。
+//   T的首指针并非out_of_range实例虚表；它是描述器自身的type_info虚表。
+//   A672D0 T -> A31BBC，而out_of_range实例使用A318FC，两者不能混用。
+//
+// 层级描述器H
+//   H+0 signature；H+4 attributes；H+8 numBaseClasses；H+12 BaseClassArray*。
+//   BaseClassArray保存numBaseClasses个BCD地址；第一项为当前完整类型自身。
+//   BCD+0 TypeDescriptor*；+4 numContainedBases；+8 PMD.mdisp。
+//   BCD+12 PMD.pdisp；+16 PMD.vdisp；+20 attributes；本批保存前24B。
+//   PMD三个值均按int32读取；pdisp=-1表示此处没有虚基表调整。
+//   contained是其后嵌套基类条目数量，不是继承深度或对象字节长度。
+//   本批根BCD contained=numBaseClasses-1且PMD=(0,-1,0)。
+//   本批CHD/BCD attrs均0；解析器允许掩码7/0x7F，超出即保留失败候选。
+//   不能据24B前缀武断否认其它版本/属性下BCD可能具有扩展字段。
+//
+// 可复核样例：out_of_range
+//   A318F8 = A53D6C；A318FC/A31900为代码入口。
+//   A53D6C = {0,0,0,A672D0,A53D58}。
+//   A53D58 = {0,0,3,A53D48}。
+//   A53D48 = {A53D2C,A53C80,A53C64}。
+//   三个BCD分别指out_of_range、logic_error、exception；contained为2、1、0。
+//   原字节与名称范围见rtti_scan.json；IDA同址字节见ida_navigation.json。
+//
+// 指针导航与虚表边界
+//   本批从V连续读取可执行区地址，到第一个非代码指针停止。
+//   这证明“至少存在这些代码入口”，不单独证明精确槽数及每槽原C++签名。
+//   E9入口另按rel32解到实际函数；跳板不能被误当成完整业务实现。
+//   只有结合构造写入、析构调用、虚调用与函数内部证据，才能提高语义结论等级。

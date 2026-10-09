@@ -1,0 +1,2338 @@
+// ============================================================================
+// 游戏时间与计时调度：当前IDA伪码与完整调用边
+// ============================================================================
+// 伪码是阅读辅助，符号名、类型和有符号比较需由汇编复核。
+// SHA256：a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2
+//
+// 0x623ee0  sub_623EE0
+// ----------------------------------------------------------------------------
+// 声明块：0x623ee0..0x62407d
+// int __stdcall sub_623EE0(int a1)
+// {
+//   int *v1; // eax
+//   void *v3; // eax
+//   int *v4; // eax
+//   float *v5; // eax
+//   double *v6; // eax
+//   _DWORD *v7; // eax
+//   int *v8; // eax
+//   int *v9; // eax
+//   _DWORD *v10; // eax
+//   _DWORD *v11; // eax
+//   char *v12; // [esp-4h] [ebp-4h]
+//   struct tagSIZE *savedregs; // [esp+0h] [ebp+0h]
+// 
+//   v1 = (int *)sub_60A1BC();
+//   if ( sub_60E749(this: v1, FileName: "Data\\Npc.kpd") == 0 )
+//     return 0;
+//   v3 = (void *)sub_60AA90();
+//   if ( sub_60E492(this: v3, FileName: "Data\\Feast.kpd") == 0 )
+//     return 0;
+//   v4 = (int *)sub_6006CB();
+//   if ( sub_5FFBA4(this: v4, FileName: "Data\\Build.kpd") == 0 )
+//     return 0;
+//   sub_600225();
+//   if ( sub_610A12(FileName: "Data\\Level.kpd") == 0 )
+//     return 0;
+//   sub_612BB9();
+//   if ( sub_60E4D8() == 0 )
+//     return 0;
+//   v5 = (float *)sub_603ABA();
+//   if ( sub_60ECFD(this: v5, FileName: "Data\\Stock.kpd") == 0 )
+//     return 0;
+//   v6 = (double *)sub_60104E();
+//   if ( sub_60264C(this: v6, FileName: "Data\\Pawn.kpd") == 0 )
+//     return 0;
+//   v7 = (_DWORD *)sub_6015B7();
+//   if ( sub_60E375(this: v7, FileName: "Data\\MapView.kpd") == 0 )
+//     return 0;
+//   sub_6123F3();
+//   if ( sub_60FE0A(FileName: "Data\\PlusPrize.kpd") == 0 )
+//     return 0;
+//   GetWindowExtEx(hdc: (HDC)&hdc, lpsize: savedregs);
+//   if ( sub_6115ED(FileName: v12) == 0 )
+//     return 0;
+//   v8 = (int *)sub_60F3E2();
+//   if ( sub_609992(this: v8, FileName: "Data\\TeachMode.kpd") == 0 )
+//     return 0;
+//   v9 = (int *)sub_60E6D1();
+//   if ( sub_603AF6(this: v9, FileName: "Data\\Filter.kpd") == 0 )
+//     return 0;
+//   v10 = (_DWORD *)sub_60E6D1();
+//   if ( sub_608A79(this: v10, FileName: "Data\\FilterN.kpd") == 0 )
+//     return 0;
+//   v11 = (_DWORD *)sub_6082F9();
+//   if ( sub_60D655(this: v11, FileName: "Data\\FaceCtrl.kpd") == 0 )
+//     return 0;
+//   j___cfltcvt_init();
+//   j___cfltcvt_init_0();
+//   sub_604C3F();
+//   sub_601B7A();
+//   return 1;
+// }
+// 调用边：
+//   0x623ee8 -> 0x60a1bc -> 0x6287f0
+//   0x623eef -> 0x60e749 -> 0x7ed490
+//   0x623f04 -> 0x60aa90 -> 0x6288b0
+//   0x623f0b -> 0x60e492 -> 0x7d8be0
+//   0x623f20 -> 0x6006cb -> 0x628900
+//   0x623f27 -> 0x5ffba4 -> 0x7e8a90
+//   0x623f3c -> 0x600225 -> 0x6289c0
+//   0x623f43 -> 0x610a12 -> 0x7dbe50
+//   0x623f53 -> 0x612bb9 -> 0x628a80
+//   0x623f5a -> 0x60e4d8 -> 0x69c880
+//   0x623f6f -> 0x603aba -> 0x628b50
+//   0x623f76 -> 0x60ecfd -> 0x80dca0
+//   0x623f8b -> 0x60104e -> 0x628c10
+//   0x623f92 -> 0x60264c -> 0x7f1d70
+//   0x623fa7 -> 0x6015b7 -> 0x628c60
+//   0x623fae -> 0x60e375 -> 0x7e8eb0
+//   0x623fc3 -> 0x6123f3 -> 0x628d20
+//   0x623fca -> 0x60fe0a -> 0x7fde40
+//   0x623fdf -> 0x607471 -> 0x628d70
+//   0x623fe6 -> 0x6115ed -> 0x7fe190
+//   0x623ff8 -> 0x60f3e2 -> 0x628e30
+//   0x623fff -> 0x609992 -> 0x8103b0
+//   0x624011 -> 0x60e6d1 -> 0x628ef0
+//   0x624018 -> 0x603af6 -> 0x64c510
+//   0x62402a -> 0x60e6d1 -> 0x628ef0
+//   0x624031 -> 0x608a79 -> 0x64c770
+//   0x624043 -> 0x6082f9 -> 0x628fb0
+//   0x62404a -> 0x60d655 -> 0x64cec0
+//   0x624057 -> 0x611b4c -> 0x7ee330
+//   0x62405c -> 0x60c48a -> 0x802e00
+//   0x624061 -> 0x604c3f -> 0x627e70
+//   0x624068 -> 0x601b7a -> 0x641ee0
+//   0x624074 -> 0x60b576 -> 0x91f6d0
+//
+// 0x625070  sub_625070
+// ----------------------------------------------------------------------------
+// 声明块：0x625070..0x6252e0
+// int sub_625070()
+// {
+//   char *v0; // eax
+//   int v2[22]; // [esp+24h] [ebp-78h]
+//   int v3[4]; // [esp+88h] [ebp-14h] BYREF
+// 
+//   sub_60554A();
+//   sub_606305();
+//   sub_60E929();
+//   sub_61068E(a1: 1);
+//   sub_60837B();
+//   sub_601247(a1: 1);
+//   sub_609B95();
+//   sub_60054F();
+//   sub_609B95();
+//   sub_6030CE();
+//   sub_609B95();
+//   sub_602511();
+//   sub_609B95();
+//   sub_61297F();
+//   if ( dword_A76730 != 0 )
+//   {
+//     sub_6090FF(a1: 1);
+//     dword_A76730 = 0;
+//   }
+//   if ( dword_A7672C != 0 )
+//   {
+//     sub_60163E(a1: 1);
+//     dword_A7672C = 0;
+//   }
+//   sub_601553(a1: 0);
+//   sub_60837B();
+//   sub_5FFB04(a1: 68, a2: 0, a3: 0);
+//   v3[0] = 7;
+//   sub_60837B();
+//   sub_5FFB04(a1: 79, a2: 0, a3: 0);
+//   sub_610DB9();
+//   qmemcpy(v2, (const void *)(COleDocument::GetStartPosition() + 8), sizeof(v2));
+//   if ( SLOBYTE(v2[21]) >= 0
+//     && ((unsigned __int8)sub_6024AD(a1: v2[12]) != 0
+//      || (unsigned __int8)sub_606035(a1: v2[12]) != 0
+//      || (unsigned __int8)sub_61260F(a1: v2[12]) != 0 && v2[20] == CMFCColorPickerCtrl::GetCursorRect()) )
+//   {
+//     v0 = (char *)sub_600F36(a1: v2[12], a2: SLOBYTE(v2[21]));
+//     CBasePane::classCBasePane(Source: v0, a2: v2[21]);
+//   }
+//   sub_60837B();
+//   CMFCColorPickerCtrl::GetCursorPos(a1: 79, a2: (int)v3);
+//   sub_60837B();
+//   sub_5FFB04(a1: 76, a2: 0, a3: 0);
+//   sub_60837B();
+//   CMFCColorPickerCtrl::GetCursorPos(a1: 76, a2: 0);
+//   sub_60837B();
+//   sub_6006E4(a1: 76, a2: 0);
+//   sub_610DB9();
+//   sub_6123CB();
+//   CTypedSimpleList<COleControlLock *>::Remove(a1: 1);
+//   sub_5FFCCB();
+//   sub_60A063();
+//   return 1;
+// }
+// 调用边：
+//   0x625095 -> 0x60554a -> 0x627760
+//   0x62509c -> 0x606305 -> 0x6dc210
+//   0x6250a3 -> 0x60e929 -> 0x627a90
+//   0x6250aa -> 0x61068e -> 0x7a57f0
+//   0x6250b1 -> 0x60837b -> 0x6279c0
+//   0x6250b8 -> 0x601247 -> 0x6e3750
+//   0x6250bd -> 0x609b95 -> 0x6275e0
+//   0x6250c4 -> 0x60054f -> 0x69a620
+//   0x6250c9 -> 0x609b95 -> 0x6275e0
+//   0x6250d0 -> 0x6030ce -> 0x69a790
+//   0x6250d5 -> 0x609b95 -> 0x6275e0
+//   0x6250dc -> 0x602511 -> 0x69a9b0
+//   0x6250e1 -> 0x609b95 -> 0x6275e0
+//   0x6250e8 -> 0x61297f -> 0x69a6f0
+//   0x625115 -> 0x6090ff -> 0x629200
+//   0x625168 -> 0x60163e -> 0x629250
+//   0x62518b -> 0x601553 -> 0x629dc0
+//   0x625199 -> 0x60837b -> 0x6279c0
+//   0x6251a0 -> 0x5ffb04 -> 0x6e3b40
+//   0x6251b2 -> 0x60837b -> 0x6279c0
+//   0x6251b9 -> 0x5ffb04 -> 0x6e3b40
+//   0x6251be -> 0x610db9 -> 0x628270
+//   0x6251c9 -> 0x603060 -> 0x629e60
+//   0x6251e9 -> 0x6024ad -> 0x629dd0
+//   0x6251fc -> 0x606035 -> 0x629df0
+//   0x62520f -> 0x61260f -> 0x629e10
+//   0x625221 -> 0x6071bf -> 0x629e30
+//   0x62523b -> 0x600f36 -> 0x6aa530
+//   0x625244 -> 0x612d3f -> 0x6a6eb0
+//   0x62524f -> 0x60837b -> 0x6279c0
+//   0x625256 -> 0x605b76 -> 0x6e4640
+//   0x625261 -> 0x60837b -> 0x6279c0
+//   0x625268 -> 0x5ffb04 -> 0x6e3b40
+//   0x625271 -> 0x60837b -> 0x6279c0
+//   0x625278 -> 0x605b76 -> 0x6e4640
+//   0x625281 -> 0x60837b -> 0x6279c0
+//   0x625288 -> 0x6006e4 -> 0x6e46d0
+//   0x62528d -> 0x610db9 -> 0x628270
+//   0x625294 -> 0x6123cb -> 0x6a37e0
+//   0x62529b -> 0x60fb26 -> 0x629e90
+//   0x6252a3 -> 0x5ffccb -> 0x6278f0
+//   0x6252aa -> 0x60a063 -> 0x6bad20
+//   0x6252be -> 0x6127bd -> 0x91f700
+//   0x6252c8 -> 0x60849d -> 0x91fbb0
+//   0x6252d7 -> 0x60b576 -> 0x91f6d0
+//
+// 0x625d70  sub_625D70
+// ----------------------------------------------------------------------------
+// 声明块：0x625d70..0x625e9f
+// void sub_625D70()
+// {
+//   int v0; // [esp+Ch] [ebp-38h]
+//   _DWORD v1[6]; // [esp+18h] [ebp-2Ch] BYREF
+//   _DWORD v2[5]; // [esp+30h] [ebp-14h] BYREF
+// 
+//   if ( dword_A76694 != 0 )
+//   {
+//     v1[0] = 0x80000000;
+//     v1[1] = 0x80000000;
+//     v1[2] = 0x80000000;
+//     v1[3] = 0x80000000;
+//     v2[0] = 7;
+//     v2[1] = 150;
+//     v2[2] = 807;
+//     v2[3] = 180;
+//     sub_60554A();
+//     sub_605FF9(a1: (int)v2, a2: (int)v1);
+//     v0 = ((int)(814 - 6 * j__strlen(Str: MultiByteStr)) >> 1) + 7;
+//     sub_60527A(a1: v0, a2: 159, lpMultiByteStr: MultiByteStr, a4: -16711936);
+//     if ( GetTickCount() - dword_A76694 >= 0x546 )
+//       dword_A76694 = 0;
+//   }
+// }
+// 调用边：
+//   0x625df9 -> 0x60554a -> 0x627760
+//   0x625e00 -> 0x605ff9 -> 0x6dc7d0
+//   0x625e0a -> 0x61032d -> 0x91fb00
+//   0x625e50 -> 0x60527a -> 0x64d2e0
+//   0x625e5a -> 0xad3cbc -> 0xad3cbc
+//   0x625e62 -> 0x60b576 -> 0x91f6d0
+//   0x625e88 -> 0x6127bd -> 0x91f700
+//   0x625e96 -> 0x60b576 -> 0x91f6d0
+//
+// 0x641ee0  sub_641EE0
+// ----------------------------------------------------------------------------
+// 声明块：0x641ee0..0x6422c9, 0xa119a2..0xa119c2
+// int __thiscall sub_641EE0(const char *this)
+// {
+//   void *v1; // eax
+//   int v2; // eax
+//   int v3; // eax
+//   enum ATL::COleDateTime::DateTimeStatus v5; // [esp-8h] [ebp-21Ch]
+//   _BYTE v6[168]; // [esp+Ch] [ebp-208h] BYREF
+//   _BYTE v7[27]; // [esp+B4h] [ebp-160h] BYREF
+//   char v8; // [esp+CFh] [ebp-145h]
+//   char String[136]; // [esp+D4h] [ebp-140h] BYREF
+//   char Buffer[132]; // [esp+15Ch] [ebp-B8h] BYREF
+//   int n; // [esp+1E0h] [ebp-34h]
+//   int m; // [esp+1E4h] [ebp-30h]
+//   int v13; // [esp+1E8h] [ebp-2Ch]
+//   int ii; // [esp+1ECh] [ebp-28h]
+//   int k; // [esp+1F0h] [ebp-24h]
+//   int j; // [esp+1F4h] [ebp-20h]
+//   int i; // [esp+1F8h] [ebp-1Ch]
+//   int v18; // [esp+1FCh] [ebp-18h]
+//   const char *v19; // [esp+200h] [ebp-14h]
+//   int v20; // [esp+210h] [ebp-4h]
+// 
+//   v19 = this;
+//   sub_60E0B4();
+//   v18 = j_unknown_libname_341();
+//   j_unknown_libname_665(this: (CRect *)v7);
+//   v20 = 0;
+//   sub_608F8D(this: v6);
+//   LOBYTE(v20) = 1;
+//   for ( i = 0; i < *((_DWORD *)v19 + 32); ++i )
+//   {
+//     v8 = 0;
+//     for ( j = 0; j < 16; ++j )
+//     {
+//       if ( *(_DWORD *)(*((_DWORD *)v19 + 33) + 260 * i + 4 * j) != -1 )
+//       {
+//         for ( k = 0; k < v18; ++k )
+//         {
+//           j__sprintf(Buffer, Format: "%s%s_%02d.avt", v19, (const char *)(*((_DWORD *)v19 + 33) + 260 * i + 64), k);
+//           if ( sub_60FD9C(FileName: Buffer) != 0 )
+//           {
+//             sub_60518A(this: v7);
+//             v5 = j_unknown_libname_290(this: (ATL::COleDateTime *)v7);
+//             v1 = (void *)j_unknown_libname_291(this: v7);
+//             sub_60ACA7(a1: 2, Src: v1, a3: v5, a4: 0);
+//             v8 = 1;
+//             for ( m = 0; m < 4; ++m )
+//             {
+//               for ( n = 0; n < 26; ++n )
+//               {
+//                 sub_60D524(a1: 0, a2: 0);
+//                 j__sprintf(Buffer: String, Format: "DIR_%d_PIC_%d", m, n);
+//                 if ( sub_608335(Str2: String) != 0 )
+//                 {
+//                   sub_609528(Str2: "frame");
+//                   sub_60FDE2(a1: (int)String, a2: 128);
+//                   v13 = j__atoi(String);
+//                   for ( ii = 0; ii < v13; ++ii )
+//                   {
+//                     j__sprintf(Buffer: String, Format: "pos%d", ii);
+//                     sub_609528(Str2: String);
+//                     sub_612C1D(a1: 0, a2: (int)String, a3: 128, a4: 44);
+//                     v2 = j__atoi(String);
+//                     *(_DWORD *)(24 * n + 624 * m + 2496 * k + *(_DWORD *)(*((_DWORD *)v19 + 33) + 260 * i + 256) + 8 * ii) = v2;
+//                     sub_612C1D(a1: 1, a2: (int)String, a3: 128, a4: 44);
+//                     v3 = j__atoi(String);
+//                     *(_DWORD *)(24 * n
+//                               + 624 * m
+//                               + 2496 * k
+//                               + *(_DWORD *)(*((_DWORD *)v19 + 33) + 260 * i + 256)
+//                               + 8 * ii
+//                               + 4) = v3;
+//                   }
+//                 }
+//               }
+//             }
+//             sub_60B125();
+//             sub_607C3C(this: v6);
+//           }
+//         }
+//         if ( v8 != 0 )
+//           break;
+//       }
+//     }
+//     Sleep(dwMilliseconds: 1u);
+//   }
+//   LOBYTE(v20) = 0;
+//   sub_60BA26(this: v6);
+//   v20 = -1;
+//   return sub_602575(this: v7);
+// }
+// 调用边：
+//   0x641f1f -> 0x60e0b4 -> 0x6276a0
+//   0x641f26 -> 0x60e29e -> 0x646590
+//   0x641f34 -> 0x5ff9ab -> 0x81ad10
+//   0x641f46 -> 0x608f8d -> 0x8191d0
+//   0x641ffc -> 0x60361e -> 0x9206d0
+//   0x642011 -> 0x60fd9c -> 0x81b4c0
+//   0x642022 -> 0x60518a -> 0x81b7f0
+//   0x64202f -> 0x610dfa -> 0x627120
+//   0x64203b -> 0x610440 -> 0x627140
+//   0x642049 -> 0x60aca7 -> 0x819250
+//   0x642097 -> 0x60d524 -> 0x81a090
+//   0x6420b0 -> 0x60361e -> 0x9206d0
+//   0x6420c5 -> 0x608335 -> 0x819470
+//   0x6420db -> 0x609528 -> 0x819660
+//   0x6420f2 -> 0x60fde2 -> 0x8198e0
+//   0x6420fe -> 0x60c813 -> 0x91f950
+//   0x642137 -> 0x60361e -> 0x9206d0
+//   0x64214c -> 0x609528 -> 0x819660
+//   0x642167 -> 0x612c1d -> 0x819a20
+//   0x642173 -> 0x60c813 -> 0x91f950
+//   0x6421ce -> 0x612c1d -> 0x819a20
+//   0x6421da -> 0x60c813 -> 0x91f950
+//   0x642235 -> 0x60b125 -> 0x81ad80
+//   0x642240 -> 0x607c3c -> 0x8193f0
+//   0x642260 -> 0xad3cac -> 0xad3cac
+//   0x642268 -> 0x60b576 -> 0x91f6d0
+//   0x64227c -> 0x60ba26 -> 0x819220
+//   0x64228e -> 0x602575 -> 0x81ad50
+//   0x64229d -> 0x6127bd -> 0x91f700
+//   0x6422b1 -> 0x60849d -> 0x91fbb0
+//   0x6422c0 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6aa530  sub_6AA530
+// ----------------------------------------------------------------------------
+// 声明块：0x6aa530..0x6aa800
+// int __thiscall sub_6AA530(void *this, int a2, int a3)
+// {
+//   DWORD Time; // eax
+//   int v4; // esi
+//   int v6; // esi
+//   int v7; // esi
+//   int v8; // esi
+//   int v9; // esi
+//   int v10; // esi
+//   int v11; // esi
+//   int v12; // esi
+//   int v13; // esi
+//   int v14; // [esp+4h] [ebp-8h]
+//   int v15; // [esp+4h] [ebp-8h]
+//   int v16; // [esp+4h] [ebp-8h]
+//   int v17; // [esp+4h] [ebp-8h]
+//   int v18; // [esp+4h] [ebp-8h]
+//   int v19; // [esp+4h] [ebp-8h]
+//   int v20; // [esp+4h] [ebp-8h]
+//   int v21; // [esp+4h] [ebp-8h]
+//   int v22; // [esp+4h] [ebp-8h]
+// 
+//   Time = timeGetTime();
+//   j__srand(Seed: Time);
+//   if ( (unsigned __int8)sub_6024AD(a1: a2) != 0 )
+//   {
+//     switch ( a3 )
+//     {
+//       case 0:
+//         v4 = j__rand();
+//         v14 = v4 % sub_609906();
+//         return sub_6124D4(a1: v14, a2: (int)this + 1352);
+//       case 1:
+//         v6 = j__rand();
+//         v15 = v6 % sub_609906();
+//         return sub_6124D4(a1: v15, a2: (int)this + 1368);
+//       case 2:
+//         v7 = j__rand();
+//         v16 = v7 % sub_609906();
+//         return sub_6124D4(a1: v16, a2: (int)this + 1384);
+//       default:
+//         break;
+//     }
+//   }
+//   else if ( (unsigned __int8)sub_606035(a1: a2) != 0 )
+//   {
+//     switch ( a3 )
+//     {
+//       case 0:
+//         v8 = j__rand();
+//         v17 = v8 % sub_609906();
+//         return sub_6124D4(a1: v17, a2: (int)this + 1400);
+//       case 1:
+//         v9 = j__rand();
+//         v18 = v9 % sub_609906();
+//         return sub_6124D4(a1: v18, a2: (int)this + 1416);
+//       case 2:
+//         v10 = j__rand();
+//         v19 = v10 % sub_609906();
+//         return sub_6124D4(a1: v19, a2: (int)this + 1432);
+//       default:
+//         break;
+//     }
+//   }
+//   else if ( (unsigned __int8)sub_61260F(a1: a2) != 0 )
+//   {
+//     switch ( a3 )
+//     {
+//       case 0:
+//         v11 = j__rand();
+//         v20 = v11 % sub_609906();
+//         return sub_6124D4(a1: v20, a2: (int)this + 1448);
+//       case 1:
+//         v12 = j__rand();
+//         v21 = v12 % sub_609906();
+//         return sub_6124D4(a1: v21, a2: (int)this + 1464);
+//       case 2:
+//         v13 = j__rand();
+//         v22 = v13 % sub_609906();
+//         return sub_6124D4(a1: v22, a2: (int)this + 1480);
+//       default:
+//         break;
+//     }
+//   }
+//   return 0;
+// }
+// 调用边：
+//   0x6aa54a -> 0xad404c -> 0xad404c
+//   0x6aa552 -> 0x60b576 -> 0x91f6d0
+//   0x6aa558 -> 0x608763 -> 0x9208a0
+//   0x6aa56b -> 0x6024ad -> 0x629dd0
+//   0x6aa584 -> 0x60ae14 -> 0x9208c0
+//   0x6aa594 -> 0x609906 -> 0x6b8c50
+//   0x6aa5b4 -> 0x6124d4 -> 0x6aa450
+//   0x6aa5c4 -> 0x60ae14 -> 0x9208c0
+//   0x6aa5d4 -> 0x609906 -> 0x6b8c50
+//   0x6aa5f4 -> 0x6124d4 -> 0x6aa450
+//   0x6aa604 -> 0x60ae14 -> 0x9208c0
+//   0x6aa614 -> 0x609906 -> 0x6b8c50
+//   0x6aa634 -> 0x6124d4 -> 0x6aa450
+//   0x6aa647 -> 0x606035 -> 0x629df0
+//   0x6aa660 -> 0x60ae14 -> 0x9208c0
+//   0x6aa670 -> 0x609906 -> 0x6b8c50
+//   0x6aa690 -> 0x6124d4 -> 0x6aa450
+//   0x6aa6a0 -> 0x60ae14 -> 0x9208c0
+//   0x6aa6b0 -> 0x609906 -> 0x6b8c50
+//   0x6aa6d0 -> 0x6124d4 -> 0x6aa450
+//   0x6aa6e0 -> 0x60ae14 -> 0x9208c0
+//   0x6aa6f0 -> 0x609906 -> 0x6b8c50
+//   0x6aa710 -> 0x6124d4 -> 0x6aa450
+//   0x6aa723 -> 0x61260f -> 0x629e10
+//   0x6aa73c -> 0x60ae14 -> 0x9208c0
+//   0x6aa74c -> 0x609906 -> 0x6b8c50
+//   0x6aa76c -> 0x6124d4 -> 0x6aa450
+//   0x6aa779 -> 0x60ae14 -> 0x9208c0
+//   0x6aa789 -> 0x609906 -> 0x6b8c50
+//   0x6aa7a9 -> 0x6124d4 -> 0x6aa450
+//   0x6aa7b6 -> 0x60ae14 -> 0x9208c0
+//   0x6aa7c6 -> 0x609906 -> 0x6b8c50
+//   0x6aa7e6 -> 0x6124d4 -> 0x6aa450
+//   0x6aa7f5 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6ab5f0  sub_6AB5F0
+// ----------------------------------------------------------------------------
+// 声明块：0x6ab5f0..0x6ab6c7
+// int __thiscall sub_6AB5F0(int this, int a2)
+// {
+//   HINSTANCE v2; // eax
+//   char *CursorW; // eax
+//   char *v5; // [esp-4h] [ebp-Ch]
+//   const CMFCRibbonQuickAccessToolBarDefaultState *v6; // [esp+0h] [ebp-8h]
+//   LPCWSTR v7; // [esp+0h] [ebp-8h]
+// 
+//   sub_60837B();
+//   CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 73);
+//   sub_60837B();
+//   CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 64);
+//   sub_60837B();
+//   sub_5FFB04(a1: 70, a2: 0, a3: 0);
+//   sub_607345();
+//   sub_606EA4();
+//   sub_6119A3();
+//   CMFCRibbonQuickAccessToolBarDefaultState::CopyFrom((CMFCRibbonQuickAccessToolBarDefaultState *)this, a2: v6);
+//   sub_5FF140();
+//   sub_60E073();
+//   sub_6055C2();
+//   *(_DWORD *)(this + 2736) = 0;
+//   *(_BYTE *)(this + 2740) = 0;
+//   *(_DWORD *)(this + 2744) = GetTickCount();
+//   sub_60E262();
+//   v2 = (HINSTANCE)sub_60608F();
+//   CursorW = (char *)LoadCursorW(hInstance: v2, lpCursorName: v7);
+//   sub_606D50(Source: CursorW, Str: v5);
+//   sub_606A12();
+//   return sub_60AE3C();
+// }
+// 调用边：
+//   0x6ab601 -> 0x60837b -> 0x6279c0
+//   0x6ab608 -> 0x610076 -> 0x6e4020
+//   0x6ab60f -> 0x60837b -> 0x6279c0
+//   0x6ab616 -> 0x610076 -> 0x6e4020
+//   0x6ab621 -> 0x60837b -> 0x6279c0
+//   0x6ab628 -> 0x5ffb04 -> 0x6e3b40
+//   0x6ab630 -> 0x607345 -> 0x6a4a80
+//   0x6ab638 -> 0x606ea4 -> 0x6a2350
+//   0x6ab640 -> 0x6119a3 -> 0x6a9430
+//   0x6ab648 -> 0x5ff48d -> 0x6a2480
+//   0x6ab64d -> 0x5ff140 -> 0x6b8210
+//   0x6ab652 -> 0x60e073 -> 0x62a1d0
+//   0x6ab659 -> 0x6055c2 -> 0x64a430
+//   0x6ab677 -> 0xad3cbc -> 0xad3cbc
+//   0x6ab67f -> 0x60b576 -> 0x91f6d0
+//   0x6ab68d -> 0x60e262 -> 0x859a80
+//   0x6ab695 -> 0x60608f -> 0x6b81f0
+//   0x6ab69e -> 0x60a06d -> 0x6b81d0
+//   0x6ab6a4 -> 0x606d50 -> 0x85a1e0
+//   0x6ab6ac -> 0x606a12 -> 0x8cd890
+//   0x6ab6b1 -> 0x60ae3c -> 0x8bb180
+//   0x6ab6bc -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc110  sub_6BC110
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc110..0x6bc13f
+// void *__thiscall sub_6BC110(void *this)
+// {
+//   j__memset(a1: this, Val: 0, Size: 0x24u);
+//   return this;
+// }
+// 调用边：
+//   0x6bc126 -> 0x60ffdb -> 0x920bf0
+//   0x6bc136 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc140  sub_6BC140
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc140..0x6bc18d
+// void __thiscall sub_6BC140(void **this)
+// {
+//   if ( *(this + 8) != nullptr )
+//   {
+//     operator delete[](a1: *(this + 8));
+//     *(this + 8) = nullptr;
+//   }
+// }
+// 调用边：
+//   0x6bc16d -> 0x601cd3 -> 0x91f7e0
+//   0x6bc184 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc190  sub_6BC190
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc190..0x6bc1af
+// _DWORD *__thiscall sub_6BC190(_DWORD *this)
+// {
+//   *(this + 5) = 0;
+//   return this;
+// }
+// 调用边：
+//
+// 0x6bc1b0  sub_6BC1B0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc1b0..0x6bc216
+// int *__thiscall sub_6BC1B0(int *this)
+// {
+//   int *result; // eax
+// 
+//   result = this;
+//   if ( *(this + 5) != 0 )
+//   {
+//     result = (int *)*(this + 5);
+//     if ( result != nullptr )
+//       result = (int *)sub_5FF596(a1: 3);
+//     *(this + 5) = 0;
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bc1ed -> 0x5ff596 -> 0x6bdf90
+//   0x6bc20d -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc220  sub_6BC220
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc220..0x6bc391, 0xa123f0..0xa12405
+// _DWORD *__thiscall sub_6BC220(_DWORD *this, int a2, int a3, int a4, int a5, int a6, int a7, int a8)
+// {
+//   _DWORD *result; // eax
+//   _DWORD *v9; // [esp+0h] [ebp-28h]
+//   int *v10; // [esp+8h] [ebp-20h]
+//   int v11; // [esp+10h] [ebp-18h]
+//   int i; // [esp+14h] [ebp-14h]
+// 
+//   *this = a2;
+//   *(this + 1) = a3;
+//   *(this + 2) = 0;
+//   *(this + 3) = a4;
+//   *(this + 4) = a5;
+//   *(this + 6) = a6;
+//   *(this + 7) = a7;
+//   *(this + 8) = a8;
+//   v11 = *this;
+//   v10 = (int *)CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(Size: 36 * *this + 4);
+//   if ( v10 != nullptr )
+//   {
+//     *v10 = v11;
+//     `eh vector constructor iterator'(a1: v10 + 1, a2: 0x24u, a3: v11, a4: sub_605E6E, a5: sub_6076BF);
+//     v9 = v10 + 1;
+//   }
+//   else
+//   {
+//     v9 = nullptr;
+//   }
+//   *(this + 5) = v9;
+//   for ( i = 0; ; ++i )
+//   {
+//     result = this;
+//     if ( i >= *this )
+//       break;
+//     if ( (int)*(this + 3) > 0 )
+//       *(_DWORD *)(*(this + 5) + 36 * i + 32) = CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(Size: *(this + 3));
+//     sub_60548C(a1: *(this + 5) + 36 * i);
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bc2b2 -> 0x609997 -> 0x91bd80
+//   0x6bc2e9 -> 0x610e45 -> 0x920b20
+//   0x6bc342 -> 0x609997 -> 0x91bd80
+//   0x6bc36d -> 0x60548c -> 0x6be030
+//   0x6bc386 -> 0x60b576 -> 0x91f6d0
+//   0xa123f4 -> 0x601cd3 -> 0x91f7e0
+//
+// 0x6bc3a0  sub_6BC3A0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc3a0..0x6bc3cc
+// int sub_6BC3A0()
+// {
+//   sub_60B869();
+//   return sub_60D6F0();
+// }
+// 调用边：
+//   0x6bc3b1 -> 0x60b869 -> 0x6bc3d0
+//   0x6bc3b9 -> 0x60d6f0 -> 0x6bc560
+//   0x6bc3c3 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc3d0  sub_6BC3D0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc3d0..0x6bc55c
+// int __thiscall sub_6BC3D0(int this)
+// {
+//   int result; // eax
+//   int v2; // [esp+4h] [ebp-Ch]
+//   int j; // [esp+8h] [ebp-8h]
+//   int i; // [esp+8h] [ebp-8h]
+// 
+//   result = this;
+//   if ( *(_DWORD *)(this + 8) < *(_DWORD *)(this + 4) )
+//   {
+//     result = this;
+//     v2 = *(_DWORD *)(this + 16);
+//     if ( v2 != 0 )
+//     {
+//       if ( v2 == 1 )
+//       {
+//         for ( i = 0; ; ++i )
+//         {
+//           result = this;
+//           if ( i >= *(_DWORD *)(this + 4) )
+//             break;
+//           if ( (unsigned __int8)sub_609460(a1: *(_DWORD *)(this + 20) + 36 * i) == 0 )
+//           {
+//             (*(void (__cdecl **)(int))(this + 24))(a1: *(_DWORD *)(this + 20) + 36 * i);
+//             *(_DWORD *)(*(_DWORD *)(this + 20) + 36 * i + 28) = GetTickCount();
+//             ++*(_DWORD *)(this + 8);
+//           }
+//           result = this;
+//           if ( *(_DWORD *)(this + 8) == *(_DWORD *)(this + 4) )
+//             break;
+//         }
+//       }
+//     }
+//     else
+//     {
+//       for ( j = 0; ; ++j )
+//       {
+//         result = this;
+//         if ( j >= *(_DWORD *)(this + 4) )
+//           break;
+//         if ( (unsigned __int8)sub_609460(a1: *(_DWORD *)(this + 20) + 36 * j) == 0 )
+//         {
+//           (*(void (__cdecl **)(int))(this + 24))(a1: *(_DWORD *)(this + 20) + 36 * j);
+//           *(_DWORD *)(*(_DWORD *)(this + 20) + 36 * j + 28) = GetTickCount();
+//           result = *(_DWORD *)(this + 8) + 1;
+//           *(_DWORD *)(this + 8) = result;
+//           return result;
+//         }
+//       }
+//     }
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bc44a -> 0x609460 -> 0x6be050
+//   0x6bc473 -> 0x60b576 -> 0x91f6d0
+//   0x6bc47a -> 0xad3cbc -> 0xad3cbc
+//   0x6bc482 -> 0x60b576 -> 0x91f6d0
+//   0x6bc4dc -> 0x609460 -> 0x6be050
+//   0x6bc505 -> 0x60b576 -> 0x91f6d0
+//   0x6bc50c -> 0xad3cbc -> 0xad3cbc
+//   0x6bc514 -> 0x60b576 -> 0x91f6d0
+//   0x6bc553 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc560  sub_6BC560
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc560..0x6bc66b
+// int __thiscall sub_6BC560(int this)
+// {
+//   int result; // eax
+//   int i; // [esp+4h] [ebp-8h]
+// 
+//   result = this;
+//   if ( *(int *)(this + 8) > 0 )
+//   {
+//     for ( i = 0; ; ++i )
+//     {
+//       result = i;
+//       if ( i >= *(_DWORD *)(this + 4) )
+//         break;
+//       if ( (unsigned __int8)sub_609460(a1: *(_DWORD *)(this + 20) + 36 * i) != 0 )
+//       {
+//         (*(void (__cdecl **)(int))(this + 28))(a1: *(_DWORD *)(this + 20) + 36 * i);
+//         if ( (unsigned __int8)sub_609460(a1: *(_DWORD *)(this + 20) + 36 * i) == 0
+//           || GetTickCount() - *(_DWORD *)(*(_DWORD *)(this + 20) + 36 * i + 28) >= *(_DWORD *)(*(_DWORD *)(this + 20)
+//                                                                                              + 36 * i
+//                                                                                              + 24) )
+//         {
+//           sub_60548C(a1: *(_DWORD *)(this + 20) + 36 * i);
+//           --*(_DWORD *)(this + 8);
+//         }
+//       }
+//     }
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bc5b4 -> 0x609460 -> 0x6be050
+//   0x6bc5e1 -> 0x60b576 -> 0x91f6d0
+//   0x6bc5f3 -> 0x609460 -> 0x6be050
+//   0x6bc604 -> 0xad3cbc -> 0xad3cbc
+//   0x6bc60c -> 0x60b576 -> 0x91f6d0
+//   0x6bc640 -> 0x60548c -> 0x6be030
+//   0x6bc662 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc670  sub_6BC670
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc670..0x6bc6fc
+// int __thiscall sub_6BC670(int this)
+// {
+//   int result; // eax
+//   int i; // [esp+4h] [ebp-8h]
+// 
+//   result = this;
+//   if ( *(int *)(this + 8) > 0 )
+//   {
+//     for ( i = 0; ; ++i )
+//     {
+//       result = i;
+//       if ( i >= *(_DWORD *)(this + 4) )
+//         break;
+//       if ( (unsigned __int8)sub_609460(a1: *(_DWORD *)(this + 20) + 36 * i) != 0 )
+//         (*(void (__cdecl **)(int))(this + 32))(a1: *(_DWORD *)(this + 20) + 36 * i);
+//     }
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bc6bd -> 0x609460 -> 0x6be050
+//   0x6bc6e6 -> 0x60b576 -> 0x91f6d0
+//   0x6bc6f3 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc700  sub_6BC700
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc700..0x6bc768
+// int __thiscall sub_6BC700(int *this)
+// {
+//   *(this + 9) = 80;
+//   *(this + 10) = 50;
+//   *(this + 11) = 0;
+//   return sub_608E3E(
+//            a1: *(this + 9),
+//            a2: *(this + 10),
+//            a3: 0,
+//            a4: *(this + 11),
+//            a5: (int)sub_605EBE,
+//            a6: (int)sub_6104A9,
+//            a7: (int)sub_605423);
+// }
+// 调用边：
+//   0x6bc755 -> 0x608e3e -> 0x6bc220
+//   0x6bc75f -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc770  sub_6BC770
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc770..0x6bc79c
+// int sub_6BC770()
+// {
+//   sub_609A19();
+//   return sub_6094E2();
+// }
+// 调用边：
+//   0x6bc781 -> 0x609a19 -> 0x6bc3a0
+//   0x6bc789 -> 0x6094e2 -> 0x6bc670
+//   0x6bc793 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc7a0  sub_6BC7A0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc7a0..0x6bc856
+// int __cdecl sub_6BC7A0(int a1)
+// {
+//   int v1; // edx
+//   float v3; // [esp+0h] [ebp-14h]
+//   float v4; // [esp+8h] [ebp-Ch]
+// 
+//   *(float *)a1 = (float)(j__rand() % 621);
+//   *(_DWORD *)(a1 + 4) = 0;
+//   v4 = (float)(j__rand() % 7 - 3);
+//   *(float *)(a1 + 16) = v4 / 10.0;
+//   v3 = (float)(j__rand() % 10 + 1);
+//   *(float *)(a1 + 20) = v3 / 10.0;
+//   v1 = 1000 * (j__rand() % 10 + 2);
+//   *(_DWORD *)(a1 + 24) = v1;
+//   return a1;
+// }
+// 调用边：
+//   0x6bc7ba -> 0x60ae14 -> 0x9208c0
+//   0x6bc7dc -> 0x60ae14 -> 0x9208c0
+//   0x6bc804 -> 0x60ae14 -> 0x9208c0
+//   0x6bc82c -> 0x60ae14 -> 0x9208c0
+//   0x6bc84d -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc860  sub_6BC860
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc860..0x6bc8d1
+// void __cdecl sub_6BC860(float *a1)
+// {
+//   *a1 = *a1 + a1[4];
+//   a1[1] = a1[1] + a1[5];
+//   if ( *a1 < (double)flt_A673C0 || *a1 > (double)flt_A673BC || a1[1] > (double)flt_A673B8 )
+//     sub_60548C((int)a1);
+// }
+// 调用边：
+//   0x6bc8c0 -> 0x60548c -> 0x6be030
+//   0x6bc8ca -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc8e0  sub_6BC8E0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc8e0..0x6bc986, 0xa12405..0xa1241d
+// int __cdecl sub_6BC8E0(float *a1)
+// {
+//   int v2; // [esp-Ch] [ebp-18h]
+//   int v3; // [esp-8h] [ebp-14h]
+//   int v4; // [esp-4h] [ebp-10h]
+// 
+//   if ( (dword_A82498 & 1) == 0 )
+//   {
+//     dword_A82498 |= 1u;
+//     sub_60554A();
+//     dword_A82494 = sub_60F3B5(a1: 1, a2: 24, a3: -1, a4: -1);
+//   }
+//   v4 = (unsigned __int64)(a1[1] + 0.5);
+//   v3 = (unsigned __int64)(*a1 + 0.5);
+//   v2 = dword_A82494;
+//   sub_60554A();
+//   return sub_60C967(a1: v2, a2: v3, a3: v4);
+// }
+// 调用边：
+//   0x6bc920 -> 0x60554a -> 0x627760
+//   0x6bc927 -> 0x60f3b5 -> 0x6dba40
+//   0x6bc944 -> 0x60c4c6 -> 0x922798
+//   0x6bc955 -> 0x60c4c6 -> 0x922798
+//   0x6bc962 -> 0x60554a -> 0x627760
+//   0x6bc969 -> 0x60c967 -> 0x6dc470
+//   0x6bc97d -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bc990  sub_6BC990
+// ----------------------------------------------------------------------------
+// 声明块：0x6bc990..0x6bc9f8
+// int __thiscall sub_6BC990(int *this)
+// {
+//   *(this + 9) = 5;
+//   *(this + 10) = 5;
+//   *(this + 11) = 0;
+//   return sub_608E3E(
+//            a1: *(this + 9),
+//            a2: *(this + 10),
+//            a3: 4,
+//            a4: *(this + 11),
+//            a5: (int)sub_60D8A3,
+//            a6: (int)sub_60BB4D,
+//            a7: (int)sub_60C1B5);
+// }
+// 调用边：
+//   0x6bc9e5 -> 0x608e3e -> 0x6bc220
+//   0x6bc9ef -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bca00  sub_6BCA00
+// ----------------------------------------------------------------------------
+// 声明块：0x6bca00..0x6bca2c
+// int sub_6BCA00()
+// {
+//   sub_609A19();
+//   return sub_6094E2();
+// }
+// 调用边：
+//   0x6bca11 -> 0x609a19 -> 0x6bc3a0
+//   0x6bca19 -> 0x6094e2 -> 0x6bc670
+//   0x6bca23 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bca30  sub_6BCA30
+// ----------------------------------------------------------------------------
+// 声明块：0x6bca30..0x6bcb28
+// DWORD __cdecl sub_6BCA30(int a1)
+// {
+//   DWORD result; // eax
+//   int v2; // [esp-Ch] [ebp-1Ch]
+//   float v3; // [esp+4h] [ebp-Ch]
+//   int *v4; // [esp+Ch] [ebp-4h]
+// 
+//   v4 = *(int **)(a1 + 32);
+//   v2 = j__rand() % 2 + 352;
+//   sub_60554A();
+//   *v4 = sub_60F3B5(a1: 1, a2: v2, a3: -1, a4: -1);
+//   *(_DWORD *)a1 = -1034158080;
+//   *(_DWORD *)(a1 + 4) = 1130430464;
+//   v3 = (float)(j__rand() % 5 + 5);
+//   *(float *)(a1 + 16) = v3 / 10.0;
+//   *(_DWORD *)(a1 + 20) = 0;
+//   result = GetTickCount() - dword_A8249C;
+//   if ( result <= 0x1F40 )
+//   {
+//     *(_DWORD *)(a1 + 24) = 1;
+//   }
+//   else
+//   {
+//     *(_DWORD *)(a1 + 24) = GetTickCount();
+//     result = GetTickCount();
+//     dword_A8249C = result;
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bca59 -> 0x60ae14 -> 0x9208c0
+//   0x6bca72 -> 0x60554a -> 0x627760
+//   0x6bca79 -> 0x60f3b5 -> 0x6dba40
+//   0x6bca96 -> 0x60ae14 -> 0x9208c0
+//   0x6bcaca -> 0xad3cbc -> 0xad3cbc
+//   0x6bcad2 -> 0x60b576 -> 0x91f6d0
+//   0x6bcae6 -> 0xad3cbc -> 0xad3cbc
+//   0x6bcaee -> 0x60b576 -> 0x91f6d0
+//   0x6bcafb -> 0xad3cbc -> 0xad3cbc
+//   0x6bcb03 -> 0x60b576 -> 0x91f6d0
+//   0x6bcb1f -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bcb30  sub_6BCB30
+// ----------------------------------------------------------------------------
+// 声明块：0x6bcb30..0x6bcb99
+// float *__cdecl sub_6BCB30(float *a1)
+// {
+//   float v2; // [esp+0h] [ebp-8h]
+// 
+//   sub_60B841();
+//   sub_6037AE();
+//   v2 = (float)sub_60B044();
+//   if ( *a1 >= (double)v2 )
+//     sub_60548C((int)a1);
+//   *a1 = *a1 + a1[4];
+//   return a1;
+// }
+// 调用边：
+//   0x6bcb44 -> 0x60b841 -> 0x629c90
+//   0x6bcb4b -> 0x6037ae -> 0x63e210
+//   0x6bcb52 -> 0x60b044 -> 0x6919f0
+//   0x6bcb73 -> 0x60548c -> 0x6be030
+//   0x6bcb90 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bcba0  sub_6BCBA0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bcba0..0x6bcc44
+// int __cdecl sub_6BCBA0(int a1)
+// {
+//   int v2; // [esp-Ch] [ebp-24h]
+//   int v3; // [esp-8h] [ebp-20h]
+//   int v4; // [esp-4h] [ebp-1Ch]
+//   float v5; // [esp+0h] [ebp-18h]
+//   float v6; // [esp+8h] [ebp-10h]
+//   __int16 *v7; // [esp+10h] [ebp-8h]
+//   int *v8; // [esp+14h] [ebp-4h]
+// 
+//   v8 = *(int **)(a1 + 32);
+//   sub_60B841();
+//   sub_606535();
+//   v7 = (__int16 *)j_unknown_libname_325();
+//   v6 = (float)v7[1];
+//   v4 = (unsigned __int64)(*(float *)(a1 + 4) - v6 + 0.5);
+//   v5 = (float)*v7;
+//   v3 = (unsigned __int64)(*(float *)a1 - v5 + 0.5);
+//   v2 = *v8;
+//   sub_60554A();
+//   return sub_60C967(a1: v2, a2: v3, a3: v4);
+// }
+// 调用边：
+//   0x6bcbc6 -> 0x60b841 -> 0x629c90
+//   0x6bcbcd -> 0x606535 -> 0x63e0e0
+//   0x6bcbd4 -> 0x60be81 -> 0x63e000
+//   0x6bcbfb -> 0x60c4c6 -> 0x922798
+//   0x6bcc1e -> 0x60c4c6 -> 0x922798
+//   0x6bcc2a -> 0x60554a -> 0x627760
+//   0x6bcc31 -> 0x60c967 -> 0x6dc470
+//   0x6bcc3b -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bcc50  sub_6BCC50
+// ----------------------------------------------------------------------------
+// 声明块：0x6bcc50..0x6bccb8
+// int __thiscall sub_6BCC50(int *this)
+// {
+//   *(this + 9) = 3;
+//   *(this + 10) = 3;
+//   *(this + 11) = 0;
+//   return sub_608E3E(
+//            a1: *(this + 9),
+//            a2: *(this + 10),
+//            a3: 8,
+//            a4: *(this + 11),
+//            a5: (int)sub_60F266,
+//            a6: (int)sub_601D7D,
+//            a7: (int)sub_60CB01);
+// }
+// 调用边：
+//   0x6bcca5 -> 0x608e3e -> 0x6bc220
+//   0x6bccaf -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bccc0  sub_6BCCC0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bccc0..0x6bccec
+// int sub_6BCCC0()
+// {
+//   sub_609A19();
+//   return sub_6094E2();
+// }
+// 调用边：
+//   0x6bccd1 -> 0x609a19 -> 0x6bc3a0
+//   0x6bccd9 -> 0x6094e2 -> 0x6bc670
+//   0x6bcce3 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bccf0  sub_6BCCF0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bccf0..0x6bce5b
+// DWORD __cdecl sub_6BCCF0(int a1)
+// {
+//   DWORD result; // eax
+//   int v2; // [esp-Ch] [ebp-30h]
+//   int v3; // [esp-4h] [ebp-28h]
+//   int v4; // [esp-4h] [ebp-28h]
+//   float v5; // [esp+4h] [ebp-20h]
+//   int v6; // [esp+14h] [ebp-10h]
+//   int v7; // [esp+18h] [ebp-Ch]
+//   int v8; // [esp+1Ch] [ebp-8h]
+//   int v9; // [esp+20h] [ebp-4h]
+// 
+//   v9 = *(_DWORD *)(a1 + 32);
+//   sub_60B841();
+//   sub_6037AE();
+//   v8 = sub_60B044();
+//   sub_60B841();
+//   sub_6037AE();
+//   v7 = sub_60BF9E();
+//   v2 = j__rand() % 3 + 394;
+//   sub_60554A();
+//   *(_DWORD *)v9 = sub_60F3B5(a1: 1, a2: v2, a3: -1, a4: -1);
+//   v3 = *(_DWORD *)v9;
+//   sub_60554A();
+//   *(float *)(v9 + 4) = (float)sub_60C372(a1: v3);
+//   v4 = *(_DWORD *)v9;
+//   sub_60554A();
+//   v6 = sub_608623(a1: v4);
+//   *(float *)a1 = (float)v8;
+//   *(float *)(a1 + 4) = (float)(j__rand() % (v7 - v6));
+//   v5 = (float)(j__rand() % 6 + 2);
+//   *(float *)(a1 + 16) = v5 / 10.0;
+//   *(_DWORD *)(a1 + 20) = 0;
+//   result = GetTickCount() - dword_A824A0;
+//   if ( result <= 0x1F40 )
+//   {
+//     *(_DWORD *)(a1 + 24) = 1;
+//   }
+//   else
+//   {
+//     *(_DWORD *)(a1 + 24) = GetTickCount();
+//     result = GetTickCount();
+//     dword_A824A0 = result;
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bcd1d -> 0x60b841 -> 0x629c90
+//   0x6bcd24 -> 0x6037ae -> 0x63e210
+//   0x6bcd2b -> 0x60b044 -> 0x6919f0
+//   0x6bcd33 -> 0x60b841 -> 0x629c90
+//   0x6bcd3a -> 0x6037ae -> 0x63e210
+//   0x6bcd41 -> 0x60bf9e -> 0x691a20
+//   0x6bcd4d -> 0x60ae14 -> 0x9208c0
+//   0x6bcd63 -> 0x60554a -> 0x627760
+//   0x6bcd6a -> 0x60f3b5 -> 0x6dba40
+//   0x6bcd7a -> 0x60554a -> 0x627760
+//   0x6bcd81 -> 0x60c372 -> 0x6dc9e0
+//   0x6bcd98 -> 0x60554a -> 0x627760
+//   0x6bcd9f -> 0x608623 -> 0x6dca50
+//   0x6bcdaf -> 0x60ae14 -> 0x9208c0
+//   0x6bcdc9 -> 0x60ae14 -> 0x9208c0
+//   0x6bcdfd -> 0xad3cbc -> 0xad3cbc
+//   0x6bce05 -> 0x60b576 -> 0x91f6d0
+//   0x6bce19 -> 0xad3cbc -> 0xad3cbc
+//   0x6bce21 -> 0x60b576 -> 0x91f6d0
+//   0x6bce2e -> 0xad3cbc -> 0xad3cbc
+//   0x6bce36 -> 0x60b576 -> 0x91f6d0
+//   0x6bce52 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bce60  sub_6BCE60
+// ----------------------------------------------------------------------------
+// 声明块：0x6bce60..0x6bceb2
+// int __cdecl sub_6BCE60(int a1)
+// {
+//   if ( -*(float *)(*(_DWORD *)(a1 + 32) + 4) > *(float *)a1 )
+//     sub_60548C(a1);
+//   *(float *)a1 = *(float *)a1 - *(float *)(a1 + 16);
+//   return a1;
+// }
+// 调用边：
+//   0x6bce8c -> 0x60548c -> 0x6be030
+//   0x6bcea9 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bcec0  sub_6BCEC0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bcec0..0x6bcf64
+// int __cdecl sub_6BCEC0(int a1)
+// {
+//   int v2; // [esp-Ch] [ebp-24h]
+//   int v3; // [esp-8h] [ebp-20h]
+//   int v4; // [esp-4h] [ebp-1Ch]
+//   float v5; // [esp+0h] [ebp-18h]
+//   float v6; // [esp+8h] [ebp-10h]
+//   __int16 *v7; // [esp+10h] [ebp-8h]
+//   int *v8; // [esp+14h] [ebp-4h]
+// 
+//   v8 = *(int **)(a1 + 32);
+//   sub_60B841();
+//   sub_606535();
+//   v7 = (__int16 *)j_unknown_libname_325();
+//   v6 = (float)v7[1];
+//   v4 = (unsigned __int64)(*(float *)(a1 + 4) - v6 + 0.5);
+//   v5 = (float)*v7;
+//   v3 = (unsigned __int64)(*(float *)a1 - v5 + 0.5);
+//   v2 = *v8;
+//   sub_60554A();
+//   return sub_60C967(a1: v2, a2: v3, a3: v4);
+// }
+// 调用边：
+//   0x6bcee6 -> 0x60b841 -> 0x629c90
+//   0x6bceed -> 0x606535 -> 0x63e0e0
+//   0x6bcef4 -> 0x60be81 -> 0x63e000
+//   0x6bcf1b -> 0x60c4c6 -> 0x922798
+//   0x6bcf3e -> 0x60c4c6 -> 0x922798
+//   0x6bcf4a -> 0x60554a -> 0x627760
+//   0x6bcf51 -> 0x60c967 -> 0x6dc470
+//   0x6bcf5b -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bcf70  sub_6BCF70
+// ----------------------------------------------------------------------------
+// 声明块：0x6bcf70..0x6bcfd8
+// int __thiscall sub_6BCF70(int *this)
+// {
+//   *(this + 9) = 3;
+//   *(this + 10) = 3;
+//   *(this + 11) = 0;
+//   return sub_608E3E(
+//            a1: *(this + 9),
+//            a2: *(this + 10),
+//            a3: 4,
+//            a4: *(this + 11),
+//            a5: (int)sub_610CEC,
+//            a6: (int)sub_6098A7,
+//            a7: (int)sub_601D78);
+// }
+// 调用边：
+//   0x6bcfc5 -> 0x608e3e -> 0x6bc220
+//   0x6bcfcf -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bcfe0  sub_6BCFE0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bcfe0..0x6bd00c
+// int sub_6BCFE0()
+// {
+//   sub_609A19();
+//   return sub_6094E2();
+// }
+// 调用边：
+//   0x6bcff1 -> 0x609a19 -> 0x6bc3a0
+//   0x6bcff9 -> 0x6094e2 -> 0x6bc670
+//   0x6bd003 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd010  sub_6BD010
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd010..0x6bd108
+// DWORD __cdecl sub_6BD010(int a1)
+// {
+//   DWORD result; // eax
+//   int v2; // [esp-Ch] [ebp-1Ch]
+//   float v3; // [esp+4h] [ebp-Ch]
+//   int *v4; // [esp+Ch] [ebp-4h]
+// 
+//   v4 = *(int **)(a1 + 32);
+//   v2 = j__rand() % 2 + 352;
+//   sub_60554A();
+//   *v4 = sub_60F3B5(a1: 1, a2: v2, a3: -1, a4: -1);
+//   *(_DWORD *)a1 = -1034158080;
+//   *(_DWORD *)(a1 + 4) = 1128267776;
+//   v3 = (float)(j__rand() % 5 + 5);
+//   *(float *)(a1 + 16) = v3 / 10.0;
+//   *(_DWORD *)(a1 + 20) = 0;
+//   result = GetTickCount() - dword_A824A4;
+//   if ( result <= 0x1388 )
+//   {
+//     *(_DWORD *)(a1 + 24) = 1;
+//   }
+//   else
+//   {
+//     *(_DWORD *)(a1 + 24) = GetTickCount();
+//     result = GetTickCount();
+//     dword_A824A4 = result;
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bd039 -> 0x60ae14 -> 0x9208c0
+//   0x6bd052 -> 0x60554a -> 0x627760
+//   0x6bd059 -> 0x60f3b5 -> 0x6dba40
+//   0x6bd076 -> 0x60ae14 -> 0x9208c0
+//   0x6bd0aa -> 0xad3cbc -> 0xad3cbc
+//   0x6bd0b2 -> 0x60b576 -> 0x91f6d0
+//   0x6bd0c6 -> 0xad3cbc -> 0xad3cbc
+//   0x6bd0ce -> 0x60b576 -> 0x91f6d0
+//   0x6bd0db -> 0xad3cbc -> 0xad3cbc
+//   0x6bd0e3 -> 0x60b576 -> 0x91f6d0
+//   0x6bd0ff -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd110  sub_6BD110
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd110..0x6bd179
+// float *__cdecl sub_6BD110(float *a1)
+// {
+//   float v2; // [esp+0h] [ebp-8h]
+// 
+//   sub_60B841();
+//   sub_6037AE();
+//   v2 = (float)sub_60B044();
+//   if ( *a1 >= (double)v2 )
+//     sub_60548C((int)a1);
+//   *a1 = *a1 + a1[4];
+//   return a1;
+// }
+// 调用边：
+//   0x6bd124 -> 0x60b841 -> 0x629c90
+//   0x6bd12b -> 0x6037ae -> 0x63e210
+//   0x6bd132 -> 0x60b044 -> 0x6919f0
+//   0x6bd153 -> 0x60548c -> 0x6be030
+//   0x6bd170 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd180  sub_6BD180
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd180..0x6bd224
+// int __cdecl sub_6BD180(int a1)
+// {
+//   int v2; // [esp-Ch] [ebp-24h]
+//   int v3; // [esp-8h] [ebp-20h]
+//   int v4; // [esp-4h] [ebp-1Ch]
+//   float v5; // [esp+0h] [ebp-18h]
+//   float v6; // [esp+8h] [ebp-10h]
+//   __int16 *v7; // [esp+10h] [ebp-8h]
+//   int *v8; // [esp+14h] [ebp-4h]
+// 
+//   v8 = *(int **)(a1 + 32);
+//   sub_60B841();
+//   sub_606535();
+//   v7 = (__int16 *)j_unknown_libname_325();
+//   v6 = (float)v7[1];
+//   v4 = (unsigned __int64)(*(float *)(a1 + 4) - v6 + 0.5);
+//   v5 = (float)*v7;
+//   v3 = (unsigned __int64)(*(float *)a1 - v5 + 0.5);
+//   v2 = *v8;
+//   sub_60554A();
+//   return sub_60C967(a1: v2, a2: v3, a3: v4);
+// }
+// 调用边：
+//   0x6bd1a6 -> 0x60b841 -> 0x629c90
+//   0x6bd1ad -> 0x606535 -> 0x63e0e0
+//   0x6bd1b4 -> 0x60be81 -> 0x63e000
+//   0x6bd1db -> 0x60c4c6 -> 0x922798
+//   0x6bd1fe -> 0x60c4c6 -> 0x922798
+//   0x6bd20a -> 0x60554a -> 0x627760
+//   0x6bd211 -> 0x60c967 -> 0x6dc470
+//   0x6bd21b -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd230  sub_6BD230
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd230..0x6bd298
+// int __thiscall sub_6BD230(int *this)
+// {
+//   *(this + 9) = 3;
+//   *(this + 10) = 3;
+//   *(this + 11) = 0;
+//   return sub_608E3E(
+//            a1: *(this + 9),
+//            a2: *(this + 10),
+//            a3: 8,
+//            a4: *(this + 11),
+//            a5: (int)sub_602DE0,
+//            a6: (int)sub_6003C9,
+//            a7: (int)sub_5FF91F);
+// }
+// 调用边：
+//   0x6bd285 -> 0x608e3e -> 0x6bc220
+//   0x6bd28f -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd2a0  sub_6BD2A0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd2a0..0x6bd2cc
+// int sub_6BD2A0()
+// {
+//   sub_609A19();
+//   return sub_6094E2();
+// }
+// 调用边：
+//   0x6bd2b1 -> 0x609a19 -> 0x6bc3a0
+//   0x6bd2b9 -> 0x6094e2 -> 0x6bc670
+//   0x6bd2c3 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd2d0  sub_6BD2D0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd2d0..0x6bd43b
+// DWORD __cdecl sub_6BD2D0(int a1)
+// {
+//   DWORD result; // eax
+//   int v2; // [esp-Ch] [ebp-30h]
+//   int v3; // [esp-4h] [ebp-28h]
+//   int v4; // [esp-4h] [ebp-28h]
+//   float v5; // [esp+4h] [ebp-20h]
+//   int v6; // [esp+14h] [ebp-10h]
+//   int v7; // [esp+18h] [ebp-Ch]
+//   int v8; // [esp+1Ch] [ebp-8h]
+//   int v9; // [esp+20h] [ebp-4h]
+// 
+//   v9 = *(_DWORD *)(a1 + 32);
+//   sub_60B841();
+//   sub_6037AE();
+//   v8 = sub_60B044();
+//   sub_60B841();
+//   sub_6037AE();
+//   v7 = sub_60BF9E();
+//   v2 = j__rand() % 3 + 503;
+//   sub_60554A();
+//   *(_DWORD *)v9 = sub_60F3B5(a1: 1, a2: v2, a3: -1, a4: -1);
+//   v3 = *(_DWORD *)v9;
+//   sub_60554A();
+//   *(float *)(v9 + 4) = (float)sub_60C372(a1: v3);
+//   v4 = *(_DWORD *)v9;
+//   sub_60554A();
+//   v6 = sub_608623(a1: v4);
+//   *(float *)a1 = (float)v8;
+//   *(float *)(a1 + 4) = (float)(j__rand() % (v7 - v6));
+//   v5 = (float)(j__rand() % 6 + 2);
+//   *(float *)(a1 + 16) = v5 / 10.0;
+//   *(_DWORD *)(a1 + 20) = 0;
+//   result = GetTickCount() - dword_A824A8;
+//   if ( result <= 0x1388 )
+//   {
+//     *(_DWORD *)(a1 + 24) = 1;
+//   }
+//   else
+//   {
+//     *(_DWORD *)(a1 + 24) = GetTickCount();
+//     result = GetTickCount();
+//     dword_A824A8 = result;
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bd2fd -> 0x60b841 -> 0x629c90
+//   0x6bd304 -> 0x6037ae -> 0x63e210
+//   0x6bd30b -> 0x60b044 -> 0x6919f0
+//   0x6bd313 -> 0x60b841 -> 0x629c90
+//   0x6bd31a -> 0x6037ae -> 0x63e210
+//   0x6bd321 -> 0x60bf9e -> 0x691a20
+//   0x6bd32d -> 0x60ae14 -> 0x9208c0
+//   0x6bd343 -> 0x60554a -> 0x627760
+//   0x6bd34a -> 0x60f3b5 -> 0x6dba40
+//   0x6bd35a -> 0x60554a -> 0x627760
+//   0x6bd361 -> 0x60c372 -> 0x6dc9e0
+//   0x6bd378 -> 0x60554a -> 0x627760
+//   0x6bd37f -> 0x608623 -> 0x6dca50
+//   0x6bd38f -> 0x60ae14 -> 0x9208c0
+//   0x6bd3a9 -> 0x60ae14 -> 0x9208c0
+//   0x6bd3dd -> 0xad3cbc -> 0xad3cbc
+//   0x6bd3e5 -> 0x60b576 -> 0x91f6d0
+//   0x6bd3f9 -> 0xad3cbc -> 0xad3cbc
+//   0x6bd401 -> 0x60b576 -> 0x91f6d0
+//   0x6bd40e -> 0xad3cbc -> 0xad3cbc
+//   0x6bd416 -> 0x60b576 -> 0x91f6d0
+//   0x6bd432 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd440  sub_6BD440
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd440..0x6bd492
+// int __cdecl sub_6BD440(int a1)
+// {
+//   if ( -*(float *)(*(_DWORD *)(a1 + 32) + 4) > *(float *)a1 )
+//     sub_60548C(a1);
+//   *(float *)a1 = *(float *)a1 - *(float *)(a1 + 16);
+//   return a1;
+// }
+// 调用边：
+//   0x6bd46c -> 0x60548c -> 0x6be030
+//   0x6bd489 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd4a0  sub_6BD4A0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd4a0..0x6bd544
+// int __cdecl sub_6BD4A0(int a1)
+// {
+//   int v2; // [esp-Ch] [ebp-24h]
+//   int v3; // [esp-8h] [ebp-20h]
+//   int v4; // [esp-4h] [ebp-1Ch]
+//   float v5; // [esp+0h] [ebp-18h]
+//   float v6; // [esp+8h] [ebp-10h]
+//   __int16 *v7; // [esp+10h] [ebp-8h]
+//   int *v8; // [esp+14h] [ebp-4h]
+// 
+//   v8 = *(int **)(a1 + 32);
+//   sub_60B841();
+//   sub_606535();
+//   v7 = (__int16 *)j_unknown_libname_325();
+//   v6 = (float)v7[1];
+//   v4 = (unsigned __int64)(*(float *)(a1 + 4) - v6 + 0.5);
+//   v5 = (float)*v7;
+//   v3 = (unsigned __int64)(*(float *)a1 - v5 + 0.5);
+//   v2 = *v8;
+//   sub_60554A();
+//   return sub_60C967(a1: v2, a2: v3, a3: v4);
+// }
+// 调用边：
+//   0x6bd4c6 -> 0x60b841 -> 0x629c90
+//   0x6bd4cd -> 0x606535 -> 0x63e0e0
+//   0x6bd4d4 -> 0x60be81 -> 0x63e000
+//   0x6bd4fb -> 0x60c4c6 -> 0x922798
+//   0x6bd51e -> 0x60c4c6 -> 0x922798
+//   0x6bd52a -> 0x60554a -> 0x627760
+//   0x6bd531 -> 0x60c967 -> 0x6dc470
+//   0x6bd53b -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd550  sub_6BD550
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd550..0x6bd5b8
+// int __thiscall sub_6BD550(int *this)
+// {
+//   *(this + 9) = 5;
+//   *(this + 10) = 5;
+//   *(this + 11) = 0;
+//   return sub_608E3E(
+//            a1: *(this + 9),
+//            a2: *(this + 10),
+//            a3: 0,
+//            a4: *(this + 11),
+//            a5: (int)sub_61231C,
+//            a6: (int)sub_605F3B,
+//            a7: (int)sub_601332);
+// }
+// 调用边：
+//   0x6bd5a5 -> 0x608e3e -> 0x6bc220
+//   0x6bd5af -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd5c0  sub_6BD5C0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd5c0..0x6bd5ec
+// int sub_6BD5C0()
+// {
+//   sub_609A19();
+//   return sub_6094E2();
+// }
+// 调用边：
+//   0x6bd5d1 -> 0x609a19 -> 0x6bc3a0
+//   0x6bd5d9 -> 0x6094e2 -> 0x6bc670
+//   0x6bd5e3 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd5f0  sub_6BD5F0
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd5f0..0x6bd780, 0xa1241d..0xa12443
+// DWORD __cdecl sub_6BD5F0(int a1)
+// {
+//   DWORD result; // eax
+//   int v2; // [esp-4h] [ebp-24h]
+//   int v3; // [esp+Ch] [ebp-14h]
+//   int v4; // [esp+10h] [ebp-10h]
+// 
+//   if ( (dword_A824B8 & 1) == 0 )
+//   {
+//     dword_A824B8 |= 1u;
+//     sub_60554A();
+//     dword_A824B4 = sub_60F3B5(a1: 1, a2: 1655, a3: -1, a4: -1);
+//   }
+//   if ( (dword_A824B8 & 2) == 0 )
+//   {
+//     dword_A824B8 |= 2u;
+//     v2 = dword_A824B4;
+//     sub_60554A();
+//     dword_A824B0 = sub_60C372(a1: v2);
+//   }
+//   sub_60B841();
+//   sub_6037AE();
+//   v4 = sub_60B044();
+//   sub_60B841();
+//   sub_6037AE();
+//   v3 = sub_60BF9E();
+//   *(float *)a1 = (float)(j__rand() % (v4 - dword_A824B0));
+//   *(float *)(a1 + 4) = (float)(v3 + j__rand() % 100);
+//   *(_DWORD *)(a1 + 16) = 0;
+//   *(_DWORD *)(a1 + 20) = 1094713344;
+//   if ( GetTickCount() - dword_A824AC <= 0x3E8 )
+//   {
+//     *(_DWORD *)(a1 + 24) = 1;
+//     return a1;
+//   }
+//   else
+//   {
+//     *(_DWORD *)(a1 + 24) = GetTickCount();
+//     result = GetTickCount();
+//     dword_A824AC = result;
+//   }
+//   return result;
+// }
+// 调用边：
+//   0x6bd648 -> 0x60554a -> 0x627760
+//   0x6bd64f -> 0x60f3b5 -> 0x6dba40
+//   0x6bd686 -> 0x60554a -> 0x627760
+//   0x6bd68d -> 0x60c372 -> 0x6dc9e0
+//   0x6bd69e -> 0x60b841 -> 0x629c90
+//   0x6bd6a5 -> 0x6037ae -> 0x63e210
+//   0x6bd6ac -> 0x60b044 -> 0x6919f0
+//   0x6bd6b4 -> 0x60b841 -> 0x629c90
+//   0x6bd6bb -> 0x6037ae -> 0x63e210
+//   0x6bd6c2 -> 0x60bf9e -> 0x691a20
+//   0x6bd6ca -> 0x60ae14 -> 0x9208c0
+//   0x6bd6e6 -> 0x60ae14 -> 0x9208c0
+//   0x6bd718 -> 0xad3cbc -> 0xad3cbc
+//   0x6bd720 -> 0x60b576 -> 0x91f6d0
+//   0x6bd734 -> 0xad3cbc -> 0xad3cbc
+//   0x6bd73c -> 0x60b576 -> 0x91f6d0
+//   0x6bd749 -> 0xad3cbc -> 0xad3cbc
+//   0x6bd751 -> 0x60b576 -> 0x91f6d0
+//   0x6bd777 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd780  sub_6BD780
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd780..0x6bd876, 0xa12443..0xa12469
+// int __cdecl sub_6BD780(int a1)
+// {
+//   int v2; // [esp-4h] [ebp-14h]
+//   float v3; // [esp+0h] [ebp-10h]
+// 
+//   if ( (dword_A824C4 & 1) == 0 )
+//   {
+//     dword_A824C4 |= 1u;
+//     sub_60554A();
+//     dword_A824C0 = sub_60F3B5(a1: 1, a2: 1655, a3: -1, a4: -1);
+//   }
+//   if ( (dword_A824C4 & 2) == 0 )
+//   {
+//     dword_A824C4 |= 2u;
+//     v2 = dword_A824C0;
+//     sub_60554A();
+//     dword_A824BC = sub_608623(a1: v2);
+//   }
+//   v3 = (float)dword_A824BC;
+//   if ( v3 + *(float *)(a1 + 4) <= 0.0 )
+//     sub_60548C(a1);
+//   *(float *)(a1 + 4) = *(float *)(a1 + 4) - *(float *)(a1 + 20);
+//   return a1;
+// }
+// 调用边：
+//   0x6bd7cb -> 0x60554a -> 0x627760
+//   0x6bd7d2 -> 0x60f3b5 -> 0x6dba40
+//   0x6bd809 -> 0x60554a -> 0x627760
+//   0x6bd810 -> 0x608623 -> 0x6dca50
+//   0x6bd844 -> 0x60548c -> 0x6be030
+//   0x6bd86d -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bd880  sub_6BD880
+// ----------------------------------------------------------------------------
+// 声明块：0x6bd880..0x6bd96f, 0xa12469..0xa12481
+// int __cdecl sub_6BD880(float *a1)
+// {
+//   int v2; // [esp-Ch] [ebp-2Ch]
+//   int v3; // [esp-8h] [ebp-28h]
+//   int v4; // [esp-4h] [ebp-24h]
+//   float v5; // [esp+0h] [ebp-20h]
+//   float v6; // [esp+8h] [ebp-18h]
+//   __int16 *v7; // [esp+10h] [ebp-10h]
+// 
+//   if ( (dword_A824CC & 1) == 0 )
+//   {
+//     dword_A824CC |= 1u;
+//     sub_60554A();
+//     dword_A824C8 = sub_60F3B5(a1: 1, a2: 1655, a3: -1, a4: -1);
+//   }
+//   sub_60B841();
+//   sub_606535();
+//   v7 = (__int16 *)j_unknown_libname_325();
+//   v6 = (float)v7[1];
+//   v4 = (unsigned __int64)(a1[1] - v6);
+//   v5 = (float)*v7;
+//   v3 = (unsigned __int64)(*a1 - v5);
+//   v2 = dword_A824C8;
+//   sub_60554A();
+//   return sub_60C967(a1: v2, a2: v3, a3: v4);
+// }
+// 调用边：
+//   0x6bd8da -> 0x60554a -> 0x627760
+//   0x6bd8e1 -> 0x60f3b5 -> 0x6dba40
+//   0x6bd8f2 -> 0x60b841 -> 0x629c90
+//   0x6bd8f9 -> 0x606535 -> 0x63e0e0
+//   0x6bd900 -> 0x60be81 -> 0x63e000
+//   0x6bd921 -> 0x60c4c6 -> 0x922798
+//   0x6bd93e -> 0x60c4c6 -> 0x922798
+//   0x6bd94b -> 0x60554a -> 0x627760
+//   0x6bd952 -> 0x60c967 -> 0x6dc470
+//   0x6bd966 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6bdf90  sub_6BDF90
+// ----------------------------------------------------------------------------
+// 声明块：0x6bdf90..0x6be00b
+// char *__thiscall sub_6BDF90(char *this, char a2)
+// {
+//   if ( (a2 & 2) != 0 )
+//   {
+//     `eh vector destructor iterator'(a1: this, a2: 0x24u, a3: *((_DWORD *)this - 1), a4: sub_6076BF);
+//     if ( (a2 & 1) != 0 )
+//       operator delete[](a1: this - 4);
+//     return this - 4;
+//   }
+//   else
+//   {
+//     sub_6076BF(a1: this);
+//     if ( (a2 & 1) != 0 )
+//       operator delete(a1: this);
+//     return this;
+//   }
+// }
+// 调用边：
+//   0x6bdfb8 -> 0x601747 -> 0x920970
+//   0x6bdfcc -> 0x601cd3 -> 0x91f7e0
+//   0x6bdfdf -> 0x6076bf -> 0x6bc140
+//   0x6bdff0 -> 0x604cfd -> 0x91fc60
+//   0x6be000 -> 0x60b576 -> 0x91f6d0
+//
+// 0x6be030  sub_6BE030
+// ----------------------------------------------------------------------------
+// 声明块：0x6be030..0x6be03f
+// int __cdecl sub_6BE030(int a1)
+// {
+//   *(_DWORD *)(a1 + 24) = 0;
+//   return a1;
+// }
+// 调用边：
+//
+// 0x6be050  sub_6BE050
+// ----------------------------------------------------------------------------
+// 声明块：0x6be050..0x6be061
+// BOOL __cdecl sub_6BE050(int a1)
+// {
+//   return *(_DWORD *)(a1 + 24) != 0;
+// }
+// 调用边：
+//
+// 0x6be070  sub_6BE070
+// ----------------------------------------------------------------------------
+// 声明块：0x6be070..0x6be08f
+// _DWORD *__thiscall sub_6BE070(_DWORD *this)
+// {
+//   *(this + 2) = 0;
+//   return this;
+// }
+// 调用边：
+//
+// 0x71fc00  sub_71FC00
+// ----------------------------------------------------------------------------
+// 声明块：0x71fc00..0x71fd07
+// int __thiscall sub_71FC00(_DWORD *this, int a2)
+// {
+//   unsigned __int8 v2; // al
+//   int v3; // ecx
+//   int v5; // [esp+4h] [ebp-Ch]
+//   int v6; // [esp+8h] [ebp-8h]
+// 
+//   if ( (unsigned __int8)sub_6107F1() != 0 )
+//     sub_60F7F7();
+//   sub_60796C();
+//   if ( timeGetTime() - dword_A842C8 >= 0xC8 )
+//   {
+//     dword_A842C8 = timeGetTime();
+//     if ( *(this + 24) != 0 )
+//     {
+//       v6 = sub_610297(a1: 17, a2: 0);
+//       sub_610297(a1: 17, a2: 0);
+//       v2 = sub_60A2FC();
+//       v3 = -v2;
+//       LOBYTE(v3) = v2 == 0;
+//       (*(void (__thiscall **)(int, int))(*(_DWORD *)v6 + 200))(a1: v6, a2: v3);
+//     }
+//     else
+//     {
+//       v5 = sub_610297(a1: 17, a2: 0);
+//       (*(void (__thiscall **)(int, _DWORD))(*(_DWORD *)v5 + 200))(a1: v5, a2: 0);
+//     }
+//   }
+//   return 0;
+// }
+// 调用边：
+//   0x71fc25 -> 0x6107f1 -> 0x81bd10
+//   0x71fc34 -> 0x60f7f7 -> 0x71fd10
+//   0x71fc3c -> 0x60796c -> 0x71ffe0
+//   0x71fc43 -> 0xad404c -> 0xad404c
+//   0x71fc4b -> 0x60b576 -> 0x91f6d0
+//   0x71fc63 -> 0xad404c -> 0xad404c
+//   0x71fc6b -> 0x60b576 -> 0x91f6d0
+//   0x71fc88 -> 0x610297 -> 0x8e2c10
+//   0x71fc9a -> 0x610297 -> 0x8e2c10
+//   0x71fca1 -> 0x60a2fc -> 0x6fa210
+//   0x71fcc2 -> 0x60b576 -> 0x91f6d0
+//   0x71fcd3 -> 0x610297 -> 0x8e2c10
+//   0x71fcef -> 0x60b576 -> 0x91f6d0
+//   0x71fcfc -> 0x60b576 -> 0x91f6d0
+//
+// 0x740000  sub_740000
+// ----------------------------------------------------------------------------
+// 声明块：0x740000..0x7405fe
+// char __thiscall sub_740000(int *this, int a2, int a3)
+// {
+//   ATL::CSimpleStringT<char, 0> *v3; // eax
+//   char v4; // al
+//   CPictureHolder *v5; // eax
+//   ATL::CSimpleStringT<char, 0> *v6; // eax
+//   char v7; // al
+//   CPictureHolder *v8; // eax
+//   const char *v9; // eax
+//   int v11; // [esp-8h] [ebp-168h]
+//   char v12; // [esp-4h] [ebp-164h]
+//   char v13; // [esp-4h] [ebp-164h]
+//   char v14; // [esp-4h] [ebp-164h]
+//   int v15; // [esp-4h] [ebp-164h]
+//   int v16; // [esp+8h] [ebp-158h]
+//   int v17; // [esp+Ch] [ebp-154h]
+//   int v18[3]; // [esp+18h] [ebp-148h] BYREF
+//   char v19; // [esp+24h] [ebp-13Ch]
+//   char *Source; // [esp+ACh] [ebp-B4h]
+//   int v21; // [esp+B0h] [ebp-B0h]
+//   int v22; // [esp+B4h] [ebp-ACh]
+//   int v23[3]; // [esp+BCh] [ebp-A4h] BYREF
+//   char v24; // [esp+C8h] [ebp-98h]
+//   int i; // [esp+150h] [ebp-10h]
+//   int v26; // [esp+154h] [ebp-Ch]
+//   int *v27; // [esp+158h] [ebp-8h]
+// 
+//   v27 = this;
+//   v26 = j_unknown_libname_508();
+//   if ( v26 != 5 )
+//   {
+//     if ( v26 == 6 )
+//     {
+//       (*(void (__thiscall **)(int *))(*v27 + 156))(a1: v27);
+//       sub_60837B();
+//       CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 84);
+//       sub_60837B();
+//       if ( (unsigned __int8)CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::GetSize(a1: 130) != 0 )
+//       {
+//         sub_60837B();
+//         CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 130);
+//       }
+//     }
+//     goto LABEL_30;
+//   }
+//   if ( v27[18] != 0 )
+//   {
+//     if ( v27[18] == 1 )
+//     {
+//       if ( j__strcmp(Str1: (const char *)v27 + 80, Str2: (const char *)v27 + 208) == 0 )
+//       {
+//         (*(void (__thiscall **)(int *))(*v27 + 160))(a1: v27);
+//         sub_60837B();
+//         CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 84);
+//       }
+//       else
+//       {
+//         v6 = (ATL::CSimpleStringT<char, 0> *)sub_610DB9();
+//         ATL::CSimpleStringT<char,0>::AppendChar(this: v6, a2: (_BYTE)v27 - 48);
+//         if ( v7 == 0
+//           || (unsigned __int8)sub_60B65C(a1: v27[19]) != 0
+//           && (v8 = (CPictureHolder *)sub_610DB9(),
+//               (unsigned __int8)CPictureHolder::CreateFromIcon(this: v8, a2: (unsigned int)(v27 + 52)) == 0)
+//           || (unsigned __int8)COleDocument::GetNextItem(a1: v27[19]) != 0
+//           && (sub_610DB9(), (unsigned __int8)sub_601814(Str2: (char *)v27 + 208) == 0) )
+//         {
+// LABEL_13:
+//           (*(void (__thiscall **)(int *))(*v27 + 160))(a1: v27);
+//           goto LABEL_25;
+//         }
+//         (*(void (__thiscall **)(int *))(*v27 + 152))(a1: v27);
+//         v14 = *((_BYTE *)v27 + 344);
+//         sub_610DB9();
+//         sub_6012B5(Source: (char *)v27 + 208, a2: v14);
+//         sub_60837B();
+//         CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 84);
+//       }
+//     }
+//   }
+//   else
+//   {
+//     if ( j__strcmp(Str1: (const char *)v27 + 80, Str2: (const char *)v27 + 208) == 0 )
+//     {
+//       (*(void (__thiscall **)(int *))(*v27 + 160))(a1: v27);
+//       v12 = *((_BYTE *)v27 + 344);
+//       sub_610DB9();
+//       CBasePane::classCBasePane(Source: (char *)v27 + 208, a2: v12);
+//       sub_60837B();
+//       CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 84);
+//       goto LABEL_25;
+//     }
+//     v3 = (ATL::CSimpleStringT<char, 0> *)sub_610DB9();
+//     ATL::CSimpleStringT<char,0>::AppendChar(this: v3, a2: (_BYTE)v27 - 48);
+//     if ( v4 == 0 )
+//       goto LABEL_13;
+//     if ( (unsigned __int8)sub_60B65C(a1: v27[19]) != 0 )
+//     {
+//       v5 = (CPictureHolder *)sub_610DB9();
+//       if ( (unsigned __int8)CPictureHolder::CreateFromIcon(this: v5, a2: (unsigned int)(v27 + 52)) == 0 )
+//         goto LABEL_13;
+//     }
+//     if ( (unsigned __int8)COleDocument::GetNextItem(a1: v27[19]) != 0 )
+//     {
+//       sub_610DB9();
+//       if ( (unsigned __int8)sub_601814(Str2: (char *)v27 + 208) == 0 )
+//         goto LABEL_13;
+//     }
+//     (*(void (__thiscall **)(int *))(*v27 + 152))(a1: v27);
+//     v13 = *((_BYTE *)v27 + 344);
+//     sub_610DB9();
+//     CBasePane::classCBasePane(Source: (char *)v27 + 208, a2: v13);
+//     sub_60837B();
+//     CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 84);
+//   }
+// LABEL_25:
+//   sub_60837B();
+//   if ( (unsigned __int8)CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::GetSize(a1: 130) != 0 )
+//   {
+//     sub_60837B();
+//     CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](a1: 130);
+//   }
+// LABEL_30:
+//   if ( v26 >= 10 && v26 <= 30 )
+//   {
+//     *((_BYTE *)v27 + 344) = -1;
+//     v9 = (const char *)sub_60EACD(a1: 0);
+//     j__strcpy(Destination: (char *)v27 + 208, Source: v9);
+//     for ( i = 10; i <= 30; i += 10 )
+//     {
+//       v17 = sub_610297(a1: i + 1, a2: 0);
+//       (*(void (__thiscall **)(int, _DWORD))(*(_DWORD *)v17 + 200))(a1: v17, a2: 0);
+//     }
+//     v16 = sub_610297(a1: v26 + 1, a2: 0);
+//     (*(void (__thiscall **)(int, int))(*(_DWORD *)v16 + 200))(a1: v16, a2: 1);
+//     v23[0] = 4;
+//     v24 = -1;
+//     (*(void (__thiscall **)(int *, int *))(*v27 + 16))(a1: v27, a2: v23);
+//   }
+//   v22 = 0;
+//   v21 = 0;
+//   if ( v26 >= 5132 && v26 <= 5134 )
+//   {
+//     *((_BYTE *)v27 + 344) = v26 - 12;
+//     if ( (unsigned __int8)sub_6024AD(a1: v27[19]) != 0
+//       || (unsigned __int8)sub_606035(a1: v27[19]) != 0
+//       || (unsigned __int8)sub_61260F(a1: v27[19]) != 0 )
+//     {
+//       v15 = *((char *)v27 + 344);
+//       v11 = v27[19];
+//       sub_610DB9();
+//       Source = (char *)sub_600F36(a1: v11, a2: v15);
+//       if ( Source == nullptr )
+//         return 1;
+//       j__strcpy(Destination: (char *)v27 + 208, Source);
+//     }
+//     else
+//     {
+//       *((_BYTE *)v27 + 344) = -1;
+//     }
+//     v18[0] = 4;
+//     v19 = *((_BYTE *)v27 + 344);
+//     (*(void (__thiscall **)(int *, int *))(*v27 + 16))(a1: v27, a2: v18);
+//   }
+//   return 1;
+// }
+// 调用边：
+//   0x74002d -> 0x6095c3 -> 0x7278e0
+//   0x740077 -> 0x61038c -> 0x922830
+//   0x740095 -> 0x60b576 -> 0x91f6d0
+//   0x7400ae -> 0x610db9 -> 0x628270
+//   0x7400b5 -> 0x612d3f -> 0x6a6eb0
+//   0x7400bc -> 0x60837b -> 0x6279c0
+//   0x7400c3 -> 0x610076 -> 0x6e4020
+//   0x7400d6 -> 0x610db9 -> 0x628270
+//   0x7400dd -> 0x6041c2 -> 0x6aaa80
+//   0x7400fb -> 0x60b576 -> 0x91f6d0
+//   0x74010c -> 0x60b65c -> 0x63edd0
+//   0x740125 -> 0x610db9 -> 0x628270
+//   0x74012c -> 0x6050f9 -> 0x6a1610
+//   0x74014a -> 0x60b576 -> 0x91f6d0
+//   0x74015b -> 0x5ff7b7 -> 0x63e1a0
+//   0x740173 -> 0x610db9 -> 0x628270
+//   0x74017a -> 0x601814 -> 0x6a1850
+//   0x740198 -> 0x60b576 -> 0x91f6d0
+//   0x7401b1 -> 0x60b576 -> 0x91f6d0
+//   0x7401ca -> 0x610db9 -> 0x628270
+//   0x7401d1 -> 0x612d3f -> 0x6a6eb0
+//   0x7401d8 -> 0x60837b -> 0x6279c0
+//   0x7401df -> 0x610076 -> 0x6e4020
+//   0x740207 -> 0x61038c -> 0x922830
+//   0x740225 -> 0x60b576 -> 0x91f6d0
+//   0x74022c -> 0x60837b -> 0x6279c0
+//   0x740233 -> 0x610076 -> 0x6e4020
+//   0x740246 -> 0x610db9 -> 0x628270
+//   0x74024d -> 0x6041c2 -> 0x6aaa80
+//   0x74026b -> 0x60b576 -> 0x91f6d0
+//   0x74027c -> 0x60b65c -> 0x63edd0
+//   0x740295 -> 0x610db9 -> 0x628270
+//   0x74029c -> 0x6050f9 -> 0x6a1610
+//   0x7402ba -> 0x60b576 -> 0x91f6d0
+//   0x7402cb -> 0x5ff7b7 -> 0x63e1a0
+//   0x7402e3 -> 0x610db9 -> 0x628270
+//   0x7402ea -> 0x601814 -> 0x6a1850
+//   0x740308 -> 0x60b576 -> 0x91f6d0
+//   0x740321 -> 0x60b576 -> 0x91f6d0
+//   0x74033a -> 0x610db9 -> 0x628270
+//   0x740341 -> 0x6012b5 -> 0x6a4580
+//   0x740348 -> 0x60837b -> 0x6279c0
+//   0x74034f -> 0x610076 -> 0x6e4020
+//   0x740359 -> 0x60837b -> 0x6279c0
+//   0x740360 -> 0x60ff7c -> 0x6e4520
+//   0x740371 -> 0x60837b -> 0x6279c0
+//   0x740378 -> 0x610076 -> 0x6e4020
+//   0x740391 -> 0x60b576 -> 0x91f6d0
+//   0x740398 -> 0x60837b -> 0x6279c0
+//   0x74039f -> 0x610076 -> 0x6e4020
+//   0x7403a9 -> 0x60837b -> 0x6279c0
+//   0x7403b0 -> 0x60ff7c -> 0x6e4520
+//   0x7403c1 -> 0x60837b -> 0x6279c0
+//   0x7403c8 -> 0x610076 -> 0x6e4020
+//   0x7403f0 -> 0x60eacd -> 0x8e1570
+//   0x740400 -> 0x61040e -> 0x9204c0
+//   0x74042f -> 0x610297 -> 0x8e2c10
+//   0x740454 -> 0x60b576 -> 0x91f6d0
+//   0x74046a -> 0x610297 -> 0x8e2c10
+//   0x74048f -> 0x60b576 -> 0x91f6d0
+//   0x7404bb -> 0x60b576 -> 0x91f6d0
+//   0x740507 -> 0x6024ad -> 0x629dd0
+//   0x74051d -> 0x606035 -> 0x629df0
+//   0x740533 -> 0x61260f -> 0x629e10
+//   0x740554 -> 0x610db9 -> 0x628270
+//   0x74055b -> 0x600f36 -> 0x6aa530
+//   0x740580 -> 0x61040e -> 0x9204c0
+//   0x7405c9 -> 0x60b576 -> 0x91f6d0
+//   0x7405da -> 0x6127bd -> 0x91f700
+//   0x7405e4 -> 0x60849d -> 0x91fbb0
+//   0x7405f3 -> 0x60b576 -> 0x91f6d0
+//
+// 0x81bc30  sub_81BC30
+// ----------------------------------------------------------------------------
+// 声明块：0x81bc30..0x81bc7a
+// struct tm *__thiscall sub_81BC30(__time32_t *this)
+// {
+//   struct tm *result; // eax
+// 
+//   *this = j__time(Time: nullptr);
+//   result = j__localtime(Time: this);
+//   qmemcpy(this + 1, result, 36);
+//   return result;
+// }
+// 调用边：
+//   0x81bc42 -> 0x60b4cc -> 0x920910
+//   0x81bc53 -> 0x5ffeb5 -> 0x928490
+//   0x81bc71 -> 0x60b576 -> 0x91f6d0
+//
+// 0x81ed10  sub_81ED10
+// ----------------------------------------------------------------------------
+// 声明块：0x81ed10..0x81edaa
+// __int64 sub_81ED10()
+// {
+//   _BYTE PerformanceCount[12]; // [esp+8h] [ebp-Ch] BYREF
+// 
+//   memset(PerformanceCount, 204, sizeof(PerformanceCount));
+//   if ( byte_ABABD9 == 0 )
+//   {
+//     QueryPerformanceFrequency(lpFrequency: &Frequency);
+//     byte_ABABD9 = 1;
+//   }
+//   QueryPerformanceCounter(lpPerformanceCount: (LARGE_INTEGER *)PerformanceCount);
+//   return 1000LL * *(_QWORD *)PerformanceCount / Frequency.QuadPart;
+// }
+// 调用边：
+//   0x81ed3a -> 0xad3b9c -> 0xad3b9c
+//   0x81ed42 -> 0x60b576 -> 0x91f6d0
+//   0x81ed54 -> 0xad3b98 -> 0xad3b98
+//   0x81ed5c -> 0x60b576 -> 0x91f6d0
+//   0x81ed70 -> 0x604a41 -> 0x92a3e0
+//   0x81ed85 -> 0x604b31 -> 0x92a300
+//   0x81ed94 -> 0x6127bd -> 0x91f700
+//   0x81eda1 -> 0x60b576 -> 0x91f6d0
+//
+// 0x81edd0  sub_81EDD0
+// ----------------------------------------------------------------------------
+// 声明块：0x81edd0..0x81ee59
+// void *__stdcall sub_81EDD0(int a1, int a2)
+// {
+//   *(_BYTE *)a1 = 8;
+//   *(_BYTE *)(a1 + 1) = 0;
+//   *(_WORD *)(a1 + 4) = GetCurrentProcessId();
+//   *(_WORD *)(a1 + 2) = 0;
+//   *(_WORD *)(a1 + 6) = 0;
+//   return j__memset(a1: (void *)(a1 + 20), Val: 69, Size: a2 - 20);
+// }
+// 调用边：
+//   0x81ee04 -> 0xad3ba0 -> 0xad3ba0
+//   0x81ee0c -> 0x60b576 -> 0x91f6d0
+//   0x81ee40 -> 0x60ffdb -> 0x920bf0
+//   0x81ee4e -> 0x60b576 -> 0x91f6d0
+//
+// 0x81ee60  sub_81EE60
+// ----------------------------------------------------------------------------
+// 声明块：0x81ee60..0x81ef14
+// __int64 __stdcall sub_81EE60(_WORD *a1, int a2, _DWORD *a3)
+// {
+//   int v4; // esi
+//   __int64 v5; // rax
+//   unsigned __int16 v6; // [esp+8h] [ebp-10h]
+//   char *v7; // [esp+Ch] [ebp-Ch]
+// 
+//   v6 = 2 * (*a1 & 0xF);
+//   if ( a2 < v6 * 2 + 8 )
+//     return 9999;
+//   v7 = (char *)&a1[v6];
+//   if ( *v7 != 0 )
+//     return 9999;
+//   v4 = *((unsigned __int16 *)v7 + 2);
+//   if ( v4 != (unsigned __int16)GetCurrentProcessId() )
+//     return 9999;
+//   *a3 = *((_DWORD *)v7 + 4);
+//   LODWORD(v5) = sub_602318();
+//   return v5 - *((_QWORD *)v7 + 1);
+// }
+// 调用边：
+//   0x81eecc -> 0xad3ba0 -> 0xad3ba0
+//   0x81eed4 -> 0x60b576 -> 0x91f6d0
+//   0x81eef4 -> 0x602318 -> 0x81ed10
+//   0x81ef09 -> 0x60b576 -> 0x91f6d0
+//
+// 0x81ef20  sub_81EF20
+// ----------------------------------------------------------------------------
+// 声明块：0x81ef20..0x81efa1
+// unsigned int __stdcall sub_81EF20(unsigned __int16 *a1, int a2)
+// {
+//   unsigned int v3; // [esp+0h] [ebp-8h]
+// 
+//   v3 = 0;
+//   while ( a2 > 1 )
+//   {
+//     v3 += *a1++;
+//     a2 -= 2;
+//   }
+//   if ( a2 != 0 )
+//     v3 += *(unsigned __int8 *)a1;
+//   return ~((unsigned __int16)v3 + HIWORD(v3) + ((unsigned int)((unsigned __int16)v3 + HIWORD(v3)) >> 16));
+// }
+// 调用边：
+//
+// 0x81efb0  sub_81EFB0
+// ----------------------------------------------------------------------------
+// 声明块：0x81efb0..0x81f178
+// int __thiscall sub_81EFB0(_DWORD *this, char a2)
+// {
+//   HANDLE hObject; // [esp+8h] [ebp-1A8h]
+//   HANDLE hThread; // [esp+Ch] [ebp-1A4h]
+//   struct WSAData WSAData; // [esp+14h] [ebp-19Ch] BYREF
+//   LPVOID lpParameter; // [esp+1A8h] [ebp-8h]
+// 
+//   lpParameter = this;
+//   if ( *this == 0 || *((_DWORD *)lpParameter + 1) == 0 )
+//     return -1;
+//   if ( j_WSAStartup(wVersionRequested: 0x202u, lpWSAData: &WSAData) != 0 )
+//     return -1;
+//   *((_DWORD *)lpParameter + 4) = j_socket(af: 2, type: 3, protocol: 1);
+//   if ( j_setsockopt(
+//          s: *((_DWORD *)lpParameter + 4),
+//          level: 0xFFFF,
+//          optname: 4102,
+//          optval: (const char *)lpParameter + 12,
+//          optlen: 4) == -1
+//     || j_setsockopt(
+//          s: *((_DWORD *)lpParameter + 4),
+//          level: 0xFFFF,
+//          optname: 4101,
+//          optval: (const char *)lpParameter + 12,
+//          optlen: 4) == -1 )
+//   {
+//     return -1;
+//   }
+//   hThread = CreateThread(
+//               lpThreadAttributes: nullptr,
+//               dwStackSize: 0,
+//               lpStartAddress: sub_609267,
+//               lpParameter,
+//               dwCreationFlags: 0,
+//               lpThreadId: nullptr);
+//   hObject = CreateThread(
+//               lpThreadAttributes: nullptr,
+//               dwStackSize: 0,
+//               lpStartAddress: sub_611327,
+//               lpParameter,
+//               dwCreationFlags: 0,
+//               lpThreadId: nullptr);
+//   if ( a2 != 0 )
+//     Sleep(dwMilliseconds: *((_DWORD *)lpParameter + 3));
+//   TerminateThread(hThread, dwExitCode: 0);
+//   CloseHandle(hObject: hThread);
+//   TerminateThread(hThread: hObject, dwExitCode: 0);
+//   CloseHandle(hObject);
+//   return 0;
+// }
+// 调用边：
+//   0x81efff -> 0x6050d6 -> 0x91f620
+//   0x81f016 -> 0x610a58 -> 0x91f61a
+//   0x81f04c -> 0x6006ee -> 0x91f614
+//   0x81f070 -> 0x6006ee -> 0x91f614
+//   0x81f095 -> 0xad3cc0 -> 0xad3cc0
+//   0x81f09d -> 0x60b576 -> 0x91f6d0
+//   0x81f0bb -> 0xad3cc0 -> 0xad3cc0
+//   0x81f0c3 -> 0x60b576 -> 0x91f6d0
+//   0x81f0df -> 0xad3cac -> 0xad3cac
+//   0x81f0e7 -> 0x60b576 -> 0x91f6d0
+//   0x81f0f7 -> 0xad3ca8 -> 0xad3ca8
+//   0x81f0ff -> 0x60b576 -> 0x91f6d0
+//   0x81f10d -> 0xad3cc8 -> 0xad3cc8
+//   0x81f115 -> 0x60b576 -> 0x91f6d0
+//   0x81f125 -> 0xad3ca8 -> 0xad3ca8
+//   0x81f12d -> 0x60b576 -> 0x91f6d0
+//   0x81f13b -> 0xad3cc8 -> 0xad3cc8
+//   0x81f143 -> 0x60b576 -> 0x91f6d0
+//   0x81f154 -> 0x6127bd -> 0x91f700
+//   0x81f15e -> 0x60849d -> 0x91fbb0
+//   0x81f16d -> 0x60b576 -> 0x91f6d0
+//
+// 0x81f1a0  sub_81F1A0
+// ----------------------------------------------------------------------------
+// 声明块：0x81f1a0..0x81f338
+// int __stdcall sub_81F1A0(_DWORD *a1)
+// {
+//   int v1; // edx
+//   int j; // [esp+10h] [ebp-34h]
+//   int i; // [esp+14h] [ebp-30h]
+//   char *buf; // [esp+18h] [ebp-2Ch]
+//   struct sockaddr to; // [esp+24h] [ebp-20h] BYREF
+//   int len; // [esp+38h] [ebp-Ch]
+//   __int16 v8; // [esp+3Ch] [ebp-8h]
+// 
+//   v8 = 0;
+//   len = 52;
+//   j__memset(a1: &to, Val: 0, Size: sizeof(to));
+//   to.sa_family = 2;
+//   buf = (char *)operator new(Size: 0x1000u);
+//   j__memset(a1: buf, Val: 0, Size: 0x1000u);
+//   sub_611ABB(a1: (int)buf, a2: len);
+//   for ( i = 0; i < a1[2]; ++i )
+//   {
+//     for ( j = 0; j < a1[1]; ++j )
+//     {
+//       *(_DWORD *)&to.sa_data[2] = *(_DWORD *)(36 * j + *a1);
+//       *((_DWORD *)buf + 4) = j;
+//       *((_WORD *)buf + 1) = 0;
+//       *((_DWORD *)buf + 2) = sub_602318();
+//       *((_DWORD *)buf + 3) = v1;
+//       *((_WORD *)buf + 3) = v8++;
+//       *((_WORD *)buf + 1) = sub_60EBD6(a1: (int)buf, a2: len);
+//       j_sendto(s: a1[4], buf, len, flags: 0, &to, tolen: 16);
+//     }
+//     Sleep(dwMilliseconds: 0xAu);
+//   }
+//   operator delete(a1: buf);
+//   return 0;
+// }
+// 调用边：
+//   0x81f1d4 -> 0x60ffdb -> 0x920bf0
+//   0x81f1ed -> 0x601274 -> 0x91bd30
+//   0x81f209 -> 0x60ffdb -> 0x920bf0
+//   0x81f21c -> 0x611abb -> 0x81edd0
+//   0x81f286 -> 0x602318 -> 0x81ed10
+//   0x81f2b6 -> 0x60ebd6 -> 0x81ef20
+//   0x81f2d9 -> 0x610e22 -> 0x91f626
+//   0x81f2e7 -> 0xad3cac -> 0xad3cac
+//   0x81f2ef -> 0x60b576 -> 0x91f6d0
+//   0x81f303 -> 0x604cfd -> 0x91fc60
+//   0x81f317 -> 0x6127bd -> 0x91f700
+//   0x81f321 -> 0x60849d -> 0x91fbb0
+//   0x81f32d -> 0x60b576 -> 0x91f6d0
+//
+// 0x81f360  sub_81F360
+// ----------------------------------------------------------------------------
+// 声明块：0x81f360..0x81f620
+// int __stdcall sub_81F360(int *a1)
+// {
+//   __int64 v1; // rax
+//   __int64 v2; // rax
+//   unsigned __int64 v3; // rax
+//   unsigned __int64 v5; // [esp+8h] [ebp-60h]
+//   unsigned __int64 v6; // [esp+18h] [ebp-50h]
+//   int v7; // [esp+40h] [ebp-28h]
+//   char *buf; // [esp+44h] [ebp-24h]
+//   int v9; // [esp+54h] [ebp-14h] BYREF
+//   int *v10; // [esp+5Ch] [ebp-Ch]
+//   __int64 v11; // [esp+60h] [ebp-8h]
+// 
+//   LODWORD(v1) = sub_602318();
+//   v11 = v1;
+//   v10 = a1;
+//   v9 = 0;
+//   buf = (char *)operator new(Size: 0x1000u);
+//   j__memset(a1: buf, Val: 0, Size: 0x1000u);
+//   while ( 1 )
+//   {
+//     LODWORD(v2) = sub_602318();
+//     if ( v2 - v11 > (unsigned __int64)v10[3] )
+//       break;
+//     v7 = j_recvfrom(s: v10[4], buf, len: 4096, flags: 0, from: nullptr, fromlen: nullptr);
+//     if ( v7 > 0 )
+//     {
+//       LODWORD(v3) = sub_606DF5(a1: (int)buf, a2: v7, a3: (int)&v9);
+//       if ( v3 < 0x270F && v9 < v10[1] )
+//       {
+//         ++*(_DWORD *)(*v10 + 36 * v9 + 4);
+//         if ( v3 <= *(_QWORD *)(*v10 + 36 * v9 + 8) )
+//           v6 = *(_QWORD *)(*v10 + 36 * v9 + 8);
+//         else
+//           v6 = v3;
+//         *(_QWORD *)(*v10 + 36 * v9 + 8) = v6;
+//         *(_QWORD *)(*v10 + 36 * v9 + 24) = (v3 + *(_QWORD *)(*v10 + 36 * v9 + 24)
+//                                                * (*(_DWORD *)(*v10 + 36 * v9 + 4) - 1))
+//                                          / *(int *)(*v10 + 36 * v9 + 4);
+//         if ( v3 <= *(_QWORD *)(*v10 + 36 * v9 + 16) )
+//           v5 = v3;
+//         else
+//           v5 = *(_QWORD *)(*v10 + 36 * v9 + 16);
+//         *(_QWORD *)(*v10 + 36 * v9 + 16) = v5;
+//         *(_BYTE *)(*v10 + 36 * v9 + 32) = 1;
+//       }
+//     }
+//   }
+//   operator delete(a1: buf);
+//   return 0;
+// }
+// 调用边：
+//   0x81f377 -> 0x602318 -> 0x81ed10
+//   0x81f3a2 -> 0x601274 -> 0x91bd30
+//   0x81f3be -> 0x60ffdb -> 0x920bf0
+//   0x81f3c6 -> 0x602318 -> 0x81ed10
+//   0x81f418 -> 0x60fe2d -> 0x91f62c
+//   0x81f439 -> 0x606df5 -> 0x81ee60
+//   0x81f528 -> 0x604a41 -> 0x92a3e0
+//   0x81f54b -> 0x60f1fd -> 0x92a430
+//   0x81f5f3 -> 0x604cfd -> 0x91fc60
+//   0x81f607 -> 0x6127bd -> 0x91f700
+//   0x81f615 -> 0x60b576 -> 0x91f6d0
+//

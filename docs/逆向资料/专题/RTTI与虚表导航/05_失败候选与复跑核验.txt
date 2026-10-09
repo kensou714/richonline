@@ -1,0 +1,31 @@
+// 失败候选、只读复跑与验证
+// ============================================================================
+// TypeDescriptor引用不等于COL
+//   扫描将“TD指针所在site-12”作为COL候选；42引用中14成立、28失败。
+//   28项原证及失败原因保留在rtti_scan.json与ida_navigation.json。
+//   其中12项signature非0；其余16项CHD地址为0、1、2而无有效映射。
+//   这些原因只是此次COL候选测试结果，不是已发现28个损坏的客户端对象。
+//
+// 可复核反例
+//   A53C64本身是exception BCD的首TD指针；site-12=A53C58会误读其前方数据。
+//   假COL中+16=0，失败；真正BCD被A53D48基类数组引用并已有24B原证。
+//   A53D2C是out_of_range BCD，site-12=A53D20的首DWORD=A67284，非signature0。
+//   A5526C也是exception TD引用，site-12=A55260的假CHD为0；不能据此判为COL。
+//   A5526C的EH CatchableType用途只作为现有命名线索，不在此宣称已恢复完整EH链。
+//   类型描述器与捕获元数据共享引用，必须结构逐字段验证，不能只搜??_R0字样。
+//
+// 复跑
+//   在Richonline根目录：python docs/逆向资料/专题/RTTI与虚表导航/证据/scan_pe.py。
+//   scan_pe.py校验EXE SHA256后重新写rtti_scan.json；不启动游戏、不修改EXE。
+//   在已选RnClient.exe的只读IDA-MCP租约中exec读取export_ida.py源码。
+//   export_ida.py只读db：数据链、引用、E9跳板与所属函数；不声明/重命名/注释函数。
+//   再运行build_notes.py整理人工结论；新EXE或新地址不能沿用该人工结论清单。
+//   最后运行validate.py；报告validation.json，核对字节、结构、函数块和中文格式。
+//
+// 校验口径
+//   校验器独立读取磁盘PE映射，不调用scan_pe.py的解析函数。
+//   重解析TD/COL/CHD/BCD和数组；检查地址字段、签名、继承及原字节记录。
+//   对IDB字节只能核对保存的导出证据与当前磁盘；实时独审需再读当前IDA字节。
+//   校验68个函数的86个声明块和指令范围覆盖、源指令定位、跳板目标、56审阅状态覆盖。
+//   474候选只核指针值、前DWORD和截止条件；通过校验不等于语义成立。
+//   正文每非空行以//开头；JSON/Python为证据与复跑工具，不要求注释行格式。

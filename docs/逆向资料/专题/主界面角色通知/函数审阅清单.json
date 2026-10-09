@@ -1,0 +1,493 @@
+{
+  "scope": "本专题静态审阅深度；共享函数不等于项目新增覆盖；依赖不自动完成",
+  "status_definitions": {
+    "已分析": "函数本体全部可见分支已阅读，外部业务仍有unknown",
+    "局部分析": "仅conclusion列出的路径已确认，unknown须继续追踪"
+  },
+  "counts": {
+    "已分析": 37,
+    "局部分析": 11
+  },
+  "functions": [
+    {
+      "va": "0x628270",
+      "status": "已分析",
+      "conclusion": "单例A76728，缺对象分配0xABC并调用构造",
+      "unknown": "构造和单例线程安全未在本篇展开",
+      "scope": "单例A76728，缺对象分配0xABC并调用构造",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e160",
+      "status": "已分析",
+      "conclusion": "读取地图+24并判等3，返回BOOL而非mode",
+      "unknown": "地图mode装载来源未展开",
+      "scope": "读取地图+24并判等3，返回BOOL而非mode",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e1a0",
+      "status": "已分析",
+      "conclusion": "参数等于3返回真",
+      "unknown": "mode3自然名称未据此命名",
+      "scope": "参数等于3返回真",
+      "evidence": "证据/notify_extra.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e1e0",
+      "status": "已分析",
+      "conclusion": "读取角色P+380头像ID DWORD",
+      "unknown": "头像字段装载见其他专题",
+      "scope": "读取角色P+380头像ID DWORD",
+      "evidence": "证据/notify_extra.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e210",
+      "status": "已分析",
+      "conclusion": "返回G+1628地图子对象地址",
+      "unknown": "子对象完整布局未恢复",
+      "scope": "返回G+1628地图子对象地址",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e230",
+      "status": "已分析",
+      "conclusion": "返回DWORD[G+3584+4*s]，无槽范围检查",
+      "unknown": "有效指针与s范围由上游保证",
+      "scope": "返回DWORD[G+3584+4*s]，无槽范围检查",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e560",
+      "status": "已分析",
+      "conclusion": "比较参数槽与G+8本地槽",
+      "unknown": "本地槽初始化未展开",
+      "scope": "比较参数槽与G+8本地槽",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e7d0",
+      "status": "已分析",
+      "conclusion": "读取BYTE[G+3632+s]",
+      "unknown": "该标志自然名称未确认",
+      "scope": "读取BYTE[G+3632+s]",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63f390",
+      "status": "已分析",
+      "conclusion": "读取BYTE[G+3672+s]",
+      "unknown": "该标志自然名称未确认",
+      "scope": "读取BYTE[G+3672+s]",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63f5f0",
+      "status": "已分析",
+      "conclusion": "读取角色P+1512点券DWORD",
+      "unknown": "结算不在getter中",
+      "scope": "读取角色P+1512点券DWORD",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63f840",
+      "status": "已分析",
+      "conclusion": "按G+8取G+3584角色指针数组",
+      "unknown": "角色指针合法性未统一校验",
+      "scope": "按G+8取G+3584角色指针数组",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x64efa0",
+      "status": "已分析",
+      "conclusion": "读取BYTE[G+3640+s]",
+      "unknown": "该标志自然名称未确认",
+      "scope": "读取BYTE[G+3640+s]",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x64fbd0",
+      "status": "局部分析",
+      "conclusion": "队列每约3000ms取项构造flags8，仅N[0]/N[1]/N[3]被写",
+      "unknown": "队列内部沿用诊断专题，公共门控未全部展开",
+      "scope": "队列每约3000ms取项构造flags8，仅N[0]/N[1]/N[3]被写",
+      "evidence": "证据/notify_entry.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x662920",
+      "status": "已分析",
+      "conclusion": "4041核验GmsvID后将两个signed BYTE转flags2通知",
+      "unknown": "长度和资源范围验证不在本体",
+      "scope": "4041核验GmsvID后将两个signed BYTE转flags2通知",
+      "evidence": "证据/notify_entry.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x691b70",
+      "status": "已分析",
+      "conclusion": "读取角色P+40角色资源ID DWORD",
+      "unknown": "角色资源ID装载来源未展开",
+      "scope": "读取角色P+40角色资源ID DWORD",
+      "evidence": "证据/notify_extra.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x691bd0",
+      "status": "已分析",
+      "conclusion": "读取BYTE[G+83831]作为提交抑制状态",
+      "unknown": "该状态所有写入来源待追踪",
+      "scope": "读取BYTE[G+83831]作为提交抑制状态",
+      "evidence": "证据/notify_extra.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x69a540",
+      "status": "局部分析",
+      "conclusion": "语音入口两个开关、底层参数和可选句柄保存",
+      "unknown": "底层声道/缓存/播放系统见音频专题",
+      "scope": "语音入口两个开关、底层参数和可选句柄保存",
+      "evidence": "证据/notify_mapping_audio.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x69afd0",
+      "status": "已分析",
+      "conclusion": "按音频对象+52跨度与+56数组读取VoiceFace表情",
+      "unknown": "没有角色/槽范围检查",
+      "scope": "按音频对象+52跨度与+56数组读取VoiceFace表情",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x69b150",
+      "status": "已分析",
+      "conclusion": "textID=(role<<8)+phrase+1664",
+      "unknown": "调用者合法域需另核",
+      "scope": "textID=(role<<8)+phrase+1664",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x69b170",
+      "status": "已分析",
+      "conclusion": "sndID=1000*(role+1)+phrase+128",
+      "unknown": "底层声音实际可播放性需实机",
+      "scope": "sndID=1000*(role+1)+phrase+128",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x6a7900",
+      "status": "局部分析",
+      "conclusion": "本篇545、末参0路径：8字节记录低12位ID与bit16",
+      "unknown": "末参非0的32槽关联查找、第二DWORD和资格来源待查",
+      "scope": "本篇545、末参0路径：8字节记录低12位ID与bit16",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x6e4640",
+      "status": "局部分析",
+      "conclusion": "同步转交UI0虚表+16通知",
+      "unknown": "通用UI前后保护依赖未全部展开",
+      "scope": "同步转交UI0虚表+16通知",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x6fa210",
+      "status": "已分析",
+      "conclusion": "读取控件+385 BYTE可见状态",
+      "unknown": "绘制效果依赖控件树",
+      "scope": "读取控件+385 BYTE可见状态",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x6fa270",
+      "status": "已分析",
+      "conclusion": "读取控件+384 BYTE启用状态",
+      "unknown": "禁用状态与服务器权限不是同一事实",
+      "scope": "读取控件+384 BYTE启用状态",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x6fab30",
+      "status": "局部分析",
+      "conclusion": "转换多字节文本并写control+12文本对象",
+      "unknown": "转换规则及源指针生命周期未完整恢复",
+      "scope": "转换多字节文本并写control+12文本对象",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x6fad70",
+      "status": "已分析",
+      "conclusion": "UI0基础构造、A242D0虚表、三计时器及八个20字节槽",
+      "unknown": "基础类构造未递归分析",
+      "scope": "UI0基础构造、A242D0虚表、三计时器及八个20字节槽",
+      "evidence": "证据/notify_entry.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7045a0",
+      "status": "局部分析",
+      "conclusion": "计时器500/1000/1350、角色槽资源ID和W+432..435初始化",
+      "unknown": "其余控件回调与UI0状态字段仍未逐项解释",
+      "scope": "计时器500/1000/1350、角色槽资源ID和W+432..435初始化",
+      "evidence": "证据/notify_lifecycle.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7053d0",
+      "status": "已分析",
+      "conclusion": "九种掩码全部可见分支：头像、表情、气泡、语音、复活状态与提示",
+      "unknown": "通知生产者、资源合法域及服务端结算需另核",
+      "scope": "九种掩码全部可见分支：头像、表情、气泡、语音、复活状态与提示",
+      "evidence": "证据/notify_entry.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x705c70",
+      "status": "局部分析",
+      "conclusion": "W+80通过时调用708330；其他复活闪烁相关尾部可见",
+      "unknown": "完整快捷键、提示与附加控件逻辑未完成",
+      "scope": "W+80通过时调用708330；其他复活闪烁相关尾部可见",
+      "evidence": "证据/notify_lifecycle.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7061f0",
+      "status": "局部分析",
+      "conclusion": "复活按钮28/43/58/73条件、0018模式与字段初始化",
+      "unknown": "其他点击分支和服务端回复未完成",
+      "scope": "复活按钮28/43/58/73条件、0018模式与字段初始化",
+      "evidence": "证据/notify_lifecycle.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x708330",
+      "status": "局部分析",
+      "conclusion": "四面板data[0]映射、mode3/4跳过条件及2700ms过期",
+      "unknown": "金额/图标/附加提示依赖和人数约束未全部展开",
+      "scope": "四面板data[0]映射、mode3/4跳过条件及2700ms过期",
+      "evidence": "证据/notify_mapping_audio.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7094c0",
+      "status": "局部分析",
+      "conclusion": "Ctrl+F1..F8短句选择主干与1350ms提示隐藏",
+      "unknown": "快捷键映射、发送门控依赖由音频专题继续",
+      "scope": "Ctrl+F1..F8短句选择主干与1350ms提示隐藏",
+      "evidence": "证据/notify_mapping_audio.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7098c0",
+      "status": "局部分析",
+      "conclusion": "短句三组和四按钮分页文字刷新主干",
+      "unknown": "文本配置合法域与按钮提示依赖未全部展开",
+      "scope": "短句三组和四按钮分页文字刷新主干",
+      "evidence": "证据/notify_mapping_audio.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x709d30",
+      "status": "已分析",
+      "conclusion": "取type8头像资源expression+13帧",
+      "unknown": "图像缓存内部未展开",
+      "scope": "取type8头像资源expression+13帧",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x709d70",
+      "status": "已分析",
+      "conclusion": "按四个面板data[0]查角色槽，ECX=this，retn4",
+      "unknown": "控件树完整性由初始化保证",
+      "scope": "按四个面板data[0]查角色槽，ECX=this，retn4",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x709e00",
+      "status": "已分析",
+      "conclusion": "清20字节角色UI槽的五个DWORD",
+      "unknown": "只说明槽构造，不推定所有W字段",
+      "scope": "清20字节角色UI槽的五个DWORD",
+      "evidence": "证据/notify_extra.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x727820",
+      "status": "已分析",
+      "conclusion": "读取DWORD[G+3616]参与人数",
+      "unknown": "人数与八槽/四面板的约束待查",
+      "scope": "读取DWORD[G+3616]参与人数",
+      "evidence": "证据/notify_count.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x727850",
+      "status": "已分析",
+      "conclusion": "本地金豆DWORD[G+1536+4*local]与金额比较",
+      "unknown": "比较不扣金额",
+      "scope": "本地金豆DWORD[G+1536+4*local]与金额比较",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x727890",
+      "status": "已分析",
+      "conclusion": "读取DWORD[G+8]本地槽，IDA的ATL命名不可信",
+      "unknown": "本地槽初始化待查",
+      "scope": "读取DWORD[G+8]本地槽，IDA的ATL命名不可信",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7278b0",
+      "status": "已分析",
+      "conclusion": "读取BYTE[G+3664+s]",
+      "unknown": "该标志自然名称未确认",
+      "scope": "读取BYTE[G+3664+s]",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x727980",
+      "status": "已分析",
+      "conclusion": "请求构造仅WORD+0=24、BYTE+5=0，其他字节未写",
+      "unknown": "模式1未写+2的服务器消费待查",
+      "scope": "请求构造仅WORD+0=24、BYTE+5=0，其他字节未写",
+      "evidence": "证据/notify_extra.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7f76c0",
+      "status": "已分析",
+      "conclusion": "取type8头像P+380、帧P+388+1",
+      "unknown": "头像状态写入来源未展开",
+      "scope": "取type8头像P+380、帧P+388+1",
+      "evidence": "证据/notify_helpers.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7fdb70",
+      "status": "已分析",
+      "conclusion": "读取角色P+388头像帧DWORD",
+      "unknown": "字段完整业务枚举未恢复",
+      "scope": "读取角色P+388头像帧DWORD",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x81bc80",
+      "status": "已分析",
+      "conclusion": "转交计时器阈值设置并返回this",
+      "unknown": "内部依赖已在81BCB0记录",
+      "scope": "转交计时器阈值设置并返回this",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x81bcb0",
+      "status": "已分析",
+      "conclusion": "写阈值与GetTickCount起始值",
+      "unknown": "不保证tick回绕稳定",
+      "scope": "写阈值与GetTickCount起始值",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x81bd10",
+      "status": "已分析",
+      "conclusion": "now>start且差值达到阈值才通过并更新start",
+      "unknown": "回绕时now<=start将返回假",
+      "scope": "now>start且差值达到阈值才通过并更新start",
+      "evidence": "证据/notify_contract.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x8e1570",
+      "status": "已分析",
+      "conclusion": "读control+420数组，index仅检查上界，无数组返回0",
+      "unknown": "负index没有防护",
+      "scope": "读control+420数组，index仅检查上界，无数组返回0",
+      "evidence": "证据/notify_mapping_audio.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x8e15b0",
+      "status": "已分析",
+      "conclusion": "写control+420数组，index仅检查上界，无数组返回失败",
+      "unknown": "负index没有防护",
+      "scope": "写control+420数组，index仅检查上界，无数组返回失败",
+      "evidence": "证据/notify_extra.json",
+      "byte_ranges": 1,
+      "bytes_match_disk": true
+    }
+  ]
+}

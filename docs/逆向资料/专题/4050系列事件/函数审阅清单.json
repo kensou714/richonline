@@ -1,0 +1,243 @@
+{
+  "scope": "4050系列及库存、共享日期消费者局部静态语义审阅",
+  "functions": [
+    {
+      "va": "0x662bf0",
+      "status": "局部语义已审阅",
+      "conclusion": "4050校验GmsvID后逐角色比较8个group0 ID；不一致尝试发送两字节0003、Sleep1000并断言；不覆盖库存。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x662d00",
+      "status": "局部语义已审阅",
+      "conclusion": "4051按signed BYTE选择P；flag非零先减去group0槽0全部数量，再以signed WORD ID、数量1插入；无本处续接或直接确认发送。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x662dc0",
+      "status": "局部语义已审阅",
+      "conclusion": "4052以ECX=G+C44将signed WORD及两个signed BYTE交给694320；只写日期三字段。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x64f710",
+      "status": "局部语义已审阅",
+      "conclusion": "比较WORD[G+14784h]与GmsvID；不符MessageBoxA后返回0。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x6942f0",
+      "status": "局部语义已审阅",
+      "conclusion": "两字节错误消息构造器只写首WORD0003并返回this。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x694320",
+      "status": "局部语义已审阅",
+      "conclusion": "写WORD[this+8]、BYTE[this+10/+11]；4052调用时this=G+C44。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x6bf380",
+      "status": "局部语义已审阅",
+      "conclusion": "局部核验状态<12与A76724单例对象首字节非零门，包装后向事件9交付；首字节完整语义未闭环，被调用不证明消息发送成功。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7f86a0",
+      "status": "局部语义已审阅",
+      "conclusion": "按group0/1/2读取P+1520/282/330的6字节记录signed ID；4050固定group0。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7f8710",
+      "status": "局部语义已审阅",
+      "conclusion": "按group0/1/2读取6字节记录的signed数量；4051固定group0槽0。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7f8780",
+      "status": "局部语义已审阅",
+      "conclusion": "扫描group0首个空ID槽插入；调用配方合成及UI12通知；P+1416非零可强制返回1。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7f8920",
+      "status": "局部语义已审阅",
+      "conclusion": "group0数量窄WORD相减，signed<=0清数量与ID；满足本地角色判断后刷新UI12。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x6279c0",
+      "status": "局部语义已审阅",
+      "conclusion": "UI管理器单例getter，首次分配6C0h并调用构造；构造内部不在本批范围。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x627c20",
+      "status": "局部语义已审阅",
+      "conclusion": "配方等资源表管理器单例getter，分配14Ch；资源装载不在本批范围。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x63e210",
+      "status": "局部语义已审阅",
+      "conclusion": "返回this+1628，库存合成调用点来自P+1404所指对象。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x63e440",
+      "status": "局部语义已审阅",
+      "conclusion": "返回DWORD[this+4]；导出作C共享对象字段对照，日期写入不覆盖此字段。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x63e560",
+      "status": "局部语义已审阅",
+      "conclusion": "比较传入角色号与DWORD[this+8]；库存刷新调用点this来自DWORD[P+1404]。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x693710",
+      "status": "局部语义已审阅",
+      "conclusion": "写DWORD[this+4]；导出作C共享对象字段对照，非4052直接调用。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x6e4640",
+      "status": "局部语义已审阅",
+      "conclusion": "锁定后查132字节UI槽+4对象，存在才调用vtbl+10h；本批不穷尽间接消费者。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x6e46d0",
+      "status": "局部语义已审阅",
+      "conclusion": "锁定后查UI槽对象，调用vtbl+1Ch传入通知地址。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7fd7a0",
+      "status": "局部语义已审阅",
+      "conclusion": "返回BYTE[P+1416]；7F8780据非零值强制返回1。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7fdc30",
+      "status": "局部语义已审阅",
+      "conclusion": "返回this+16字符串，合成通知从此取得文字；MFC识别标签不作业务命名。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x800fd0",
+      "status": "局部语义已审阅",
+      "conclusion": "局部核验60字节配方记录、按ID匹配8库存槽并原地清材料写产物；未穷尽资源表有效性。",
+      "evidence": "证据/inventory_followup.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x6288b0",
+      "status": "局部语义已审阅",
+      "conclusion": "日期表单例getter，只见340h分配；装载及完整年份容量未核。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x63e590",
+      "status": "局部语义已审阅",
+      "conclusion": "返回G+C44共享对象地址。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x63f420",
+      "status": "局部语义已审阅",
+      "conclusion": "返回DWORD[G+83804]，日期UI同时显示该值但本批不命名。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7080d0",
+      "status": "局部语义已审阅",
+      "conclusion": "局部核验C日期经特殊日期检索选择数字图集，月/日前两字符写控件81..84；另显示G+83804到85/86。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x727a70",
+      "status": "局部语义已审阅",
+      "conclusion": "读取signed BYTE[C+10]，UI及日期表将它用作月字段。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x727a90",
+      "status": "局部语义已审阅",
+      "conclusion": "读取signed BYTE[C+11]，UI及日期表将它用作日字段。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7d8de0",
+      "status": "局部语义已审阅",
+      "conclusion": "按(year-2004)*26扫描13对月/日，命中返回索引否则-1；无此处年份边界钳制。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7d8e60",
+      "status": "局部语义已审阅",
+      "conclusion": "取得C年/月/日，调用7D8DE0并比较返回值是否非-1。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7d90e0",
+      "status": "局部语义已审阅",
+      "conclusion": "读取signed WORD[C+8]，日期表以该值减2004选择年份段。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7eff50",
+      "status": "局部语义已审阅",
+      "conclusion": "4050桥接，将首个参数装入ECX为G并push第二参数packet转发662BF0。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7eff70",
+      "status": "局部语义已审阅",
+      "conclusion": "4051桥接，将首个参数装入ECX为G并push第二参数packet转发662D00。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    },
+    {
+      "va": "0x7eff90",
+      "status": "局部语义已审阅",
+      "conclusion": "4052桥接，将首个参数装入ECX为G并push第二参数packet转发662DC0。",
+      "evidence": "证据/date_and_bridge.json",
+      "unknown": "未实机验证；上游长度/参数校验、资源装载和间接UI消费者不计为已闭环。"
+    }
+  ]
+}

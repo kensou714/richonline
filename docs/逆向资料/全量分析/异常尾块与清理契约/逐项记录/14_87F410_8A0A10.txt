@@ -1,0 +1,542 @@
+// 异常尾块逐项记录 / 14_87F410_8A0A10.txt
+// 来源：cleanup_evidence.json与cleanup_contracts.json；仅静态证据。
+//
+// [209] 主函数 0x87f410；尾块 0xa189c0-0xa189d2（18字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5f110，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f118；UnwindMap动作（state->入口）：
+//         0->0xa189c0。
+//       state 0 -> -1；0xa189c0：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       主state写点：0x87f459；0x87f475。
+//       历史来源：
+//         专题/网络协议/证据/第二批/版本与逐函数核验.json#/functions/86
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x87f410：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x87f410；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa189c0；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x87f459；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [210] 主函数 0x87fa30；尾块 0xa18a20-0xa18a32（18字节）；PE/IDB=一致。
+//       分类：字符串兼容布局对象的清理跳板（自动MFC名称不可信）。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5f188，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f190；UnwindMap动作（state->入口）：
+//         0->0xa18a20。
+//       state 0 -> -1；0xa18a20：字符串兼容布局对象的清理跳板（自动MFC名称不可信）；对象/槽证据=lea     ecx, [ebp+var_38]; this。
+//       主state写点：0x87fb25；0x87fbd2；0x87fbf0。
+//       历史来源：
+//         专题/网络协议/证据/第二批/版本与逐函数核验.json#/functions/19
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x87fa30：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x87fa30；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa18a20；62B8A0传(释放标志1,长度0)至62BAD0；capacity>=16时释放堆指针，随后恢复capacity15和length0。
+//     主函数设置证据=0x87fb25；完全展开链=0->-1。
+//     未闭合=精确模板typedef及字符串字符编码未由清理函数证明。
+//
+// [211] 主函数 0x87fd30；尾块 0xa18a40-0xa18d81（833字节）；PE/IDB=一致。
+//       分类：operator delete标量异常清理动作。
+//       FuncInfo magic=0x19930520，maxState=61，UnwindMap=0xa5f1b0，唯一动作入口61个，toState=-1项48；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f398；UnwindMap动作（state->入口）：
+//         0->0xa18a40, 1->0xa18a4b, 2->0xa18a59, 3->0xa18a67, 4->0xa18a75, 5->0xa18a83。
+//         6->0xa18a91, 7->0xa18a9f, 8->0xa18aad, 9->0xa18abb, 10->0xa18ac9, 11->0xa18ad7。
+//         12->0xa18ae5, 13->0xa18af3, 14->0xa18b01, 15->0xa18b0f, 16->0xa18b1d, 17->0xa18b2b。
+//         18->0xa18b39, 19->0xa18b47, 20->0xa18b55, 21->0xa18b63, 22->0xa18b71, 23->0xa18b7f。
+//         24->0xa18b8d, 25->0xa18b9b, 26->0xa18ba9, 27->0xa18bb7, 28->0xa18bc5, 29->0xa18bd3。
+//         30->0xa18be1, 31->0xa18bef, 32->0xa18bfd, 33->0xa18c0b, 34->0xa18c19, 35->0xa18c27。
+//         36->0xa18c35, 37->0xa18c43, 38->0xa18c51, 39->0xa18c5f, 40->0xa18c6d, 41->0xa18c7b。
+//         42->0xa18c89, 43->0xa18c97, 44->0xa18ca7, 45->0xa18cb2, 46->0xa18cbd, 47->0xa18cc8。
+//         48->0xa18cd3, 49->0xa18cde, 50->0xa18ce9, 51->0xa18cf4, 52->0xa18d02, 53->0xa18d10。
+//         54->0xa18d1e, 55->0xa18d2c, 56->0xa18d3a, 57->0xa18d45, 58->0xa18d53, 59->0xa18d5e。
+//         60->0xa18d69。
+//       state 0 -> -1；0xa18a40：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_F0C]。
+//       state 1 -> -1；0xa18a4b：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_EC8]。
+//       state 2 -> -1；0xa18a59：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_EA4]。
+//       state 3 -> -1；0xa18a67：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_E8C]。
+//       state 4 -> -1；0xa18a75：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_E74]。
+//       state 5 -> -1；0xa18a83：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_E5C]。
+//       state 6 -> -1；0xa18a91：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_E44]。
+//       state 7 -> -1；0xa18a9f：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_E2C]。
+//       state 8 -> -1；0xa18aad：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_E08]。
+//       state 9 -> -1；0xa18abb：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_DF0]。
+//       state 10 -> -1；0xa18ac9：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_DD8]。
+//       state 11 -> -1；0xa18ad7：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_DC0]。
+//       state 12 -> -1；0xa18ae5：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_DA8]。
+//       state 13 -> -1；0xa18af3：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_D90]。
+//       state 14 -> -1；0xa18b01：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_D78]。
+//       state 15 -> -1；0xa18b0f：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_D60]。
+//       state 16 -> -1；0xa18b1d：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_D48]。
+//       state 17 -> -1；0xa18b2b：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_D30]。
+//       state 18 -> -1；0xa18b39：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_D0C]。
+//       state 19 -> -1；0xa18b47：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_CF4]。
+//       state 20 -> -1；0xa18b55：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_CDC]。
+//       state 21 -> -1；0xa18b63：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_CC4]。
+//       state 22 -> -1；0xa18b71：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_CAC]。
+//       state 23 -> -1；0xa18b7f：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_C94]。
+//       state 24 -> -1；0xa18b8d：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_C7C]。
+//       state 25 -> -1；0xa18b9b：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_C64]。
+//       state 26 -> -1；0xa18ba9：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_C4C]。
+//       state 27 -> -1；0xa18bb7：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_C34]。
+//       state 28 -> -1；0xa18bc5：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_C10]。
+//       state 29 -> -1；0xa18bd3：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_BF8]。
+//       state 30 -> -1；0xa18be1：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_BE0]。
+//       state 31 -> -1；0xa18bef：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_BC8]。
+//       state 32 -> -1；0xa18bfd：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_BB0]。
+//       state 33 -> -1；0xa18c0b：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_B98]。
+//       state 34 -> -1；0xa18c19：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_B80]。
+//       state 35 -> -1；0xa18c27：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_B68]。
+//       state 36 -> -1；0xa18c35：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_ACBAA0。
+//       state 37 -> -1；0xa18c43：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_ACBAA0。
+//       state 38 -> -1；0xa18c51：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_ACBAA0。
+//       state 39 -> -1；0xa18c5f：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_ACBAA0。
+//       state 40 -> -1；0xa18c6d：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_ACBAA0。
+//       state 41 -> -1；0xa18c7b：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_ACBAA0。
+//       state 42 -> -1；0xa18c89：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_ACBAA0。
+//       state 43 -> -1；0xa18c97：全局静态初始化guard位回滚（可混有其他清理动作）；对象/槽证据=mov     eax, dword_ACBAA0。
+//       state 44 -> -1；0xa18ca7：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_52C]。
+//       state 45 -> 44；0xa18cb2：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_56C]。
+//       state 46 -> 45；0xa18cbd：字符串兼容布局对象的清理跳板（自动MFC名称不可信）；对象/槽证据=lea     ecx, [ebp+var_B50]; this。
+//       state 47 -> 45；0xa18cc8：字符串兼容布局对象的清理跳板（自动MFC名称不可信）；对象/槽证据=lea     ecx, [ebp+var_B2C]; this。
+//       state 48 -> 45；0xa18cd3：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_B08]。
+//       state 49 -> 45；0xa18cde：字符串兼容布局对象的清理跳板（自动MFC名称不可信）；对象/槽证据=lea     ecx, [ebp+var_59C]; this。
+//       state 50 -> 45；0xa18ce9：字符串兼容布局对象的清理跳板（自动MFC名称不可信）；对象/槽证据=lea     ecx, [ebp+var_AC8]; this。
+//       state 51 -> 45；0xa18cf4：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_A98]。
+//       state 52 -> 44；0xa18d02：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_A80]。
+//       state 53 -> 44；0xa18d10：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_A68]。
+//       state 54 -> 44；0xa18d1e：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_A50]。
+//       state 55 -> 44；0xa18d2c：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_A38]。
+//       state 56 -> -1；0xa18d3a：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_600]。
+//       state 57 -> -1；0xa18d45：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_9FC]。
+//       state 58 -> -1；0xa18d53：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_840]。
+//       state 59 -> 58；0xa18d5e：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_86C]。
+//       state 60 -> 59；0xa18d69：operator delete标量异常清理动作；对象/槽证据=mov     eax, [ebp+var_9E4]。
+//       主state写点：0x87fe83；0x87fe99；0x87ff80；0x87ffc5；0x880086；0x8800d8；0x88012d；0x880171；0x880196；0x8801dc；0x880201；0x880243；0x880268；0x8802aa；0x8802cf；0x880322；0x880495；0x8804e0；0x880539；0x88058b；0x8805d8；0x88061c；0x880641；0x880687；0x8806d2；0x88071d；0x880768；0x8807b3；0x8807f0；0x880834；0x880878；0x8808bc；0x8808e1；0x88091e；0x8809b4；0x880a0c；0x880e04；0x880e48；0x880e90；0x880ee5；0x880f2d；0x880f82；0x880ff7；0x881045；0x8810a2；0x8810fb；0x88114a；0x88119c；0x881207；0x881267；0x8812a8；0x8812f3；0x881384；0x8813cf；0x881410；0x88145b；0x881799；0x8817f2；0x881817；0x88185d；0x881890；0x8818dd；0x88191e；0x881969；0x8819c6；0x881a29；0x881a5c；0x881aa5；0x881ad8；0x881b21；0x881b54；0x881b9d；0x881c33；0x881c56；0x881c74；0x881c97；0x881cb5；0x881cd8；0x881cf6；0x881d19；0x881d37；0x881d5a；0x881d78；0x881d9b；0x881db9；0x881ddc；0x881dfe；0x881e21；0x881e58；0x881e87；0x881fc1；0x881ffd；0x88204c；0x882065；0x882098；0x8820ae；0x8820d4；0x882171；0x8821bc；0x8821f8；0x88228d；0x8822f3；0x882300；0x88230f；0x88235c；0x8823c2；0x8823e4；0x88244a；0x88246c；0x8824d2；0x8824f4；0x88255a；0x8825a8；0x88274c；0x88283a；0x882f1f；0x882f80；0x882f9e；0x882fe4；0x88302c；0x883093；0x88312a；0x883139。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/131
+//         专题/网络协议/证据/第二批/版本与逐函数核验.json#/functions/40
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x87fd30：61个状态动作项、61个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x87fd30；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa18a40；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x87fe83；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 1 -> -1；动作0xa18a4b；从[ebp+var_EC8]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x87ff80；完全展开链=1->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 2 -> -1；动作0xa18a59；从[ebp+var_EA4]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880086；完全展开链=2->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 3 -> -1；动作0xa18a67；从[ebp+var_E8C]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x88012d；完全展开链=3->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 4 -> -1；动作0xa18a75；从[ebp+var_E74]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880196；完全展开链=4->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 5 -> -1；动作0xa18a83；从[ebp+var_E5C]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880201；完全展开链=5->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 6 -> -1；动作0xa18a91；从[ebp+var_E44]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880268；完全展开链=6->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 7 -> -1；动作0xa18a9f；从[ebp+var_E2C]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8802cf；完全展开链=7->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 8 -> -1；动作0xa18aad；从[ebp+var_E08]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880495；完全展开链=8->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 9 -> -1；动作0xa18abb；从[ebp+var_DF0]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880539；完全展开链=9->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 10 -> -1；动作0xa18ac9；从[ebp+var_DD8]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8805d8；完全展开链=10->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 11 -> -1；动作0xa18ad7；从[ebp+var_DC0]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880641；完全展开链=11->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 12 -> -1；动作0xa18ae5；从[ebp+var_DA8]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8806d2；完全展开链=12->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 13 -> -1；动作0xa18af3；从[ebp+var_D90]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880768；完全展开链=13->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 14 -> -1；动作0xa18b01；从[ebp+var_D78]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8807f0；完全展开链=14->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 15 -> -1；动作0xa18b0f；从[ebp+var_D60]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880878；完全展开链=15->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 16 -> -1；动作0xa18b1d；从[ebp+var_D48]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8808e1；完全展开链=16->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 17 -> -1；动作0xa18b2b；从[ebp+var_D30]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8809b4；完全展开链=17->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 18 -> -1；动作0xa18b39；从[ebp+var_D0C]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880e04；完全展开链=18->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 19 -> -1；动作0xa18b47；从[ebp+var_CF4]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880e90；完全展开链=19->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 20 -> -1；动作0xa18b55；从[ebp+var_CDC]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880f2d；完全展开链=20->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 21 -> -1；动作0xa18b63；从[ebp+var_CC4]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x880ff7；完全展开链=21->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 22 -> -1；动作0xa18b71；从[ebp+var_CAC]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8810a2；完全展开链=22->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 23 -> -1；动作0xa18b7f；从[ebp+var_C94]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x88114a；完全展开链=23->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 24 -> -1；动作0xa18b8d；从[ebp+var_C7C]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881207；完全展开链=24->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 25 -> -1；动作0xa18b9b；从[ebp+var_C64]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8812a8；完全展开链=25->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 26 -> -1；动作0xa18ba9；从[ebp+var_C4C]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881384；完全展开链=26->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 27 -> -1；动作0xa18bb7；从[ebp+var_C34]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881410；完全展开链=27->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 28 -> -1；动作0xa18bc5；从[ebp+var_C10]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881799；完全展开链=28->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 29 -> -1；动作0xa18bd3；从[ebp+var_BF8]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881817；完全展开链=29->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 30 -> -1；动作0xa18be1；从[ebp+var_BE0]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881890；完全展开链=30->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 31 -> -1；动作0xa18bef；从[ebp+var_BC8]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x88191e；完全展开链=31->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 32 -> -1；动作0xa18bfd；从[ebp+var_BB0]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8819c6；完全展开链=32->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 33 -> -1；动作0xa18c0b；从[ebp+var_B98]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881a5c；完全展开链=33->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 34 -> -1；动作0xa18c19；从[ebp+var_B80]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881ad8；完全展开链=34->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 35 -> -1；动作0xa18c27；从[ebp+var_B68]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x881b54；完全展开链=35->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 36 -> -1；动作0xa18c35；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x881c33；完全展开链=36->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//     state 37 -> -1；动作0xa18c43；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x881c74；完全展开链=37->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//     state 38 -> -1；动作0xa18c51；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x881cb5；完全展开链=38->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//     state 39 -> -1；动作0xa18c5f；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x881cf6；完全展开链=39->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//     state 40 -> -1；动作0xa18c6d；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x881d37；完全展开链=40->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//     state 41 -> -1；动作0xa18c7b；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x881d78；完全展开链=41->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//     state 42 -> -1；动作0xa18c89；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x881db9；完全展开链=42->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//     state 43 -> -1；动作0xa18c97；按立即掩码清除全局guard位；主函数guard引用及置位由guard_evidence保存。
+//     主函数设置证据=0x881dfe；完全展开链=43->-1。
+//     未闭合=guard对应对象的正式C++类型与跨线程安全性未闭合。
+//     state 44 -> -1；动作0xa18ca7；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x881e58,0x882300,0x8823c2,0x88244a,0x8824d2,0x88255a；完全展开链=44->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 45 -> 44；动作0xa18cb2；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x881e87,0x881ffd,0x882065,0x8820ae,0x882171,0x8821f8,0x8822f3；完全展开链=45->44->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 46 -> 45；动作0xa18cbd；62B8A0传(释放标志1,长度0)至62BAD0；capacity>=16时释放堆指针，随后恢复capacity15和length0。
+//     主函数设置证据=0x881fc1；完全展开链=46->45->44->-1。
+//     未闭合=精确模板typedef及字符串字符编码未由清理函数证明。
+//     state 47 -> 45；动作0xa18cc8；62B8A0传(释放标志1,长度0)至62BAD0；capacity>=16时释放堆指针，随后恢复capacity15和length0。
+//     主函数设置证据=0x88204c；完全展开链=47->45->44->-1。
+//     未闭合=精确模板typedef及字符串字符编码未由清理函数证明。
+//     state 48 -> 45；动作0xa18cd3；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x882098；完全展开链=48->45->44->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 49 -> 45；动作0xa18cde；62B8A0传(释放标志1,长度0)至62BAD0；capacity>=16时释放堆指针，随后恢复capacity15和length0。
+//     主函数设置证据=0x8820d4；完全展开链=49->45->44->-1。
+//     未闭合=精确模板typedef及字符串字符编码未由清理函数证明。
+//     state 50 -> 45；动作0xa18ce9；62B8A0传(释放标志1,长度0)至62BAD0；capacity>=16时释放堆指针，随后恢复capacity15和length0。
+//     主函数设置证据=0x8821bc；完全展开链=50->45->44->-1。
+//     未闭合=精确模板typedef及字符串字符编码未由清理函数证明。
+//     state 51 -> 45；动作0xa18cf4；从[ebp+var_A98]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x88228d；完全展开链=51->45->44->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 52 -> 44；动作0xa18d02；从[ebp+var_A80]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x88235c；完全展开链=52->44->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 53 -> 44；动作0xa18d10；从[ebp+var_A68]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8823e4；完全展开链=53->44->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 54 -> 44；动作0xa18d1e；从[ebp+var_A50]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x88246c；完全展开链=54->44->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 55 -> 44；动作0xa18d2c；从[ebp+var_A38]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x8824f4；完全展开链=55->44->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 56 -> -1；动作0xa18d3a；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88274c；完全展开链=56->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 57 -> -1；动作0xa18d45；从[ebp+var_9FC]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x882f1f；完全展开链=57->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//     state 58 -> -1；动作0xa18d53；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x882f9e,0x88312a；完全展开链=58->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 59 -> 58；动作0xa18d5e；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x882fe4,0x883093；完全展开链=59->58->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 60 -> 59；动作0xa18d69；从[ebp+var_9E4]取指针后调用operator delete；动作返回，不调用该指针对象的完整析构函数。
+//     主函数设置证据=0x88302c；完全展开链=60->59->58->-1。
+//     未闭合=具体构造类名不由delete入口证明。
+//
+// [212] 主函数 0x88cfc0；尾块 0xa191f0-0xa19202（18字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5f870，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f878；UnwindMap动作（state->入口）：
+//         0->0xa191f0。
+//       state 0 -> -1；0xa191f0：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       主state写点：0x88d007；0x88d044。
+//       历史来源：
+//         专题/网络协议/证据/第二批/版本与逐函数核验.json#/functions/103
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x88cfc0：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x88cfc0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa191f0；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88d007；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [213] 主函数 0x88d260；尾块 0xa19250-0xa19262（18字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5f8e8，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f8f0；UnwindMap动作（state->入口）：
+//         0->0xa19250。
+//       state 0 -> -1；0xa19250：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       主state写点：0x88d2a7；0x88d2e1。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/146
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x88d260：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x88d260；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19250；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88d2a7；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [214] 主函数 0x88d340；尾块 0xa19270-0xa19282（18字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5f910，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f918；UnwindMap动作（state->入口）：
+//         0->0xa19270。
+//       state 0 -> -1；0xa19270：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       主state写点：0x88d387；0x88d3c4。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/147
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x88d340：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x88d340；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19270；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88d387；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [215] 主函数 0x88d420；尾块 0xa19290-0xa192ad（29字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=2，UnwindMap=0xa5f938，唯一动作入口2个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f948；UnwindMap动作（state->入口）：
+//         0->0xa19290, 1->0xa19298。
+//       state 0 -> -1；0xa19290：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       state 1 -> 0；0xa19298：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       主state写点：0x88d46c；0x88d487；0x88d4d0。
+//       历史来源：
+//         专题/网络协议/证据/第二批/版本与逐函数核验.json#/functions/51
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x88d420：2个状态动作项、2个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x88d420；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19290；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88d46c；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 1 -> 0；动作0xa19298；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88d487；完全展开链=1->0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [216] 主函数 0x88d610；尾块 0xa192f0-0xa19302（18字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5f998，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f9a0；UnwindMap动作（state->入口）：
+//         0->0xa192f0。
+//       state 0 -> -1；0xa192f0：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_48]。
+//       主state写点：0x88d6a7；0x88d6ba。
+//       历史来源：
+//         专题/网络协议/证据/第二批/版本与逐函数核验.json#/functions/73
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x88d610：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x88d610；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa192f0；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88d6a7；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [217] 主函数 0x88dd50；尾块 0xa19310-0xa19322（18字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa5f9c0，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5f9c8；UnwindMap动作（state->入口）：
+//         0->0xa19310。
+//       state 0 -> -1；0xa19310：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       主state写点：0x88dd97；0x88ddc9。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/148
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x88dd50：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x88dd50；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19310；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88dd97；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [218] 主函数 0x88fe40；尾块 0xa19460-0xa19488（40字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=3，UnwindMap=0xa5fb1c，唯一动作入口3个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5fb34；UnwindMap动作（state->入口）：
+//         0->0xa19460, 1->0xa19468, 2->0xa19473。
+//       state 0 -> -1；0xa19460：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       state 1 -> 0；0xa19468：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       state 2 -> 1；0xa19473：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       主state写点：0x88fe87；0x88fea6；0x88fec0；0x88feda。
+//       历史来源：
+//         专题/网络协议/证据/第二批/版本与逐函数核验.json#/functions/55
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x88fe40：3个状态动作项、3个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x88fe40；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19460；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88fe87；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 1 -> 0；动作0xa19468；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88fea6；完全展开链=1->0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 2 -> 1；动作0xa19473；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88fec0；完全展开链=2->1->0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [219] 主函数 0x88ff40；尾块 0xa194a0-0xa194bd（29字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=2，UnwindMap=0xa5fb58，唯一动作入口2个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa5fb68；UnwindMap动作（state->入口）：
+//         0->0xa194a0, 1->0xa194a8。
+//       state 0 -> -1；0xa194a0：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       state 1 -> 0；0xa194a8：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=mov     ecx, [ebp+var_14]。
+//       主state写点：0x88ff80；0x88ffa9；0x88ffc4。
+//       历史来源：
+//         专题/网络协议/证据/第二批/版本与逐函数核验.json#/functions/82
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x88ff40：2个状态动作项、2个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x88ff40；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa194a0；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88ff80；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//     state 1 -> 0；动作0xa194a8；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x88ffa9；完全展开链=1->0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [220] 主函数 0x89fe10；尾块 0xa19de0-0xa19df5（21字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa60754，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa6075c；UnwindMap动作（state->入口）：
+//         0->0xa19de0。
+//       state 0 -> -1；0xa19de0：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_100]。
+//       主state写点：0x89fe9c；0x89febd。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/149
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x89fe10：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x89fe10；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19de0；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x89fe9c；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [221] 主函数 0x8a00f0；尾块 0xa19e20-0xa19e35（21字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa607a4，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa607ac；UnwindMap动作（state->入口）：
+//         0->0xa19e20。
+//       state 0 -> -1；0xa19e20：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_100]。
+//       主state写点：0x8a0180；0x8a01a1。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/150
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x8a00f0：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x8a00f0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19e20；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x8a0180；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [222] 主函数 0x8a03e0；尾块 0xa19e60-0xa19e75（21字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa607f4，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa607fc；UnwindMap动作（state->入口）：
+//         0->0xa19e60。
+//       state 0 -> -1；0xa19e60：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_100]。
+//       主state写点：0x8a046c；0x8a048d。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/151
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x8a03e0：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x8a03e0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19e60；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x8a046c；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [223] 主函数 0x8a06c0；尾块 0xa19ea0-0xa19eb5（21字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa60844，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa6084c；UnwindMap动作（state->入口）：
+//         0->0xa19ea0。
+//       state 0 -> -1；0xa19ea0：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_100]。
+//       主state写点：0x8a074c；0x8a076d。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/152
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x8a06c0：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x8a06c0；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19ea0；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x8a074c；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//
+// [224] 主函数 0x8a0a10；尾块 0xa19ee0-0xa19ef5（21字节）；PE/IDB=一致。
+//       分类：局部或成员对象的展开清理跳板；完整类型待定。
+//       FuncInfo magic=0x19930520，maxState=1，UnwindMap=0xa60894，唯一动作入口1个，toState=-1项1；动作必须按异常发生时的state逆向执行。
+//       FuncInfo=0xa6089c；UnwindMap动作（state->入口）：
+//         0->0xa19ee0。
+//       state 0 -> -1；0xa19ee0：局部或成员对象的展开清理跳板；完整类型待定；对象/槽证据=lea     ecx, [ebp+var_100]。
+//       主state写点：0x8a0a9c；0x8a0abd。
+//       历史来源：
+//         专题/登录与大厅状态/证据/版本核验.json#/functions/153
+//       语义边界：尾块指令字节已核验；对象完整类型、异常实机触发顺序未由本条静态证据单独证明。
+//
+// 0x8a0a10：1个状态动作项、1个唯一动作入口；逐state链与栈槽已分离，所有动作入口均位于中央尾块内。
+//     IDA尾块父函数：0x8a0a10；中央历史出处在上方逐项记录。
+//     state 0 -> -1；动作0xa19ee0；ECX调整、直接调用/跳转的真实目标已核验，详见本动作指令及implementation_evidence。
+//     主函数设置证据=0x8a0a9c；完全展开链=0->-1。
+//     未闭合=完整业务类名与详细资源契约仍待补；cleanup_targets_full.json保存目标完整原证，不代表目标语义已闭合。
+//

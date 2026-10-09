@@ -1,0 +1,78 @@
+// 短字符串与缓冲所有权：独立审阅
+// ============================================================================
+// 审阅时间：2026-10-09 15:18 UTC；审阅者：sweep_texture。
+// 对象：F:/大富翁online/Richonline/RnClient.exe，当前32位客户端。
+// 范围：三篇正文、人工分级清单、三个生成/查询/验证脚本、六组函数原证。
+// 方式：独立读取当前PE与IDA，逐块核字节，再核汇编数据流和异常表。
+// 未修改原证、共享索引、游戏文件或IDA数据库；仅新增本审阅记录。
+//
+// 结论
+//   已关闭一处立即数来源笔误；未发现阻断当前限定结论的问题。
+//   42入口仍为28静态契约、5局部消费契约、9邻近或运行库仅导出。
+//   本结论不是42入口全业务审阅，更不是全部字符串模板实例已分析。
+//
+// 字节与完整块核验
+//   当前EXE SHA256：
+//   a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2
+//   原证引用的基线IDA输入SHA256：
+//   cb35f69f3d49c2093897d4ea2cb547a1e38b213f3a8df0af52b859f9e661de77
+//   两个整文件哈希不同；本次按PE节表RawSize逐个VA映射，不以文件同一性代替核验。
+//   42函数、47完整块，含5尾块；1189条指令；50个唯一E9跳板。
+//   declared_chunks、ida-domain get_chunks、idautils.Chunks集合三方一致。
+//   每个声明块都具有完整chunk_byte_ranges，指令地址集合与当前IDA一致。
+//   函数块共3519字节，跳板共250字节；本组去重地址覆盖共3769字节。
+//   含重复共165次字节核验，去重(start,size)共97范围；本组无不同长度相互重叠。
+//   原证byte_ranges和chunk_byte_ranges仍重叠，不将两者直接相加算覆盖。
+//   每个范围的disk_hex、idb_hex、当前PE、当前IDA四者一致。
+//   所有跳板均核E9及有符号rel32目标；没有发现块缺失、字节差异或跳转差异。
+//   清单入口集合等于原证入口集合，28/5/9等级未被邻近导出抬高。
+//
+// 对象布局与复制
+//   62BB80/62BF70均为无符号capacity<16时取S+4，否则取DWORD[S+4]。
+//   62BA40取S+20；62BE10先写该长度，再对真实data+length写一个零字节。
+//   62BE70只复制一个字节；以上不是字符集转换，也不检查外部可读长度。
+//   62B830/62B7B0保存完整ECX，栈临时allocator伪码char(this)不表示this窄化。
+//   691AB0的栈对象为28字节，构造、正常释放、异常释放的ECX基址一致。
+//   S+0具体身份仍未证明；不能凭模板外观给它指定业务或调试代理名称。
+//   62B910的62B927/62B93C将ECX设为源参数T，以源长度检查pos及裁count。
+//   目标ECX另存局部；S==T依次删除后缀与前缀，S!=T才扩容后复制源子串。
+//   62CA90先无符号检查Src>=data，再检查data+length>Src，区间不包含末尾NUL。
+//   62BC50对内部Src转为同对象子串；外部路径仅按size复制，前提仍由调用者满足。
+//   62BD10裁剪count后搬移length-pos-count字节，最后缩长度补NUL。
+//   62BDE0的真实CALL为j__memcpy_0；CRT实现的重叠契约未在本组闭合。
+//
+// 所有权、容量与异常
+//   62BAD0在release非零且capacity>=16时保存旧堆指针，按指定长度拷到S+4，
+//   然后62BFC0释放旧指针；最后无条件设capacity=15并调用62BE10。
+//   该方法自身没有new_length<=15保护；release=0也不是保留原堆容量的方法。
+//   62B8A0传(1,0)，不释放S本体；62BFC0实际只用指针参数调用operator delete。
+//   62BE90先核最大长度，再按容量和trim分流；AL是n!=0，不是分配结果。
+//   62DD00返回FFFFFFFF；62C850保存EAX，无符号大于1时减一，真实结果FFFFFFFE。
+//   62C8C0为request|15候选；除三用xor edx,edx后DIV，除二用SHR。
+//   candidate/3<old_capacity/2及old_capacity<=max-old_capacity/2均是整数无符号条件。
+//   成功先分配并复制，再清旧、安装新地址容量、恢复长度，顺序与正文一致。
+//   独立补核A55498异常信息头、A55470两条TryBlockMap、A55450/A55460 catch项；
+//   上述表当前IDA与PE逐字节一致，共36+40+16+16字节，另计，不纳入函数覆盖。
+//   TryBlockMap状态2..2的catch入口为62C9A2，状态0..0的catch入口为62C97B。
+//   62C97B将容量候选改为request再分配request+1；62C9A2先62BAD0(1,0)，
+//   再_CxxThrowException(0,0)重抛；双失败不保留旧字符串。
+//   62C9B7返回续接地址62C9C4，不把catch续接理解为业务成功标志。
+//   62DCC0向62E920传size与额外0；62E920只读size并转operator new。
+//
+// 已关闭修订
+//   build_review.py中79D3D0原写count来自FFFFFFFF全局；79D3DE实际是push立即数。
+//   作者已改为count=FFFFFFFF立即数并重建函数审阅清单，本审阅已回读两处确认。
+//   62B7B0和62B910的A22674全局读取不能移植到79D3D0的结论。
+//
+// 证据身份：以下为本次读取的六组原证SHA256
+//   string_allocation.json   8f0a63a33a13a44842e9b8054fbe2f8f9a49f8200ab8f608a81e829d6ff4faad
+//   string_consumers.json    ede257a651812814a780de1d2b854d16769df8015174b2f06a0fdbebde14b206
+//   string_dependencies.json 25e83ad29dfcb214b20c60e9fdb55f8baeed63f1da9858897c7b79293e709c87
+//   string_growth.json       bc58dcebedde6ad4c00eadbfc336bbedac28477e4bdffa2f1fe60aaa9b4a64c9
+//   string_limit.json        0d7a0de8f8b90377b52a7a1b52899060132b6a99936119bbd91a5d7952033a97
+//   string_seeds.json        219f93cc87f251e18a4cdc51d55f504d06c7503a806d75393d688c3b7912c0c7
+//
+// 待继续取证
+//   62BDE0下游CRT复制实现的真实重叠能力、全部trim调用者、其他模板实例与S+0身份。
+//   三处消费点完整业务，以及9个仅导出依赖的语义不在本次结论内。
+//   未运行游戏，未注入分配异常、畸形输入或超大字符串，未修改资源或执行补丁。

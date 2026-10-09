@@ -1,0 +1,35 @@
+// ============================================================================
+// 路径 / 创建目录与回调枚举
+// ============================================================================
+// A0E76A / CRT _mkdir
+//   CreateDirectoryA(Path, NULL)成功时返回0。
+//   失败时读取GetLastError；非0错误经92ACA0映射后返回-1。
+//   若API返回假但GetLastError恰为0，此包装仍返回0；真实分支判断依据是最终错误值。
+//   未递归创建上级目录；目录已存在不是成功分支，由具体调用者决定是否忽略。
+//   使用ANSI路径；没有Unicode转换、路径标准化或工作目录变更逻辑。
+//   92ACA0的完整errno映射表未展开，不能凭CRT通名写死所有错误码。
+//
+// 623B60 / 启动阶段的局部文件事实
+//   623BA0调用_mkdir("ScreenShot")且忽略返回。
+//   随后使用Config\、Data\Role.kpd、Data\LogFixStr.kpd等相对路径。
+//   本次仅核路径及返回消费；图形、声音、角色资源初始化属于相应专题。
+//   相对路径会交给当前进程环境解析；此函数未改变当前目录。
+//   未证明整个进程绝不SetCurrentDirectory，也未把资源根固定为EXE所在目录。
+//
+// 81C350 / 枚举契约
+//   参数：ANSI搜索模式、cdecl回调、透传上下文整数。
+//   FindFirstFileA返回INVALID_HANDLE_VALUE时直接返回-1，不调用回调或FindClose。
+//   搜索成功先回调首条；回调AL为0才继续FindNextFileA。
+//   回调非0立即停止后续枚举；正常结束与主动停止都调用FindClose。
+//   未见过滤点目录、目录属性、扩展名或递归；这些应由回调/传入模式实现。
+//   WIN32_FIND_DATAA位于栈上，下一次枚举复用同一地址；回调需要保留时应复制。
+//   返回FindClose的BOOL结果，反编译的HANDLE返回类型会误导：不是可使用的搜索句柄。
+//   不返回匹配个数或回调业务错误，也不区分FindNextFileA结束与失败原因。
+//   未检查回调为空；未见覆盖回调抛异常后的FindClose清理块。
+//   真实调用者与跳板证据见undeclared_write.json#/references，不依据文件名猜录像用途。
+//
+// API检索边界
+//   api_references.json保留14个匹配符号及跨E9的引用者。
+//   GetFullPathNameA/DeleteFileA/MoveFileA在存档专题已有局部解释；本处不重复登记完成量。
+//   没检出GetCurrentDirectory/SetCurrentDirectory/GetTempPath符号只表示本次符号查询结果。
+//   动态解析、字符串拼接的间接调用和未命名函数仍可能存在，不能据此给出全局不存在结论。

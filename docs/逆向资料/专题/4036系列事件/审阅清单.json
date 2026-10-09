@@ -1,0 +1,481 @@
+{
+  "scope": "4036系列及直接消费者、UI40布局与局部上行链静态审阅",
+  "functions": [
+    {
+      "va": "0x661280",
+      "status": "局部静态语义已审阅",
+      "conclusion": "4036以ECX=G校验+2 WORD，跳过三个signed WORD中的-1，ECX=G+65C按紧凑type22..24调用地图写入；无直接上行。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x661330",
+      "status": "局部静态语义已审阅",
+      "conclusion": "4037以ECX=G校验后，以signed WORD+4为pos、type28调用Map写入；本处没有pos=-1钳制。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6613a0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "4038校验GmsvID及G+3624与G+8相等；8B UI1通知{3,signed BYTE+8}；signed DWORD+4为正才扣金豆。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x661470",
+      "status": "已分析（空实现）",
+      "conclusion": "4039保存ECX后retn4，当前函数无字段写入、校验、UI或网络调用。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x661490",
+      "status": "局部静态语义已审阅",
+      "conclusion": "403A逐分支核对+14绕过校验、+4/+6 signed BYTE及+12 signed WORD门槛；构造6000/6003/6005/6006/6008，详见03文档。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x661d70",
+      "status": "局部静态语义已审阅",
+      "conclusion": "403B校验后strcpy到RTC确认128B栈缓冲；begin创建显示再隐藏，end先交文字再显示，普通文本交UI40。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x661ec0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "403C以signed BYTE+7为槽，signed WORD+4扩展写Summary+132 DWORD，+6写Summary+136 BYTE；本处无槽范围钳制。",
+      "evidence": "证据/handlers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x63e410",
+      "status": "局部静态语义已审阅",
+      "conclusion": "返回DWORD[this+1464]；403A调用时this为P，作为地图位置进入6005。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x63e560",
+      "status": "局部静态语义已审阅",
+      "conclusion": "比较栈参数与DWORD[this+8]；4038调用时参数为DWORD[G+3624]。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x63e5b0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "把ECX=this+640后调用getter；403A用返回值续排本地队列，不采用MFC自动名称。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x63f080",
+      "status": "局部静态语义已审阅",
+      "conclusion": "6000构造器写首WORD编号及+8/+12/+16 DWORD=0；未写+2动画号和+4暂停BYTE。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x63f760",
+      "status": "局部静态语义已审阅",
+      "conclusion": "比较DWORD[this+3624]与DWORD[this+8]；403A据此决定是否排6006。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x64f710",
+      "status": "局部静态语义已审阅",
+      "conclusion": "比较对象内GmsvID与传入WORD，不符弹Error GmsvID后返回0；403A +14非零分支绕过它。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x650110",
+      "status": "局部静态语义已审阅",
+      "conclusion": "G+8索引下从G+1536金豆DWORD减参数，动画事件41携带扣值地址，再交UI1通知类别2。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6932b0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "6003构造器写首WORD、+4/+5/+6 BYTE和+8/+12/+16/+20 DWORD默认0；403A调用点按24B排队。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6937d0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "6005构造器写首WORD编号；403A调用点把+2 WORD设为地图位置并按4B排队。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x693980",
+      "status": "局部静态语义已审阅",
+      "conclusion": "6006构造器只写首WORD编号，403A另写+2 BYTE=1；其余栈填充值未被构造器清零。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x693a80",
+      "status": "局部静态语义已审阅",
+      "conclusion": "6008构造器写首WORD编号；403A调用点补+2 UI槽、+4 payload指针、+8长度并按12B排队。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x694140",
+      "status": "局部静态语义已审阅",
+      "conclusion": "写DWORD[this+4]=0，仅作为已导出构造辅助字段对照，不扩展业务命名。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x694170",
+      "status": "局部静态语义已审阅",
+      "conclusion": "检查参数>=0且参数<DWORD[this+3616]；403A用它确认当前行动槽有效。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6941d0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "写DWORD[this]=-1、BYTE[this+4]=0；403A动画45静态载荷首次初始化后覆盖首DWORD和BYTE。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7c0a60",
+      "status": "局部静态语义已审阅",
+      "conclusion": "受共同谓词约束，向G+116对应槽交0标志两次，G+3620减1，BYTE[G+83846]=1。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7c0ae0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "受共同谓词约束，向G+116对应槽交1标志两次，G+3620加1，BYTE[G+83846]=0。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7c0bb0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "共同谓词非零才读BYTE[G+3640+DWORD(G+116)]，否则返回0；槽未在本函数钳制。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7f4550",
+      "status": "局部静态语义已审阅",
+      "conclusion": "局部核对403A选中的配置记录同步当前P，涉及名字、状态和装备；内部资源/UI链不计为闭环。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7f72a0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "局部核对403A以ECX=当前P、signed WORD+8写P+1464并更新坐标；地图坐标映射待展开。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7f7940",
+      "status": "局部静态语义已审阅",
+      "conclusion": "局部核对写P+1460并把值交P+864子对象；403A来源为signed WORD记录+10。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x8073c0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "以ID扫最多30个568B配置记录，基址this+736，命中返回记录，遇ID=-1停止。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x807440",
+      "status": "局部静态语义已审阅",
+      "conclusion": "扫DWORD[this+17796]个568B配置记录选择当前项；调用谓词和配置装载未展开。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x8074f0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "局部核对按选择ID取配置首DWORD及+8并调用两条同步路径；不把伪码stdcall签名直接当ABI。",
+      "evidence": "证据/helpers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x67d750",
+      "status": "局部静态语义已审阅",
+      "conclusion": "6000消费者以signed WORD+2事件和+12指针交动画管理器；BYTE+4非零按+8时长或默认时长再加100暂停。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x67de20",
+      "status": "局部静态语义已审阅",
+      "conclusion": "6008消费者以signed WORD+2选择UI槽，将+4指针交UI通知桥，不把本地6008当网络消息。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6e3b40",
+      "status": "局部静态语义已审阅",
+      "conclusion": "局部核对132B槽、工厂及窗口虚表；UI40调用点创建/显示，最终vtable+60及槽标志清0。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6e4020",
+      "status": "局部静态语义已审阅",
+      "conclusion": "局部核对对象存在且vtable+80为真时调用+64隐藏，管理器槽标志置1；子对象开关仍依虚表。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6e4640",
+      "status": "局部静态语义已审阅",
+      "conclusion": "从管理器+68所指132B UI槽查+4对象，非空才调用虚表+16交payload；间接UI语义另核。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x71e760",
+      "status": "局部静态语义已审阅",
+      "conclusion": "UI40文本消费者：begin清count/total，普通文本按128B无界槽复制并加10000时长，end启计时、显示首项并暂停。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x71e8c0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "10000ms后未完翻下一项；完成构造8B0036并经6BF380提交，再解暂停、扣未用pending，返回1。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x71ea30",
+      "status": "局部静态语义已审阅",
+      "conclusion": "按钮controlID2先调用窗口虚表+152；未完翻页，完成执行0036提交/解暂停/扣pending，再6E4020隐藏。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x71ec10",
+      "status": "局部静态语义已审阅",
+      "conclusion": "以DWORD比较返回max(total-(GetTickCount-startTick),0)；tick回绕/异常组时序未动态验证。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7efd70",
+      "status": "局部静态语义已审阅",
+      "conclusion": "4036桥接将首参数装ECX、push第二记录指针转thiscall661280。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7efd90",
+      "status": "局部静态语义已审阅",
+      "conclusion": "4037桥接将首参数装ECX、push第二记录指针转thiscall661330。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7efdb0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "4038桥接将首参数装ECX、push第二记录指针转thiscall6613A0。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7efdd0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "4039桥接将首参数装ECX、push第二记录指针转thiscall661470。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7efdf0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "403A桥接将首参数装ECX、push第二记录指针转thiscall661490。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7efe10",
+      "status": "局部静态语义已审阅",
+      "conclusion": "403B桥接将首参数装ECX、push第二记录指针转thiscall661D70。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7efe30",
+      "status": "局部静态语义已审阅",
+      "conclusion": "403C桥接将首参数装ECX、push第二记录指针转thiscall661EC0。",
+      "evidence": "证据/consumers.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x63e440",
+      "status": "局部静态语义已审阅",
+      "conclusion": "返回DWORD[this+4]；UI40完成时this为G+C44，故取得G+3144用于0036+2 WORD。",
+      "evidence": "证据/followups.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x63e590",
+      "status": "局部静态语义已审阅",
+      "conclusion": "返回this+C44共享对象地址；与63E440组合定位UI40上行0036的校验字段来源。",
+      "evidence": "证据/followups.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x694bc0",
+      "status": "仅导出",
+      "conclusion": "只导出供6000默认时长检索线索；未独立穷尽事件索引和表容量。",
+      "evidence": "证据/followups.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6e6d90",
+      "status": "仅导出",
+      "conclusion": "只导出UI工厂注册原证；本批未逐分支解释全部UI工厂。",
+      "evidence": "证据/followups.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6e8380",
+      "status": "局部静态语义已审阅",
+      "conclusion": "UI40工厂分配0x25C字节，成功调用构造6FB9A0，失败返回0。",
+      "evidence": "证据/followups.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x71eb50",
+      "status": "局部静态语义已审阅",
+      "conclusion": "局部核对cursor自增选128B槽，调用文本转换/控件更新并写最近显示tick；媒体与控件调用未展开。",
+      "evidence": "证据/followups.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7289b0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "0036构造器只写首WORD0x36；8B长度和后续字段由UI40完成调用点确定。",
+      "evidence": "证据/followups.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7a5c30",
+      "status": "仅导出",
+      "conclusion": "只导出动画管理器分派原证；调用点事件26/41/45已核，间接工厂/资源尚未穷尽。",
+      "evidence": "证据/followups.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6fb9a0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "UI40构造先调用基础构造后写虚表A26280；派生计数/文本字段由begin协议重置而非本构造。",
+      "evidence": "证据/ui40_ctor.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6e26e0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "窗口虚表+152实现通过单例向另一对象提交(1,0,0)，该间接对象语义未展开。",
+      "evidence": "证据/ui40_vtable.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6fa100",
+      "status": "局部静态语义已审阅",
+      "conclusion": "把BYTE参数交this+4子窗口虚表+196；UI40 begin/end用它传0/1。",
+      "evidence": "证据/ui40_vtable.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x64fb10",
+      "status": "局部静态语义已审阅",
+      "conclusion": "写DWORD[this+12]=时长、DWORD[this+16]=GetTickCount；UI40 end传total暂停。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x64fb50",
+      "status": "局部静态语义已审阅",
+      "conclusion": "写DWORD[this+12]=0；UI40完成及隐藏槽调用用于清基础暂停。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6bf380",
+      "status": "局部静态语义已审阅",
+      "conclusion": "局部核对状态<12与连接门槛，包装后向事件9交记录；进入此函数不证明实际发送成功。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6e2520",
+      "status": "局部静态语义已审阅",
+      "conclusion": "窗口显示槽实现对子窗口虚表+200/+196均传1，写窗口+56=0。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6e2590",
+      "status": "局部静态语义已审阅",
+      "conclusion": "窗口隐藏槽实现对子窗口虚表+200传0，写窗口+56=2。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6fa1e0",
+      "status": "局部静态语义已审阅",
+      "conclusion": "以this+4子窗口作ECX转发6FA210，供虚表+80存在状态门槛使用。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x6fa210",
+      "status": "局部静态语义已审阅",
+      "conclusion": "返回BYTE[this+385]；产品状态名称未独立确认。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x71e730",
+      "status": "局部静态语义已审阅",
+      "conclusion": "UI40隐藏槽先清基础暂停，再调用6E2590隐藏子窗口。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x728970",
+      "status": "局部静态语义已审阅",
+      "conclusion": "DWORD[this+83792]累加参数；UI40每条普通文字传10000增加pending时长。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7bb490",
+      "status": "局部静态语义已审阅",
+      "conclusion": "DWORD[this+83792]以无符号量扣参数，不足置0；UI40完成扣剩余未用时长。",
+      "evidence": "证据/ui40_state_and_send.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    },
+    {
+      "va": "0x7e2380",
+      "status": "局部静态语义已审阅",
+      "conclusion": "从Map+60所指4B位置记录写type/a4/a5前三BYTE，再按类型谓词登记并刷新位置；本处无pos钳制。",
+      "evidence": "证据/map_writer.json",
+      "unknown": "未实机验证；上游长度/槽校验、间接虚表、资源映射及连接后实际发送均不计为已闭环。"
+    }
+  ]
+}

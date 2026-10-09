@@ -1,0 +1,42 @@
+// 扩容、异常与误名核验
+// ============================================================================
+// 62BE90：请求长度n，另有BYTE trim。
+//   先取得62C850的无符号最大长度；n更大则91BDA0抛length_error。
+//   capacity<n时62C8C0(n,old_length)扩容。
+//   capacity>=n且trim非零/n<16时，按min(n,old_length)缩回短缓冲。
+//   其余仅在n==0时清长度；返回值AL表示n!=0，不是分配成功/失败结果。
+//   当前赋值入口都传trim=0；trim分支全程序调用者尚未穷尽。
+//
+// 62C850 / 62DD00
+//   62DD00返回FFFFFFFF；62C850无符号比较后返回该值减一：FFFFFFFE。
+//   62C850的伪码只显示调用、不显示返回，是错误自动原型引起的EAX遗漏。
+//   原字节62C871后存EAX，62C88B附近减一并返回；以汇编为准。
+//   不把FFFFFFFE称为实际可分配内存，地址空间与分配失败仍限制使用。
+//
+// 62C8C0增长
+//   candidate=request|15，通常把容量推到16字节边界的前一字节。
+//   candidate<=max时，若candidate/3<old_capacity/2，且
+//   old_capacity<=max-old_capacity/2，则改用old_capacity+old_capacity/2。
+//   两次除法分别为无符号DIV和右移；不能改写为浮点比率比较。
+//   candidate>max时改为request。分配candidate+1字节供终止符。
+//   成功先复制指定old_length到新缓冲，释放/reset旧缓冲，再写新地址、
+//   容量和old_length；不能把先分配解释为提前覆盖旧地址。
+//
+// 异常路径
+//   62C97B是声明函数中的catch入口，第一次分配失败后改用request+1重试。
+//   第二次失败62C9A2调用62BAD0(1,0)清旧内容，再CxxThrowException(0,0)重抛。
+//   此双失败路径不保留原字符串；不能对整个方法承诺强异常保证。
+//   62C9B7的返回是编译器catch续接，不是普通业务return成功标志。
+//   全部尾块须同主块核字节；单看伪码会遗漏catch和重抛。
+//   62DCC0向62E920传size与额外0；后者只消费size再调用operator new。
+//   不依据符号名推断额外0是某种安全模式或堆类型。
+//
+// 自动库名与参数失真
+//   62B8A0名为CControlBar::OnInitialUpdate，实为本字符串释放/reset包装。
+//   62C850名为CMFCTasksPane::ShowCommandMessageString，实为最大长度包装。
+//   62BA40、62BAB0标有MFC版本注释，实为字段读与strlen包装。
+//   62B830/62B7B0伪码的char(this)来自栈临时对象，不能认定字符串this窄化。
+//   62BBD0把栈参数地址传给无动作allocator包装，并返回this。
+//   79D3D0只包装整段字符串复制；691AB0用28B栈对象构造再析构。
+//   这些证据反驳具体库名，不证明编译器或标准库准确发行版本。
+

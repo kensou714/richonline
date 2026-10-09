@@ -1,0 +1,25 @@
+// 来源、覆盖和维护
+//
+// core.json：格式器、固定字符串getter、装载器、输出器及其单例getter。
+// lifecycle.json：格式器/输出器构造析构、文件初始化、启动调用站点。
+// event_producers.json：29个已见直接调用站点中的27个外围函数；余2个在构造
+//   完成和析构中。其中649A30/64B880将界面文字作为事件128记录，6AFB60至
+//   6B1A40主要把大厅操作失败码作为Sys事件整数。外围UI/网络业务没有全部闭合。
+// record_writers.json：27个记录写入器，首DWORD或第二DWORD赋值均核到汇编。
+// resource_parser.json：装载/解压/文本解析关键依赖。完整LZO算法不在本专题重做。
+// buffers.json、cleanup_and_encoding.json、shutdown*.json：缓存、清理、编码条件。
+// date.json：time/localtime和年、月、日getter，核实目录日期来源。
+// data_audit.json：RTC表/变量名、switch跳表、格式/断言常量、全局指针静态像。
+// resource.json与LogFixStr.decoded.bin：CP950原文、逐项字段、行号、来源与解码哈希。
+// event_dictionary.json：65分支的原伪码、汇编入口、格式串地址、参数和输出样式。
+//
+// 尚未证明每个支持事件都有可达生产者。资源中ut_*、et_*及avatar_error_*
+//   是模板文字，功能说明仅在已见调用者中核验，不扩写成服务器接口定义。
+//   核心已闭合到fwrite；原始网络消息、GUI全部副作用、编码表装载、CRT实际
+//   文件落盘行为等外部依赖不列为“全部分析完成”。
+//
+// 复跑：extract_resource.py严格解包；export_evidence.py在当前IDA只读租约
+//   导出函数和数据；build_events.py生成事件字典；build_review.py更新逐函数
+//   状态；validate.py独立对照磁盘PE、跳板、数据及资源。只写此专题目录。
+//   RnClient.exe版本哈希变化时停止复用地址；不得用新版本覆盖旧证据后继续沿用结论。
+//   导出函数仍保留IDA原名，即使被误识别为MFC，也按指令/ECX/栈参数判断职责。

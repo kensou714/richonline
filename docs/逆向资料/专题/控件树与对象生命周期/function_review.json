@@ -1,0 +1,302 @@
+{
+  "scope": "控件树局部静态语义审阅",
+  "functions": [
+    {
+      "va": "0x8e0af0",
+      "status": "部分分析",
+      "review_status": "部分分析",
+      "conclusion": "父/首子/兄弟零、局部状态1、几何/层序/关联数组初值；27回调清零复用。",
+      "unknown": "文本、样式及全部扩展资源初始化依赖未闭合",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e0ed0",
+      "status": "部分分析",
+      "review_status": "部分分析",
+      "conclusion": "递归清首子；清引擎引用并摘链；释放多资源后析构通知；非空U+20724直接清。",
+      "unknown": "完整资源所有权、派生析构和直接删根头保存兄弟契约未闭合",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e22c0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "U+80七参cdecl自定义工厂失败回退；新根插顶层头；ECX=新C刷新坐标。",
+      "unknown": "自定义工厂初始化契约和外部调用方未全部闭合",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e23f0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "第七工厂参数父C；写父字段并插首子；ECX=新C刷新坐标。",
+      "unknown": "全部派生构造/父子关系重入未闭合",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e24d0",
+      "status": "部分分析",
+      "review_status": "部分分析",
+      "conclusion": "type0..12的分配大小和构造跳板；越界/分配失败0。",
+      "unknown": "13类派生构造器与完整资源所有权不在本专题展开",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e2ac0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "名称忽略大小写，当前/子/兄弟深度优先首命中；不筛状态。",
+      "unknown": "循环/重复名称与无效名称指针动态行为未验证",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e2b50",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "空字符串调试并返回0；a3匹配却返this；失败只查首子；15处已知调用a3均0。",
+      "unknown": "非零a3实际外部触发未找到；重名归属判断未动态验证",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e2c10",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "ID查找当前/子/兄弟，首个命中；失败0，无可见启用门。",
+      "unknown": "ID唯一性和异常链动态行为未验证",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e2ca0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "从父首子/根头找前驱；this不在非空链仍返尾。",
+      "unknown": "链成员前置条件是否在全部调用方保证未闭合",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e2d10",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "按前驱结果修兄弟或头；不清当前三链字段，不释放。",
+      "unknown": "非法成员调用的实际可达性未闭合",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e30d0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "自身绝对=相对+父绝对；再回写相对；清四布局字段，无递归。",
+      "unknown": "四缓存完整用途和溢出动态行为未验证",
+      "evidence": [
+        "证据/几何传播.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e31b0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "水平夹边，虚表+8通知；按关联数组移动同层对象；刷新子坐标。",
+      "unknown": "关联数组构造和任意关联环缺少独立闭合",
+      "evidence": [
+        "证据/几何传播.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e3340",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "垂直与水平对称；使用+348/+356/客户高；按关联差值递归。",
+      "unknown": "关联数组构造和任意关联环缺少独立闭合",
+      "evidence": [
+        "证据/几何传播.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e34d0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "宽请求门、父边界截短、子越界先移再缩；最后虚表+12。",
+      "unknown": "负最终尺寸、派生通知和样式门动态效果未验证",
+      "evidence": [
+        "证据/几何传播.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e3610",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "高度对称；<=0与样式5/1拒绝，截短后不二次限正。",
+      "unknown": "负最终尺寸、派生通知和样式门动态效果未验证",
+      "evidence": [
+        "证据/几何传播.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e3750",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "负层归0；摘下同链再按降序插入，同层放旧节点前。",
+      "unknown": "所有调用方和重入导致的链状态未验证",
+      "evidence": [
+        "证据/创建与链表.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e3830",
+      "status": "复用已审阅",
+      "review_status": "复用已审阅",
+      "conclusion": "基础位置通知+8为空函数。",
+      "unknown": "派生覆盖、动态重入和全部调用方契约未闭合",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e3850",
+      "status": "复用已审阅",
+      "review_status": "复用已审阅",
+      "conclusion": "非空this基础析构后operator delete；基础虚表+120。",
+      "unknown": "派生覆盖、动态重入和全部调用方契约未闭合",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e38a0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "保存入口ECX；自身刷新后先兄弟递归，再首子循环。",
+      "unknown": "循环链和入口ECX上下文所有调用方未闭合",
+      "evidence": [
+        "证据/几何传播.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e39d0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "通过节点虚表+0先兄弟后首子；visible且样式5按自身enabled刷0/3。",
+      "unknown": "派生+0覆盖及完整样式枚举未展开",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e3a70",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "仅enabled改变时动作；先写自身，启用刷子样式和层序，禁用按名称清输入归属。",
+      "unknown": "特殊模式、重名和全部派生通知的动态效果未验证",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e3eb0",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "visible通知在写状态前；显示刷子样式/层序；隐藏按名称清引用；最后重算悬停。",
+      "unknown": "特殊模式、重名、回调重入与派生通知动态效果未验证",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e48f0",
+      "status": "复用已审阅",
+      "review_status": "复用已审阅",
+      "conclusion": "兄弟先绘制；本节点visible门控制自身及首子，层序后插同层显示靠前。",
+      "unknown": "全部绘制回调与派生渲染行为复用控件回调专题",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e7e40",
+      "status": "复用已审阅",
+      "review_status": "复用已审阅",
+      "conclusion": "兄弟先命中；hidden常规模式跳本树；enabled/层掩码控制首子访问。",
+      "unknown": "图像透明、缩放和全部输入分派复用输入专题",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8e8800",
+      "status": "复用已审阅",
+      "review_status": "复用已审阅",
+      "conclusion": "名称查找610D96调用传a3=0；鼠标引用归属复用输入专题。",
+      "unknown": "其它鼠标流程本专题未重复闭合",
+      "evidence": [
+        "证据/名称调用复用.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8ea240",
+      "status": "复用已审阅",
+      "review_status": "复用已审阅",
+      "conclusion": "基础尺寸通知+12清四布局字段并返0。",
+      "unknown": "派生覆盖、动态重入和全部调用方契约未闭合",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    },
+    {
+      "va": "0x8ea680",
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "先递归首子，再重读兄弟递归，最后虚表+120；销毁包含后继链。",
+      "unknown": "全部派生销毁覆盖和重入未闭合",
+      "evidence": [
+        "证据/状态与销毁.json"
+      ],
+      "full_dependency_closure": false
+    }
+  ]
+}

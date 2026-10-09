@@ -1,0 +1,58 @@
+// 构造析构、字段与自动名核验
+// ============================================================================
+// 证据链：ida_navigation.json的表引用、原字节、槽跳板；functions_raw.json的完整块。
+// 函数偏移均由入口ECX保存到局部槽、再读取ECX/EAX路径确认；没有仅按mov正则猜this。
+//
+// exception对象E的已确认前12B
+//   E+0  vptr=A31B64；E+4文本指针；E+8所有权标志DWORD。
+//   920C70写表并清+4/+8，返回原this：具有默认构造行为。
+//   920CF0接char**，malloc(strlen(*arg)+1)并成功才strcpy，+8设1。
+//   920D70复制+8；非0复制文本，0仅借用源文本指针。
+//   920E50仅所有权非0时free(E+4)；不释放E，也不清零字段。
+//   920E90/what返回E+4或Unknown exception；malloc失败后仍可走空指针回退。
+//   没有从这些函数证明所有输入char*均合法或malloc必定成功。
+//
+// logic_error / runtime_error
+//   62B590 / 91C040先默认构造exception；回写各自表，再构造E+12短字符串。
+//   62C7B0 / 91C230先拷贝exception，再复制源E+12到目标E+12。
+//   62B6A0 / 91C120回写表，释放/reset成员字符串，再清理exception基类。
+//   62B620 / 91C0C0以E+12调用62B8E0取data；伪码没有表达ECX偏移。
+//   E+12是28B字符串成员，布局依据短字符串与缓冲所有权专题。
+//   已确认成员操作范围至少到E+39；不能凭本专题把全部派生对象尺寸强制为40B。
+//   length_error / out_of_range仅调用logic_error构造、拷贝、析构后调整+0表。
+//   ios_base::failure同样调用runtime_error对应操作后调整+0表。
+//
+// 删除包装与普通析构
+//   表slot0多解到标量删除析构，参数flag低位1决定是否operator delete(this)。
+//   普通析构中的“回写本类表 -> 清理成员 -> 清理基类”不代表在调用虚业务动作。
+//   本批删除包装保持原this作为返回值；retn4说明本包装清理一个栈参数。
+//   原始flag读取为DWORD、仅最低位生效；伪码char类型不能用于恢复完整原型宽度。
+//   92直接调用跳板的原字节已核；外部delete、malloc、free算法未在本批完整审阅。
+//
+// locale / ios
+//   facet构造7DB7B0写+0表、+4参数；析构7DB840只回写表，删除包装另行释放对象。
+//   _Locimp构造91D750：facet(1)，+8/+12/+16清0，+20 bool，+24星号字符串。
+//   _Locimp析构91D840在Lockit(0)范围反向遍历+8表，+12为数量。
+//   非空项经7DA7C0后交7DB2C0处理；不在此把返回值宣称完整引用计数算法。
+//   正常及尾块分别清理锁、字符串、facet；+16的业务意义仍未闭合。
+//   ios_base CHD的_Iosb<int> PMD=(4,-1,0)，是基类子对象偏移，不是COL.offset。
+//   835E20仅写ios_base表；91C6D0检查+4，减全局字节计数后<=0才调用_Tidy。
+//   同一路径处理+36指针；完整ios状态字段需沿91CB60等使用者继续恢复。
+//
+// type_info
+//   921130回写A31BBC，lock(14)后若+4非0则free_base，最后unlock(14)。
+//   A31BC8 SEH表为{-1,0,921196}，filter=0的finally处理器就是unlock块。
+//   静态TD+4初值0与运行态缓存槽重合；禁止把初值0推广成运行态常量。
+//   921300虽然自动名是type_info拷贝构造，但只写vptr，没有读取源参数或名称。
+//
+// 必须保留的误识别
+//   920C70自动名Concurrency::UMSFreeVirtualProcessorRoot析构；实际是exception初始化。
+//   920F30自动名bad_typeid拷贝；写A31B8C -> bad_cast COL，实际属于bad_cast。
+//   91F460自动名bad_typeid拷贝；写A31A84 -> bad_alloc COL，实际属于bad_alloc。
+//   91C120自动名CSessionMapPtrToPtr析构；写runtime_error表，清理字符串和exception。
+//   62B8A0自动名CControlBar::OnInitialUpdate；实际字符串释放/reset已由既有专题核实。
+//   未修改IDB自动名称；上述结论以RTTI链、this数据流、写入字节及相互调用证明。
+//
+// 未声明函数的边界
+//   A31BAC还有921076、9210E6代码引用，但当前IDA未声明所属函数。
+//   保留引用地址和指令原证；本批不创建函数、不伪造完整chunk和构造语义。

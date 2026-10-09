@@ -1,0 +1,95 @@
+// 确认类型与继承导航
+// ============================================================================
+// 本表取自完整COL链；装饰名直接记录磁盘值，不依赖IDA自动类名。
+// 连续代码指针数仅为导航前缀。所有14 COL的offset/cdOffset均0；不推断全EXE不存在多重/虚继承。
+//
+// .?AVexception@@
+//   TD=0xa67268  COL=0xa53fb4  CHD=0xa53fa0
+//   vftable=0xa31b64  连续入口数=2
+//   BCD次序=.?AVexception@@(mdisp=0)
+//   槽入口=0x60c54d=>0x920cb0, 0x60ecc1=>0x920e90
+//
+// .?AVlogic_error@std@@
+//   TD=0xa67284  COL=0xa53d14  CHD=0xa53d00
+//   vftable=0xa318d0  连续入口数=2
+//   BCD次序=.?AVlogic_error@std@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x60ca34=>0x62b650, 0x60d542=>0x62b620
+//
+// .?AVlength_error@std@@
+//   TD=0xa672a8  COL=0xa53cdc  CHD=0xa53cc8
+//   vftable=0xa318c0  连续入口数=2
+//   BCD次序=.?AVlength_error@std@@(mdisp=0) -> .?AVlogic_error@std@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x603024=>0x62b760, 0x60d542=>0x62b620
+//
+// .?AVout_of_range@std@@
+//   TD=0xa672d0  COL=0xa53d6c  CHD=0xa53d58
+//   vftable=0xa318fc  连续入口数=2
+//   BCD次序=.?AVout_of_range@std@@(mdisp=0) -> .?AVlogic_error@std@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x6102a1=>0x62d550, 0x60d542=>0x62b620
+//
+// .?AVbad_cast@@
+//   TD=0xa6754c  COL=0xa54008  CHD=0xa53ff4
+//   vftable=0xa31b8c  连续入口数=2
+//   BCD次序=.?AVbad_cast@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x605dd3=>0x920ef0, 0x60ecc1=>0x920e90
+//
+// .?AVruntime_error@std@@
+//   TD=0xa691a4  COL=0xa53e18  CHD=0xa53e04
+//   vftable=0xa31974  连续入口数=2
+//   BCD次序=.?AVruntime_error@std@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x60d4b1=>0x91c0e0, 0x603ed4=>0x91c0c0
+//
+// .?AVfailure@ios_base@std@@
+//   TD=0xa691cc  COL=0xa53de0  CHD=0xa53dcc
+//   vftable=0xa31964  连续入口数=2
+//   BCD次序=.?AVfailure@ios_base@std@@(mdisp=0) -> .?AVruntime_error@std@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x6093c0=>0x91c1c0, 0x603ed4=>0x91c0c0
+//
+// .?AVios_base@std@@
+//   TD=0xa6921c  COL=0xa53e88  CHD=0xa53e74
+//   vftable=0xa31990  连续入口数=1
+//   BCD次序=.?AVios_base@std@@(mdisp=0) -> .?AV?$_Iosb@H@std@@(mdisp=4)
+//   槽入口=0x606f21=>0x835e70
+//
+// .?AVfacet@locale@std@@
+//   TD=0xa69240  COL=0xa53f2c  CHD=0xa53f18
+//   vftable=0xa319d0  连续入口数=1
+//   BCD次序=.?AVfacet@locale@std@@(mdisp=0)
+//   槽入口=0x5ffcf3=>0x7db7f0
+//
+// .?AV_Locimp@locale@std@@
+//   TD=0xa69268  COL=0xa53ef8  CHD=0xa53ee4
+//   vftable=0xa319c4  连续入口数=1
+//   BCD次序=.?AV_Locimp@locale@std@@(mdisp=0) -> .?AVfacet@locale@std@@(mdisp=0)
+//   槽入口=0x612b5a=>0x91d800
+//
+// .?AVbad_alloc@std@@
+//   TD=0xa69290  COL=0xa53f80  CHD=0xa53f6c
+//   vftable=0xa31a84  连续入口数=2
+//   BCD次序=.?AVbad_alloc@std@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x612399=>0x91f420, 0x60ecc1=>0x920e90
+//
+// .?AVbad_typeid@@
+//   TD=0xa69350  COL=0xa5405c  CHD=0xa54048
+//   vftable=0xa31b9c  连续入口数=2
+//   BCD次序=.?AVbad_typeid@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x60fe3c=>0x920fc0, 0x60ecc1=>0x920e90
+//
+// .?AV__non_rtti_object@@
+//   TD=0xa69370  COL=0xa540b4  CHD=0xa540a0
+//   vftable=0xa31bac  连续入口数=2
+//   BCD次序=.?AV__non_rtti_object@@(mdisp=0) -> .?AVbad_typeid@@(mdisp=0) -> .?AVexception@@(mdisp=0)
+//   槽入口=0x609b2c=>0x921090, 0x60ecc1=>0x920e90
+//
+// .?AVtype_info@@
+//   TD=0xa69398  COL=0xa54104  CHD=0xa540f0
+//   vftable=0xa31bbc  连续入口数=1
+//   BCD次序=.?AVtype_info@@(mdisp=0)
+//   槽入口=0x6028e5=>0x9211e0
+//
+// 仅有类型描述器、未连接完整COL链的6项
+//   CAtlException@ATL；BufferOverflowException；PosOutOfRangeException；
+//   BufferUnderflowException；InvalidMarkException；?$_Iosb@H@std。
+//   TD可被EH CatchableType引用；TD存在不能推出对象有虚表。
+//   ios_base的CHD包含_Iosb<int>，该基类PMD.mdisp=4；这是已确认的非零基类偏移。
+//   其余本批BCD均(mdisp=0,pdisp=-1,vdisp=0)、attrs=0；不能用此结果推断未知游戏类。

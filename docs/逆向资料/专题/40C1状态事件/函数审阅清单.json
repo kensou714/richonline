@@ -1,0 +1,432 @@
+{
+  "scope": "送神卡本体与局部消费者；不含实机、递归图像后端和请求资格闭环",
+  "functions": [
+    {
+      "va": "0x6279c0",
+      "status": "复用接口局部已核",
+      "conclusion": "UI管理单例，首次分配6C0h并调用构造。",
+      "unknown": "全部UI注册/资源装载沿用界面专题。",
+      "evidence": "证据/bridge_ui_animation.json"
+    },
+    {
+      "va": "0x627b60",
+      "status": "局部语义已审阅",
+      "conclusion": "取A766DC单例，首次分配12B并调用6D7170。",
+      "unknown": "字符串表装载及线程同步未复原。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x627c20",
+      "status": "局部语义已审阅",
+      "conclusion": "A766E0单例getter，首次分配14Ch并调用构造。",
+      "unknown": "本篇未递归分析构造与所有表。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x6287f0",
+      "status": "局部语义已审阅",
+      "conclusion": "A766CC单例，首次分配8B并调用构造。",
+      "unknown": "本篇不复原72B元数据表装载。",
+      "evidence": "证据/bridge_ui_animation.json"
+    },
+    {
+      "va": "0x629d90",
+      "status": "局部语义已审阅",
+      "conclusion": "返回DWORD[this+8]+DWORD[this]*index作为文本槽地址。",
+      "unknown": "槽长和index总数由装载器决定。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x6304b0",
+      "status": "局部语义已审阅",
+      "conclusion": "动画3启动取目标坐标/镜头偏移，写x/y、步长6、旧附身图像编号，并启动16ms门。",
+      "unknown": "地图镜头和图像资源合法性未递归穷尽。",
+      "evidence": "证据/god_animation.json"
+    },
+    {
+      "va": "0x630580",
+      "status": "局部语义已审阅",
+      "conclusion": "每次先绘图，16ms门通过才y-=6，返回y<=0。",
+      "unknown": "绘制后端及管理器配置超时不由本体复原。",
+      "evidence": "证据/god_animation.json"
+    },
+    {
+      "va": "0x63e000",
+      "status": "局部语义已审阅",
+      "conclusion": "返回this+4；动画3用作镜头signed WORD偏移地址。",
+      "unknown": "镜头对象完整结构另查。",
+      "evidence": "证据/animation_fields.json"
+    },
+    {
+      "va": "0x63e020",
+      "status": "局部语义已审阅",
+      "conclusion": "读DWORD[P+540]，动画3作x来源。",
+      "unknown": "坐标所有写入源见地图/移动专题。",
+      "evidence": "证据/animation_fields.json"
+    },
+    {
+      "va": "0x63e050",
+      "status": "局部语义已审阅",
+      "conclusion": "读DWORD[P+544]，动画3作y来源。",
+      "unknown": "坐标所有写入源见地图/移动专题。",
+      "evidence": "证据/animation_fields.json"
+    },
+    {
+      "va": "0x63e1c0",
+      "status": "局部语义已审阅",
+      "conclusion": "返回P+112；40C1使用该位置作目标名字。",
+      "unknown": "字段总容量与写入约束未恢复。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x63e260",
+      "status": "局部语义已审阅",
+      "conclusion": "从72B元数据行+40读DWORD；动画3保存该图像编号。",
+      "unknown": "行总数、图像资源映射未展开。",
+      "evidence": "证据/animation_fields.json"
+    },
+    {
+      "va": "0x63e560",
+      "status": "局部语义已审阅",
+      "conclusion": "比较传入slot与DWORD[G+8]，用于目标是否本机。",
+      "unknown": "本地槽赋值链未展开。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x63e5b0",
+      "status": "复用接口局部已核",
+      "conclusion": "读取G+0x640队列当前插入位置。",
+      "unknown": "队列ABI及容量沿用基础对象与分派专题。",
+      "evidence": "证据/consumers.json"
+    },
+    {
+      "va": "0x63e6a0",
+      "status": "局部语义已审阅",
+      "conclusion": "动画3结束虚函数本体为空。",
+      "unknown": "管理器的资源释放行为不在空回调内。",
+      "evidence": "证据/god_animation.json"
+    },
+    {
+      "va": "0x63ef50",
+      "status": "局部语义已审阅",
+      "conclusion": "signed BYTE[this+1494]!=-1返回BOOL。",
+      "unknown": "住院规则见对应事件专题。",
+      "evidence": "证据/god_animation.json"
+    },
+    {
+      "va": "0x63ef80",
+      "status": "局部语义已审阅",
+      "conclusion": "signed BYTE[this+1495]!=-1返回BOOL。",
+      "unknown": "字段自然名称和所有写入源另查。",
+      "evidence": "证据/god_animation.json"
+    },
+    {
+      "va": "0x63f4a0",
+      "status": "局部语义已审阅",
+      "conclusion": "signed BYTE[this+1493]!=-1返回BOOL。",
+      "unknown": "字段自然名称和所有写入源另查。",
+      "evidence": "证据/god_animation.json"
+    },
+    {
+      "va": "0x63f6e0",
+      "status": "局部语义已审阅",
+      "conclusion": "构造6061，+6=1，+7/+8/+9=0；未写+2/+4/+5。",
+      "unknown": "不代表所有字段在所有分支都消费。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x63f760",
+      "status": "局部语义已审阅",
+      "conclusion": "比较DWORD[G+0xE28]与DWORD[G+8]，返回当前是否本地槽。",
+      "unknown": "两槽初始化和同步链未展开。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x64f710",
+      "status": "复用接口局部已核",
+      "conclusion": "输入WORD与WORD[G+0x14784]比较，不一致弹诊断框并返回0。",
+      "unknown": "消息是否可信、外部长度检查另核。",
+      "evidence": "证据/consumers.json"
+    },
+    {
+      "va": "0x64fa50",
+      "status": "复用接口局部已核",
+      "conclusion": "ECX=G按Src/Size/index复制记录并交6980F0指定位置插入；本组链式使用返回位置。",
+      "unknown": "失败、并发及消费门控不由此调用点证明。",
+      "evidence": "证据/consumers.json"
+    },
+    {
+      "va": "0x64fb10",
+      "status": "复用接口局部已核",
+      "conclusion": "写DWORD[this+12]=等待值，DWORD[this+16]=GetTickCount。",
+      "unknown": "其他消费门和等待解除条件另查。",
+      "evidence": "证据/bridge_ui_animation.json"
+    },
+    {
+      "va": "0x66fc80",
+      "status": "局部语义已审阅",
+      "conclusion": "40C1校验GmsvID后按序排6007/6003/可选6050/6061/可选6006；目标由+6，扣卡槽/组由+4/+5，扣卡角色由current。",
+      "unknown": "请求生产者、资格检查、失败回复和精确线长未闭环。",
+      "evidence": "证据/entry.json"
+    },
+    {
+      "va": "0x67d880",
+      "status": "局部语义已审阅",
+      "conclusion": "6002先设目标动作，再按P+40!=-1显示UI/声音；record+6非零才取+8或默认1800写等待。",
+      "unknown": "动作内部与UI消费者未在本篇完全展开。",
+      "evidence": "证据/conditional_6002.json"
+    },
+    {
+      "va": "0x67da40",
+      "status": "局部语义已审阅",
+      "conclusion": "6003按+4/+5显示隐藏，+16内容交UI，+6非零时+12或回退+8写等待。",
+      "unknown": "UI4文本复制时机和+20语义未闭环。",
+      "evidence": "证据/consumers.json"
+    },
+    {
+      "va": "0x67dbe0",
+      "status": "局部语义已审阅",
+      "conclusion": "6006检查+2及当前P+1493/+1494/+1495，与-1比较决定向712610传0/1。",
+      "unknown": "控件树更新与网络后续未展开。",
+      "evidence": "证据/consumers.json"
+    },
+    {
+      "va": "0x67dc90",
+      "status": "局部语义已审阅",
+      "conclusion": "6007先用类型查表设置P+388及P+864子对象，再按P+40!=-1显示UI/声音/可选等待。",
+      "unknown": "各type全枚举及UI23实际绘制未穷尽。",
+      "evidence": "证据/consumers.json"
+    },
+    {
+      "va": "0x67f680",
+      "status": "局部语义已审阅",
+      "conclusion": "6050先保存旧P+1488，再清附身三字段，启动动画3；附带文字/声音/条件头像事件。",
+      "unknown": "全部神明资格和额外UI门条件未穷尽。",
+      "evidence": "证据/consumers.json"
+    },
+    {
+      "va": "0x67fbe0",
+      "status": "局部语义已审阅",
+      "conclusion": "6061真实ECX=G；+8优先加group0，否则+9按slot/group/数量扣库存，P取+4 signed槽。",
+      "unknown": "负槽/组的上游校验及请求可信性未证明。",
+      "evidence": "证据/consumers.json"
+    },
+    {
+      "va": "0x693260",
+      "status": "局部语义已审阅",
+      "conclusion": "构造首WORD6002、BYTE+5=0/+6=1、DWORD+8=0。",
+      "unknown": "其余字段由调用者填入，不能等同6007。",
+      "evidence": "证据/conditional_6002.json"
+    },
+    {
+      "va": "0x6932b0",
+      "status": "局部语义已审阅",
+      "conclusion": "构造6003，+4/+5/+6清0，DWORD+8/+12/+16/+20清0。",
+      "unknown": "其他保留字节未初始化。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x693370",
+      "status": "局部语义已审阅",
+      "conclusion": "按DWORD[this]+1128*index+660返回元数据名称地址；40C1固定索引1048。",
+      "unknown": "表装载和index合法域未递归展开。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x693510",
+      "status": "局部语义已审阅",
+      "conclusion": "读取signed BYTE[P+1488]，与-1比较返回BOOL。",
+      "unknown": "附身资格规则及所有写入源未穷尽。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x693570",
+      "status": "局部语义已审阅",
+      "conclusion": "只写首WORD6050并返回this。",
+      "unknown": "其余记录字节由调用者决定。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x693980",
+      "status": "局部语义已审阅",
+      "conclusion": "只写首WORD6006并返回this。",
+      "unknown": "控制参数由调用者写入。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x693e80",
+      "status": "局部语义已审阅",
+      "conclusion": "读signed BYTE[P+1488]；6050在清除前保存此值。",
+      "unknown": "神明ID的完整合法域待查。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x6944a0",
+      "status": "局部语义已审阅",
+      "conclusion": "构造6007首WORD，+5 BYTE=0、+8 DWORD=0，未初始化整个12B。",
+      "unknown": "type枚举不能由构造器推出。",
+      "evidence": "证据/helpers.json"
+    },
+    {
+      "va": "0x694790",
+      "status": "局部语义已审阅",
+      "conclusion": "返回DWORD[this+4]+72*index，6050用作旧附身名称指针。",
+      "unknown": "元数据装载/完整条目边界未展开。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x6947c0",
+      "status": "局部语义已审阅",
+      "conclusion": "仅判index属于1/2/6/7/18，6050据此补类型3的6002。",
+      "unknown": "集合完整业务原因未确认。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x694bf0",
+      "status": "局部语义已审阅",
+      "conclusion": "返回type+1000*(DWORD[this+40]+1)，6007用作声音编号。",
+      "unknown": "声音可播放性和表有效域未实机。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x694c20",
+      "status": "局部语义已审阅",
+      "conclusion": "读取DWORD[this+40]与-1比较；6007调用点this=P。",
+      "unknown": "P+40装载及角色资源枚举另查。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x694cf0",
+      "status": "局部语义已审阅",
+      "conclusion": "参数等于4返回BOOL。",
+      "unknown": "该ID完整神明机制未恢复。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x694d10",
+      "status": "局部语义已审阅",
+      "conclusion": "参数等于6返回BOOL。",
+      "unknown": "该ID完整神明机制未恢复。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x6d7170",
+      "status": "局部语义已审阅",
+      "conclusion": "文本表对象构造只写DWORD[this+8]=0。",
+      "unknown": "其余字段装载来自其他路径，不能凭构造补0。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x6e3b40",
+      "status": "局部语义已审阅",
+      "conclusion": "按UI号进入显示/创建路径；本组UI4/23参数1800与0。",
+      "unknown": "具体窗口状态/计时器和资源见界面专题。",
+      "evidence": "证据/bridge_ui_animation.json"
+    },
+    {
+      "va": "0x6e4640",
+      "status": "复用接口局部已核",
+      "conclusion": "检查UI槽对象存在后向虚表+10h传通知指针。",
+      "unknown": "UI4/23/1/12具体间接消费者未全部展开。",
+      "evidence": "证据/bridge_ui_animation.json"
+    },
+    {
+      "va": "0x7a5c30",
+      "status": "复用接口局部已核",
+      "conclusion": "按40B槽取对象或工厂，调用启动虚函数、写tick并加入活动列表。",
+      "unknown": "配置最大时长及完整更新循环沿用动画专题。",
+      "evidence": "证据/bridge_ui_animation.json"
+    },
+    {
+      "va": "0x7a66e0",
+      "status": "局部语义已审阅",
+      "conclusion": "动画3工厂分配1Ch后调用7AA1D0，失败返回0。",
+      "unknown": "调用方分配失败后处理未闭环。",
+      "evidence": "证据/god_animation.json"
+    },
+    {
+      "va": "0x7aa1d0",
+      "status": "局部语义已审阅",
+      "conclusion": "先调用动画基类构造，再写A2BFE0虚表。",
+      "unknown": "基类全部生命周期另查。",
+      "evidence": "证据/god_animation.json"
+    },
+    {
+      "va": "0x7f09b0",
+      "status": "局部语义已审阅",
+      "conclusion": "桥接首参G装ECX、第二参指针push，61071F进入66FC80；本体不取消息长度。",
+      "unknown": "分派器的外部长度检查另查网络专题。",
+      "evidence": "证据/bridge_ui_animation.json"
+    },
+    {
+      "va": "0x7f7670",
+      "status": "局部语义已审阅",
+      "conclusion": "写P+388并把同值交P+864子对象。",
+      "unknown": "子对象的头像/步态完整状态规则另查。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x7f7d50",
+      "status": "局部语义已审阅",
+      "conclusion": "P+1488/+1489置-1、+1490置0；7016B0检查P+1740为正时经7FDBA0清该DWORD，不清P+1744。",
+      "unknown": "附属值产品含义、全部调用资格与三字段全部写入源未穷尽。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x7f8780",
+      "status": "复用接口局部已核",
+      "conclusion": "group0八槽首空槽插入ID/数量，成功后可配方合成/通知UI12，另有P+1416强制成功门。",
+      "unknown": "配方全表及额外资格见4050专题，未实机。",
+      "evidence": "证据/status_inventory.json"
+    },
+    {
+      "va": "0x7f8920",
+      "status": "复用接口局部已核",
+      "conclusion": "group0窄WORD减数量，signed<=0清ID/数量，本机判断后刷新UI12。",
+      "unknown": "非法数量及slot由上游保证与否未知。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x7f8b50",
+      "status": "局部语义已审阅",
+      "conclusion": "group1/2数量WORD相减，<=0清ID及数量，单件flag路径先交旧ID到7D02B0。",
+      "unknown": "7D02B0附属效果、槽合法域未展开。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x7f8f90",
+      "status": "局部语义已审阅",
+      "conclusion": "ECX=P，group0调用7F8920，group1/2调用7F8B50并传flag1；retn0Ch。",
+      "unknown": "非法group路径返回值未规范化。",
+      "evidence": "证据/status_inventory.json"
+    },
+    {
+      "va": "0x7fb150",
+      "status": "局部语义已审阅",
+      "conclusion": "局部核验附身资格门及资源表二次判断，6050据结果决定UI1通知。",
+      "unknown": "门内部所有对象归属与资源规则尚未展开。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x7fb200",
+      "status": "局部语义已审阅",
+      "conclusion": "首次初始化63项DWORD表；6007本组type47命中值4。",
+      "unknown": "其余类型与自然动作名不因本组分析算完成。",
+      "evidence": "证据/followup.json"
+    },
+    {
+      "va": "0x81bcb0",
+      "status": "局部语义已审阅",
+      "conclusion": "写DWORD[this]阈值及DWORD[this+4]起始tick。",
+      "unknown": "调用者可使用不同计时阈值，非动画独有。",
+      "evidence": "证据/animation_fields.json"
+    },
+    {
+      "va": "0x81bd10",
+      "status": "局部语义已审阅",
+      "conclusion": "now>start且差值>=阈值才通过，通过后更新start。",
+      "unknown": "tick回绕时now<=start返回假，未实机观察。",
+      "evidence": "证据/animation_fields.json"
+    }
+  ]
+}

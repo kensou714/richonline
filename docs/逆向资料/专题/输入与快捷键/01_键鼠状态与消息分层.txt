@@ -1,0 +1,63 @@
+// ============================================================================
+// 键鼠状态与消息分层                         第三批静态审阅 / 2026-10-09
+// ============================================================================
+// 适用范围：当前 Richonline/RnClient.exe；不适用于上级旧客户端。
+// 关键更正：606D55 读取的是释放沿，60CD40 才读取按下沿。
+// 以下名称为本轮语义命名；IDA 中的 CSize、CWinApp 等库名不能直接当业务名。
+
+// 三张 VK 表：输入对象 I
+//   获取器 609956 -> 627270；单例指针 dword_ABABC8，分配 0x32C=812 字节。
+//   构造 60FE4B -> 81DB50 清三张 256 字节键表、鼠标按钮和滚轮；
+//   HWND 与坐标由随后 81DC20 初始化。不要把构造函数视为整块清零。
+//   +0x000  HWND；初始化 81DC20 从屏幕鼠标坐标转换为客户区坐标。
+//   +0x02C  BYTE pressed[256]   首次 WM_KEYDOWN 写 1。
+//   +0x12C  BYTE released[256]  WM_KEYUP 写 1。
+//   +0x22C  BYTE held[256]      WM_KEYDOWN 写 1，WM_KEYUP 写 0。
+//   691C60 / 60CD40 读 pressed；64ED30 / 606D55 读 released。
+//   64ED60 / 5FF3CF 读 held。getter 的 VK 参数截为 unsigned char。
+//   81DCA0 写入端直接使用消息 wParam 作索引，本函数没有显式 <256 检查。
+//   这是写入边界事实，不等于证明普通系统键消息可越界。
+
+// 消息采集：81DCA0
+//   WM_KEYDOWN(0x100)：若 held 已为 1，pressed 清 0；否则 pressed/held 置 1。
+//   WM_KEYUP  (0x101)：released 置 1，held 清 0。
+//   不在此 switch 处理 WM_SYSKEYDOWN/WM_SYSKEYUP(0x104/0x105)。
+//   pressed/released 是布尔标志，不是事件队列：同帧重复按键可能覆盖 pressed。
+//   不能用“每帧至少按过一次”描述所有输入序列。
+
+// 帧末清理：81DEC0；正常主更新 624CA0 -> 60583D -> 81DEC0。
+//   清 pressed、released、鼠标 down/up/doubleclick、滚轮和位移增量。
+//   held 与鼠标保持位不清；主更新提前返回时不会走到此处。
+//   唯一特别处理 VK_MENU(18)：GetAsyncKeyState(18)<0 同时写
+//   I+0x03E=pressed[18]、I+0x23E=held[18]。
+//   因而 Alt 的 pressed 槽在这里实际表示轮询保持态，不能当普通按下沿。
+
+// 鼠标字段：81DCA0 / 81DC20 / 81DEC0
+//   +0x04/+0x05/+0x06/+0x07：左键 down/up/doubleclick/held。
+//   +0x08/+0x09/+0x0A/+0x0B：右键 down/up/doubleclick/held。
+//   +0x0C/+0x0D/+0x0E/+0x0F：中键 down/up/doubleclick/held。
+//   +0x10/+0x14：上一条 mouse-move 坐标；+0x18/+0x1C：当前坐标。
+//   +0x20/+0x24：本条消息与上一条的坐标差；不是帧内累计位移。
+//   +0x28：WM_MOUSEWHEEL 的有符号高 16 位增量；后消息覆盖前消息。
+//   WM_MOUSEMOVE 用有符号 short 解 lParam 的 x/y。
+
+// Win32 消息到两条消费路径：7A29E0
+//   先检查 604BB8；允许时调用 5FF6A4 -> 81DCA0 更新 I。
+//   随后在 dword_ACC3C8 非空时，60041E -> 8E8A10 分派给界面控件。
+//   UI 返回非零：另一个对象的首字节设 0，并提前 return 0。
+//   UI 未消费：该首字节设 1，继续 WndProc 后续分支。
+//   该对象由 6278F0 获取、7A47B0 写首字节；完整游戏鼠标消费者尚未审阅。
+//   UI 消费发生在 I 已写入之后；这里没有撤销 I 的快捷键标志。
+//   键盘回调的返回值未被 8E8A10 用作消费返回值，不能断言
+//   “输入框有焦点就会屏蔽所有游戏 F 键”。各窗口还需自己的状态门控。
+
+// 两个坐标解码边界
+//   输入对象 I 对 mouse-move 使用有符号 short；UI 8E8A10 使用 unsigned
+//   low/high word。捕获期间负客户区坐标会走不同的越界表示。
+//   此处仅记静态差异；本轮没有执行拖拽或多屏实机验证。
+
+// 证据与版本
+//   ida_input_raw.json 含完整伪代码、带 VA 汇编、全部函数 chunks 字节。
+//   input_verification.json 对当前 PE 节表映射逐区间比较。
+//   IDB 输入 CB35F69F...61DE77；当前磁盘 A23410E7...263C2。
+//   两个整文件指纹不能互换；本批函数是否一致以核验报告为准。

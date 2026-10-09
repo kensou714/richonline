@@ -1,0 +1,7722 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "baseline_reference": "全量分析/版本核验_第二批.json",
+  "scope": "当前IDA数据库；保存函数指令覆盖范围含尾块，非指令数据/外部依赖另核",
+  "functions": [
+    {
+      "va": "0x627c20",
+      "end_va": "0x627cbd",
+      "name": "sub_627C20",
+      "status": "仅导出",
+      "pseudocode": [
+        "int sub_627C20()",
+        "{",
+        "  int v1; // [esp+0h] [ebp-18h]",
+        "",
+        "  if ( dword_A766E0 == 0 )",
+        "  {",
+        "    if ( operator new(Size: 0x14Cu) != nullptr )",
+        "      v1 = sub_610760();",
+        "    else",
+        "      v1 = 0;",
+        "    dword_A766E0 = v1;",
+        "  }",
+        "  return dword_A766E0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x627c20",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x627c21",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x627c23",
+          "text": "push    0FFFFFFFFh"
+        },
+        {
+          "va": "0x627c25",
+          "text": "push    offset SEH_627C20"
+        },
+        {
+          "va": "0x627c2a",
+          "text": "mov     eax, large fs:0"
+        },
+        {
+          "va": "0x627c30",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x627c31",
+          "text": "mov     large fs:0, esp"
+        },
+        {
+          "va": "0x627c38",
+          "text": "sub     esp, 0Ch"
+        },
+        {
+          "va": "0x627c3b",
+          "text": "mov     [ebp+var_18], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x627c42",
+          "text": "mov     [ebp+var_14], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x627c49",
+          "text": "mov     [ebp+var_10], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x627c50",
+          "text": "cmp     dword_A766E0, 0"
+        },
+        {
+          "va": "0x627c57",
+          "text": "jnz     short loc_627CA0"
+        },
+        {
+          "va": "0x627c59",
+          "text": "push    14Ch; Size"
+        },
+        {
+          "va": "0x627c5e",
+          "text": "call    operator new(uint)"
+        },
+        {
+          "va": "0x627c63",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x627c66",
+          "text": "mov     [ebp+var_14], eax"
+        },
+        {
+          "va": "0x627c69",
+          "text": "mov     [ebp+var_4], 0"
+        },
+        {
+          "va": "0x627c70",
+          "text": "cmp     [ebp+var_14], 0"
+        },
+        {
+          "va": "0x627c74",
+          "text": "jz      short loc_627C83"
+        },
+        {
+          "va": "0x627c76",
+          "text": "mov     ecx, [ebp+var_14]"
+        },
+        {
+          "va": "0x627c79",
+          "text": "call    sub_610760"
+        },
+        {
+          "va": "0x627c7e",
+          "text": "mov     [ebp+var_18], eax"
+        },
+        {
+          "va": "0x627c81",
+          "text": "jmp     short loc_627C8A"
+        },
+        {
+          "va": "0x627c83",
+          "text": "mov     [ebp+var_18], 0"
+        },
+        {
+          "va": "0x627c8a",
+          "text": "mov     eax, [ebp+var_18]"
+        },
+        {
+          "va": "0x627c8d",
+          "text": "mov     [ebp+var_10], eax"
+        },
+        {
+          "va": "0x627c90",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x627c97",
+          "text": "mov     ecx, [ebp+var_10]"
+        },
+        {
+          "va": "0x627c9a",
+          "text": "mov     dword_A766E0, ecx"
+        },
+        {
+          "va": "0x627ca0",
+          "text": "mov     eax, dword_A766E0"
+        },
+        {
+          "va": "0x627ca5",
+          "text": "mov     ecx, [ebp+var_C]"
+        },
+        {
+          "va": "0x627ca8",
+          "text": "mov     large fs:0, ecx"
+        },
+        {
+          "va": "0x627caf",
+          "text": "add     esp, 18h"
+        },
+        {
+          "va": "0x627cb2",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x627cb4",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x627cb9",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x627cbb",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x627cbc",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x627c5e",
+          "target": "0x601274",
+          "implementation": "0x91bd30",
+          "thunks": [
+            "0x601274"
+          ]
+        },
+        {
+          "site": "0x627c79",
+          "target": "0x610760",
+          "implementation": "0x7fea80",
+          "thunks": [
+            "0x610760"
+          ]
+        },
+        {
+          "site": "0x627cb4",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x602890",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x627c20",
+          "size": 157,
+          "idb_hex": "558bec6aff685b13a10064a100000000506489250000000083ec0cc745e8ccccccccc745ecccccccccc745f0cccccccc833de066a700007547684c010000e81196fdff83c4048945ecc745fc00000000837dec00740d8b4dece8e28afeff8945e8eb07c745e8000000008b45e88945f0c745fcffffffff8b4df0890de066a700a1e066a7008b4df464890d0000000083c4183bece8bd38feff8be55dc3",
+          "disk_hex": "558bec6aff685b13a10064a100000000506489250000000083ec0cc745e8ccccccccc745ecccccccccc745f0cccccccc833de066a700007547684c010000e81196fdff83c4048945ecc745fc00000000837dec00740d8b4dece8e28afeff8945e8eb07c745e8000000008b45e88945f0c745fcffffffff8b4df0890de066a700a1e066a7008b4df464890d0000000083c4183bece8bd38feff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x627f40",
+      "end_va": "0x627fdd",
+      "name": "sub_627F40",
+      "status": "仅导出",
+      "pseudocode": [
+        "int sub_627F40()",
+        "{",
+        "  int v1; // [esp+0h] [ebp-18h]",
+        "",
+        "  if ( dword_A76718 == 0 )",
+        "  {",
+        "    if ( operator new(Size: 0x2FCu) != nullptr )",
+        "      v1 = sub_604A96();",
+        "    else",
+        "      v1 = 0;",
+        "    dword_A76718 = v1;",
+        "  }",
+        "  return dword_A76718;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x627f40",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x627f41",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x627f43",
+          "text": "push    0FFFFFFFFh"
+        },
+        {
+          "va": "0x627f45",
+          "text": "push    offset SEH_627F40"
+        },
+        {
+          "va": "0x627f4a",
+          "text": "mov     eax, large fs:0"
+        },
+        {
+          "va": "0x627f50",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x627f51",
+          "text": "mov     large fs:0, esp"
+        },
+        {
+          "va": "0x627f58",
+          "text": "sub     esp, 0Ch"
+        },
+        {
+          "va": "0x627f5b",
+          "text": "mov     [ebp+var_18], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x627f62",
+          "text": "mov     [ebp+var_14], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x627f69",
+          "text": "mov     [ebp+var_10], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x627f70",
+          "text": "cmp     dword_A76718, 0"
+        },
+        {
+          "va": "0x627f77",
+          "text": "jnz     short loc_627FC0"
+        },
+        {
+          "va": "0x627f79",
+          "text": "push    2FCh; Size"
+        },
+        {
+          "va": "0x627f7e",
+          "text": "call    operator new(uint)"
+        },
+        {
+          "va": "0x627f83",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x627f86",
+          "text": "mov     [ebp+var_14], eax"
+        },
+        {
+          "va": "0x627f89",
+          "text": "mov     [ebp+var_4], 0"
+        },
+        {
+          "va": "0x627f90",
+          "text": "cmp     [ebp+var_14], 0"
+        },
+        {
+          "va": "0x627f94",
+          "text": "jz      short loc_627FA3"
+        },
+        {
+          "va": "0x627f96",
+          "text": "mov     ecx, [ebp+var_14]"
+        },
+        {
+          "va": "0x627f99",
+          "text": "call    sub_604A96"
+        },
+        {
+          "va": "0x627f9e",
+          "text": "mov     [ebp+var_18], eax"
+        },
+        {
+          "va": "0x627fa1",
+          "text": "jmp     short loc_627FAA"
+        },
+        {
+          "va": "0x627fa3",
+          "text": "mov     [ebp+var_18], 0"
+        },
+        {
+          "va": "0x627faa",
+          "text": "mov     eax, [ebp+var_18]"
+        },
+        {
+          "va": "0x627fad",
+          "text": "mov     [ebp+var_10], eax"
+        },
+        {
+          "va": "0x627fb0",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x627fb7",
+          "text": "mov     ecx, [ebp+var_10]"
+        },
+        {
+          "va": "0x627fba",
+          "text": "mov     dword_A76718, ecx"
+        },
+        {
+          "va": "0x627fc0",
+          "text": "mov     eax, dword_A76718"
+        },
+        {
+          "va": "0x627fc5",
+          "text": "mov     ecx, [ebp+var_C]"
+        },
+        {
+          "va": "0x627fc8",
+          "text": "mov     large fs:0, ecx"
+        },
+        {
+          "va": "0x627fcf",
+          "text": "add     esp, 18h"
+        },
+        {
+          "va": "0x627fd2",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x627fd4",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x627fd9",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x627fdb",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x627fdc",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x627f7e",
+          "target": "0x601274",
+          "implementation": "0x91bd30",
+          "thunks": [
+            "0x601274"
+          ]
+        },
+        {
+          "site": "0x627f99",
+          "target": "0x604a96",
+          "implementation": "0x7acc10",
+          "thunks": [
+            "0x604a96"
+          ]
+        },
+        {
+          "site": "0x627fd4",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x6071c9",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x627f40",
+          "size": 157,
+          "idb_hex": "558bec6aff68db13a10064a100000000506489250000000083ec0cc745e8ccccccccc745ecccccccccc745f0cccccccc833d1867a70000754768fc020000e8f192fdff83c4048945ecc745fc00000000837dec00740d8b4dece8f8cafdff8945e8eb07c745e8000000008b45e88945f0c745fcffffffff8b4df0890d1867a700a11867a7008b4df464890d0000000083c4183bece89d35feff8be55dc3",
+          "disk_hex": "558bec6aff68db13a10064a100000000506489250000000083ec0cc745e8ccccccccc745ecccccccccc745f0cccccccc833d1867a70000754768fc020000e8f192fdff83c4048945ecc745fc00000000837dec00740d8b4dece8f8cafdff8945e8eb07c745e8000000008b45e88945f0c745fcffffffff8b4df0890d1867a700a11867a7008b4df464890d0000000083c4183bece89d35feff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x628010",
+      "end_va": "0x6280ad",
+      "name": "sub_628010",
+      "status": "仅导出",
+      "pseudocode": [
+        "int sub_628010()",
+        "{",
+        "  int v1; // [esp+0h] [ebp-18h]",
+        "",
+        "  if ( dword_A7671C == 0 )",
+        "  {",
+        "    if ( operator new(Size: 0x4588u) != nullptr )",
+        "      v1 = sub_6016CF();",
+        "    else",
+        "      v1 = 0;",
+        "    dword_A7671C = v1;",
+        "  }",
+        "  return dword_A7671C;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x628010",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x628011",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x628013",
+          "text": "push    0FFFFFFFFh"
+        },
+        {
+          "va": "0x628015",
+          "text": "push    offset SEH_628010"
+        },
+        {
+          "va": "0x62801a",
+          "text": "mov     eax, large fs:0"
+        },
+        {
+          "va": "0x628020",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x628021",
+          "text": "mov     large fs:0, esp"
+        },
+        {
+          "va": "0x628028",
+          "text": "sub     esp, 0Ch"
+        },
+        {
+          "va": "0x62802b",
+          "text": "mov     [ebp+var_18], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x628032",
+          "text": "mov     [ebp+var_14], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x628039",
+          "text": "mov     [ebp+var_10], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x628040",
+          "text": "cmp     dword_A7671C, 0"
+        },
+        {
+          "va": "0x628047",
+          "text": "jnz     short loc_628090"
+        },
+        {
+          "va": "0x628049",
+          "text": "push    4588h; Size"
+        },
+        {
+          "va": "0x62804e",
+          "text": "call    operator new(uint)"
+        },
+        {
+          "va": "0x628053",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x628056",
+          "text": "mov     [ebp+var_14], eax"
+        },
+        {
+          "va": "0x628059",
+          "text": "mov     [ebp+var_4], 0"
+        },
+        {
+          "va": "0x628060",
+          "text": "cmp     [ebp+var_14], 0"
+        },
+        {
+          "va": "0x628064",
+          "text": "jz      short loc_628073"
+        },
+        {
+          "va": "0x628066",
+          "text": "mov     ecx, [ebp+var_14]"
+        },
+        {
+          "va": "0x628069",
+          "text": "call    sub_6016CF"
+        },
+        {
+          "va": "0x62806e",
+          "text": "mov     [ebp+var_18], eax"
+        },
+        {
+          "va": "0x628071",
+          "text": "jmp     short loc_62807A"
+        },
+        {
+          "va": "0x628073",
+          "text": "mov     [ebp+var_18], 0"
+        },
+        {
+          "va": "0x62807a",
+          "text": "mov     eax, [ebp+var_18]"
+        },
+        {
+          "va": "0x62807d",
+          "text": "mov     [ebp+var_10], eax"
+        },
+        {
+          "va": "0x628080",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x628087",
+          "text": "mov     ecx, [ebp+var_10]"
+        },
+        {
+          "va": "0x62808a",
+          "text": "mov     dword_A7671C, ecx"
+        },
+        {
+          "va": "0x628090",
+          "text": "mov     eax, dword_A7671C"
+        },
+        {
+          "va": "0x628095",
+          "text": "mov     ecx, [ebp+var_C]"
+        },
+        {
+          "va": "0x628098",
+          "text": "mov     large fs:0, ecx"
+        },
+        {
+          "va": "0x62809f",
+          "text": "add     esp, 18h"
+        },
+        {
+          "va": "0x6280a2",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x6280a4",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x6280a9",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x6280ab",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x6280ac",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x62804e",
+          "target": "0x601274",
+          "implementation": "0x91bd30",
+          "thunks": [
+            "0x601274"
+          ]
+        },
+        {
+          "site": "0x628069",
+          "target": "0x6016cf",
+          "implementation": "0x8054e0",
+          "thunks": [
+            "0x6016cf"
+          ]
+        },
+        {
+          "site": "0x6280a4",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x60ae19",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x628010",
+          "size": 157,
+          "idb_hex": "558bec6aff68fb13a10064a100000000506489250000000083ec0cc745e8ccccccccc745ecccccccccc745f0cccccccc833d1c67a7000075476888450000e82192fdff83c4048945ecc745fc00000000837dec00740d8b4dece86196fdff8945e8eb07c745e8000000008b45e88945f0c745fcffffffff8b4df0890d1c67a700a11c67a7008b4df464890d0000000083c4183bece8cd34feff8be55dc3",
+          "disk_hex": "558bec6aff68fb13a10064a100000000506489250000000083ec0cc745e8ccccccccc745ecccccccccc745f0cccccccc833d1c67a7000075476888450000e82192fdff83c4048945ecc745fc00000000837dec00740d8b4dece86196fdff8945e8eb07c745e8000000008b45e88945f0c745fcffffffff8b4df0890d1c67a700a11c67a7008b4df464890d0000000083c4183bece8cd34feff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x6287f0",
+      "end_va": "0x62888a",
+      "name": "sub_6287F0",
+      "status": "仅导出",
+      "pseudocode": [
+        "int sub_6287F0()",
+        "{",
+        "  int v1; // [esp+0h] [ebp-18h]",
+        "",
+        "  if ( dword_A766CC == 0 )",
+        "  {",
+        "    if ( operator new(Size: 8u) != nullptr )",
+        "      v1 = sub_607BB0();",
+        "    else",
+        "      v1 = 0;",
+        "    dword_A766CC = v1;",
+        "  }",
+        "  return dword_A766CC;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x6287f0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x6287f1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x6287f3",
+          "text": "push    0FFFFFFFFh"
+        },
+        {
+          "va": "0x6287f5",
+          "text": "push    offset SEH_6287F0"
+        },
+        {
+          "va": "0x6287fa",
+          "text": "mov     eax, large fs:0"
+        },
+        {
+          "va": "0x628800",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x628801",
+          "text": "mov     large fs:0, esp"
+        },
+        {
+          "va": "0x628808",
+          "text": "sub     esp, 0Ch"
+        },
+        {
+          "va": "0x62880b",
+          "text": "mov     [ebp+var_18], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x628812",
+          "text": "mov     [ebp+var_14], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x628819",
+          "text": "mov     [ebp+var_10], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x628820",
+          "text": "cmp     dword_A766CC, 0"
+        },
+        {
+          "va": "0x628827",
+          "text": "jnz     short loc_62886D"
+        },
+        {
+          "va": "0x628829",
+          "text": "push    8; Size"
+        },
+        {
+          "va": "0x62882b",
+          "text": "call    operator new(uint)"
+        },
+        {
+          "va": "0x628830",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x628833",
+          "text": "mov     [ebp+var_14], eax"
+        },
+        {
+          "va": "0x628836",
+          "text": "mov     [ebp+var_4], 0"
+        },
+        {
+          "va": "0x62883d",
+          "text": "cmp     [ebp+var_14], 0"
+        },
+        {
+          "va": "0x628841",
+          "text": "jz      short loc_628850"
+        },
+        {
+          "va": "0x628843",
+          "text": "mov     ecx, [ebp+var_14]"
+        },
+        {
+          "va": "0x628846",
+          "text": "call    sub_607BB0"
+        },
+        {
+          "va": "0x62884b",
+          "text": "mov     [ebp+var_18], eax"
+        },
+        {
+          "va": "0x62884e",
+          "text": "jmp     short loc_628857"
+        },
+        {
+          "va": "0x628850",
+          "text": "mov     [ebp+var_18], 0"
+        },
+        {
+          "va": "0x628857",
+          "text": "mov     eax, [ebp+var_18]"
+        },
+        {
+          "va": "0x62885a",
+          "text": "mov     [ebp+var_10], eax"
+        },
+        {
+          "va": "0x62885d",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x628864",
+          "text": "mov     ecx, [ebp+var_10]"
+        },
+        {
+          "va": "0x628867",
+          "text": "mov     dword_A766CC, ecx"
+        },
+        {
+          "va": "0x62886d",
+          "text": "mov     eax, dword_A766CC"
+        },
+        {
+          "va": "0x628872",
+          "text": "mov     ecx, [ebp+var_C]"
+        },
+        {
+          "va": "0x628875",
+          "text": "mov     large fs:0, ecx"
+        },
+        {
+          "va": "0x62887c",
+          "text": "add     esp, 18h"
+        },
+        {
+          "va": "0x62887f",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x628881",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x628886",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x628888",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x628889",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x62882b",
+          "target": "0x601274",
+          "implementation": "0x91bd30",
+          "thunks": [
+            "0x601274"
+          ]
+        },
+        {
+          "site": "0x628846",
+          "target": "0x607bb0",
+          "implementation": "0x7ed400",
+          "thunks": [
+            "0x607bb0"
+          ]
+        },
+        {
+          "site": "0x628881",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x60a1bc",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x6287f0",
+          "size": 154,
+          "idb_hex": "558bec6aff68cb15a10064a100000000506489250000000083ec0cc745e8ccccccccc745ecccccccccc745f0cccccccc833dcc66a7000075446a08e8448afdff83c4048945ecc745fc00000000837dec00740d8b4dece865f3fdff8945e8eb07c745e8000000008b45e88945f0c745fcffffffff8b4df0890dcc66a700a1cc66a7008b4df464890d0000000083c4183bece8f02cfeff8be55dc3",
+          "disk_hex": "558bec6aff68cb15a10064a100000000506489250000000083ec0cc745e8ccccccccc745ecccccccccc745f0cccccccc833dcc66a7000075446a08e8448afdff83c4048945ecc745fc00000000837dec00740d8b4dece865f3fdff8945e8eb07c745e8000000008b45e88945f0c745fcffffffff8b4df0890dcc66a700a1cc66a7008b4df464890d0000000083c4183bece8f02cfeff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e160",
+      "end_va": "0x63e18b",
+      "name": "sub_63E160",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_63E160(int *this)",
+        "{",
+        "  return COleDocument::GetNextItem(a1: *(this + 6));",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63e160",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63e161",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63e163",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e164",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63e16b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63e16e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63e171",
+          "text": "mov     ecx, [eax+18h]"
+        },
+        {
+          "va": "0x63e174",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e175",
+          "text": "call    COleDocument::GetNextItem(__POSITION * &)"
+        },
+        {
+          "va": "0x63e17a",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63e17d",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63e180",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x63e182",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x63e187",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63e189",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63e18a",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x63e175",
+          "target": "0x5ff7b7",
+          "implementation": "0x63e1a0",
+          "thunks": [
+            "0x5ff7b7"
+          ]
+        },
+        {
+          "site": "0x63e182",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x610c06",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63e160",
+          "size": 43,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8b481851e83d16fcff83c40483c4043bece8efd3fcff8be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8b481851e83d16fcff83c40483c4043bece8efd3fcff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e340",
+      "end_va": "0x63e35f",
+      "name": "sub_63E340",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_63E340(_DWORD *this, int a2)",
+        "{",
+        "  return *(this + 7) + a2;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63e340",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63e341",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63e343",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e344",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63e34b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63e34e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63e351",
+          "text": "mov     ecx, [ebp+arg_0]"
+        },
+        {
+          "va": "0x63e354",
+          "text": "add     ecx, [eax+1Ch]"
+        },
+        {
+          "va": "0x63e357",
+          "text": "mov     eax, ecx"
+        },
+        {
+          "va": "0x63e359",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63e35b",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63e35c",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x6045a5",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63e340",
+          "size": 31,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8b4d0803481c8bc18be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8b4d0803481c8bc18be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e370",
+      "end_va": "0x63e38a",
+      "name": "sub_63E370",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __stdcall sub_63E370(int a1)",
+        "{",
+        "  return a1 - 1;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63e370",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63e371",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63e373",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e374",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63e37b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63e37e",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x63e381",
+          "text": "sub     eax, 1"
+        },
+        {
+          "va": "0x63e384",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63e386",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63e387",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x6017a1",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63e370",
+          "size": 26,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b450883e8018be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b450883e8018be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e390",
+      "end_va": "0x63e3af",
+      "name": "sub_63E390",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_63E390(_DWORD *this, int a2)",
+        "{",
+        "  return a2 - *(this + 7);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63e390",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63e391",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63e393",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e394",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63e39b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63e39e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63e3a1",
+          "text": "mov     ecx, [ebp+arg_0]"
+        },
+        {
+          "va": "0x63e3a4",
+          "text": "sub     ecx, [eax+1Ch]"
+        },
+        {
+          "va": "0x63e3a7",
+          "text": "mov     eax, ecx"
+        },
+        {
+          "va": "0x63e3a9",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63e3ab",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63e3ac",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x600392",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63e390",
+          "size": 31,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8b4d082b481c8bc18be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8b4d082b481c8bc18be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e3c0",
+      "end_va": "0x63e3da",
+      "name": "sub_63E3C0",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __stdcall sub_63E3C0(int a1)",
+        "{",
+        "  return a1 + 1;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63e3c0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63e3c1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63e3c3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e3c4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63e3cb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63e3ce",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x63e3d1",
+          "text": "add     eax, 1"
+        },
+        {
+          "va": "0x63e3d4",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63e3d6",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63e3d7",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x605ea5",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63e3c0",
+          "size": 26,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b450883c0018be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b450883c0018be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e710",
+      "end_va": "0x63e73e",
+      "name": "sub_63E710",
+      "status": "仅导出",
+      "pseudocode": [
+        "bool __cdecl sub_63E710(int a1)",
+        "{",
+        "  return a1 == 12 || a1 == 27;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63e710",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63e711",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63e713",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e714",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63e71b",
+          "text": "cmp     [ebp+arg_0], 0Ch"
+        },
+        {
+          "va": "0x63e71f",
+          "text": "jz      short loc_63E730"
+        },
+        {
+          "va": "0x63e721",
+          "text": "cmp     [ebp+arg_0], 1Bh"
+        },
+        {
+          "va": "0x63e725",
+          "text": "jz      short loc_63E730"
+        },
+        {
+          "va": "0x63e727",
+          "text": "mov     [ebp+var_4], 0"
+        },
+        {
+          "va": "0x63e72e",
+          "text": "jmp     short loc_63E737"
+        },
+        {
+          "va": "0x63e730",
+          "text": "mov     [ebp+var_4], 1"
+        },
+        {
+          "va": "0x63e737",
+          "text": "mov     al, byte ptr [ebp+var_4]"
+        },
+        {
+          "va": "0x63e73a",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63e73c",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63e73d",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60fd1f",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63e710",
+          "size": 46,
+          "idb_hex": "558bec51c745fccccccccc837d080c740f837d081b7409c745fc00000000eb07c745fc010000008a45fc8be55dc3",
+          "disk_hex": "558bec51c745fccccccccc837d080c740f837d081b7409c745fc00000000eb07c745fc010000008a45fc8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e7d0",
+      "end_va": "0x63e7f0",
+      "name": "sub_63E7D0",
+      "status": "仅导出",
+      "pseudocode": [
+        "char __thiscall sub_63E7D0(_BYTE *this, int a2)",
+        "{",
+        "  return *(this + a2 + 3632);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63e7d0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63e7d1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63e7d3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e7d4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63e7db",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63e7de",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63e7e1",
+          "text": "add     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x63e7e4",
+          "text": "mov     al, [eax+0E30h]"
+        },
+        {
+          "va": "0x63e7ea",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63e7ec",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63e7ed",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60b49f",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63e7d0",
+          "size": 32,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0345088a80300e00008be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0345088a80300e00008be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63e990",
+      "end_va": "0x63e9bb",
+      "name": "sub_63E990",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_63E990(int *this)",
+        "{",
+        "  return sub_61260F(a1: *(this + 6));",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63e990",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63e991",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63e993",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e994",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63e99b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63e99e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63e9a1",
+          "text": "mov     ecx, [eax+18h]"
+        },
+        {
+          "va": "0x63e9a4",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63e9a5",
+          "text": "call    sub_61260F"
+        },
+        {
+          "va": "0x63e9aa",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63e9ad",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63e9b0",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x63e9b2",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x63e9b7",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63e9b9",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63e9ba",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x63e9a5",
+          "target": "0x61260f",
+          "implementation": "0x629e10",
+          "thunks": [
+            "0x61260f"
+          ]
+        },
+        {
+          "site": "0x63e9b2",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x604703",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63e990",
+          "size": 43,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8b481851e8653cfdff83c40483c4043bece8bfcbfcff8be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8b481851e8653cfdff83c40483c4043bece8bfcbfcff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63ea60",
+      "end_va": "0x63eaa1",
+      "name": "sub_63EA60",
+      "status": "仅导出",
+      "pseudocode": [
+        "bool __thiscall sub_63EA60(_DWORD *this, int a2)",
+        "{",
+        "  return a2 >= 0 && a2 < *(this + 7);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63ea60",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63ea61",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63ea63",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x63ea66",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63ea6d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63ea74",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63ea77",
+          "text": "cmp     [ebp+arg_0], 0"
+        },
+        {
+          "va": "0x63ea7b",
+          "text": "jl      short loc_63EA91"
+        },
+        {
+          "va": "0x63ea7d",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63ea80",
+          "text": "mov     ecx, [ebp+arg_0]"
+        },
+        {
+          "va": "0x63ea83",
+          "text": "cmp     ecx, [eax+1Ch]"
+        },
+        {
+          "va": "0x63ea86",
+          "text": "jge     short loc_63EA91"
+        },
+        {
+          "va": "0x63ea88",
+          "text": "mov     [ebp+var_8], 1"
+        },
+        {
+          "va": "0x63ea8f",
+          "text": "jmp     short loc_63EA98"
+        },
+        {
+          "va": "0x63ea91",
+          "text": "mov     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x63ea98",
+          "text": "mov     al, byte ptr [ebp+var_8]"
+        },
+        {
+          "va": "0x63ea9b",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63ea9d",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63ea9e",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x604b09",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63ea60",
+          "size": 65,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d08007c148b45fc8b4d083b481c7d09c745f801000000eb07c745f8000000008a45f88be55dc20400",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d08007c148b45fc8b4d083b481c7d09c745f801000000eb07c745f8000000008a45f88be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63eac0",
+      "end_va": "0x63eb01",
+      "name": "sub_63EAC0",
+      "status": "仅导出",
+      "pseudocode": [
+        "bool __thiscall sub_63EAC0(_DWORD *this, int a2)",
+        "{",
+        "  return a2 >= 0 && a2 < *(this + 8);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63eac0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63eac1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63eac3",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x63eac6",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63eacd",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63ead4",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63ead7",
+          "text": "cmp     [ebp+arg_0], 0"
+        },
+        {
+          "va": "0x63eadb",
+          "text": "jl      short loc_63EAF1"
+        },
+        {
+          "va": "0x63eadd",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63eae0",
+          "text": "mov     ecx, [ebp+arg_0]"
+        },
+        {
+          "va": "0x63eae3",
+          "text": "cmp     ecx, [eax+20h]"
+        },
+        {
+          "va": "0x63eae6",
+          "text": "jge     short loc_63EAF1"
+        },
+        {
+          "va": "0x63eae8",
+          "text": "mov     [ebp+var_8], 1"
+        },
+        {
+          "va": "0x63eaef",
+          "text": "jmp     short loc_63EAF8"
+        },
+        {
+          "va": "0x63eaf1",
+          "text": "mov     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x63eaf8",
+          "text": "mov     al, byte ptr [ebp+var_8]"
+        },
+        {
+          "va": "0x63eafb",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63eafd",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63eafe",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60dfdd",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63eac0",
+          "size": 65,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d08007c148b45fc8b4d083b48207d09c745f801000000eb07c745f8000000008a45f88be55dc20400",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d08007c148b45fc8b4d083b48207d09c745f801000000eb07c745f8000000008a45f88be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63ed10",
+      "end_va": "0x63ed3b",
+      "name": "sub_63ED10",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_63ED10(int *this)",
+        "{",
+        "  return sub_6024AD(a1: *(this + 6));",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63ed10",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63ed11",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63ed13",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63ed14",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63ed1b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63ed1e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63ed21",
+          "text": "mov     ecx, [eax+18h]"
+        },
+        {
+          "va": "0x63ed24",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63ed25",
+          "text": "call    sub_6024AD"
+        },
+        {
+          "va": "0x63ed2a",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63ed2d",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63ed30",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x63ed32",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x63ed37",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63ed39",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63ed3a",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x63ed25",
+          "target": "0x6024ad",
+          "implementation": "0x629dd0",
+          "thunks": [
+            "0x6024ad"
+          ]
+        },
+        {
+          "site": "0x63ed32",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x5ffbe0",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63ed10",
+          "size": 43,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8b481851e88337fcff83c40483c4043bece83fc8fcff8be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8b481851e88337fcff83c40483c4043bece83fc8fcff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63ed50",
+      "end_va": "0x63edb4",
+      "name": "sub_63ED50",
+      "status": "仅导出",
+      "pseudocode": [
+        "bool __thiscall sub_63ED50(int *this)",
+        "{",
+        "  return (unsigned __int8)sub_60B65C(a1: *(this + 6)) != 0 && (unsigned __int8)sub_6024AD(a1: *(this + 27)) != 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63ed50",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63ed51",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63ed53",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x63ed56",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63ed5d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63ed64",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63ed67",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63ed6a",
+          "text": "mov     ecx, [eax+18h]"
+        },
+        {
+          "va": "0x63ed6d",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63ed6e",
+          "text": "call    sub_60B65C"
+        },
+        {
+          "va": "0x63ed73",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63ed76",
+          "text": "movzx   edx, al"
+        },
+        {
+          "va": "0x63ed79",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x63ed7b",
+          "text": "jz      short loc_63ED9C"
+        },
+        {
+          "va": "0x63ed7d",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63ed80",
+          "text": "mov     ecx, [eax+6Ch]"
+        },
+        {
+          "va": "0x63ed83",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63ed84",
+          "text": "call    sub_6024AD"
+        },
+        {
+          "va": "0x63ed89",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63ed8c",
+          "text": "movzx   edx, al"
+        },
+        {
+          "va": "0x63ed8f",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x63ed91",
+          "text": "jz      short loc_63ED9C"
+        },
+        {
+          "va": "0x63ed93",
+          "text": "mov     [ebp+var_8], 1"
+        },
+        {
+          "va": "0x63ed9a",
+          "text": "jmp     short loc_63EDA3"
+        },
+        {
+          "va": "0x63ed9c",
+          "text": "mov     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x63eda3",
+          "text": "mov     al, byte ptr [ebp+var_8]"
+        },
+        {
+          "va": "0x63eda6",
+          "text": "add     esp, 8"
+        },
+        {
+          "va": "0x63eda9",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x63edab",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x63edb0",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63edb2",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63edb3",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x63ed6e",
+          "target": "0x60b65c",
+          "implementation": "0x63edd0",
+          "thunks": [
+            "0x60b65c"
+          ]
+        },
+        {
+          "site": "0x63ed84",
+          "target": "0x6024ad",
+          "implementation": "0x629dd0",
+          "thunks": [
+            "0x6024ad"
+          ]
+        },
+        {
+          "site": "0x63edab",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x6011ca",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63ed50",
+          "size": 100,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fc8b481851e8e9c8fcff83c4040fb6d085d2741f8b45fc8b486c51e82437fcff83c4040fb6d085d27409c745f801000000eb07c745f8000000008a45f883c4083bece8c6c7fcff8be55dc3",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fc8b481851e8e9c8fcff83c4040fb6d085d2741f8b45fc8b486c51e82437fcff83c4040fb6d085d27409c745f801000000eb07c745f8000000008a45f883c4083bece8c6c7fcff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63ee90",
+      "end_va": "0x63eebb",
+      "name": "sub_63EE90",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_63EE90(int *this)",
+        "{",
+        "  return sub_606035(a1: *(this + 6));",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63ee90",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63ee91",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63ee93",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63ee94",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63ee9b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63ee9e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63eea1",
+          "text": "mov     ecx, [eax+18h]"
+        },
+        {
+          "va": "0x63eea4",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63eea5",
+          "text": "call    sub_606035"
+        },
+        {
+          "va": "0x63eeaa",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63eead",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63eeb0",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x63eeb2",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x63eeb7",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63eeb9",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63eeba",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x63eea5",
+          "target": "0x606035",
+          "implementation": "0x629df0",
+          "thunks": [
+            "0x606035"
+          ]
+        },
+        {
+          "site": "0x63eeb2",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x608628",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63ee90",
+          "size": 43,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8b481851e88b71fcff83c40483c4043bece8bfc6fcff8be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8b481851e88b71fcff83c40483c4043bece8bfc6fcff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63eed0",
+      "end_va": "0x63ef34",
+      "name": "sub_63EED0",
+      "status": "仅导出",
+      "pseudocode": [
+        "bool __thiscall sub_63EED0(int *this)",
+        "{",
+        "  return (unsigned __int8)sub_60B65C(a1: *(this + 6)) != 0 && (unsigned __int8)sub_606035(a1: *(this + 27)) != 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63eed0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63eed1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63eed3",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x63eed6",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63eedd",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63eee4",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63eee7",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63eeea",
+          "text": "mov     ecx, [eax+18h]"
+        },
+        {
+          "va": "0x63eeed",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63eeee",
+          "text": "call    sub_60B65C"
+        },
+        {
+          "va": "0x63eef3",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63eef6",
+          "text": "movzx   edx, al"
+        },
+        {
+          "va": "0x63eef9",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x63eefb",
+          "text": "jz      short loc_63EF1C"
+        },
+        {
+          "va": "0x63eefd",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63ef00",
+          "text": "mov     ecx, [eax+6Ch]"
+        },
+        {
+          "va": "0x63ef03",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x63ef04",
+          "text": "call    sub_606035"
+        },
+        {
+          "va": "0x63ef09",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63ef0c",
+          "text": "movzx   edx, al"
+        },
+        {
+          "va": "0x63ef0f",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x63ef11",
+          "text": "jz      short loc_63EF1C"
+        },
+        {
+          "va": "0x63ef13",
+          "text": "mov     [ebp+var_8], 1"
+        },
+        {
+          "va": "0x63ef1a",
+          "text": "jmp     short loc_63EF23"
+        },
+        {
+          "va": "0x63ef1c",
+          "text": "mov     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x63ef23",
+          "text": "mov     al, byte ptr [ebp+var_8]"
+        },
+        {
+          "va": "0x63ef26",
+          "text": "add     esp, 8"
+        },
+        {
+          "va": "0x63ef29",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x63ef2b",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x63ef30",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63ef32",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63ef33",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x63eeee",
+          "target": "0x60b65c",
+          "implementation": "0x63edd0",
+          "thunks": [
+            "0x60b65c"
+          ]
+        },
+        {
+          "site": "0x63ef04",
+          "target": "0x606035",
+          "implementation": "0x629df0",
+          "thunks": [
+            "0x606035"
+          ]
+        },
+        {
+          "site": "0x63ef2b",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x604375",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63eed0",
+          "size": 100,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fc8b481851e869c7fcff83c4040fb6d085d2741f8b45fc8b486c51e82c71fcff83c4040fb6d085d27409c745f801000000eb07c745f8000000008a45f883c4083bece846c6fcff8be55dc3",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fc8b481851e869c7fcff83c4040fb6d085d2741f8b45fc8b486c51e82c71fcff83c4040fb6d085d27409c745f801000000eb07c745f8000000008a45f883c4083bece846c6fcff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x67fa90",
+      "end_va": "0x67fbd9",
+      "name": "sub_67FA90",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __stdcall sub_67FA90(int a1)",
+        "{",
+        "  int result; // eax",
+        "",
+        "  CDialog::OnInitDialog();",
+        "  if ( *(_BYTE *)(a1 + 3) != 0 )",
+        "  {",
+        "    result = a1;",
+        "    if ( *(_BYTE *)(a1 + 5) != 0 )",
+        "    {",
+        "      return sub_60D38A(a1: *(_DWORD *)(a1 + 8), a2: 1);",
+        "    }",
+        "    else if ( *(_BYTE *)(a1 + 6) != 0 )",
+        "    {",
+        "      return sub_60A7B6(a1: *(_DWORD *)(a1 + 8), a2: 1);",
+        "    }",
+        "  }",
+        "  else",
+        "  {",
+        "    result = *(unsigned __int8 *)(a1 + 4);",
+        "    if ( *(_BYTE *)(a1 + 4) != 0 )",
+        "    {",
+        "      if ( *(_BYTE *)(a1 + 5) != 0 )",
+        "      {",
+        "        sub_6057BB(a1: *(_DWORD *)(a1 + 8), a2: 1);",
+        "        result = sub_606797();",
+        "        if ( (_BYTE)result != 0 )",
+        "        {",
+        "          result = sub_605545();",
+        "          if ( result <= 0 )",
+        "            return sub_60EE8D(a1: 500);",
+        "        }",
+        "      }",
+        "      else",
+        "      {",
+        "        result = a1;",
+        "        if ( *(_BYTE *)(a1 + 6) != 0 )",
+        "          return sub_6012D3(a1: *(_DWORD *)(a1 + 8), a2: 1);",
+        "      }",
+        "    }",
+        "  }",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x67fa90",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x67fa91",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x67fa93",
+          "text": "sub     esp, 10h"
+        },
+        {
+          "va": "0x67fa96",
+          "text": "mov     eax, 0CCCCCCCCh"
+        },
+        {
+          "va": "0x67fa9b",
+          "text": "mov     [ebp+var_10], eax"
+        },
+        {
+          "va": "0x67fa9e",
+          "text": "mov     [ebp+var_C], eax"
+        },
+        {
+          "va": "0x67faa1",
+          "text": "mov     [ebp+var_8], eax"
+        },
+        {
+          "va": "0x67faa4",
+          "text": "mov     [ebp+var_4], eax"
+        },
+        {
+          "va": "0x67faa7",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x67faaa",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x67faad",
+          "text": "mov     [ebp+var_8], eax"
+        },
+        {
+          "va": "0x67fab0",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x67fab3",
+          "text": "call    CDialog::OnInitDialog(void)"
+        },
+        {
+          "va": "0x67fab8",
+          "text": "mov     [ebp+var_C], eax"
+        },
+        {
+          "va": "0x67fabb",
+          "text": "mov     [ebp+var_10], 0"
+        },
+        {
+          "va": "0x67fac2",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fac5",
+          "text": "movzx   edx, byte ptr [ecx+3]"
+        },
+        {
+          "va": "0x67fac9",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x67facb",
+          "text": "jz      short loc_67FB28"
+        },
+        {
+          "va": "0x67facd",
+          "text": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fad0",
+          "text": "movzx   ecx, byte ptr [eax+5]"
+        },
+        {
+          "va": "0x67fad4",
+          "text": "test    ecx, ecx"
+        },
+        {
+          "va": "0x67fad6",
+          "text": "jz      short loc_67FAF9"
+        },
+        {
+          "va": "0x67fad8",
+          "text": "push    1"
+        },
+        {
+          "va": "0x67fada",
+          "text": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fadd",
+          "text": "mov     eax, [edx+8]"
+        },
+        {
+          "va": "0x67fae0",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x67fae1",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fae4",
+          "text": "movsx   edx, byte ptr [ecx+2]"
+        },
+        {
+          "va": "0x67fae8",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x67faeb",
+          "text": "mov     ecx, [eax+edx*4+0E00h]"
+        },
+        {
+          "va": "0x67faf2",
+          "text": "call    sub_60D38A"
+        },
+        {
+          "va": "0x67faf7",
+          "text": "jmp     short loc_67FB23"
+        },
+        {
+          "va": "0x67faf9",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fafc",
+          "text": "movzx   edx, byte ptr [ecx+6]"
+        },
+        {
+          "va": "0x67fb00",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x67fb02",
+          "text": "jz      short loc_67FB23"
+        },
+        {
+          "va": "0x67fb04",
+          "text": "push    1"
+        },
+        {
+          "va": "0x67fb06",
+          "text": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fb09",
+          "text": "mov     ecx, [eax+8]"
+        },
+        {
+          "va": "0x67fb0c",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x67fb0d",
+          "text": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fb10",
+          "text": "movsx   eax, byte ptr [edx+2]"
+        },
+        {
+          "va": "0x67fb14",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x67fb17",
+          "text": "mov     ecx, [ecx+eax*4+0E00h]"
+        },
+        {
+          "va": "0x67fb1e",
+          "text": "call    sub_60A7B6"
+        },
+        {
+          "va": "0x67fb23",
+          "text": "jmp     loc_67FBC9"
+        },
+        {
+          "va": "0x67fb28",
+          "text": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fb2b",
+          "text": "movzx   eax, byte ptr [edx+4]"
+        },
+        {
+          "va": "0x67fb2f",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x67fb31",
+          "text": "jz      loc_67FBC9"
+        },
+        {
+          "va": "0x67fb37",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fb3a",
+          "text": "movzx   edx, byte ptr [ecx+5]"
+        },
+        {
+          "va": "0x67fb3e",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x67fb40",
+          "text": "jz      short loc_67FB9F"
+        },
+        {
+          "va": "0x67fb42",
+          "text": "push    1"
+        },
+        {
+          "va": "0x67fb44",
+          "text": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fb47",
+          "text": "mov     ecx, [eax+8]"
+        },
+        {
+          "va": "0x67fb4a",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x67fb4b",
+          "text": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fb4e",
+          "text": "movsx   eax, byte ptr [edx+2]"
+        },
+        {
+          "va": "0x67fb52",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x67fb55",
+          "text": "mov     ecx, [ecx+eax*4+0E00h]"
+        },
+        {
+          "va": "0x67fb5c",
+          "text": "call    sub_6057BB"
+        },
+        {
+          "va": "0x67fb61",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x67fb64",
+          "text": "add     ecx, 65Ch"
+        },
+        {
+          "va": "0x67fb6a",
+          "text": "call    sub_606797"
+        },
+        {
+          "va": "0x67fb6f",
+          "text": "movzx   edx, al"
+        },
+        {
+          "va": "0x67fb72",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x67fb74",
+          "text": "jz      short loc_67FB9D"
+        },
+        {
+          "va": "0x67fb76",
+          "text": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fb79",
+          "text": "movsx   ecx, byte ptr [eax+2]"
+        },
+        {
+          "va": "0x67fb7d",
+          "text": "mov     edx, [ebp+var_4]"
+        },
+        {
+          "va": "0x67fb80",
+          "text": "mov     ecx, [edx+ecx*4+0E00h]"
+        },
+        {
+          "va": "0x67fb87",
+          "text": "call    sub_605545"
+        },
+        {
+          "va": "0x67fb8c",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x67fb8e",
+          "text": "jg      short loc_67FB9D"
+        },
+        {
+          "va": "0x67fb90",
+          "text": "push    1F4h"
+        },
+        {
+          "va": "0x67fb95",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x67fb98",
+          "text": "call    sub_60EE8D"
+        },
+        {
+          "va": "0x67fb9d",
+          "text": "jmp     short loc_67FBC9"
+        },
+        {
+          "va": "0x67fb9f",
+          "text": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fba2",
+          "text": "movzx   ecx, byte ptr [eax+6]"
+        },
+        {
+          "va": "0x67fba6",
+          "text": "test    ecx, ecx"
+        },
+        {
+          "va": "0x67fba8",
+          "text": "jz      short loc_67FBC9"
+        },
+        {
+          "va": "0x67fbaa",
+          "text": "push    1"
+        },
+        {
+          "va": "0x67fbac",
+          "text": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fbaf",
+          "text": "mov     eax, [edx+8]"
+        },
+        {
+          "va": "0x67fbb2",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x67fbb3",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x67fbb6",
+          "text": "movsx   edx, byte ptr [ecx+2]"
+        },
+        {
+          "va": "0x67fbba",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x67fbbd",
+          "text": "mov     ecx, [eax+edx*4+0E00h]"
+        },
+        {
+          "va": "0x67fbc4",
+          "text": "call    sub_6012D3"
+        },
+        {
+          "va": "0x67fbc9",
+          "text": "add     esp, 10h"
+        },
+        {
+          "va": "0x67fbcc",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x67fbce",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x67fbd3",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x67fbd5",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x67fbd6",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x67fab3",
+          "target": "0x6023cc",
+          "implementation": "0x63e5b0",
+          "thunks": [
+            "0x6023cc"
+          ]
+        },
+        {
+          "site": "0x67faf2",
+          "target": "0x60d38a",
+          "implementation": "0x7fa050",
+          "thunks": [
+            "0x60d38a"
+          ]
+        },
+        {
+          "site": "0x67fb1e",
+          "target": "0x60a7b6",
+          "implementation": "0x7fa0a0",
+          "thunks": [
+            "0x60a7b6"
+          ]
+        },
+        {
+          "site": "0x67fb5c",
+          "target": "0x6057bb",
+          "implementation": "0x7f83f0",
+          "thunks": [
+            "0x6057bb"
+          ]
+        },
+        {
+          "site": "0x67fb6a",
+          "target": "0x606797",
+          "implementation": "0x63edf0",
+          "thunks": [
+            "0x606797"
+          ]
+        },
+        {
+          "site": "0x67fb87",
+          "target": "0x605545",
+          "implementation": "0x63f620",
+          "thunks": [
+            "0x605545"
+          ]
+        },
+        {
+          "site": "0x67fb98",
+          "target": "0x60ee8d",
+          "implementation": "0x64fb10",
+          "thunks": [
+            "0x60ee8d"
+          ]
+        },
+        {
+          "site": "0x67fbc4",
+          "target": "0x6012d3",
+          "implementation": "0x7f9f10",
+          "thunks": [
+            "0x6012d3"
+          ]
+        },
+        {
+          "site": "0x67fbce",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x60711a",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x67fa90",
+          "size": 329,
+          "idb_hex": "558bec83ec10b8cccccccc8945f08945f48945f88945fc894dfc8b45088945f88b4dfce81429f8ff8945f4c745f0000000008b4df80fb6510385d2745b8b45f80fb6480585c974216a018b55f88b4208508b4df80fbe51028b45fc8b8c90000e0000e893d8f8ffeb2a8b4df80fb6510685d2741f6a018b45f88b4808518b55f80fbe42028b4dfc8b8c81000e0000e893acf8ffe9a10000008b55f80fb6420485c00f84920000008b4df80fb6510585d2745d6a018b45f88b4808518b55f80fbe42028b4dfc8b8c81000e0000e85a5cf8ff8b4dfc81c15c060000e8286cf8ff0fb6d085d274278b45f80fbe48028b55fc8b8c8a000e0000e8b959f8ff85c07f0d68f40100008b4dfce8f0f2f8ffeb2a8b45f80fb6480685c9741f6a018b55f88b4208508b4df80fbe51028b45fc8b8c90000e0000e80a17f8ff83c4103bece8a3b9f8ff8be55dc20400",
+          "disk_hex": "558bec83ec10b8cccccccc8945f08945f48945f88945fc894dfc8b45088945f88b4dfce81429f8ff8945f4c745f0000000008b4df80fb6510385d2745b8b45f80fb6480585c974216a018b55f88b4208508b4df80fbe51028b45fc8b8c90000e0000e893d8f8ffeb2a8b4df80fb6510685d2741f6a018b45f88b4808518b55f80fbe42028b4dfc8b8c81000e0000e893acf8ffe9a10000008b55f80fb6420485c00f84920000008b4df80fb6510585d2745d6a018b45f88b4808518b55f80fbe42028b4dfc8b8c81000e0000e85a5cf8ff8b4dfc81c15c060000e8286cf8ff0fb6d085d274278b45f80fbe48028b55fc8b8c8a000e0000e8b959f8ff85c07f0d68f40100008b4dfce8f0f2f8ffeb2a8b45f80fb6480685c9741f6a018b55f88b4208508b4df80fbe51028b45fc8b8c90000e0000e80a17f8ff83c4103bece8a3b9f8ff8be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x6933f0",
+      "end_va": "0x69340b",
+      "name": "sub_6933F0",
+      "status": "仅导出",
+      "pseudocode": [
+        "char __thiscall sub_6933F0(_BYTE *this)",
+        "{",
+        "  return *(this + 1696);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x6933f0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x6933f1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x6933f3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x6933f4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x6933fb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x6933fe",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x693401",
+          "text": "mov     al, [eax+6A0h]"
+        },
+        {
+          "va": "0x693407",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x693409",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x69340a",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x6106fc",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x6933f0",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8a80a00600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8a80a00600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x693d10",
+      "end_va": "0x693d34",
+      "name": "sub_693D10",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_693D10(char *this)",
+        "{",
+        "  return *(this + 1488) == 2;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x693d10",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x693d11",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x693d13",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x693d14",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x693d1b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x693d1e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x693d21",
+          "text": "movsx   eax, byte ptr [eax+5D0h]"
+        },
+        {
+          "va": "0x693d28",
+          "text": "sub     eax, 2"
+        },
+        {
+          "va": "0x693d2b",
+          "text": "neg     eax"
+        },
+        {
+          "va": "0x693d2d",
+          "text": "sbb     eax, eax"
+        },
+        {
+          "va": "0x693d2f",
+          "text": "inc     eax"
+        },
+        {
+          "va": "0x693d30",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x693d32",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x693d33",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60a815",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x693d10",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80d005000083e802f7d81bc0408be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80d005000083e802f7d81bc0408be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x694c90",
+      "end_va": "0x694cb1",
+      "name": "sub_694C90",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_694C90(char *this)",
+        "{",
+        "  return *(this + 1488) == 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x694c90",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x694c91",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x694c93",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x694c94",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x694c9b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x694c9e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x694ca1",
+          "text": "movsx   eax, byte ptr [eax+5D0h]"
+        },
+        {
+          "va": "0x694ca8",
+          "text": "neg     eax"
+        },
+        {
+          "va": "0x694caa",
+          "text": "sbb     eax, eax"
+        },
+        {
+          "va": "0x694cac",
+          "text": "inc     eax"
+        },
+        {
+          "va": "0x694cad",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x694caf",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x694cb0",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60c4da",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x694c90",
+          "size": 33,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80d0050000f7d81bc0408be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80d0050000f7d81bc0408be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x694cc0",
+      "end_va": "0x694ce4",
+      "name": "sub_694CC0",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_694CC0(char *this)",
+        "{",
+        "  return *(this + 1488) == 1;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x694cc0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x694cc1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x694cc3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x694cc4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x694ccb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x694cce",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x694cd1",
+          "text": "movsx   eax, byte ptr [eax+5D0h]"
+        },
+        {
+          "va": "0x694cd8",
+          "text": "sub     eax, 1"
+        },
+        {
+          "va": "0x694cdb",
+          "text": "neg     eax"
+        },
+        {
+          "va": "0x694cdd",
+          "text": "sbb     eax, eax"
+        },
+        {
+          "va": "0x694cdf",
+          "text": "inc     eax"
+        },
+        {
+          "va": "0x694ce0",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x694ce2",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x694ce3",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60c5a7",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x694cc0",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80d005000083e801f7d81bc0408be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80d005000083e801f7d81bc0408be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7014d0",
+      "end_va": "0x7014f4",
+      "name": "sub_7014D0",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_7014D0(float *this, int a2)",
+        "{",
+        "  return *(this + 3 * a2 + 78);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7014d0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7014d1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7014d3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7014d4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7014db",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7014de",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7014e1",
+          "text": "imul    eax, 0Ch"
+        },
+        {
+          "va": "0x7014e4",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7014e7",
+          "text": "fld     dword ptr [ecx+eax+138h]"
+        },
+        {
+          "va": "0x7014ee",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7014f0",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7014f1",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x611fb6",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7014d0",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc00c8b4dfcd98401380100008be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc00c8b4dfcd98401380100008be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701500",
+      "end_va": "0x701524",
+      "name": "sub_701500",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_701500(float *this, int a2)",
+        "{",
+        "  return *(this + 3 * a2 + 74);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701500",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701501",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701503",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701504",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70150b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70150e",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x701511",
+          "text": "imul    eax, 0Ch"
+        },
+        {
+          "va": "0x701514",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x701517",
+          "text": "fld     dword ptr [ecx+eax+128h]"
+        },
+        {
+          "va": "0x70151e",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701520",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701521",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x605ea0",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701500",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc00c8b4dfcd98401280100008be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc00c8b4dfcd98401280100008be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701530",
+      "end_va": "0x701554",
+      "name": "sub_701530",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_701530(char *this)",
+        "{",
+        "  return *(this + 1488) == 3;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701530",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701531",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701533",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701534",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70153b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70153e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701541",
+          "text": "movsx   eax, byte ptr [eax+5D0h]"
+        },
+        {
+          "va": "0x701548",
+          "text": "sub     eax, 3"
+        },
+        {
+          "va": "0x70154b",
+          "text": "neg     eax"
+        },
+        {
+          "va": "0x70154d",
+          "text": "sbb     eax, eax"
+        },
+        {
+          "va": "0x70154f",
+          "text": "inc     eax"
+        },
+        {
+          "va": "0x701550",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701552",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701553",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60931b",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701530",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80d005000083e803f7d81bc0408be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80d005000083e803f7d81bc0408be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701560",
+      "end_va": "0x701583",
+      "name": "sub_701560",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_701560(char *this)",
+        "{",
+        "  return *(this + 1660) > 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701560",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701561",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701563",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701564",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70156b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70156e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701571",
+          "text": "movsx   ecx, byte ptr [eax+67Ch]"
+        },
+        {
+          "va": "0x701578",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x70157a",
+          "text": "test    ecx, ecx"
+        },
+        {
+          "va": "0x70157c",
+          "text": "setnle  al"
+        },
+        {
+          "va": "0x70157f",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701581",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701582",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x608713",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701560",
+          "size": 35,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe887c06000033c085c90f9fc08be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe887c06000033c085c90f9fc08be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701590",
+      "end_va": "0x7015ab",
+      "name": "sub_701590",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_701590(float *this)",
+        "{",
+        "  return *(this + 413);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701590",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701591",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701593",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701594",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70159b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70159e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7015a1",
+          "text": "fld     dword ptr [eax+674h]"
+        },
+        {
+          "va": "0x7015a7",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7015a9",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7015aa",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x604b13",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701590",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fcd980740600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fcd980740600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7015c0",
+      "end_va": "0x7015e3",
+      "name": "sub_7015C0",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_7015C0(char *this)",
+        "{",
+        "  return *(this + 1672) > 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7015c0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7015c1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7015c3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7015c4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7015cb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7015ce",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7015d1",
+          "text": "movsx   ecx, byte ptr [eax+688h]"
+        },
+        {
+          "va": "0x7015d8",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x7015da",
+          "text": "test    ecx, ecx"
+        },
+        {
+          "va": "0x7015dc",
+          "text": "setnle  al"
+        },
+        {
+          "va": "0x7015df",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7015e1",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7015e2",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x607a9d",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7015c0",
+          "size": 35,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe888806000033c085c90f9fc08be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe888806000033c085c90f9fc08be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7015f0",
+      "end_va": "0x70160b",
+      "name": "sub_7015F0",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_7015F0(float *this)",
+        "{",
+        "  return *(this + 416);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7015f0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7015f1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7015f3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7015f4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7015fb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7015fe",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701601",
+          "text": "fld     dword ptr [eax+680h]"
+        },
+        {
+          "va": "0x701607",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701609",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x70160a",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x604c9e",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7015f0",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fcd980800600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fcd980800600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701620",
+      "end_va": "0x70163b",
+      "name": "sub_701620",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_701620(float *this)",
+        "{",
+        "  return *(this + 419);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701620",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701621",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701623",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701624",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70162b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70162e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701631",
+          "text": "fld     dword ptr [eax+68Ch]"
+        },
+        {
+          "va": "0x701637",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701639",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x70163a",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x5ff078",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701620",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fcd9808c0600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fcd9808c0600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701650",
+      "end_va": "0x701674",
+      "name": "sub_701650",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_701650(__int16 *this)",
+        "{",
+        "  return *(this + 867) != -1;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701650",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701651",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701653",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701654",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70165b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70165e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701661",
+          "text": "movsx   ecx, word ptr [eax+6C6h]"
+        },
+        {
+          "va": "0x701668",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x70166a",
+          "text": "cmp     ecx, 0FFFFFFFFh"
+        },
+        {
+          "va": "0x70166d",
+          "text": "setnz   al"
+        },
+        {
+          "va": "0x701670",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701672",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701673",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x602fed",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701650",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbf88c606000033c083f9ff0f95c08be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbf88c606000033c083f9ff0f95c08be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701680",
+      "end_va": "0x70169c",
+      "name": "sub_701680",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_701680(char *this)",
+        "{",
+        "  return *(this + 1736);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701680",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701681",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701683",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701684",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70168b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70168e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701691",
+          "text": "movsx   eax, byte ptr [eax+6C8h]"
+        },
+        {
+          "va": "0x701698",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x70169a",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x70169b",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x606efe",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701680",
+          "size": 28,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80c80600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80c80600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7016b0",
+      "end_va": "0x7016d3",
+      "name": "sub_7016B0",
+      "status": "仅导出",
+      "pseudocode": [
+        "bool __thiscall sub_7016B0(_DWORD *this)",
+        "{",
+        "  return *(this + 435) > 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7016b0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7016b1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7016b3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7016b4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7016bb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7016be",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7016c1",
+          "text": "xor     ecx, ecx"
+        },
+        {
+          "va": "0x7016c3",
+          "text": "cmp     dword ptr [eax+6CCh], 0"
+        },
+        {
+          "va": "0x7016ca",
+          "text": "setnle  cl"
+        },
+        {
+          "va": "0x7016cd",
+          "text": "mov     al, cl"
+        },
+        {
+          "va": "0x7016cf",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7016d1",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7016d2",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x61283a",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7016b0",
+          "size": 35,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc33c983b8cc060000000f9fc18ac18be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc33c983b8cc060000000f9fc18ac18be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7016e0",
+      "end_va": "0x7016fb",
+      "name": "sub_7016E0",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_7016E0(float *this)",
+        "{",
+        "  return *(this + 436);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7016e0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7016e1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7016e3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7016e4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7016eb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7016ee",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7016f1",
+          "text": "fld     dword ptr [eax+6D0h]"
+        },
+        {
+          "va": "0x7016f7",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7016f9",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7016fa",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60167f",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7016e0",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fcd980d00600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fcd980d00600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701710",
+      "end_va": "0x701733",
+      "name": "sub_701710",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_701710(_DWORD *this)",
+        "{",
+        "  return *(this + 438) != 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701710",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701711",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701713",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701714",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70171b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70171e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701721",
+          "text": "xor     ecx, ecx"
+        },
+        {
+          "va": "0x701723",
+          "text": "cmp     dword ptr [eax+6D8h], 0"
+        },
+        {
+          "va": "0x70172a",
+          "text": "setnz   cl"
+        },
+        {
+          "va": "0x70172d",
+          "text": "mov     eax, ecx"
+        },
+        {
+          "va": "0x70172f",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701731",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701732",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x6012b0",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701710",
+          "size": 35,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc33c983b8d8060000000f95c18bc18be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc33c983b8d8060000000f95c18bc18be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701740",
+      "end_va": "0x701776",
+      "name": "sub_701740",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_701740(int *this)",
+        "{",
+        "  float v2; // [esp+0h] [ebp-8h]",
+        "",
+        "  v2 = (float)*(this + 438);",
+        "  return v2 / 100.0 + 1.0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701740",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701741",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701743",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x701746",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70174d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x701754",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x701757",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x70175a",
+          "text": "fild    dword ptr [eax+6D8h]"
+        },
+        {
+          "va": "0x701760",
+          "text": "fstp    [ebp+var_8]"
+        },
+        {
+          "va": "0x701763",
+          "text": "fld     [ebp+var_8]"
+        },
+        {
+          "va": "0x701766",
+          "text": "fdiv    ds:flt_A23388"
+        },
+        {
+          "va": "0x70176c",
+          "text": "fadd    ds:flt_A23488"
+        },
+        {
+          "va": "0x701772",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701774",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701775",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x603916",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701740",
+          "size": 54,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fcdb80d8060000d95df8d945f8d8358833a200d8058834a2008be55dc3",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fcdb80d8060000d95df8d945f8d8358833a200d8058834a2008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701790",
+      "end_va": "0x7017b4",
+      "name": "sub_701790",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_701790(float *this, int a2)",
+        "{",
+        "  return *(this + 3 * a2 + 54);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701790",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701791",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701793",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701794",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70179b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70179e",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7017a1",
+          "text": "imul    eax, 0Ch"
+        },
+        {
+          "va": "0x7017a4",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7017a7",
+          "text": "fld     dword ptr [ecx+eax+0D8h]"
+        },
+        {
+          "va": "0x7017ae",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7017b0",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7017b1",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x608371",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701790",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc00c8b4dfcd98401d80000008be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc00c8b4dfcd98401d80000008be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7017c0",
+      "end_va": "0x7017e4",
+      "name": "sub_7017C0",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_7017C0(float *this, int a2)",
+        "{",
+        "  return *(this + 3 * a2 + 50);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7017c0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7017c1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7017c3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7017c4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7017cb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7017ce",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7017d1",
+          "text": "imul    eax, 0Ch"
+        },
+        {
+          "va": "0x7017d4",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7017d7",
+          "text": "fld     dword ptr [ecx+eax+0C8h]"
+        },
+        {
+          "va": "0x7017de",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7017e0",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7017e1",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x611219",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7017c0",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc00c8b4dfcd98401c80000008be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc00c8b4dfcd98401c80000008be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7017f0",
+      "end_va": "0x701813",
+      "name": "sub_7017F0",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_7017F0(char *this)",
+        "{",
+        "  return *(this + 1661) > 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7017f0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7017f1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7017f3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7017f4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7017fb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7017fe",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701801",
+          "text": "movsx   ecx, byte ptr [eax+67Dh]"
+        },
+        {
+          "va": "0x701808",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x70180a",
+          "text": "test    ecx, ecx"
+        },
+        {
+          "va": "0x70180c",
+          "text": "setnle  al"
+        },
+        {
+          "va": "0x70180f",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701811",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701812",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x602958",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7017f0",
+          "size": 35,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe887d06000033c085c90f9fc08be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe887d06000033c085c90f9fc08be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701820",
+      "end_va": "0x70183b",
+      "name": "sub_701820",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_701820(float *this)",
+        "{",
+        "  return *(this + 414);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701820",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701821",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701823",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701824",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70182b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70182e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701831",
+          "text": "fld     dword ptr [eax+678h]"
+        },
+        {
+          "va": "0x701837",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701839",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x70183a",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60dc36",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701820",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fcd980780600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fcd980780600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701850",
+      "end_va": "0x701873",
+      "name": "sub_701850",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_701850(char *this)",
+        "{",
+        "  return *(this + 1673) > 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701850",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701851",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701853",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701854",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70185b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70185e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701861",
+          "text": "movsx   ecx, byte ptr [eax+689h]"
+        },
+        {
+          "va": "0x701868",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x70186a",
+          "text": "test    ecx, ecx"
+        },
+        {
+          "va": "0x70186c",
+          "text": "setnle  al"
+        },
+        {
+          "va": "0x70186f",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701871",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701872",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x601f71",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701850",
+          "size": 35,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe888906000033c085c90f9fc08be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe888906000033c085c90f9fc08be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701880",
+      "end_va": "0x70189b",
+      "name": "sub_701880",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_701880(float *this)",
+        "{",
+        "  return *(this + 417);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701880",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701881",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701883",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701884",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70188b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70188e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701891",
+          "text": "fld     dword ptr [eax+684h]"
+        },
+        {
+          "va": "0x701897",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701899",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x70189a",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60786d",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701880",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fcd980840600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fcd980840600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7018b0",
+      "end_va": "0x7018cb",
+      "name": "sub_7018B0",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_7018B0(float *this)",
+        "{",
+        "  return *(this + 420);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7018b0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7018b1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7018b3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7018b4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7018bb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7018be",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7018c1",
+          "text": "fld     dword ptr [eax+690h]"
+        },
+        {
+          "va": "0x7018c7",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7018c9",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7018ca",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60a3c4",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7018b0",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fcd980900600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fcd980900600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7018e0",
+      "end_va": "0x701904",
+      "name": "sub_7018E0",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_7018E0(__int16 *this)",
+        "{",
+        "  return *(this + 865) != -1;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7018e0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7018e1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7018e3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7018e4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7018eb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7018ee",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7018f1",
+          "text": "movsx   ecx, word ptr [eax+6C2h]"
+        },
+        {
+          "va": "0x7018f8",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x7018fa",
+          "text": "cmp     ecx, 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7018fd",
+          "text": "setnz   al"
+        },
+        {
+          "va": "0x701900",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701902",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701903",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x602782",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7018e0",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbf88c206000033c083f9ff0f95c08be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbf88c206000033c083f9ff0f95c08be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701910",
+      "end_va": "0x70192c",
+      "name": "sub_701910",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_701910(char *this)",
+        "{",
+        "  return *(this + 1732);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701910",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701911",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701913",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701914",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70191b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70191e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701921",
+          "text": "movsx   eax, byte ptr [eax+6C4h]"
+        },
+        {
+          "va": "0x701928",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x70192a",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x70192b",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60945b",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701910",
+          "size": 28,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80c40600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc0fbe80c40600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701940",
+      "end_va": "0x701963",
+      "name": "sub_701940",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __thiscall sub_701940(_DWORD *this)",
+        "{",
+        "  return *(this + 440) != 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701940",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701941",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701943",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x701944",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70194b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x70194e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x701951",
+          "text": "xor     ecx, ecx"
+        },
+        {
+          "va": "0x701953",
+          "text": "cmp     dword ptr [eax+6E0h], 0"
+        },
+        {
+          "va": "0x70195a",
+          "text": "setnz   cl"
+        },
+        {
+          "va": "0x70195d",
+          "text": "mov     eax, ecx"
+        },
+        {
+          "va": "0x70195f",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x701961",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x701962",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x6054af",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701940",
+          "size": 35,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc33c983b8e0060000000f95c18bc18be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc33c983b8e0060000000f95c18bc18be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x701970",
+      "end_va": "0x7019a6",
+      "name": "sub_701970",
+      "status": "仅导出",
+      "pseudocode": [
+        "double __thiscall sub_701970(int *this)",
+        "{",
+        "  float v2; // [esp+0h] [ebp-8h]",
+        "",
+        "  v2 = (float)*(this + 440);",
+        "  return 1.0 - v2 / 100.0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x701970",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x701971",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x701973",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x701976",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x70197d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x701984",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x701987",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x70198a",
+          "text": "fild    dword ptr [eax+6E0h]"
+        },
+        {
+          "va": "0x701990",
+          "text": "fstp    [ebp+var_8]"
+        },
+        {
+          "va": "0x701993",
+          "text": "fld     [ebp+var_8]"
+        },
+        {
+          "va": "0x701996",
+          "text": "fdiv    ds:flt_A23388"
+        },
+        {
+          "va": "0x70199c",
+          "text": "fsubr   ds:flt_A23488"
+        },
+        {
+          "va": "0x7019a2",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7019a4",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7019a5",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x604091",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x701970",
+          "size": 54,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fcdb80e0060000d95df8d945f8d8358833a200d82d8834a2008be55dc3",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fcdb80e0060000d95df8d945f8d8358833a200d82d8834a2008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7c0c00",
+      "end_va": "0x7c0c45",
+      "name": "sub_7C0C00",
+      "status": "仅导出",
+      "pseudocode": [
+        "bool __thiscall sub_7C0C00(_DWORD *this, int a2)",
+        "{",
+        "  return (unsigned __int8)sub_604703() != 0 && *(this + 29) == a2;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7c0c00",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7c0c01",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7c0c03",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7c0c04",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7c0c0b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7c0c0e",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7c0c11",
+          "text": "add     ecx, 65Ch"
+        },
+        {
+          "va": "0x7c0c17",
+          "text": "call    sub_604703"
+        },
+        {
+          "va": "0x7c0c1c",
+          "text": "movzx   eax, al"
+        },
+        {
+          "va": "0x7c0c1f",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x7c0c21",
+          "text": "jz      short loc_7C0C33"
+        },
+        {
+          "va": "0x7c0c23",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7c0c26",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7c0c29",
+          "text": "sub     eax, [ecx+74h]"
+        },
+        {
+          "va": "0x7c0c2c",
+          "text": "neg     eax"
+        },
+        {
+          "va": "0x7c0c2e",
+          "text": "sbb     eax, eax"
+        },
+        {
+          "va": "0x7c0c30",
+          "text": "inc     eax"
+        },
+        {
+          "va": "0x7c0c31",
+          "text": "jmp     short loc_7C0C35"
+        },
+        {
+          "va": "0x7c0c33",
+          "text": "xor     al, al"
+        },
+        {
+          "va": "0x7c0c35",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x7c0c38",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x7c0c3a",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x7c0c3f",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7c0c41",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7c0c42",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x7c0c17",
+          "target": "0x604703",
+          "implementation": "0x63e990",
+          "thunks": [
+            "0x604703"
+          ]
+        },
+        {
+          "site": "0x7c0c3a",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x6053ab",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7c0c00",
+          "size": 69,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b4dfc81c15c060000e8e73ae4ff0fb6c085c074108b4dfc8b45082b4174f7d81bc040eb0232c083c4043bece837a9e4ff8be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b4dfc81c15c060000e8e73ae4ff0fb6c085c074108b4dfc8b45082b4174f7d81bc040eb0232c083c4043bece837a9e4ff8be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7d6370",
+      "end_va": "0x7d637e",
+      "name": "sub_7D6370",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __cdecl sub_7D6370(int a1)",
+        "{",
+        "  return a1 == 26;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7d6370",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7d6371",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7d6373",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x7d6375",
+          "text": "cmp     [ebp+arg_0], 1Ah"
+        },
+        {
+          "va": "0x7d6379",
+          "text": "setz    al"
+        },
+        {
+          "va": "0x7d637c",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7d637d",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60a883",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7d6370",
+          "size": 14,
+          "idb_hex": "558bec33c0837d081a0f94c05dc3",
+          "disk_hex": "558bec33c0837d081a0f94c05dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7d6e00",
+      "end_va": "0x7d6e24",
+      "name": "sub_7D6E00",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7D6E00(_DWORD *this, int a2)",
+        "{",
+        "  return *(_DWORD *)(*(this + 1) + 72 * a2 + 68);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7d6e00",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7d6e01",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7d6e03",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7d6e04",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7d6e0b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7d6e0e",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7d6e11",
+          "text": "imul    eax, 48h ; 'H'"
+        },
+        {
+          "va": "0x7d6e14",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7d6e17",
+          "text": "mov     edx, [ecx+4]"
+        },
+        {
+          "va": "0x7d6e1a",
+          "text": "mov     eax, [edx+eax+44h]"
+        },
+        {
+          "va": "0x7d6e1e",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7d6e20",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7d6e21",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x6076ec",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7d6e00",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc0488b4dfc8b51048b4402448be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc0488b4dfc8b51048b4402448be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7d7730",
+      "end_va": "0x7d7756",
+      "name": "sub_7D7730",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7D7730(_DWORD *this, int a2)",
+        "{",
+        "  return *(_DWORD *)(*this + 1128 * a2 + 108);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7d7730",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7d7731",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7d7733",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7d7734",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7d773b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7d773e",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7d7741",
+          "text": "imul    eax, 468h"
+        },
+        {
+          "va": "0x7d7747",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7d774a",
+          "text": "mov     edx, [ecx]"
+        },
+        {
+          "va": "0x7d774c",
+          "text": "mov     eax, [edx+eax+6Ch]"
+        },
+        {
+          "va": "0x7d7750",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7d7752",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7d7753",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x6033b7",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7d7730",
+          "size": 38,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b450869c0680400008b4dfc8b118b44026c8be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b450869c0680400008b4dfc8b118b44026c8be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7d7760",
+      "end_va": "0x7d777c",
+      "name": "sub_7D7760",
+      "status": "仅导出",
+      "pseudocode": [
+        "_BYTE *__thiscall sub_7D7760(_BYTE *this)",
+        "{",
+        "  *(this + 1650) = 1;",
+        "  return this;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7d7760",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7d7761",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7d7763",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7d7764",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7d776b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7d776e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7d7771",
+          "text": "mov     byte ptr [eax+672h], 1"
+        },
+        {
+          "va": "0x7d7778",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7d777a",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7d777b",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x608da3",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7d7760",
+          "size": 28,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fcc68072060000018be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fcc68072060000018be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7d7790",
+      "end_va": "0x7d77ab",
+      "name": "sub_7D7790",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7D7790(_DWORD *this)",
+        "{",
+        "  return *(this + 437);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7d7790",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7d7791",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7d7793",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7d7794",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7d779b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7d779e",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7d77a1",
+          "text": "mov     eax, [eax+6D4h]"
+        },
+        {
+          "va": "0x7d77a7",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7d77a9",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7d77aa",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x5ffb95",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7d7790",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8b80d40600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8b80d40600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7d77c0",
+      "end_va": "0x7d77db",
+      "name": "sub_7D77C0",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7D77C0(_DWORD *this)",
+        "{",
+        "  return *(this + 439);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7d77c0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7d77c1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7d77c3",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7d77c4",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7d77cb",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7d77ce",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7d77d1",
+          "text": "mov     eax, [eax+6DCh]"
+        },
+        {
+          "va": "0x7d77d7",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7d77d9",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7d77da",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x5ffc26",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7d77c0",
+          "size": 27,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45fc8b80dc0600008be55dc3",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45fc8b80dc0600008be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7e1600",
+      "end_va": "0x7e1632",
+      "name": "sub_7E1600",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7E1600(_DWORD *this, int a2, int *a3, int *a4)",
+        "{",
+        "  int result; // eax",
+        "",
+        "  *a3 = a2 % *(this + 7);",
+        "  result = a2 / *(this + 7);",
+        "  *a4 = result;",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7e1600",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7e1601",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7e1603",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7e1604",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e160b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7e160e",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e1611",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7e1614",
+          "text": "cdq"
+        },
+        {
+          "va": "0x7e1615",
+          "text": "idiv    dword ptr [ecx+1Ch]"
+        },
+        {
+          "va": "0x7e1618",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7e161b",
+          "text": "mov     [eax], edx"
+        },
+        {
+          "va": "0x7e161d",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e1620",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7e1623",
+          "text": "cdq"
+        },
+        {
+          "va": "0x7e1624",
+          "text": "idiv    dword ptr [ecx+1Ch]"
+        },
+        {
+          "va": "0x7e1627",
+          "text": "mov     edx, [ebp+arg_8]"
+        },
+        {
+          "va": "0x7e162a",
+          "text": "mov     [edx], eax"
+        },
+        {
+          "va": "0x7e162c",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7e162e",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7e162f",
+          "text": "retn    0Ch"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x607eb7",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7e1600",
+          "size": 50,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b4dfc8b450899f7791c8b450c89108b4dfc8b450899f7791c8b551089028be55dc20c00",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b4dfc8b450899f7791c8b450c89108b4dfc8b450899f7791c8b551089028be55dc20c00",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7e2520",
+      "end_va": "0x7e25d8",
+      "name": "sub_7E2520",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7E2520(int this, int a2, int a3)",
+        "{",
+        "  int result; // eax",
+        "  int i; // [esp+0h] [ebp-8h]",
+        "",
+        "  if ( a3 != -1 || (result = sub_600B26(a1: a2), a3 = result, result != -1) )",
+        "  {",
+        "    result = a3;",
+        "    *(_WORD *)(*(_DWORD *)(this + 180) + 2 * a3) = -1;",
+        "    if ( a3 == *(__int16 *)(this + 184) )",
+        "    {",
+        "      result = a3 - 1;",
+        "      for ( i = a3 - 1; i >= 0; --i )",
+        "      {",
+        "        result = *(_DWORD *)(this + 180);",
+        "        if ( *(__int16 *)(result + 2 * i) != -1 )",
+        "        {",
+        "          result = this;",
+        "          *(_WORD *)(this + 184) = i;",
+        "          break;",
+        "        }",
+        "      }",
+        "      if ( i < 0 )",
+        "        *(_WORD *)(this + 184) = -1;",
+        "    }",
+        "  }",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7e2520",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7e2521",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7e2523",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x7e2526",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e252d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e2534",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7e2537",
+          "text": "cmp     [ebp+arg_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e253b",
+          "text": "jnz     short loc_7E2554"
+        },
+        {
+          "va": "0x7e253d",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7e2540",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x7e2541",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2544",
+          "text": "call    sub_600B26"
+        },
+        {
+          "va": "0x7e2549",
+          "text": "mov     [ebp+arg_4], eax"
+        },
+        {
+          "va": "0x7e254c",
+          "text": "cmp     [ebp+arg_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e2550",
+          "text": "jnz     short loc_7E2554"
+        },
+        {
+          "va": "0x7e2552",
+          "text": "jmp     short loc_7E25C8"
+        },
+        {
+          "va": "0x7e2554",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2557",
+          "text": "mov     edx, [ecx+0B4h]"
+        },
+        {
+          "va": "0x7e255d",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7e2560",
+          "text": "mov     word ptr [edx+eax*2], 0FFFFh"
+        },
+        {
+          "va": "0x7e2566",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2569",
+          "text": "movsx   edx, word ptr [ecx+0B8h]"
+        },
+        {
+          "va": "0x7e2570",
+          "text": "cmp     [ebp+arg_4], edx"
+        },
+        {
+          "va": "0x7e2573",
+          "text": "jnz     short loc_7E25C8"
+        },
+        {
+          "va": "0x7e2575",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7e2578",
+          "text": "sub     eax, 1"
+        },
+        {
+          "va": "0x7e257b",
+          "text": "mov     [ebp+var_8], eax"
+        },
+        {
+          "va": "0x7e257e",
+          "text": "jmp     short loc_7E2589"
+        },
+        {
+          "va": "0x7e2580",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e2583",
+          "text": "sub     ecx, 1"
+        },
+        {
+          "va": "0x7e2586",
+          "text": "mov     [ebp+var_8], ecx"
+        },
+        {
+          "va": "0x7e2589",
+          "text": "cmp     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x7e258d",
+          "text": "jl      short loc_7E25B6"
+        },
+        {
+          "va": "0x7e258f",
+          "text": "mov     edx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2592",
+          "text": "mov     eax, [edx+0B4h]"
+        },
+        {
+          "va": "0x7e2598",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e259b",
+          "text": "movsx   edx, word ptr [eax+ecx*2]"
+        },
+        {
+          "va": "0x7e259f",
+          "text": "cmp     edx, 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e25a2",
+          "text": "jz      short loc_7E25B4"
+        },
+        {
+          "va": "0x7e25a4",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e25a7",
+          "text": "mov     cx, word ptr [ebp+var_8]"
+        },
+        {
+          "va": "0x7e25ab",
+          "text": "mov     [eax+0B8h], cx"
+        },
+        {
+          "va": "0x7e25b2",
+          "text": "jmp     short loc_7E25B6"
+        },
+        {
+          "va": "0x7e25b4",
+          "text": "jmp     short loc_7E2580"
+        },
+        {
+          "va": "0x7e25b6",
+          "text": "cmp     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x7e25ba",
+          "text": "jge     short loc_7E25C8"
+        },
+        {
+          "va": "0x7e25bc",
+          "text": "mov     edx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e25bf",
+          "text": "mov     word ptr [edx+0B8h], 0FFFFh"
+        },
+        {
+          "va": "0x7e25c8",
+          "text": "add     esp, 8"
+        },
+        {
+          "va": "0x7e25cb",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x7e25cd",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x7e25d2",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7e25d4",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7e25d5",
+          "text": "retn    8"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x7e2544",
+          "target": "0x600b26",
+          "implementation": "0x7e24b0",
+          "thunks": [
+            "0x600b26"
+          ]
+        },
+        {
+          "site": "0x7e25cd",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x609910",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7e2520",
+          "size": 184,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d0cff75178b4508508b4dfce8dde5e1ff89450c837d0cff7502eb748b4dfc8b91b40000008b450c66c70442ffff8b4dfc0fbf91b800000039550c75538b450c83e8018945f8eb098b4df883e901894df8837df8007c278b55fc8b82b40000008b4df80fbf144883faff74108b45fc668b4df8668988b8000000eb02ebca837df8007d0c8b55fc66c782b8000000ffff83c4083bece8a48fe2ff8be55dc20800",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d0cff75178b4508508b4dfce8dde5e1ff89450c837d0cff7502eb748b4dfc8b91b40000008b450c66c70442ffff8b4dfc0fbf91b800000039550c75538b450c83e8018945f8eb098b4df883e901894df8837df8007c278b55fc8b82b40000008b4df80fbf144883faff74108b45fc668b4df8668988b8000000eb02ebca837df8007d0c8b55fc66c782b8000000ffff83c4083bece8a48fe2ff8be55dc20800",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7e2e40",
+      "end_va": "0x7e2ef8",
+      "name": "sub_7E2E40",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7E2E40(int this, int a2, int a3)",
+        "{",
+        "  int result; // eax",
+        "  int i; // [esp+0h] [ebp-8h]",
+        "",
+        "  if ( a3 != -1 || (result = sub_6059FA(a1: a2), a3 = result, result != -1) )",
+        "  {",
+        "    result = a3;",
+        "    *(_WORD *)(*(_DWORD *)(this + 192) + 2 * a3) = -1;",
+        "    if ( a3 == *(__int16 *)(this + 196) )",
+        "    {",
+        "      result = a3 - 1;",
+        "      for ( i = a3 - 1; i >= 0; --i )",
+        "      {",
+        "        result = *(_DWORD *)(this + 192);",
+        "        if ( *(__int16 *)(result + 2 * i) != -1 )",
+        "        {",
+        "          result = this;",
+        "          *(_WORD *)(this + 196) = i;",
+        "          break;",
+        "        }",
+        "      }",
+        "      if ( i < 0 )",
+        "        *(_WORD *)(this + 196) = -1;",
+        "    }",
+        "  }",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7e2e40",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7e2e41",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7e2e43",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x7e2e46",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e2e4d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e2e54",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7e2e57",
+          "text": "cmp     [ebp+arg_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e2e5b",
+          "text": "jnz     short loc_7E2E74"
+        },
+        {
+          "va": "0x7e2e5d",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7e2e60",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x7e2e61",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2e64",
+          "text": "call    sub_6059FA"
+        },
+        {
+          "va": "0x7e2e69",
+          "text": "mov     [ebp+arg_4], eax"
+        },
+        {
+          "va": "0x7e2e6c",
+          "text": "cmp     [ebp+arg_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e2e70",
+          "text": "jnz     short loc_7E2E74"
+        },
+        {
+          "va": "0x7e2e72",
+          "text": "jmp     short loc_7E2EE8"
+        },
+        {
+          "va": "0x7e2e74",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2e77",
+          "text": "mov     edx, [ecx+0C0h]"
+        },
+        {
+          "va": "0x7e2e7d",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7e2e80",
+          "text": "mov     word ptr [edx+eax*2], 0FFFFh"
+        },
+        {
+          "va": "0x7e2e86",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2e89",
+          "text": "movsx   edx, word ptr [ecx+0C4h]"
+        },
+        {
+          "va": "0x7e2e90",
+          "text": "cmp     [ebp+arg_4], edx"
+        },
+        {
+          "va": "0x7e2e93",
+          "text": "jnz     short loc_7E2EE8"
+        },
+        {
+          "va": "0x7e2e95",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7e2e98",
+          "text": "sub     eax, 1"
+        },
+        {
+          "va": "0x7e2e9b",
+          "text": "mov     [ebp+var_8], eax"
+        },
+        {
+          "va": "0x7e2e9e",
+          "text": "jmp     short loc_7E2EA9"
+        },
+        {
+          "va": "0x7e2ea0",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e2ea3",
+          "text": "sub     ecx, 1"
+        },
+        {
+          "va": "0x7e2ea6",
+          "text": "mov     [ebp+var_8], ecx"
+        },
+        {
+          "va": "0x7e2ea9",
+          "text": "cmp     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x7e2ead",
+          "text": "jl      short loc_7E2ED6"
+        },
+        {
+          "va": "0x7e2eaf",
+          "text": "mov     edx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2eb2",
+          "text": "mov     eax, [edx+0C0h]"
+        },
+        {
+          "va": "0x7e2eb8",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e2ebb",
+          "text": "movsx   edx, word ptr [eax+ecx*2]"
+        },
+        {
+          "va": "0x7e2ebf",
+          "text": "cmp     edx, 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e2ec2",
+          "text": "jz      short loc_7E2ED4"
+        },
+        {
+          "va": "0x7e2ec4",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2ec7",
+          "text": "mov     cx, word ptr [ebp+var_8]"
+        },
+        {
+          "va": "0x7e2ecb",
+          "text": "mov     [eax+0C4h], cx"
+        },
+        {
+          "va": "0x7e2ed2",
+          "text": "jmp     short loc_7E2ED6"
+        },
+        {
+          "va": "0x7e2ed4",
+          "text": "jmp     short loc_7E2EA0"
+        },
+        {
+          "va": "0x7e2ed6",
+          "text": "cmp     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x7e2eda",
+          "text": "jge     short loc_7E2EE8"
+        },
+        {
+          "va": "0x7e2edc",
+          "text": "mov     edx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e2edf",
+          "text": "mov     word ptr [edx+0C4h], 0FFFFh"
+        },
+        {
+          "va": "0x7e2ee8",
+          "text": "add     esp, 8"
+        },
+        {
+          "va": "0x7e2eeb",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x7e2eed",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x7e2ef2",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7e2ef4",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7e2ef5",
+          "text": "retn    8"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x7e2e64",
+          "target": "0x6059fa",
+          "implementation": "0x7e2dd0",
+          "thunks": [
+            "0x6059fa"
+          ]
+        },
+        {
+          "site": "0x7e2eed",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x60c480",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7e2e40",
+          "size": 184,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d0cff75178b4508508b4dfce8912be2ff89450c837d0cff7502eb748b4dfc8b91c00000008b450c66c70442ffff8b4dfc0fbf91c400000039550c75538b450c83e8018945f8eb098b4df883e901894df8837df8007c278b55fc8b82c00000008b4df80fbf144883faff74108b45fc668b4df8668988c4000000eb02ebca837df8007d0c8b55fc66c782c4000000ffff83c4083bece88486e2ff8be55dc20800",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d0cff75178b4508508b4dfce8912be2ff89450c837d0cff7502eb748b4dfc8b91c00000008b450c66c70442ffff8b4dfc0fbf91c400000039550c75538b450c83e8018945f8eb098b4df883e901894df8837df8007c278b55fc8b82c00000008b4df80fbf144883faff74108b45fc668b4df8668988c4000000eb02ebca837df8007d0c8b55fc66c782c4000000ffff83c4083bece88486e2ff8be55dc20800",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7e3190",
+      "end_va": "0x7e3263",
+      "name": "sub_7E3190",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7E3190(int this, int a2, int a3)",
+        "{",
+        "  int result; // eax",
+        "  int i; // [esp+0h] [ebp-8h]",
+        "",
+        "  if ( a3 != -1 || (result = sub_60FA22(a1: a2), a3 = result, result != -1) )",
+        "  {",
+        "    *(_WORD *)(*(_DWORD *)(this + 204) + 2 * a3) = -1;",
+        "    result = this;",
+        "    --*(_WORD *)(this + 212);",
+        "    if ( a3 == *(__int16 *)(this + 208) )",
+        "    {",
+        "      result = a3 - 1;",
+        "      for ( i = a3 - 1; i >= 0; --i )",
+        "      {",
+        "        result = *(_DWORD *)(this + 204);",
+        "        if ( *(__int16 *)(result + 2 * i) != -1 )",
+        "        {",
+        "          result = this;",
+        "          *(_WORD *)(this + 208) = i;",
+        "          break;",
+        "        }",
+        "      }",
+        "      if ( i < 0 )",
+        "        *(_WORD *)(this + 208) = -1;",
+        "    }",
+        "  }",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7e3190",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7e3191",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7e3193",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x7e3196",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e319d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e31a4",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7e31a7",
+          "text": "cmp     [ebp+arg_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e31ab",
+          "text": "jnz     short loc_7E31C7"
+        },
+        {
+          "va": "0x7e31ad",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7e31b0",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x7e31b1",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e31b4",
+          "text": "call    sub_60FA22"
+        },
+        {
+          "va": "0x7e31b9",
+          "text": "mov     [ebp+arg_4], eax"
+        },
+        {
+          "va": "0x7e31bc",
+          "text": "cmp     [ebp+arg_4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e31c0",
+          "text": "jnz     short loc_7E31C7"
+        },
+        {
+          "va": "0x7e31c2",
+          "text": "jmp     loc_7E3253"
+        },
+        {
+          "va": "0x7e31c7",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e31ca",
+          "text": "mov     edx, [ecx+0CCh]"
+        },
+        {
+          "va": "0x7e31d0",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7e31d3",
+          "text": "mov     word ptr [edx+eax*2], 0FFFFh"
+        },
+        {
+          "va": "0x7e31d9",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e31dc",
+          "text": "mov     dx, [ecx+0D4h]"
+        },
+        {
+          "va": "0x7e31e3",
+          "text": "sub     dx, 1"
+        },
+        {
+          "va": "0x7e31e7",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e31ea",
+          "text": "mov     [eax+0D4h], dx"
+        },
+        {
+          "va": "0x7e31f1",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e31f4",
+          "text": "movsx   edx, word ptr [ecx+0D0h]"
+        },
+        {
+          "va": "0x7e31fb",
+          "text": "cmp     [ebp+arg_4], edx"
+        },
+        {
+          "va": "0x7e31fe",
+          "text": "jnz     short loc_7E3253"
+        },
+        {
+          "va": "0x7e3200",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7e3203",
+          "text": "sub     eax, 1"
+        },
+        {
+          "va": "0x7e3206",
+          "text": "mov     [ebp+var_8], eax"
+        },
+        {
+          "va": "0x7e3209",
+          "text": "jmp     short loc_7E3214"
+        },
+        {
+          "va": "0x7e320b",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e320e",
+          "text": "sub     ecx, 1"
+        },
+        {
+          "va": "0x7e3211",
+          "text": "mov     [ebp+var_8], ecx"
+        },
+        {
+          "va": "0x7e3214",
+          "text": "cmp     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x7e3218",
+          "text": "jl      short loc_7E3241"
+        },
+        {
+          "va": "0x7e321a",
+          "text": "mov     edx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e321d",
+          "text": "mov     eax, [edx+0CCh]"
+        },
+        {
+          "va": "0x7e3223",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e3226",
+          "text": "movsx   edx, word ptr [eax+ecx*2]"
+        },
+        {
+          "va": "0x7e322a",
+          "text": "cmp     edx, 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7e322d",
+          "text": "jz      short loc_7E323F"
+        },
+        {
+          "va": "0x7e322f",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e3232",
+          "text": "mov     cx, word ptr [ebp+var_8]"
+        },
+        {
+          "va": "0x7e3236",
+          "text": "mov     [eax+0D0h], cx"
+        },
+        {
+          "va": "0x7e323d",
+          "text": "jmp     short loc_7E3241"
+        },
+        {
+          "va": "0x7e323f",
+          "text": "jmp     short loc_7E320B"
+        },
+        {
+          "va": "0x7e3241",
+          "text": "cmp     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x7e3245",
+          "text": "jge     short loc_7E3253"
+        },
+        {
+          "va": "0x7e3247",
+          "text": "mov     edx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e324a",
+          "text": "mov     word ptr [edx+0D0h], 0FFFFh"
+        },
+        {
+          "va": "0x7e3253",
+          "text": "add     esp, 8"
+        },
+        {
+          "va": "0x7e3256",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x7e3258",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x7e325d",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7e325f",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7e3260",
+          "text": "retn    8"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x7e31b4",
+          "target": "0x60fa22",
+          "implementation": "0x7e3120",
+          "thunks": [
+            "0x60fa22"
+          ]
+        },
+        {
+          "site": "0x7e3258",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x60c2af",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7e3190",
+          "size": 211,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d0cff751a8b4508508b4dfce869c8e2ff89450c837d0cff7505e98c0000008b4dfc8b91cc0000008b450c66c70442ffff8b4dfc668b91d40000006683ea018b45fc668990d40000008b4dfc0fbf91d000000039550c75538b450c83e8018945f8eb098b4df883e901894df8837df8007c278b55fc8b82cc0000008b4df80fbf144883faff74108b45fc668b4df8668988d0000000eb02ebca837df8007d0c8b55fc66c782d0000000ffff83c4083bece81983e2ff8be55dc20800",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc837d0cff751a8b4508508b4dfce869c8e2ff89450c837d0cff7505e98c0000008b4dfc8b91cc0000008b450c66c70442ffff8b4dfc668b91d40000006683ea018b45fc668990d40000008b4dfc0fbf91d000000039550c75538b450c83e8018945f8eb098b4df883e901894df8837df8007c278b55fc8b82cc0000008b4df80fbf144883faff74108b45fc668b4df8668988d0000000eb02ebca837df8007d0c8b55fc66c782d0000000ffff83c4083bece81983e2ff8be55dc20800",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7e3270",
+      "end_va": "0x7e32e4",
+      "name": "sub_7E3270",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __thiscall sub_7E3270(_DWORD *this, int a2)",
+        "{",
+        "  int result; // eax",
+        "  int i; // [esp+4h] [ebp-8h]",
+        "",
+        "  for ( i = 0; i < *(this + 66); ++i )",
+        "  {",
+        "    if ( *(_DWORD *)(*(this + 67) + 8 * i) == a2 )",
+        "    {",
+        "      *(this + i + 68) = *(_DWORD *)(*(this + 67) + 8 * i + 4);",
+        "      return i;",
+        "    }",
+        "    result = i + 1;",
+        "  }",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7e3270",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7e3271",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7e3273",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x7e3276",
+          "text": "push    esi"
+        },
+        {
+          "va": "0x7e3277",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e327e",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7e3285",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7e3288",
+          "text": "mov     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x7e328f",
+          "text": "jmp     short loc_7E329A"
+        },
+        {
+          "va": "0x7e3291",
+          "text": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e3294",
+          "text": "add     eax, 1"
+        },
+        {
+          "va": "0x7e3297",
+          "text": "mov     [ebp+var_8], eax"
+        },
+        {
+          "va": "0x7e329a",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e329d",
+          "text": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e32a0",
+          "text": "cmp     edx, [ecx+108h]"
+        },
+        {
+          "va": "0x7e32a6",
+          "text": "jge     short loc_7E32DD"
+        },
+        {
+          "va": "0x7e32a8",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e32ab",
+          "text": "mov     ecx, [eax+10Ch]"
+        },
+        {
+          "va": "0x7e32b1",
+          "text": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e32b4",
+          "text": "mov     eax, [ecx+edx*8]"
+        },
+        {
+          "va": "0x7e32b7",
+          "text": "cmp     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7e32ba",
+          "text": "jnz     short loc_7E32DB"
+        },
+        {
+          "va": "0x7e32bc",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e32bf",
+          "text": "mov     edx, [ecx+10Ch]"
+        },
+        {
+          "va": "0x7e32c5",
+          "text": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e32c8",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7e32cb",
+          "text": "mov     esi, [ebp+var_8]"
+        },
+        {
+          "va": "0x7e32ce",
+          "text": "mov     edx, [edx+esi*8+4]"
+        },
+        {
+          "va": "0x7e32d2",
+          "text": "mov     [ecx+eax*4+110h], edx"
+        },
+        {
+          "va": "0x7e32d9",
+          "text": "jmp     short loc_7E32DD"
+        },
+        {
+          "va": "0x7e32db",
+          "text": "jmp     short loc_7E3291"
+        },
+        {
+          "va": "0x7e32dd",
+          "text": "pop     esi"
+        },
+        {
+          "va": "0x7e32de",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7e32e0",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7e32e1",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60e640",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7e3270",
+          "size": 116,
+          "idb_hex": "558bec83ec0856c745f8ccccccccc745fccccccccc894dfcc745f800000000eb098b45f883c0018945f88b4dfc8b55f83b91080100007d358b45fc8b880c0100008b55f88b04d13b4508751f8b4dfc8b910c0100008b45f88b4dfc8b75f88b54f20489948110010000eb02ebb45e8be55dc20400",
+          "disk_hex": "558bec83ec0856c745f8ccccccccc745fccccccccc894dfcc745f800000000eb098b45f883c0018945f88b4dfc8b55f83b91080100007d358b45fc8b880c0100008b55f88b04d13b4508751f8b4dfc8b910c0100008b45f88b4dfc8b75f88b54f20489948110010000eb02ebb45e8be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7eca00",
+      "end_va": "0x7eca0e",
+      "name": "sub_7ECA00",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __cdecl sub_7ECA00(int a1)",
+        "{",
+        "  return a1 == 29;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7eca00",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7eca01",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7eca03",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x7eca05",
+          "text": "cmp     [ebp+arg_0], 1Dh"
+        },
+        {
+          "va": "0x7eca09",
+          "text": "setz    al"
+        },
+        {
+          "va": "0x7eca0c",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7eca0d",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60a090",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7eca00",
+          "size": 14,
+          "idb_hex": "558bec33c0837d081d0f94c05dc3",
+          "disk_hex": "558bec33c0837d081d0f94c05dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7ecaa0",
+      "end_va": "0x7ecaae",
+      "name": "sub_7ECAA0",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __cdecl sub_7ECAA0(int a1)",
+        "{",
+        "  return a1 == 28;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7ecaa0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7ecaa1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7ecaa3",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x7ecaa5",
+          "text": "cmp     [ebp+arg_0], 1Ch"
+        },
+        {
+          "va": "0x7ecaa9",
+          "text": "setz    al"
+        },
+        {
+          "va": "0x7ecaac",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7ecaad",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x608df3",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7ecaa0",
+          "size": 14,
+          "idb_hex": "558bec33c0837d081c0f94c05dc3",
+          "disk_hex": "558bec33c0837d081c0f94c05dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7ecaf0",
+      "end_va": "0x7ecafe",
+      "name": "sub_7ECAF0",
+      "status": "仅导出",
+      "pseudocode": [
+        "BOOL __cdecl sub_7ECAF0(int a1)",
+        "{",
+        "  return a1 == 32;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7ecaf0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7ecaf1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7ecaf3",
+          "text": "xor     eax, eax"
+        },
+        {
+          "va": "0x7ecaf5",
+          "text": "cmp     [ebp+arg_0], 20h ; ' '"
+        },
+        {
+          "va": "0x7ecaf9",
+          "text": "setz    al"
+        },
+        {
+          "va": "0x7ecafc",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7ecafd",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x60a10d",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7ecaf0",
+          "size": 14,
+          "idb_hex": "558bec33c0837d08200f94c05dc3",
+          "disk_hex": "558bec33c0837d08200f94c05dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7f16f0",
+      "end_va": "0x7f1708",
+      "name": "sub_7F16F0",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __cdecl sub_7F16F0(int a1, int a2)",
+        "{",
+        "  return sub_60711A(a1: a2);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7f16f0",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7f16f1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7f16f3",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7f16f6",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x7f16f7",
+          "text": "mov     ecx, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7f16fa",
+          "text": "call    sub_60711A"
+        },
+        {
+          "va": "0x7f16ff",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x7f1701",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x7f1706",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7f1707",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x7f16fa",
+          "target": "0x60711a",
+          "implementation": "0x67fa90",
+          "thunks": [
+            "0x60711a"
+          ]
+        },
+        {
+          "site": "0x7f1701",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x5ff64f",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7f16f0",
+          "size": 24,
+          "idb_hex": "558bec8b450c508b4d08e81b5ae1ff3bece8709ee1ff5dc3",
+          "disk_hex": "558bec8b450c508b4d08e81b5ae1ff3bece8709ee1ff5dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7fa270",
+      "end_va": "0x7fa2f8",
+      "name": "sub_7FA270",
+      "status": "仅导出",
+      "pseudocode": [
+        "_BYTE *__thiscall sub_7FA270(_BYTE *this, int a2, int a3)",
+        "{",
+        "  _BYTE *result; // eax",
+        "",
+        "  if ( a2 == -1 || sub_5FF2EE(this: *((_BYTE **)this + 351), a2) == 0 )",
+        "    *(this + 1648) = a2;",
+        "  else",
+        "    *(this + 1648) = -1;",
+        "  result = (_BYTE *)sub_60A883(a1: a3);",
+        "  if ( (_BYTE)result != 0 )",
+        "  {",
+        "    *(this + 1651) = 1;",
+        "  }",
+        "  else",
+        "  {",
+        "    result = this;",
+        "    *(this + 1651) = 0;",
+        "  }",
+        "  *(this + 1649) = 2;",
+        "  return result;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7fa270",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7fa271",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7fa273",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7fa274",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7fa27b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7fa27e",
+          "text": "cmp     [ebp+arg_0], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x7fa282",
+          "text": "jz      short loc_7FA2A9"
+        },
+        {
+          "va": "0x7fa284",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7fa287",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x7fa288",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7fa28b",
+          "text": "mov     ecx, [ecx+57Ch]"
+        },
+        {
+          "va": "0x7fa291",
+          "text": "call    sub_5FF2EE"
+        },
+        {
+          "va": "0x7fa296",
+          "text": "movzx   edx, al"
+        },
+        {
+          "va": "0x7fa299",
+          "text": "test    edx, edx"
+        },
+        {
+          "va": "0x7fa29b",
+          "text": "jz      short loc_7FA2A9"
+        },
+        {
+          "va": "0x7fa29d",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7fa2a0",
+          "text": "mov     byte ptr [eax+670h], 0FFh"
+        },
+        {
+          "va": "0x7fa2a7",
+          "text": "jmp     short loc_7FA2B5"
+        },
+        {
+          "va": "0x7fa2a9",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7fa2ac",
+          "text": "mov     dl, byte ptr [ebp+arg_0]"
+        },
+        {
+          "va": "0x7fa2af",
+          "text": "mov     [ecx+670h], dl"
+        },
+        {
+          "va": "0x7fa2b5",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "va": "0x7fa2b8",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x7fa2b9",
+          "text": "call    sub_60A883"
+        },
+        {
+          "va": "0x7fa2be",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x7fa2c1",
+          "text": "movzx   ecx, al"
+        },
+        {
+          "va": "0x7fa2c4",
+          "text": "test    ecx, ecx"
+        },
+        {
+          "va": "0x7fa2c6",
+          "text": "jz      short loc_7FA2D4"
+        },
+        {
+          "va": "0x7fa2c8",
+          "text": "mov     edx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7fa2cb",
+          "text": "mov     byte ptr [edx+673h], 1"
+        },
+        {
+          "va": "0x7fa2d2",
+          "text": "jmp     short loc_7FA2DE"
+        },
+        {
+          "va": "0x7fa2d4",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x7fa2d7",
+          "text": "mov     byte ptr [eax+673h], 0"
+        },
+        {
+          "va": "0x7fa2de",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7fa2e1",
+          "text": "mov     byte ptr [ecx+671h], 2"
+        },
+        {
+          "va": "0x7fa2e8",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x7fa2eb",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x7fa2ed",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x7fa2f2",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7fa2f4",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7fa2f5",
+          "text": "retn    8"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x7fa291",
+          "target": "0x5ff2ee",
+          "implementation": "0x63f390",
+          "thunks": [
+            "0x5ff2ee"
+          ]
+        },
+        {
+          "site": "0x7fa2b9",
+          "target": "0x60a883",
+          "implementation": "0x7d6370",
+          "thunks": [
+            "0x60a883"
+          ]
+        },
+        {
+          "site": "0x7fa2ed",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x5ff9c9",
+          "kind": 19
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7fa270",
+          "size": 136,
+          "idb_hex": "558bec51c745fccccccccc894dfc837d08ff74258b4508508b4dfc8b897c050000e85850e0ff0fb6d085d2740c8b45fcc68070060000ffeb0c8b4dfc8a55088891700600008b450c50e8c505e1ff83c4040fb6c885c9740c8b55fcc6827306000001eb0a8b45fcc68073060000008b4dfcc681710600000283c4043bece88412e1ff8be55dc20800",
+          "disk_hex": "558bec51c745fccccccccc894dfc837d08ff74258b4508508b4dfc8b897c050000e85850e0ff0fb6d085d2740c8b45fcc68070060000ffeb0c8b4dfc8a55088891700600008b450c50e8c505e1ff83c4040fb6c885c9740c8b55fcc6827306000001eb0a8b45fcc68073060000008b4dfcc681710600000283c4043bece88412e1ff8be55dc20800",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    }
+  ],
+  "thunks": [
+    {
+      "va": "0x601274",
+      "size": 5,
+      "idb_hex": "e9b7aa3100",
+      "disk_hex": "e9b7aa3100",
+      "matching": true,
+      "target": "0x91bd30"
+    },
+    {
+      "va": "0x610760",
+      "size": 5,
+      "idb_hex": "e91be31e00",
+      "disk_hex": "e91be31e00",
+      "matching": true,
+      "target": "0x7fea80"
+    },
+    {
+      "va": "0x60b576",
+      "size": 5,
+      "idb_hex": "e955413100",
+      "disk_hex": "e955413100",
+      "matching": true,
+      "target": "0x91f6d0"
+    },
+    {
+      "va": "0x604a96",
+      "size": 5,
+      "idb_hex": "e975811a00",
+      "disk_hex": "e975811a00",
+      "matching": true,
+      "target": "0x7acc10"
+    },
+    {
+      "va": "0x6016cf",
+      "size": 5,
+      "idb_hex": "e90c3e2000",
+      "disk_hex": "e90c3e2000",
+      "matching": true,
+      "target": "0x8054e0"
+    },
+    {
+      "va": "0x607bb0",
+      "size": 5,
+      "idb_hex": "e94b581e00",
+      "disk_hex": "e94b581e00",
+      "matching": true,
+      "target": "0x7ed400"
+    },
+    {
+      "va": "0x5ff7b7",
+      "size": 5,
+      "idb_hex": "e9e4e90300",
+      "disk_hex": "e9e4e90300",
+      "matching": true,
+      "target": "0x63e1a0"
+    },
+    {
+      "va": "0x61260f",
+      "size": 5,
+      "idb_hex": "e9fc770100",
+      "disk_hex": "e9fc770100",
+      "matching": true,
+      "target": "0x629e10"
+    },
+    {
+      "va": "0x6024ad",
+      "size": 5,
+      "idb_hex": "e91e790200",
+      "disk_hex": "e91e790200",
+      "matching": true,
+      "target": "0x629dd0"
+    },
+    {
+      "va": "0x60b65c",
+      "size": 5,
+      "idb_hex": "e96f370300",
+      "disk_hex": "e96f370300",
+      "matching": true,
+      "target": "0x63edd0"
+    },
+    {
+      "va": "0x606035",
+      "size": 5,
+      "idb_hex": "e9b63d0200",
+      "disk_hex": "e9b63d0200",
+      "matching": true,
+      "target": "0x629df0"
+    },
+    {
+      "va": "0x6023cc",
+      "size": 5,
+      "idb_hex": "e9dfc10300",
+      "disk_hex": "e9dfc10300",
+      "matching": true,
+      "target": "0x63e5b0"
+    },
+    {
+      "va": "0x60d38a",
+      "size": 5,
+      "idb_hex": "e9c1cc1e00",
+      "disk_hex": "e9c1cc1e00",
+      "matching": true,
+      "target": "0x7fa050"
+    },
+    {
+      "va": "0x60a7b6",
+      "size": 5,
+      "idb_hex": "e9e5f81e00",
+      "disk_hex": "e9e5f81e00",
+      "matching": true,
+      "target": "0x7fa0a0"
+    },
+    {
+      "va": "0x6057bb",
+      "size": 5,
+      "idb_hex": "e9302c1f00",
+      "disk_hex": "e9302c1f00",
+      "matching": true,
+      "target": "0x7f83f0"
+    },
+    {
+      "va": "0x606797",
+      "size": 5,
+      "idb_hex": "e954860300",
+      "disk_hex": "e954860300",
+      "matching": true,
+      "target": "0x63edf0"
+    },
+    {
+      "va": "0x605545",
+      "size": 5,
+      "idb_hex": "e9d6a00300",
+      "disk_hex": "e9d6a00300",
+      "matching": true,
+      "target": "0x63f620"
+    },
+    {
+      "va": "0x60ee8d",
+      "size": 5,
+      "idb_hex": "e97e0c0400",
+      "disk_hex": "e97e0c0400",
+      "matching": true,
+      "target": "0x64fb10"
+    },
+    {
+      "va": "0x6012d3",
+      "size": 5,
+      "idb_hex": "e9388c1f00",
+      "disk_hex": "e9388c1f00",
+      "matching": true,
+      "target": "0x7f9f10"
+    },
+    {
+      "va": "0x604703",
+      "size": 5,
+      "idb_hex": "e988a20300",
+      "disk_hex": "e988a20300",
+      "matching": true,
+      "target": "0x63e990"
+    },
+    {
+      "va": "0x600b26",
+      "size": 5,
+      "idb_hex": "e985191e00",
+      "disk_hex": "e985191e00",
+      "matching": true,
+      "target": "0x7e24b0"
+    },
+    {
+      "va": "0x6059fa",
+      "size": 5,
+      "idb_hex": "e9d1d31d00",
+      "disk_hex": "e9d1d31d00",
+      "matching": true,
+      "target": "0x7e2dd0"
+    },
+    {
+      "va": "0x60fa22",
+      "size": 5,
+      "idb_hex": "e9f9361d00",
+      "disk_hex": "e9f9361d00",
+      "matching": true,
+      "target": "0x7e3120"
+    },
+    {
+      "va": "0x60711a",
+      "size": 5,
+      "idb_hex": "e971890700",
+      "disk_hex": "e971890700",
+      "matching": true,
+      "target": "0x67fa90"
+    },
+    {
+      "va": "0x5ff2ee",
+      "size": 5,
+      "idb_hex": "e99d000400",
+      "disk_hex": "e99d000400",
+      "matching": true,
+      "target": "0x63f390"
+    },
+    {
+      "va": "0x60a883",
+      "size": 5,
+      "idb_hex": "e9e8ba1c00",
+      "disk_hex": "e9e8ba1c00",
+      "matching": true,
+      "target": "0x7d6370"
+    }
+  ]
+}
