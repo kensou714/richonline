@@ -29,8 +29,8 @@ OriginalBossBoardRequest request_for(const OriginalMapResources& map, std::strin
 }
 int main() {
     try {
-        constexpr std::string_view source = __FILE__;
-        const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+        constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+        const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
         const auto config = OriginalBossConfig::load(root/"local-server"/"boss-stages.json",{1038,1044,1046,1063,1075});
         const auto price = load_original_price_base(root/"Data"/"Option.kpd");
         constexpr std::array<OriginalBossSpawn,4> humans{{{115,3},{98,3},{85,3},{89,0}}};

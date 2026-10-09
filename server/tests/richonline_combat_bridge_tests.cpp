@@ -183,6 +183,72 @@ void helmet_status_and_inventory_commit_together(const std::filesystem::path& ro
     check(f.cards->inventory()[3].count==1 && f.statuses[0].safety_helmet_uses==2 &&
         f.ledger->snapshot(0).funds.cash==5000,"mine_bridge_activated_projectile_helmet");
 }
+void fire_uses_shared_terms_and_atomic_survival(const std::filesystem::path& root) {
+    Fixture f(root);f.ground->place(232,{26,1,3});
+    f.statuses[1].possession=3;f.statuses[0].possession=0;
+    f.refs[0].capabilities.mine_immune_vehicle=true;
+    f.world.resolve_terms=[](const RichonlineCombatActorView& actor,const RichonlineCombatSessionView&) {
+        RichonlineCombatWorld::ResolvedTerms terms{{},{},0,0};
+        if(actor.slot==1){terms.attack.equipment_percentage=20;terms.flat_attack=100;}
+        else {terms.defense.equipment_percentage=10;terms.flat_defense=50;}
+        return terms;
+    };
+    f.world.helmet=[](const auto&,const auto&)->std::optional<RichonlineBossCards::PreparedConsumption> {
+        throw CodecError("fire_must_not_invoke_projectile_helmet");
+    };
+    auto bridge=f.bridge();const auto hand=f.cards->inventory();const auto ground=f.ground->snapshot();
+    const auto initial=f.ledger->snapshot(0);unsigned preflight=0;
+    rejects([&]{bridge.fire_landing(f.refs,0,232,2000,[]{throw CodecError("fire_continuation_rejected");});},
+        "fire_continuation_rejected");
+    check(f.ledger->snapshot(0)==initial && f.cards->inventory()==hand && f.ground->snapshot()==ground,
+        "fire_preflight_partially_committed");
+    const auto hit=bridge.fire_landing(f.refs,0,232,2000,[&]{++preflight;});
+    // 2000 *1.5 *1.2 *0.5 *0.9 +100 -50 =1670.
+    check(hit.packets.empty() && hit.bankrupt_actors.empty() && preflight==1 &&
+        f.ledger->snapshot(0).funds.cash==8330 && f.ground->snapshot()==ground && f.cards->inventory()==hand,
+        "fire_modifiers_or_persistent_ground_wrong");
+    auto poor=f.ledger->snapshot(0);auto funds=poor.funds;funds.cash=670;funds.deposit=1000;
+    f.ledger->commit(0,poor,funds);
+    const auto lethal=bridge.fire_landing(f.refs,0,232,2000,[]{throw CodecError("fatal_fire_called_continuation");});
+    check(lethal.packets.empty() && lethal.bankrupt_actors==std::vector<std::uint8_t>{0} && !f.active[0] &&
+        f.ledger->snapshot(0).funds.cash==0 && *f.ledger->snapshot(0).funds.deposit==0 &&
+        f.ground->snapshot()==ground,"fire_exact_total_bankruptcy_wrong");
+    for(const auto owner:std::array<std::uint8_t,3>{0,1,255}) {
+        Fixture neutral(root);neutral.ground->place(232,{26,owner,3});neutral.statuses[1].possession=3;
+        if(owner==1){neutral.active[1]=false;neutral.refs[1].capabilities.active=false;}
+        auto b=neutral.bridge();b.fire_landing(neutral.refs,0,232,2000,[]{});
+        check(neutral.ledger->snapshot(0).funds.cash==8000,"fire_self_neutral_or_inactive_owner_damage_wrong");
+    }
+    Fixture stale(root);stale.ground->place(232,{26,1,3});auto b=stale.bridge();const auto before=stale.ledger->snapshot(0);
+    rejects([&]{b.fire_landing(stale.refs,0,232,2000,[&]{stale.statuses[0].stay=1;});},"richonline_combat_bridge_stale");
+    check(stale.ledger->snapshot(0)==before,"fire_stale_status_debited");
+}
+void poison_shared_count_relations_and_stale_commit(const std::filesystem::path& root) {
+    Fixture f(root);RichonlineChanceInventory hand{};hand[2]={1182,6};f.cards->commit_inventory(hand);
+    std::array<RichonlineRawActorState,8> raw{};for(auto& r:raw)r={-1,-1,-1,-1,true};
+    std::array<std::array<std::uint8_t,8>,2> relations{};relations[0][1]=3;relations[1][0]=2;
+    std::uint32_t count=0;
+    const RichonlineResearchCardRequest request{RichonlineResearchCard::poison1182,9,2,0,{},1,0xa5};
+    const RichonlineResearchCardContext context{7,9,0,0,true,true};
+    const std::array<RichonlinePoisonCell,1> footprint{{{231,0}}};
+    f.world.resolve_terms=[&](const auto&,const auto&){f.statuses[0].stay=1;return RichonlineCombatWorld::ResolvedTerms{{},{},0,0};};
+    auto stale=f.bridge();const auto funds=f.ledger->snapshot(1);
+    rejects([&]{stale.poison_card(f.refs,request,context,count,{3,2500},footprint,raw,relations);},"richonline_combat_bridge_stale");
+    check(count==0 && f.cards->inventory()==hand && f.ledger->snapshot(1)==funds && relations[0][1]==3 && relations[1][0]==2,
+        "poison_partial_count_or_relations_on_stale");
+    f.statuses[0].stay=0;f.world.resolve_terms=[](const auto&,const auto&){return RichonlineCombatWorld::ResolvedTerms{{},{},0,0};};
+    auto bridge=f.bridge();
+    for(std::uint32_t use=0;use<4;++use) {
+        const auto before=f.ledger->snapshot(1).funds.cash;
+        const auto result=bridge.poison_card(f.refs,request,context,count,{3,2500},footprint,raw,relations);
+        check(result.packets.size()==1 && count==use+1 && f.ledger->snapshot(1).funds.cash==before-(use==3?3750U:2500U),
+            "poison_count_or_strength_not_committed");
+    }
+    check(relations[0][1]==0 && relations[1][0]==0 && f.cards->inventory()[2].count==2,"poison_relations_inventory_commit");
+    auto invalid=request;invalid.slot=1;const auto before=f.ledger->snapshot(1);
+    rejects([&]{bridge.poison_card(f.refs,invalid,context,count,{3,2500},footprint,raw,relations);},"richonline_research_card_not_owned");
+    check(count==4 && f.ledger->snapshot(1)==before && f.cards->inventory()[2].count==2,"poison_refusal_raised_count");
+}
 }
 int main(int argc,char** argv) {
     try {
@@ -192,6 +258,8 @@ int main(int argc,char** argv) {
         human_cards_commit_shared_inventory_once(argv[1]);
         human_nuclear_uses_shared_property_and_safe_exclusion(argv[1]);
         helmet_status_and_inventory_commit_together(argv[1]);
+        fire_uses_shared_terms_and_atomic_survival(argv[1]);
+        poison_shared_count_relations_and_stale_commit(argv[1]);
         std::cout<<"PASS NEW shared combat bridge CAS and continuation effects\n";
     } catch(const std::exception& error) { std::cerr<<error.what()<<'\n';return 1; }
 }

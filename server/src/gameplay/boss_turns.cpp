@@ -15,6 +15,8 @@
 #include "richonline_ground_card.hpp"
 #include "richonline_route_effect.hpp"
 #include "richonline_clear_card.hpp"
+#include "richonline_research_cards.hpp"
+#include "richonline_boss_landing.hpp"
 
 #include <iterator>
 #include <algorithm>
@@ -70,6 +72,7 @@ struct Turns {
     std::uint8_t human_dice_count=1;
     struct AcceptedRandomRoll { std::uint16_t counter; std::uint64_t turn; };
     std::optional<AcceptedRandomRoll> accepted_random_roll{};
+    std::uint32_t poison_use_count=0;
 
     bool controlled_roll_actor() const noexcept {
         return status[actor].possession==7 || status[actor].sleepwalking!=0;
@@ -115,7 +118,8 @@ struct Turns {
         return value.sleepwalking<=127 && value.frozen<=127 && !value.attack_turns && !value.damage_turns &&
             value.attack_multiplier==1.0F && value.damage_multiplier==1.0F &&
             !value.protected_from_status && (!value.possession || (rules.npcs &&
-                ((*value.possession>=0 && *value.possession<=3) || *value.possession==7))) &&
+                ((*value.possession>=0 && *value.possession<=3) || *value.possession==7 ||
+                    (rules.npc_aura && (*value.possession==4 || *value.possession==6))))) &&
             ((!value.timed_bomb && !value.timed_bomb_owner) || (rules.timed_bombs && value.timed_bomb &&
                 *value.timed_bomb>=1 && *value.timed_bomb<=127 && value.timed_bomb_owner &&
                 *value.timed_bomb_owner>=-1 && *value.timed_bomb_owner<static_cast<std::int8_t>(status.size()))) &&
@@ -271,6 +275,9 @@ struct Turns {
         return commit_move(std::move(prepared));
     }
     std::vector<Bytes> begin_turn() {
+        // NEW7C0C50 clears game+60 at entry, including resumed turn phases.
+        // Supported card restore-action paths do not call that entry again.
+        poison_use_count=0;
         ++active_counter;
         ++turn_sequence;
         if(rules.research_turn_started) rules.research_turn_started(actor);
@@ -285,6 +292,27 @@ struct Turns {
         if (rules.npcs) static_cast<void>(rules.npcs->actor_begin(actor,++actor_turns[actor],status[actor]));
         std::vector<Bytes> messages{
             encode_richonline_turn4010({init.game_server_id,static_cast<std::int8_t>(actor),1,0},rules.opaque_turn7)};
+        if(status[actor].possession==4 || status[actor].possession==6) {
+            if(!rules.npc_aura || !rules.npc_aura_raw_actor || !rules.ledger || !rules.terminal)
+                throw CodecError("richonline_boss_npc_aura_capability_required");
+            std::array<RichonlineNpcAuraActor,2> targets{};
+            for(std::uint8_t slot=0;slot<targets.size();++slot)
+                targets[slot]={slot,init.participants[slot].position,active[slot],
+                    rules.npc_aura_raw_actor(slot),rules.ledger->snapshot(slot)};
+            // NEW7F3840 initializes1740 to0. Positive temple strengthening
+            // remains gated in Property; no supported transition writes1744.
+            auto aura=plan_richonline_npc_aura(topology,*rules.npc_aura,
+                {game_mode,actor,1,status[actor].possession,RichonlineNpcAuraEffect{0,0.0F}},targets);
+            if(!aura.updates.empty() && !rules.ledger->commit_batch(aura.updates,[]{return true;}))
+                throw CodecError("richonline_boss_npc_aura_ledger_rejected");
+            if(!aura.bankrupt_actors.empty())
+                return terminal(std::move(messages),std::move(aura.bankrupt_actors),RichonlineTerminalReason::npc_aura);
+        }
+        if(rules.fire_traps) {
+            const auto tick=plan_richonline_fire_trap_tick(rules.ground->snapshot(),actor,actor==1,active);
+            auto ground=rules.ground->prepare(tick.expected_ground,tick.after_ground);
+            if(!rules.ground->commit_prepared(ground)) throw CodecError("richonline_boss_fire_clock_stale");
+        }
         if(actor==1 && rules.combat) {
             if(pending_mine_day) {
                 auto refs=combat_refs();auto expiry=rules.combat->finish_round(refs,*pending_mine_day);
@@ -330,6 +358,15 @@ struct Turns {
         return messages;
     }
     std::vector<Bytes> resolve(RichonlineLandingResult result) {
+        if(result.temple_change) {
+            if(!rules.npcs || result.status_change || result.progress!=RichonlineLandingProgress::complete ||
+                status[actor]!=result.temple_change->expected || (result.temple_change->summon &&
+                    (!rules.npc_aura || !rules.npc_aura_raw_actor || !rules.ledger || !rules.terminal)))
+                throw CodecError("richonline_boss_temple_transition_invalid");
+            auto change=rules.npcs->prepare_temple_change(actor,*result.temple_change);
+            if(!rules.npcs->commit_status_change(change,status[actor]))
+                throw CodecError("richonline_boss_temple_clock_changed");
+        }
         if (result.status_change) {
             if (status[actor]!=result.status_change->expected)
                 throw CodecError("richonline_boss_landing_status_changed");
@@ -565,9 +602,38 @@ struct Turns {
         return {actor,position,cell.static_type,cell.property_ref,game_mode,
             init.participants[actor].lobby_identity==-1,degree,occupied,status[actor],collision_resolved};
     }
+    void project_ice_landing(RichonlineLandingContext& context) const {
+        if(!rules.ice_traps) return;
+        const auto ground=rules.ground->snapshot();
+        const auto found=ground.objects.find(context.position);
+        if(found!=ground.objects.end() && found->second.npc==25)
+            context.actor_status=plan_richonline_ice_trap_landing(context.position,ground,
+                context.actor_status,*rules.ice_traps).after_status;
+    }
+    void consume_ice_landing(std::int16_t position) {
+        if(!rules.ice_traps) return;
+        const auto before=rules.ground->snapshot();
+        const auto found=before.objects.find(position);
+        if(found==before.objects.end() || found->second.npc!=25) return;
+        const auto planned=plan_richonline_ice_trap_landing(position,before,status[actor],*rules.ice_traps);
+        auto context=landing_context(position);context.actor_status=planned.after_status;
+        rules.npc_landing_preflight(context);
+        auto ground=rules.ground->prepare(planned.expected_ground,planned.after_ground);
+        auto clock=rules.npcs ? std::optional{rules.npcs->prepare_status_change(actor,
+            planned.expected_status,planned.after_status)} : std::nullopt;
+        if(status[actor]!=planned.expected_status || !rules.ground->matches(ground) ||
+            (clock && !rules.npcs->matches_status_change(*clock,status[actor])))
+            throw CodecError("richonline_boss_ice_landing_stale");
+        // Serialized room owner: both prepared commits are nonthrowing, and no
+        // callback or allocation occurs between the checks and the two writes.
+        if(!rules.ground->commit_prepared(ground)) std::terminate();
+        if(clock) {
+            if(!rules.npcs->commit_status_change(*clock,status[actor])) std::terminate();
+        } else status[actor]=planned.after_status;
+    }
     std::vector<Bytes> finish_landing(PendingLanding landing) {
         const auto& cell=topology.cell(landing.position);
-        if (cell.static_type==9 && rules.bank && !controlled_roll_actor()) {
+        if (cell.static_type==9 && rules.bank && !richonline_landing_controlled(status[actor])) {
             if (cell.property_ref!=-1) throw CodecError("richonline_boss_bank_property_phase_unimplemented");
             for (std::size_t slot=0;slot<init.participants.size();++slot)
                 if (slot!=actor && init.participants[slot].position==landing.position &&
@@ -616,8 +682,8 @@ struct Turns {
                 throw CodecError("richonline_boss_portal_continuation_invalid");
         }
         const auto context=landing_context(landing.position);
-        auto card_result=!controlled_roll_actor() && rules.chance_landing ? rules.chance_landing(context) : std::nullopt;
-        if(!controlled_roll_actor() && !card_result && rules.cards) card_result=rules.cards->land(context);
+        auto card_result=!richonline_landing_controlled(status[actor]) && rules.chance_landing ? rules.chance_landing(context) : std::nullopt;
+        if(!richonline_landing_controlled(status[actor]) && !card_result && rules.cards) card_result=rules.cards->land(context);
         auto result=card_result ? std::move(*card_result) : rules.landed(context);
         if(landing.sent_stop) {
             for(auto it=result.messages.begin();it!=result.messages.end();) {
@@ -666,6 +732,19 @@ struct Turns {
         throw CodecError("richonline_boss_npc_continuation_invalid");
     }
     std::vector<Bytes> ground_landing(PendingLanding landing,std::vector<Bytes> messages={}) {
+        consume_ice_landing(landing.position);
+        if(has_fire(landing.position)) {
+            if(!landing.sent_stop) {
+                Bytes stop;append_le(stop,0x4013,2);append_le(stop,init.game_server_id,2);
+                append_le(stop,static_cast<std::uint16_t>(landing.position),2);
+                messages.push_back(std::move(stop));landing.sent_stop=true;
+            }
+            auto refs=combat_refs(landing.position);
+            auto effect=rules.combat->fire_landing(refs,actor,landing.position,rules.fire_traps->npc26_damage,
+                [&]{auto context=landing_context(landing.position);context.actor_status=status[actor];rules.npc_landing_preflight(context);});
+            if(!effect.bankrupt_actors.empty())
+                return terminal(std::move(messages),std::move(effect.bankrupt_actors),RichonlineTerminalReason::fire_trap);
+        }
         if(rules.combat && rules.combat->has_mine(landing.position)) {
             auto refs=combat_refs(landing.position);
             auto explosion=rules.combat->stepped_mine(refs,landing.position);
@@ -680,7 +759,8 @@ struct Turns {
                 return terminal(std::move(messages),std::move(explosion.bankrupt_actors),RichonlineTerminalReason::stepped_mine);
         }
         if(rules.npcs) {
-            auto event=rules.npcs->landing(landing_context(landing.position),landing.counter,status[actor]);
+            auto event=rules.npcs->landing(landing_context(landing.position),landing.counter,status[actor],
+                rules.npc_landing_preflight);
             if(event) {
                 // A timed explosion or stepped mine already supplied this stop.
                 if(landing.sent_stop && event->sent_stop4013) {
@@ -700,6 +780,11 @@ struct Turns {
         auto following=finish_landing(landing);
         messages.insert(messages.end(),std::make_move_iterator(following.begin()),
             std::make_move_iterator(following.end()));return messages;
+    }
+    bool has_fire(std::int16_t position) const {
+        if(!rules.fire_traps) return false;
+        const auto ground=rules.ground->snapshot();const auto found=ground.objects.find(position);
+        return found!=ground.objects.end() && found->second.npc==26;
     }
     RichonlineHibernateSnapshot hibernate_snapshot() const {
         if(!rules.hibernate || !rules.cards) throw CodecError("richonline_boss_hibernate_capability_required");
@@ -935,6 +1020,70 @@ struct Turns {
             rules.cards->commit_inventory(planned.after_inventory);
             return response;
         }
+        case 156: {
+            if(phase!=Phase::roll || actor!=init.local_slot || plain.size()!=8 ||
+                read_le(plain.subspan(2,2))!=active_counter)
+                throw CodecError("richonline_boss_research_card_out_of_phase");
+            RichonlineCombatBridgeResult result;
+            try {
+                const auto request=decode_richonline_research_card(plain);
+                if(!rules.poison || !rules.combat || !rules.poison_raw_actor)
+                    throw CodecError("richonline_boss_poison_authority_required");
+                const RichonlineResearchCardContext context{init.game_server_id,active_counter,
+                    static_cast<std::int8_t>(actor),static_cast<std::int8_t>(init.local_slot),true,
+                    active[actor] && !richonline_landing_controlled(status[actor])};
+                std::array<RichonlineRawActorState,8> raw{};
+                for(std::uint8_t slot=0;slot<active.size();++slot) raw[slot]=rules.poison_raw_actor(slot);
+                const auto footprint=richonline_poison_map_footprint(topology,init.participants[actor].position,rules.poison->range);
+                auto refs=combat_refs();
+                result=rules.combat->poison_card(refs,request,context,poison_use_count,*rules.poison,footprint,raw,relations1472);
+            } catch(const CodecError& error) {
+                if(rules.log) rules.log(std::string("richonline_poison_refused reason=")+error.what());
+                return {encode_richonline_dice_recovery400b(init.game_server_id)};
+            }
+            if(!result.bankrupt_actors.empty())
+                return terminal(std::move(result.packets),std::move(result.bankrupt_actors),RichonlineTerminalReason::poison_card);
+            return std::move(result.packets);
+        }
+        case 155: case 157: {
+            if(phase!=Phase::roll || actor!=init.local_slot || plain.size()!=8 ||
+                read_le(plain.subspan(2,2))!=active_counter)
+                throw CodecError("richonline_boss_research_card_out_of_phase");
+            std::optional<RichonlineResearchTrapPlan> planned;
+            try {
+                const auto request=decode_richonline_research_card(plain);
+                const auto* traps=request.card==RichonlineResearchCard::ice1181 ? rules.ice_traps.get() :
+                    rules.fire_traps ? &rules.fire_traps->traps : nullptr;
+                if(!traps || !rules.cards || !rules.ground || !rules.ground_card_visible)
+                    throw CodecError("richonline_boss_research_card_authority_required");
+                const RichonlineResearchCardContext context{init.game_server_id,active_counter,
+                    static_cast<std::int8_t>(actor),static_cast<std::int8_t>(init.local_slot),true,
+                    active[actor] && !richonline_landing_controlled(status[actor])};
+                const auto position=*request.position;
+                const bool valid=position>=0 && static_cast<std::size_t>(position)<topology.cells().size();
+                const RichonlineResearchTrapMap map{static_cast<std::uint16_t>(topology.width()),
+                    static_cast<std::uint16_t>(topology.height()),valid &&
+                    rules.ground_card_visible(actor,init.participants[actor].position,position),
+                    [this](std::int16_t target) {
+                        const auto& cell=topology.cell(target);bool occupied=false;
+                        for(std::size_t slot=0;slot<active.size();++slot)
+                            if(active[slot] && init.participants[slot].position==target) occupied=true;
+                        return RichonlineResearchTrapCell{cell.walkable,occupied,cell.static_type};
+                    },static_cast<std::int8_t>(actor)};
+                planned=plan_richonline_research_trap(request,context,map,*traps,
+                    rules.cards->inventory(),rules.ground->snapshot());
+            } catch(const CodecError& error) {
+                if(rules.log) rules.log(std::string("richonline_research_card_refused reason=")+error.what());
+                return {encode_richonline_dice_recovery400b(init.game_server_id)};
+            }
+            auto ground=rules.ground->prepare(planned->expected_ground,planned->after_ground);
+            std::vector<Bytes> response{std::move(planned->success)};
+            if(rules.cards->inventory()!=planned->expected_inventory || !rules.ground->matches(ground))
+                throw CodecError("richonline_boss_ice_card_stale");
+            if(!rules.ground->commit_prepared(ground)) std::terminate();
+            rules.cards->commit_inventory(planned->after_inventory);
+            return response;
+        }
         case 160: {
             const auto request=decode_richonline_clear_card160(plain);
             require_local_controls();
@@ -1024,7 +1173,9 @@ struct Turns {
             PendingLanding landing{request.endpoint,heading,request.calendar_counter,false};
             auto context=landing_context(request.endpoint);
             if(progress) context.actor_status=progress->plan().combat.after.actors[actor]->status;
-            if(rules.npcs || rules.combat) rules.npc_landing_preflight(context);
+            project_ice_landing(context);
+            if((rules.npcs || rules.combat || rules.ice_traps) && !has_fire(request.endpoint))
+                rules.npc_landing_preflight(context);
             if(progress) static_cast<void>(commit_timed_progress(*progress));
             else if(ground_progress) commit_ground_progress(*ground_progress,route.landings.size()-1);
             return ground_landing(landing);
@@ -1040,7 +1191,8 @@ struct Turns {
             if(!dies) {
                 auto context=landing_context(request.endpoint);
                 context.actor_status=progress->plan().combat.after.actors[actor]->status;
-                rules.npc_landing_preflight(context);
+                project_ice_landing(context);
+                if(!has_fire(request.endpoint)) rules.npc_landing_preflight(context);
             }
             // Reserve the retirement slot before the shared commit. It remains
             // valid across the immediately following turns and is bounded.
@@ -1066,10 +1218,13 @@ struct Turns {
 RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& startup,
     RichonlineRoadTopology topology, RichonlineBossTurnRules rules) {
     if (!rules.random || !rules.landed || !rules.event || !rules.now) throw CodecError("richonline_boss_turn_rules_required");
-    if((rules.npcs || rules.combat) && !rules.npc_landing_preflight)
+    if((rules.npcs || rules.combat || rules.ice_traps || rules.fire_traps) && !rules.npc_landing_preflight)
         throw CodecError("richonline_boss_npc_landing_preflight_required");
     if(rules.combat && (!rules.combat_random || !rules.combat_capabilities || !rules.terminal))
         throw CodecError("richonline_boss_combat_turn_rules_required");
+    if(rules.npc_aura && (!rules.npcs || !rules.ledger || rules.ledger->actor_count()!=2 ||
+        !rules.npc_aura_raw_actor || !rules.terminal || rules.npc_aura->amount<0 || rules.npc_aura->radius<0))
+        throw CodecError("richonline_boss_npc_aura_capability_required");
     if(rules.timed_bombs && (!rules.combat || !rules.timed_bombs->resources || !rules.timed_bombs->step_context))
         throw CodecError("richonline_boss_timed_bomb_rules_required");
     if(rules.hibernate && (!rules.cards || !rules.hibernate->resources || !rules.hibernate->raw_actor ||
@@ -1100,6 +1255,20 @@ RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& st
     for (const auto& person : startup.init.participants)
         if (!topology.cell(person.position).walkable || person.direction > 3) throw CodecError("richonline_boss_turn_spawn_invalid");
     const auto mode = read_le(View(startup.room.description.record).subspan(36,4));
+    if(rules.poison && (mode!=3 || !rules.combat || !rules.cards || !rules.poison_raw_actor || !rules.terminal ||
+        !rules.poison->range || rules.poison->range>4 || !rules.poison->base_damage || rules.poison->base_damage>0x7fffffffU))
+        throw CodecError("richonline_boss_poison_rules_required");
+    if(rules.fire_traps && (mode!=3 || !rules.combat || !rules.cards || !rules.ground || !rules.ground_card_visible ||
+        !rules.terminal || !rules.fire_traps->npc26_damage || rules.fire_traps->npc26_damage>0x7fffffffU ||
+        !rules.fire_traps->traps.freeze_timer || rules.fire_traps->traps.freeze_timer>127 ||
+        !rules.fire_traps->traps.fire_radius || rules.fire_traps->traps.fire_radius>8 ||
+        !rules.fire_traps->traps.fire_rounds || rules.fire_traps->traps.fire_rounds>127))
+        throw CodecError("richonline_boss_fire_trap_rules_required");
+    if(rules.ice_traps && (mode!=3 || !rules.cards || !rules.ground || !rules.ground_card_visible ||
+        !rules.ice_traps->freeze_timer || rules.ice_traps->freeze_timer>127 ||
+        !rules.ice_traps->fire_radius || rules.ice_traps->fire_radius>8 ||
+        !rules.ice_traps->fire_rounds || rules.ice_traps->fire_rounds>127))
+        throw CodecError("richonline_boss_ice_trap_rules_required");
     auto state = std::make_shared<Turns>(Turns{startup.init,std::move(topology),std::move(rules),Phase::loading,1,{},mode});
     state->junction.emplace(startup.init.game_server_id);
     state->active_counter=static_cast<std::uint16_t>(startup.snapshot.calendar_counter);

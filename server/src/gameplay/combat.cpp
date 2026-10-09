@@ -339,7 +339,7 @@ bool richonline_attack_hits_actor(RichonlineCombatEffect effect,std::int8_t atta
 }
 RichonlineBossBlastBuildingEffect richonline_boss_blast_building_effect(RichonlineCombatEffect effect,
     std::int8_t kind,std::uint8_t level,bool owned,bool protected_owner) {
-    if (level>5) throw CodecError("richonline_combat_building_level_invalid");
+    if (level>7) throw CodecError("richonline_combat_building_level_invalid");
     if (effect!=RichonlineCombatEffect::missile && effect!=RichonlineCombatEffect::nuclear && effect!=RichonlineCombatEffect::safe_nuclear)
         throw CodecError("richonline_combat_footprint_effect_invalid");
     if (kind==10 && owned) return RichonlineBossBlastBuildingEffect::remove_ownership;

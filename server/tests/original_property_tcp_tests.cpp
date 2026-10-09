@@ -7,8 +7,8 @@ namespace {
 using namespace original_startup_test;
 enum class Scenario { research, miracle, skill_limit };
 OriginalBuildingPolicy building_policy() {
-    constexpr std::string_view source = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
     const auto policies = load_original_building_policies(root/"Data"/"BossWar.kpd");
     const auto found = std::find_if(policies.maps.begin(),policies.maps.end(),[](const auto& item) { return item.map_name == "BS_1_1.emp"; });
     require(found != policies.maps.end() && found->default_kind.has_value(),"property_original_policy_missing");
@@ -184,8 +184,8 @@ void alternate_build_paths(std::shared_ptr<const OriginalMapResources> map, std:
 int main() {
     try {
         const Network network;
-        constexpr std::string_view source = __FILE__;
-        const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+        constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+        const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
         const auto map = std::make_shared<OriginalMapResources>(original_map_resources(load_original_emp(root/"Map"/"BS_1_1.emp"),10));
         const auto road = std::find_if(map->roads.begin(),map->roads.end(),[](const auto& cell) { return cell.tile == 119; });
         require(road != map->roads.end() && road->property_id == 104,"property_original_map_oracle_wrong");

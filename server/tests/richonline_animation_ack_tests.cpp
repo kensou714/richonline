@@ -16,12 +16,12 @@ Bytes wire(std::uint16_t counter) {
     return {21,0,static_cast<std::uint8_t>(counter),static_cast<std::uint8_t>(counter>>8)};
 }
 RichonlineAnimationAckTransition entry(std::uint16_t counter=7,std::uint64_t turn=12,
-    RichonlineAckAnimation type=RichonlineAckAnimation::type10) {
-    return {91,turn,counter,type,type==RichonlineAckAnimation::type6,{0,0,false,false,false},
+    RichonlineAckAnimation type=RichonlineAckAnimation::type10,std::uint64_t token=91) {
+    return {token,turn,counter,type,type==RichonlineAckAnimation::type6,{0,0,false,false,false},
         now+std::chrono::seconds{5}};
 }
-RichonlineAnimationAckContext context(std::uint64_t turn=12) {
-    return {turn,{0,0,false,false,false}};
+RichonlineAnimationAckContext context(std::uint64_t turn=12,std::uint64_t token=91) {
+    return {token,turn,{0,0,false,false,false}};
 }
 void successful_transitions_are_one_shot() {
     for(const auto type:{RichonlineAckAnimation::type6,RichonlineAckAnimation::type10,RichonlineAckAnimation::type12}) {
@@ -33,7 +33,12 @@ void successful_transitions_are_one_shot() {
         check(duplicate.disposition==RichonlineAnimationAckDisposition::duplicate && !duplicate.transition,
             "duplicate_released_continuation");
         rejects([&]{gate.begin(entry(7,12,RichonlineAckAnimation::type12),now);},
-            "richonline_animation_ack_counter_reuse");
+            "richonline_animation_ack_token");
+        gate.begin(entry(7,12,RichonlineAckAnimation::type12,92),now);
+        check(gate.accept(wire(7),context(),now).disposition==RichonlineAnimationAckDisposition::duplicate &&
+            gate.pending(),"old_server_callback_completed_new_event");
+        const auto second=gate.accept(wire(7),context(12,92),now);
+        check(second.transition && second.transition->token==92,"same_counter_second_event_rejected");
     }
 }
 void authority_and_wire_validation_do_not_consume_pending() {
@@ -92,29 +97,29 @@ void expiry_cancel_and_close_never_complete() {
         const auto result=gate.accept(wire(7),context(),now+std::chrono::seconds{5});
         check(result.disposition==RichonlineAnimationAckDisposition::expired && !result.transition &&
             !gate.pending(),"late_ack_completed");
-        rejects([&]{gate.begin(entry(),now);},"richonline_animation_ack_counter_reuse");
-        gate.begin(entry(8,13),now);
-        check(gate.accept(wire(7),context(13),now).disposition==RichonlineAnimationAckDisposition::expired &&
+        rejects([&]{gate.begin(entry(),now);},"richonline_animation_ack_token");
+        gate.begin(entry(8,13,RichonlineAckAnimation::type10,92),now);
+        check(gate.accept(wire(7),context(),now).disposition==RichonlineAnimationAckDisposition::expired &&
             gate.pending(),"stale_ack_changed_new_pending");
         check(gate.cancel().has_value() && !gate.cancel(),"cancel_not_once");
-        gate.begin(entry(9,14),now);gate.close();gate.close();
+        gate.begin(entry(9,14,RichonlineAckAnimation::type10,93),now);gate.close();gate.close();
         check(gate.closed() && !gate.pending() && !gate.expire(now+std::chrono::seconds{6}),"close_failed");
         rejects([&]{gate.accept(wire(9),context(14),now);},"richonline_animation_ack_closed");
         rejects([&]{gate.begin(entry(10,15),now);},"richonline_animation_ack_closed");
     }
 }
-void wrap_cannot_relabel_old_wire_as_new_work() {
+void wrap_and_reuse_require_fresh_event_instances() {
     Gate gate;gate.begin(entry(0xffff,100),now);
     gate.accept(wire(0xffff),context(100),now);
-    gate.begin(entry(0,101),now);
-    const auto stale=gate.accept(wire(0xffff),context(101),now);
+    gate.begin(entry(0,101,RichonlineAckAnimation::type10,92),now);
+    const auto stale=gate.accept(wire(0xffff),context(100),now);
     check(stale.disposition==RichonlineAnimationAckDisposition::duplicate && !stale.transition && gate.pending(),
         "previous_counter_completed_wrapped_pending");
-    gate.accept(wire(0),context(101),now);
-    rejects([&]{gate.begin(entry(0xffff,100+65536),now);},"richonline_animation_ack_counter_reuse");
-    rejects([&]{gate.begin(entry(1,99),now);},"richonline_animation_ack_turn_regression");
-    gate.begin(entry(1,102),now);
-    check(gate.accept(wire(1),context(102),now).transition.has_value(),"fresh_counter_after_wrap_failed");
+    gate.accept(wire(0),context(101,92),now);
+    rejects([&]{gate.begin(entry(1,99,RichonlineAckAnimation::type10,93),now);},"richonline_animation_ack_turn_regression");
+    gate.begin(entry(0xffff,100+65536,RichonlineAckAnimation::type10,93),now);
+    rejects([&]{gate.accept(wire(0xffff),context(100),now);},"richonline_animation_ack_context_changed");
+    check(gate.accept(wire(0xffff),context(100+65536,93),now).transition.has_value(),"reused_counter_after_wrap_failed");
 }
 }
 int main() {
@@ -122,7 +127,7 @@ int main() {
         check(decode_richonline_animation_ack21(wire(0xabcd)).calendar_counter==0xabcd,"calendar_decode_wrong");
         successful_transitions_are_one_shot();authority_and_wire_validation_do_not_consume_pending();
         excluded_origins_cannot_register();expiry_cancel_and_close_never_complete();
-        wrap_cannot_relabel_old_wire_as_new_work();
+        wrap_and_reuse_require_fresh_event_instances();
         std::cout<<"PASS animation ACK21 pending identity, gates, wire, duplicate, expiry, wrap and close\n";
     } catch(const std::exception& error) { std::cerr<<"FAIL "<<error.what()<<'\n';return 1; }
 }

@@ -42,6 +42,8 @@ RichonlineCombatWorld::ResolvedTerms richonline_unamplified_possession_combat_te
     case 1: // NEW694CC0: defense1.5.
     case 2: // NEW693D10: attack0.5.
     case 3: // NEW701530: attack1.5.
+    case 4:
+    case 6:
     case 7: // None of those equality predicates match this possession.
         break;
     default:throw CodecError("richonline_combat_world_possession_extension_required");

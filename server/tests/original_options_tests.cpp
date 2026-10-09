@@ -132,9 +132,8 @@ int main() {
         test_kpd_limits();
         test_ini();
         test_price_base();
-        constexpr std::string_view source_path = __FILE__;
-        const auto root = std::filesystem::path(std::u8string(source_path.begin(), source_path.end()))
-                              .parent_path().parent_path().parent_path();
+        constexpr std::u8string_view source_path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+        const auto root = std::filesystem::path(std::u8string(source_path.begin(), source_path.end()));
         check(richnet::load_original_exchange_ratio(root / "Data" / "Option.kpd") == 10, "actual Data/Option.kpd ratio must be 10");
         check(richnet::load_original_price_base(root / "Data" / "Option.kpd") == 10, "actual Data/Option.kpd priceBase must be 10");
         const auto options = richnet::load_original_kpd(root / "Data" / "Option.kpd");

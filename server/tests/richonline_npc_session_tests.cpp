@@ -107,6 +107,63 @@ void synthetic_money_is_server_driven(const std::filesystem::path& root) {
         f.statuses[1].possession==0 && f.ground->snapshot().objects.empty(),"synthetic_money_ground_state_not_committed");
     f.session->actor_begin(0,2,f.statuses[0]);
 }
+void unsupported_projected_landing_preserves_npc_transaction(const std::filesystem::path& root) {
+    for(const auto npc : {0,3}) for(const auto actor : std::array<std::uint8_t,2>{0,1}) {
+        Fixture f(root); f.ground->place(114,{static_cast<std::int8_t>(npc),7,8});
+        const auto ground=f.ground->snapshot(); const auto inventory=f.cards->inventory();
+        const auto before0=f.ledger->snapshot(0),before1=f.ledger->snapshot(1);
+        bool projected=false;
+        rejects([&] {f.session->landing(f.context(actor),7,f.statuses[actor],
+            [&](const RichonlineLandingContext& after) {
+                projected=after.actor_slot==actor && after.actor_status.possession==npc;
+                throw CodecError("fixture_property_possession_unsupported");
+            });});
+        check(projected,"npc_preflight_did_not_receive_projected_possession");
+        check(f.ground->snapshot()==ground && f.cards->inventory()==inventory &&
+            f.ledger->snapshot(0)==before0 && f.ledger->snapshot(1)==before1 && !f.statuses[actor].possession &&
+            !f.session->awaiting_roulette(),"rejected_continuation_partially_committed_npc");
+        check(f.session->actor_begin(actor,1,f.statuses[actor]).duplicate,"rejected_continuation_changed_clock");
+    }
+}
+void temple_clock_transactions(const std::filesystem::path& root) {
+    for(const auto actor : std::array<std::uint8_t,2>{0,1}) {
+        Fixture f(root,0);f.ground->place(114,{3,7,8});
+        f.session->landing(f.context(actor),7,f.statuses[actor]);
+        const auto before=f.statuses[actor];const auto inventory=f.cards->inventory();
+        const auto funds0=f.ledger->snapshot(0),funds1=f.ledger->snapshot(1);const auto ground=f.ground->snapshot();
+        auto plan=f.session->prepare_temple_change(actor,{before,false,1,10});
+        check(f.statuses[actor]==before,"temple_prepare_mutated_status");
+        check(f.session->commit_status_change(plan,f.statuses[actor]),"temple_duration_commit_failed");
+        check(!f.session->commit_status_change(plan,f.statuses[actor]),"temple_duration_plan_replayed");
+        check(f.session->actor_begin(actor,1,f.statuses[actor]).duplicate,"temple_lost_same_turn_identity");
+        check(f.cards->inventory()==inventory && f.ground->snapshot()==ground &&
+            f.ledger->snapshot(0)==funds0 && f.ledger->snapshot(1)==funds1,"temple_invented_wire_reward");
+        check(!f.session->actor_begin(actor,2,f.statuses[actor]).expired,"temple_duration_expired_early");
+        auto stale=f.session->prepare_temple_change(actor,{f.statuses[actor],false,0,10});
+        check(!f.session->actor_begin(actor,3,f.statuses[actor]).expired,"temple_duration_expired_early");
+        check(!f.session->commit_status_change(stale,f.statuses[actor]),"temple_plan_survived_clock_generation");
+        check(f.session->actor_begin(actor,4,f.statuses[actor]).expired==3,"temple_reduced_clock_not_applied");
+
+        Fixture extended(root,0);extended.ground->place(114,{1,7,8});
+        extended.session->landing(extended.context(actor),7,extended.statuses[actor]);
+        if(actor==0) {
+            rejects([&]{extended.session->prepare_temple_change(actor,{extended.statuses[actor],true,2,6});});
+            extended.session->resolve_roulette(actor,extended.statuses[actor]);
+        }
+        auto add=extended.session->prepare_temple_change(actor,{extended.statuses[actor],true,2,6});
+        check(extended.session->commit_status_change(add,extended.statuses[actor]),"temple_extension_commit_failed");
+        for(std::uint64_t turn=2;turn<=7;++turn)
+            check(extended.session->actor_begin(actor,turn,extended.statuses[actor]).expired.has_value()==(turn==7),
+                "temple_extension_or_maximum_wrong");
+
+        Fixture detached(root);detached.ground->place(114,{3,7,8});
+        detached.session->landing(detached.context(actor),7,detached.statuses[actor]);
+        auto detach=detached.session->prepare_temple_change(actor,{detached.statuses[actor],false,-1,10});
+        check(detached.session->commit_status_change(detach,detached.statuses[actor]) && !detached.statuses[actor].possession,
+            "temple_immediate_detach_missing");
+        check(!detached.session->actor_begin(actor,2,detached.statuses[actor]).expired,"temple_detached_clock_remained");
+    }
+}
 void roulette_timeout_resolution(const std::filesystem::path& root) {
     Fixture f(root);f.ground->place(114,{0,7,8});
     f.session->landing(f.context(),7,f.statuses[0]);
@@ -302,6 +359,36 @@ void sleep_deity_protection_and_ownership(const std::filesystem::path& root) {
         other.cards->inventory()[0].card_id==-1 && other.cards->inventory()[1].card_id==1071,
         "other_actor_sleep_summon_used_wrong_inventory");
 }
+void temple_aura_attachment(const std::filesystem::path& root) {
+    for(const std::int8_t npc:{std::int8_t{4},std::int8_t{6}}) {
+        Fixture f(root);
+        const RichonlineTemplePossessionChange change{f.statuses[0],false,0,10,npc};
+        rejects([&]{f.session->prepare_temple_change(0,change);});
+        f.policy.temple_aura_affix=std::array<std::uint8_t,2>{3,5};f.reset();
+        f.ground->place(114,{npc,0xff,0xff});const auto ground=f.ground->snapshot();
+        check(!f.session->landing(f.context(),7,f.statuses[0]) && f.ground->snapshot().objects==ground.objects,
+            "temple_capability_enabled_ground_roulette");
+        auto stale=f.session->prepare_temple_change(0,change);
+        f.session->actor_begin(0,2,f.statuses[0]);
+        check(!f.session->commit_status_change(stale,f.statuses[0]),"temple_summon_survived_clock_generation_change");
+        auto attach=f.session->prepare_temple_change(0,change);auto copied=attach;
+        check(f.session->commit_status_change(attach,f.statuses[0]) && f.statuses[0].possession==npc,
+            "temple_summon_did_not_attach");
+        check(!f.session->commit_status_change(copied,f.statuses[0]),"temple_summon_replayed");
+        check(f.session->actor_begin(0,2,f.statuses[0]).duplicate,"temple_summon_reset_own_turn_identity");
+        rejects([&]{f.session->prepare_temple_change(0,{f.statuses[0],false,0,10,npc});});
+        auto duration=f.session->prepare_temple_change(0,{f.statuses[0],true,2,10});
+        check(f.session->commit_status_change(duration,f.statuses[0]),"aura_duration_extension_rejected");
+        const auto turns=npc==4?5U:7U;
+        for(unsigned i=1;i<=turns;++i)
+            check(f.session->actor_begin(0,2+i,f.statuses[0]).expired.has_value()==(i==turns),
+                "temple_summon_affix_or_expiry_wrong");
+        check(f.ledger->snapshot(0).funds.cash==100 && f.cards->inventory()==RichonlineChanceInventory{} &&
+            f.ground->snapshot().objects==ground.objects,"temple_summon_changed_unrelated_state");
+        Fixture invalid(root);invalid.policy.temple_aura_affix=std::array<std::uint8_t,2>{0,3};
+        rejects([&]{invalid.reset();});
+    }
+}
 void external_status_change_and_detach(const std::filesystem::path& root) {
     Fixture kept(root);kept.ground->place(114,{3,0xff,0xff});
     kept.session->landing(kept.context(),7,kept.statuses[0]);
@@ -358,10 +445,13 @@ int main(int argc,char** argv) {
     try {check(argc==2,"NEW_resource_root_required");const std::filesystem::path root(argv[1]);
         fortune_lifecycle(root);money_wait_and_atomic_commit(root);failures_and_settlement(root);card_and_replenishment(root);
         synthetic_money_is_server_driven(root);roulette_timeout_resolution(root);
+        unsupported_projected_landing_preserves_npc_transaction(root);
+        temple_clock_transactions(root);
         summon_and_dismiss(root);summon_rejection_preserves_state(root);badluck_ground_and_summon(root);
         ticket_chest_shared_balance(root);
         sleep_deity_protection_and_ownership(root);
         external_status_change_and_detach(root);
+        temple_aura_attachment(root);
         std::cout<<"PASS NEW production NPC hooks: shared cards/funds/status, phase continuations, roulette waits, own-turn expiry and closed spawning\n";
     }catch(const std::exception& error){std::cerr<<"FAIL "<<error.what()<<'\n';return 1;}
 }

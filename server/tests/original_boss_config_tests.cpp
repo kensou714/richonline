@@ -150,8 +150,8 @@ void test_document_limits() {
     rejects([&] { OriginalBossConfig::parse(std::string(10, '[') + "0" + std::string(10, ']'), known_cards); }, "original_boss_document_depth_invalid");
 }
 void test_real_config() {
-    constexpr std::string_view source_path = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source_path.begin(), source_path.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source_path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source_path.begin(), source_path.end()));
     const auto config = OriginalBossConfig::load(root / "local-server" / "boss-stages.json", known_cards);
     check(config.stages().size() == 8, "existing configuration stage count differs");
     const std::array expected_human{100000U,15000U,20000U,18000U};

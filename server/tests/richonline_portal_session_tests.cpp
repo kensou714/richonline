@@ -76,7 +76,7 @@ void run_case(const std::filesystem::path& root,std::string_view map_name,
     std::int8_t portal_type,std::int32_t raw) {
     const auto category=portal_type==61 ? 2U : 0U;
     const auto& registered=find_richonline_map_package(map_name,category);
-    check(!registered.runtime_enabled,"portal_map_was_accidentally_enabled");
+    check(registered.runtime_enabled==(map_name=="V_BS_1_1.emp"),"portal_map_runtime_gate_wrong");
     const auto package=fixture_package(registered);
     const auto resources=load_richonline_map_rule_resources(root,package,category);
     const auto pair=resources.portals[portal_type==28 ? 0U : 1U];

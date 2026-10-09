@@ -37,6 +37,7 @@ struct Fixture {
     RichonlineStartupPlan plan;
     std::vector<RichonlineLandingContext> preflight;
     bool reject_preflight=false;
+    bool reject_attachment=false;
     Fixture(const std::filesystem::path& root,std::string selected_map,bool human_starts_on_bank)
         : map_name(std::move(selected_map)),topology(bank_geometry()) {
         std::vector<std::int16_t> roads;
@@ -84,7 +85,8 @@ struct Fixture {
         rules.bank=bank;rules.ledger=ledger;rules.cards=cards;rules.npcs=npcs;
         rules.npc_landing_preflight=[this](const RichonlineLandingContext& context) {
             preflight.push_back(context);
-            if(reject_preflight || (context.occupied_by_other_actor && !context.collision_resolved))
+            if(reject_preflight || (reject_attachment && context.actor_status.possession) ||
+                (context.occupied_by_other_actor && !context.collision_resolved))
                 throw CodecError("test_collision_continuation_not_admitted");
             const auto& cell=topology.cell(context.position);
             check(cell.static_type==9 && cell.property_ref==-1 && context.game_mode==3,
@@ -99,8 +101,9 @@ void boss_npc_then_occupied_bank(const std::filesystem::path& root,const std::st
     Fixture f(root,map,true);f.ground->place(f.bank_position,{0,0x91,0x92});
     const auto result=f.plan.action({},f.stop(calendar+1));
     codes(result,{0x4013,0x4022,0x4018,0x402a,0x4010,0x420f});
-    check(f.preflight.size()==1 && f.preflight[0].occupied_by_other_actor &&
-        f.preflight[0].collision_resolved && !f.bank->active(),"BOSS_overlap_not_admitted");
+    check(!f.preflight.empty() && std::all_of(f.preflight.begin(),f.preflight.end(),[](const auto& context) {
+        return context.occupied_by_other_actor && context.collision_resolved;
+    }) && f.preflight.back().actor_status.possession==0 && !f.bank->active(),"BOSS_overlap_not_admitted");
     check(f.ledger->snapshot(0).funds.cash==980 && f.ledger->snapshot(1).funds.cash==5020 &&
         !f.ground->snapshot().objects.contains(f.bank_position),"BOSS_money_pickup_not_once");
 }
@@ -121,8 +124,9 @@ void human_npc_then_occupied_bank(const std::filesystem::path& root,const std::s
     check(!f.bank->active() && f.cards->inventory()==inventory && f.plan.action({},exit).empty(),
         "bank_replay_repeated_collision_or_fortune");
 }
-void preflight_before_npc_commit(const std::filesystem::path& root,const std::string& map) {
-    Fixture f(root,map,true);f.ground->place(f.bank_position,{0,0x91,0x92});f.reject_preflight=true;
+void preflight_before_npc_commit(const std::filesystem::path& root,const std::string& map,bool after_attachment) {
+    Fixture f(root,map,true);f.ground->place(f.bank_position,{0,0x91,0x92});
+    f.reject_preflight=!after_attachment;f.reject_attachment=after_attachment;
     const auto before_ground=f.ground->snapshot();const auto before_cards=f.cards->inventory();
     const std::array before_funds{f.ledger->snapshot(0),f.ledger->snapshot(1)};
     try {static_cast<void>(f.plan.action({},f.stop(calendar+1)));}
@@ -131,7 +135,9 @@ void preflight_before_npc_commit(const std::filesystem::path& root,const std::st
             f.ground->snapshot()==before_ground && f.cards->inventory()==before_cards &&
             f.ledger->snapshot(0)==before_funds[0] && f.ledger->snapshot(1)==before_funds[1] &&
             !f.bank->active(),"preflight_failure_mutated_shared_state");
-        f.reject_preflight=false;codes(f.plan.action({},f.stop(calendar+1)),
+        check(f.preflight.back().actor_status.possession.has_value()==after_attachment,
+            "preflight_rejected_wrong_possession_phase");
+        f.reject_preflight=false;f.reject_attachment=false;codes(f.plan.action({},f.stop(calendar+1)),
             {0x4013,0x4022,0x4018,0x402a,0x4010,0x420f});return;
     }
     throw std::runtime_error("rejected_collision_preflight_was_ignored");
@@ -144,7 +150,7 @@ int main(int argc,char** argv) {
             "BS1_1_resource_bank_coverage_changed");
         const std::string selected="BS_1_1.emp";
         boss_npc_then_occupied_bank(root,selected);human_npc_then_occupied_bank(root,selected);
-        preflight_before_npc_commit(root,selected);
+        preflight_before_npc_commit(root,selected,false);preflight_before_npc_commit(root,selected,true);
         std::cout<<"PASS synthetic occupied bank with real BS1_1 NPC resources, human/BOSS order, no duplicate4013, replay and preflight atomicity; actual BS1_1 has no bank\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

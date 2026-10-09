@@ -3,6 +3,7 @@
 // 新版房间目录：以连接和角色身份管理成员、准备状态、角色切换与开局快照。
 
 #include "richonline_room_protocol.hpp"
+#include "richonline_lobby_vote.hpp"
 
 #include <cstdint>
 #include <functional>
@@ -43,7 +44,9 @@ class RichonlineRoomDirectory final {
 public:
     explicit RichonlineRoomDirectory(RichonlineRoomPolicy policy, RichonlineRoomLog log = {});
     std::vector<RichonlineRoomDispatch> enter(std::uint64_t connection, std::uint32_t actor, Frame profile);
-    std::vector<RichonlineRoomDispatch> receive(std::uint64_t connection, std::uint32_t actor, const Frame& request);
+    std::vector<RichonlineRoomDispatch> receive(std::uint64_t connection, std::uint32_t actor, const Frame& request,
+        RichonlineLobbyVote::Time now = RichonlineLobbyVote::Clock::now());
+    std::vector<RichonlineRoomDispatch> poll_votes(RichonlineLobbyVote::Time now = RichonlineLobbyVote::Clock::now());
     std::vector<RichonlineRoomDispatch> disconnect(std::uint64_t connection);
     std::vector<RichonlineRoomDispatch> select_character(std::uint64_t connection, std::uint32_t character,
                                                         const std::function<void()>& persist);
@@ -65,6 +68,7 @@ private:
         std::map<std::uint64_t, RichonlineRoomPeer> peers;
         std::uint32_t wire_slot = 0;
         bool game_pending = false;
+        RichonlineLobbyVote vote;
     };
     struct Observer { std::uint32_t actor; Frame profile; };
     std::vector<RichonlineRoomDispatch> create(std::uint64_t connection, std::uint32_t actor, View payload);
@@ -74,6 +78,11 @@ private:
     std::vector<RichonlineRoomDispatch> edit(std::uint64_t connection, std::uint32_t actor, View payload);
     std::vector<RichonlineRoomDispatch> select_team(std::uint64_t connection, const Frame& request);
     std::vector<RichonlineRoomDispatch> kick(std::uint64_t connection, const Frame& request);
+    RichonlineVoteScope vote_scope(const Room& room) const;
+    std::vector<RichonlineRoomDispatch> vote_request(std::uint64_t connection, const Frame& request,
+        RichonlineLobbyVote::Time now);
+    std::vector<RichonlineRoomDispatch> resolve_vote(const RichonlineVoteResolution& resolution);
+    std::vector<RichonlineRoomDispatch> cancel_vote(Room& room);
     Room& room_for_peer(std::uint64_t connection);
     std::vector<RichonlineRoomDispatch> broadcast(const Frame& frame) const;
     std::vector<RichonlineRoomDispatch> remove(std::uint64_t connection);

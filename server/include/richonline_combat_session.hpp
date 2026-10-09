@@ -1,6 +1,8 @@
 #pragma once
 
 #include "richonline_combat.hpp"
+#include "richonline_research_cards.hpp"
+#include "richonline_raw_authority.hpp"
 
 namespace richnet {
 // These are snapshots of the session's shared stores, never a second status or
@@ -112,6 +114,20 @@ RichonlineCombatTurnPlan prepare_richonline_combat_mine_day(const RichonlineComb
 // animation. It mirrors state and produces no duplicate 4017.
 RichonlineCombatTurnPlan prepare_richonline_combat_stepped_mine(const RichonlineCombatSessionView&,
     const RichonlineCombatWorld&,std::int16_t root);
+// NEW7CC970: one landing victim, shared7CE420 modifiers, no helmet or mine immunity,
+// no removal of NPC26 and no additional wire effect.
+RichonlineCombatTurnPlan prepare_richonline_combat_fire_landing(const RichonlineCombatSessionView&,
+    const RichonlineCombatWorld&,std::int8_t owner,std::uint8_t victim,std::int16_t position,
+    std::uint32_t npc26_damage);
+struct RichonlineCombatPoisonPlan {
+    RichonlineCombatTurnPlan combat;
+    std::uint32_t after_use_count;
+    std::vector<std::uint8_t> hit_actors;
+};
+RichonlineCombatPoisonPlan prepare_richonline_combat_poison(const RichonlineCombatSessionView&,
+    const RichonlineCombatWorld&,const RichonlineResearchCardRequest&,const RichonlineResearchCardContext&,
+    std::uint32_t use_count,const RichonlinePoisonRules&,std::span<const RichonlinePoisonCell>,
+    std::span<const RichonlineRawActorState>);
 // The adapter MUST compare the global revision and all authoritative snapshots,
 // prevalidate map/cards, then atomically commit funds/cards/status/map under the
 // session lock (ledger.commit_batch can supply the funds CAS). False or throw

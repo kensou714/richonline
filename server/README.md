@@ -1,30 +1,36 @@
 # RichOnline native service and protocol core
 
-## NEW map and gameplay layout (2026-10-09)
+## Current development location (2026-10-09)
 
-The current NEW runtime selects an immutable package by room map name and category.
-See [map packages](src/maps/README.md) and [shared gameplay](src/gameplay/README.md).
-Black Beibei and Zhao Ling'er have separate packages; their duplicate numeric map
-index 11 does not imply interchangeable resources. Shared property rules receive
-the selected stage's prices, default building, caps and synthetic skills.
-Zhao remains gated while its remaining events are incomplete. `gameReady:false`
-still reflects incomplete full gameplay. The latest integrated build has98
-passing tests, including map isolation, portal routes and encrypted junction flows.
-The broader protocol goal is recorded in
-`../protocol-analysis/richonline-rebuild/coverage/GOAL.md`.
+All subsequent server development belongs in this `server` directory. The source
+was reconciled with `F:/大富翁online/native-server`; migration details, validation
+and remaining work are recorded in [DEVELOPMENT.md](DEVELOPMENT.md).
 
-## Native rewrite status (2026-10-09)
+The C++20 service includes SQLite accounts, administration, lobby and auxiliary
+listeners, and partial BOSS gameplay. The wave25 dice, mine configuration,
+random shop/card rewards, research selection and event-color fixes are retained.
+Black Beibei 1-1, 1-2, 1-4 and Zhao Ling'er have partial runtimes. Zhao Ling'er
+now passes independent encrypted multi-turn validation, including level-6
+construction and opponent-property continuations. Black Beibei 1-3 remains
+gated pending its independent multi-turn acceptance.
+`gameReady:false` continues to mean full gameplay coverage has not been achieved.
 
-`RichOnline.Server.exe` now provides the current-user-only administrator pipe,
-SQLite accounts/settings/audit/backup, and compatible scrypt password verification.
-The compiled .NET WinForms application lives in `../admin`. This path has no
-Python runtime. The native service currently reports `gameReady:false`: game
-listeners, lobby state and full BOSS gameplay have not yet been migrated.
+Build and test from the current repository root with CMake, Ninja and LLVM-MinGW:
 
-Build with the existing CMake/Ninja toolchain below, then run
-`ctest --test-dir native-server/build-ninja --output-on-failure` from the workspace
-root. `native_codec`, `native_storage`, and `native_control` exercise fixed codec
-fixtures, real SQLite transactions and real Windows named-pipe processes.
+```powershell
+cmake -S server -B server/build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release
+cmake --build server/build --parallel 6
+ctest --test-dir server/build --output-on-failure --parallel 4
+```
+
+If Ninja is not on PATH, pass `-DCMAKE_MAKE_PROGRAM=<absolute ninja.exe path>`.
+`RICHONLINE_CLIENT_DIR` defaults to the parent of `server`. Legacy comparison
+tests use `RICHONLINE_LEGACY_CLIENT_DIR`, defaulting to the parent of the current
+repository; it must contain the original client resources and protocol oracles.
+Both are configurable CMake cache paths. Proprietary resources are not vendored.
+Tests generate their own date-compatible client copy inside the build directory.
+The `long` test label identifies encrypted multi-turn gameplay checks; these
+exercise server protocols, not the real client UI.
 
 Launch headless with absolute paths:
 
@@ -44,8 +50,8 @@ has no old four-byte tail. The legacy default is retained only for historical
 comparison. [tests/CODEC-EVIDENCE.md](tests/CODEC-EVIDENCE.md) documents machine
 arithmetic and direction-dependent negative-key behavior from the new binary.
 
-The sections below describe the older codec CLI; its Python comparison harness
-is historical and is not required to build/run the new service or manager.
+The sections below describe the historical codec CLI and its original workspace
+layout; its Python comparison harness is not required to build/run the service.
 
 This C++20 executable checks the recovered transport codec and evaluates a
 trusted Lua BOSS attack policy. It reads commands from stdin and writes results

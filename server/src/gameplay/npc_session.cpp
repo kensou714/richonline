@@ -48,6 +48,8 @@ RichonlineNpcSession::RichonlineNpcSession(std::uint16_t game,std::string map,
         throw CodecError("richonline_npc_session_sleep_policy_invalid");
     for(const auto card:policy_.fortune_cards)
         if(!resources_->contains_card(card)) throw CodecError("richonline_npc_session_reward_invalid");
+    if(policy_.temple_aura_affix) for(const auto turns:*policy_.temple_aura_affix)
+        if(!turns || turns>127) throw CodecError("richonline_npc_session_affix_invalid");
     // Validate the exact map before any initialization mutates shared ground.
     static_cast<void>(events_->size(map_));
 }
@@ -65,7 +67,8 @@ std::uint8_t RichonlineNpcSession::affix_turns(std::int8_t npc) const {
 void RichonlineNpcSession::check_actor(std::uint8_t actor,const RichonlineActorStatus& status) const {
     if(!initialized_ || actor>=clocks_.size()) throw CodecError("richonline_npc_session_actor_invalid");
     const auto& clock=clocks_[actor];
-    if(clock.npc!=status.possession || (clock.npc && (!clock.turns || clock.turns>127 || !supported_npc(*clock.npc))) ||
+    const bool temple_aura=clock.npc && policy_.temple_aura_affix && (*clock.npc==4 || *clock.npc==6);
+    if(clock.npc!=status.possession || (clock.npc && !supported_npc(*clock.npc) && !temple_aura) ||
         (!clock.npc && clock.turns)) throw CodecError("richonline_npc_session_status_desynchronized");
 }
 void RichonlineNpcSession::admit_clock_change(std::uint8_t actor) const {
@@ -85,11 +88,38 @@ RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_status_
     if(!after.possession) {result.after_clock_.npc.reset();result.after_clock_.turns=0;}
     return result;
 }
+RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_temple_change(std::uint8_t actor,
+    const RichonlineTemplePossessionChange& change) const {
+    check_actor(actor,change.expected);
+    if(pending_) throw CodecError("richonline_npc_temple_out_of_phase");
+    if(change.summon) {
+        if(change.expected.possession || !policy_.temple_aura_affix ||
+            (*change.summon!=4 && *change.summon!=6))
+            throw CodecError("richonline_npc_temple_summon_unsupported");
+        admit_clock_change(actor);
+        PreparedStatusChange plan;plan.owner_=this;plan.actor_=actor;plan.generation_=clock_generations_[actor];
+        plan.before_status_=change.expected;plan.after_status_=change.expected;
+        plan.after_status_.possession=change.summon;
+        plan.before_clock_=clocks_[actor];plan.after_clock_=plan.before_clock_;
+        plan.after_clock_.npc=change.summon;
+        plan.after_clock_.turns=(*policy_.temple_aura_affix)[*change.summon==4?0:1];
+        plan.requires_idle_=true;return plan;
+    }
+    if(!change.expected.possession) throw CodecError("richonline_npc_temple_out_of_phase");
+    const auto duration=plan_richonline_temple_duration(clocks_[actor].turns,change.extend,change.days,change.maximum);
+    auto after=change.expected;
+    if(!duration) after.possession.reset();
+    auto plan=prepare_status_change(actor,change.expected,after);
+    plan.after_clock_.turns=duration.value_or(0);
+    plan.requires_idle_=true;
+    return plan;
+}
 bool RichonlineNpcSession::matches_status_change(const PreparedStatusChange& plan,
     const RichonlineActorStatus& authoritative) const noexcept {
     return plan.owner_==this && initialized_ && !plan.committed_ && plan.actor_<clocks_.size() &&
         clock_generations_[plan.actor_]==plan.generation_ && authoritative==plan.before_status_ &&
         same_clock(clocks_[plan.actor_],plan.before_clock_) &&
+        !(plan.requires_idle_ && pending_) &&
         !(plan.before_status_.possession!=plan.after_status_.possession && pending_ && pending_->actor==plan.actor_);
 }
 bool RichonlineNpcSession::commit_status_change(PreparedStatusChange& plan,RichonlineActorStatus& authoritative) noexcept {
@@ -120,7 +150,8 @@ RichonlinePossessionTick RichonlineNpcSession::actor_begin(std::uint8_t actor,st
     return tick;
 }
 std::optional<RichonlineNpcSessionResult> RichonlineNpcSession::landing(const RichonlineLandingContext& context,
-    std::uint16_t calendar,RichonlineActorStatus& status) {
+    std::uint16_t calendar,RichonlineActorStatus& status,
+    const std::function<void(const RichonlineLandingContext&)>& preflight) {
     check_actor(context.actor_slot,status);
     if(pending_) throw CodecError("richonline_npc_session_landing_pending");
     if(context.actor_status!=status) throw CodecError("richonline_npc_session_context_stale");
@@ -171,6 +202,12 @@ std::optional<RichonlineNpcSessionResult> RichonlineNpcSession::landing(const Ri
             result.wait=immediate_money->awaits_settlement ? RichonlineNpcWait::settlement : RichonlineNpcWait::none;
             result.bankrupt_actor=immediate_money->bankrupt_actor;
         } else result.wait=RichonlineNpcWait::roulette34;
+    }
+    // Ground attachment precedes the property phase. Validate that phase using
+    // the projected possession before committing rewards, money or ground.
+    if(preflight && result.wait!=RichonlineNpcWait::settlement) {
+        auto continuation=context;continuation.actor_status=next_status;
+        preflight(continuation);
     }
     append(result.messages,staged_spawner.replenish_minimum(staged_ground).messages);
     // All fallible planning/allocation precedes shared commits. No owner callback

@@ -137,8 +137,8 @@ void pyramid_flow(PyramidInput input) {
 int main() {
     try {
         const Network network;
-        constexpr std::string_view source = __FILE__;
-        const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+        constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+        const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
         for (const auto level : {std::int8_t{6},std::int8_t{7}})
             for (const auto friendly : {true,false}) pyramid_flow(setup(root,level,friendly));
         std::cout << "PASS original pyramid encrypted TCP native property and god-event continuation.\n";

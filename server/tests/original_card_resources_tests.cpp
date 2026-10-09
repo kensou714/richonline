@@ -94,8 +94,8 @@ void test_game_values() {
     rejects([&] { parse_original_game_values(bytes("[ITEM]\nindx=260")); },"original_game_value_field_missing");
 }
 void test_actual_resources() {
-    constexpr std::string_view source_path = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source_path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end()));
     const auto prop = load_original_prop_cards(root / "Data" / "Prop.kpd");
     check(prop.cards.size() == 100,"original decoded Prop.txt oracle contains100 CARD records");
     const auto remote = std::find_if(prop.cards.begin(),prop.cards.end(),[](const auto& card) { return card.id == 1038; });

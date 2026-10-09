@@ -141,8 +141,8 @@ void multiplayer_room_roundtrip() {
     OriginalLobbyPolicy policy{"Test-only opaque templates for three-client native TCP room validation.",
         Bytes(220,0xa1),Bytes(208,0xb2),Bytes(268,0xc3),Bytes(16,0xd4),Bytes(16,0xe5),
         Bytes(original_bank_test::config.begin(),original_bank_test::config.end()),Bytes(28,0x27),3,1,100,32,2,{1,1,2,0},"4096",14,10};
-    constexpr std::string_view source = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
     policy.maps = std::make_shared<OriginalMapCatalog>(OriginalMapCatalog::load(root/"protocol-analysis"/"board-startup"/"maps"/"index.json"));
     std::mutex mutex; std::condition_variable changed; bool listening = false; bool runtime_rejected = false;
     const auto log = [&](const std::string& line) {

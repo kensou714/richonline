@@ -88,6 +88,27 @@ void possession_clock() {
     status.possession=0;
     reject([&] { tick_richonline_possession(clock,status,6); });
 }
+void temple_duration_bytes() {
+    check(plan_richonline_temple_duration(5,false,1,10)==3,"temple_missing_extra_decrement");
+    check(!plan_richonline_temple_duration(2,false,1,10),"temple_expiry_not_detached");
+    check(!plan_richonline_temple_duration(5,false,-1,10),"temple_direct_detach_missing");
+    check(plan_richonline_temple_duration(5,true,0,10)==5,"temple_zero_extension_changed_clock");
+    check(plan_richonline_temple_duration(9,true,3,10)==10,"temple_signed_maximum_missing");
+    check(plan_richonline_temple_duration(127,true,1,10)==128,"temple_add_was_saturated_before_byte_wrap");
+    check(plan_richonline_temple_duration(1,false,129,10)==127,"temple_subtract_byte_wrap_wrong");
+    check(plan_richonline_temple_duration(255,true,1,10)==0,"temple_zero_byte_lost");
+    reject([] {plan_richonline_temple_duration(5,true,1,0);});
+    reject([] {plan_richonline_temple_duration(5,true,1,128);});
+    RichonlineActorStatus status;status.possession=1;
+    const auto wrapped=tick_richonline_possession({1,128,1},status,2);
+    check(wrapped.clock.turns==127 && wrapped.status.possession==1 && !wrapped.expired,
+        "temple_signed_minimum_tick_did_not_wrap");
+    for(const std::uint8_t duration : {std::uint8_t{0},std::uint8_t{129},std::uint8_t{255}}) {
+        const auto tick=tick_richonline_possession({1,duration,1},status,2);
+        check(tick.expired==1 && !tick.status.possession && !tick.clock.npc && tick.clock.turns==0,
+            "temple_nonpositive_tick_did_not_detach");
+    }
+}
 void constrained_pool() {
     auto policy=RichonlineNpcSpawnPolicy::user_requested(1,2,3,4);
     policy.refresh_chests=false;
@@ -105,7 +126,7 @@ void constrained_pool() {
 }
 }
 int main() {
-    try { spawn_and_wire(); refill_and_duplicate(); blocked_and_small_maps(); possession_clock(); constrained_pool();
+    try { spawn_and_wire(); refill_and_duplicate(); blocked_and_small_maps(); possession_clock(); temple_duration_bytes(); constrained_pool();
         std::cout<<"NEW NPC spawn, occupancy and own-turn expiration tests passed\n"; return 0;
     } catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; return 1; }
 }

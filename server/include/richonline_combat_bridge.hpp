@@ -37,6 +37,15 @@ public:
     RichonlineCombatBridgeResult finish_round(std::span<const RichonlineCombatActorRef>,std::uint64_t day);
     bool has_mine(std::int16_t position) const;
     RichonlineCombatBridgeResult stepped_mine(std::span<const RichonlineCombatActorRef>,std::int16_t root);
+    // Calls the pure continuation preflight only for a surviving victim, before
+    // the shared ledger commit. Fatal landings proceed directly to settlement.
+    RichonlineCombatBridgeResult fire_landing(std::span<const RichonlineCombatActorRef>,
+        std::uint8_t victim,std::int16_t position,std::uint32_t npc26_damage,
+        const std::function<void()>& continuation_preflight);
+    RichonlineCombatBridgeResult poison_card(std::span<const RichonlineCombatActorRef>,
+        const RichonlineResearchCardRequest&,const RichonlineResearchCardContext&,std::uint32_t& use_count,
+        const RichonlinePoisonRules&,std::span<const RichonlinePoisonCell>,std::span<const RichonlineRawActorState>,
+        std::span<std::array<std::uint8_t,8>> relations);
     RichonlineCombatBridgeResult timed_bomb_card(std::span<const RichonlineCombatActorRef>,
         std::uint8_t action_actor,const RichonlineTimedBombRequest110&,std::uint16_t expected_calendar,
         const RichonlineTimedBombRules&,const RichonlineTimedBombEligibility&,std::uint8_t envelope_opaque7);

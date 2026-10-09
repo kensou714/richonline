@@ -79,8 +79,8 @@ void objects_and_portal() {
     check(stop.event->travelled_steps == 2 && stop.event->cell.tile == 6,"portal relocation spends no bomb step");
 }
 void fork_and_cancel() {
-    constexpr std::string_view file = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(file.begin(),file.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view file = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(file.begin(),file.end()));
     const auto map = std::make_shared<OriginalMapResources>(original_map_resources(load_original_emp(root/"Map"/"BS_1_1.emp"),10));
     auto move = make(map,179,1);
     move.set_effects({{{},false,{},{}},{},true});

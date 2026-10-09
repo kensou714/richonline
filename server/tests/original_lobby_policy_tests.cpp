@@ -91,8 +91,8 @@ void schema_failures(const std::filesystem::path& path) {
 }
 void client_option_paths(const std::filesystem::path& path) {
     require(!load(path,fixture()).exchange_ratio,"unconfigured_exchange_has_invented_ratio");
-    constexpr std::string_view source = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
     const auto original = root / "Data" / "Option.kpd";
     auto input = fixture();
     const auto encoded = original.u8string();
@@ -114,8 +114,8 @@ void client_option_paths(const std::filesystem::path& path) {
 }
 void map_catalog_paths(const std::filesystem::path& path) {
     require(!load(path,fixture()).maps,"unconfigured_maps_has_invented_catalog");
-    constexpr std::string_view source = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
     const auto original = root / "protocol-analysis" / "board-startup" / "maps" / "index.json";
     auto input = fixture();
     const auto encoded = original.u8string();

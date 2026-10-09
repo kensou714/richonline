@@ -62,9 +62,8 @@ void arrive_at_fork(const Client& client) {
 }
 
 void original_map_fork_survives_rejected_connections() {
-    constexpr std::string_view source_path = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end()))
-        .parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source_path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end()));
     const auto map = std::make_shared<OriginalMapResources>(original_map_resources(
         load_original_emp(root / "Map" / "BS_1_1.emp"),10));
     require(std::find(map->edges.begin(),map->edges.end(),OriginalRoadEdge{179,178,1}) != map->edges.end(),

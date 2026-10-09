@@ -25,8 +25,8 @@ inline Bytes profile(std::uint32_t user) {
     Bytes result(268,0xcd); put(result,0,user); put(result,12,0xffffffffU); put(result,40,user==12?2:4); return result;
 }
 inline std::shared_ptr<const OriginalMapCatalog> maps() {
-    constexpr std::string_view source=__FILE__;
-    const auto root=std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root=std::filesystem::path(std::u8string(source.begin(),source.end()));
     return std::make_shared<OriginalMapCatalog>(OriginalMapCatalog::load(root/"protocol-analysis"/"board-startup"/"maps"/"index.json"));
 }
 struct Fixture {

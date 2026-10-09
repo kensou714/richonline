@@ -12,10 +12,11 @@ void run(const std::filesystem::path& root) {
     const auto& ordinary=find_richonline_map_package("BS_1_1.emp",0);
     const auto& special=find_richonline_map_package("V_BS_1_1.emp",2);
     check(&legacy_richonline_map_package()==&ordinary,"legacy_schema_binding_changed");
-    check(ordinary.runtime_enabled && !special.runtime_enabled,"partial_package_runtime_gate_wrong");
+    check(ordinary.runtime_enabled && special.runtime_enabled,"verified_package_runtime_gate_wrong");
     check(ordinary.closed_chance && ordinary.closed_chance->playable_reward_cards==std::vector<std::int16_t>{1038,1039,1040,1041} &&
         ordinary.closed_chance->enable_motion_status,"ordinary_closed_chance_policy_changed");
-    check(!special.closed_chance,"special_map_inherited_ordinary_chance_policy");
+    check(special.closed_chance && special.closed_chance->playable_reward_cards==std::vector<std::int16_t>{1038,1039,1040,1041} &&
+        special.closed_chance->enable_motion_status,"special_closed_chance_policy_missing");
     check(ordinary.closed_npcs && ordinary.closed_npcs->god_pool==std::vector<std::int8_t>{0,1,2,3} &&
         ordinary.closed_npcs->initial_gods==4 && ordinary.closed_npcs->initial_chests==1 &&
         ordinary.closed_npcs->minimum_objects==2 && ordinary.closed_npcs->maximum_objects==5 &&
@@ -24,7 +25,8 @@ void run(const std::filesystem::path& root) {
         ordinary.closed_npcs->max_transfer==1000 && ordinary.closed_npcs->badluck &&
         ordinary.closed_npcs->badluck->lost_card_limit==4 && ordinary.closed_npcs->badluck->selection==
             RichonlineMapBadluckSelection::uniform_inventory_units_without_replacement,"ordinary_closed_npc_policy_changed");
-    check(!special.closed_npcs,"special_map_inherited_ordinary_npc_policy");
+    check(special.closed_npcs && special.closed_npcs->god_pool==std::vector<std::int8_t>{0,1,2,3} &&
+        special.closed_npcs->initial_gods==4 && special.closed_npcs->initial_chests==1,"special_closed_npc_policy_missing");
     auto local_npcs=*ordinary.closed_npcs;
     local_npcs.god_pool.clear(); local_npcs.max_transfer=1;
     check(ordinary.closed_npcs->god_pool.size()==4 && ordinary.closed_npcs->max_transfer==1000,

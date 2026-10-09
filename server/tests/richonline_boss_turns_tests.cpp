@@ -1,5 +1,6 @@
 #include "richonline_boss_turns.hpp"
 #include "richonline_portal_landing.hpp"
+#include "richonline_npc_session.hpp"
 #include <iostream>
 
 namespace {
@@ -187,6 +188,101 @@ void upgrade_to_research_retires_both_requests(const RichonlineRoadTopology& map
         check(plan.retired_action(choice) && plan.retired_action(upgrade),"research_or_upgrade_not_retired");
     }
 }
+void encrypted_research_calendar_is_checked_before_dispatch(const RichonlineRoadTopology& map) {
+    for(const bool invalid_calendar:{false,true}) {
+        auto selected=rules();unsigned research=0;
+        selected.landed=[](const RichonlineLandingContext& context) {
+            return RichonlineLandingResult{{},context.actor_slot==0?RichonlineLandingProgress::await_event:
+                RichonlineLandingProgress::complete,context.actor_slot==0?std::optional<std::uint16_t>{0x39}:std::nullopt};
+        };
+        selected.event=[&](View plain) {
+            check(read_le(plain.first(2))==0x39,"calendar_fixture_nonresearch_action");++research;
+            return RichonlineLandingResult{{Bytes{0x3f,0x40,0x34,0x12,1}},RichonlineLandingProgress::complete};
+        };
+        auto plan=make_richonline_boss_turns(startup(),map,selected);
+        const GameAdmission admission{0,3,25,{1,2,3,4,5,6,7,8},19,{}};
+        GameSession session(ClientVersion::richonline,make_richonline_game_callbacks(
+            [plan=std::move(plan),admission](const GameAdmission& value)->std::optional<RichonlineStartupPlan> {
+                return value==admission?std::optional{plan}:std::nullopt;
+            },[](std::size_t count){return Bytes(count,0x91);}));
+        session.feed(encode_frame(encode_game_admission(admission,ClientVersion::richonline),
+            {Channel::game_c2s,{},ClientVersion::richonline}));
+        const auto send=[&](const Bytes& plain) {
+            return session.feed(encode_frame(richonline_board_frame(plain,{7,-2},Bytes(plain.size()+2,0x91)),
+                {Channel::game_c2s,{},ClientVersion::richonline}));
+        };
+        send({0,0});send(request(0x11,235));send(request(0x10,0,4,0x4569));
+        send(request(0x11,114,2,0x4569));const auto old_choice=request(0x39,1,2,0x4569);
+        send(old_choice);send(request(0x11,234,2,0x456a));send(request(0x10,0,4,0x456b));
+        const auto route=build_richonline_route(map,{114,1,1,{}},selected.random);
+        send(request(0x11,static_cast<std::uint16_t>(route.landings.back()),2,0x456b));
+        check(send(old_choice).empty() && research==1 && session.state()==GameState::admitted,
+            "old39_dispatched_to_new_research_window");
+        if(invalid_calendar) {
+            rejects([&]{send(request(0x39,2,2,0x4567));},"richonline_game_action_context_mismatch");
+            check(research==1,"wrong39_calendar_changed_research_state");
+        } else {
+            check(!send(request(0x39,2,2,0x456b)).empty() && research==2 && session.state()==GameState::admitted,
+                "current39_failed_after_retired_replay");
+        }
+    }
+}
+void temple_aura_turns(const std::filesystem::path& root,const RichonlineRoadTopology& map) {
+    for(const std::int8_t npc:{std::int8_t{4},std::int8_t{6}})
+        for(const std::uint8_t source:{std::uint8_t{0},std::uint8_t{1}})
+            for(const std::uint8_t affix:{std::uint8_t{1},std::uint8_t{3}})
+                for(const bool bankrupt:{false,true}) {
+        auto selected=rules();auto initial=startup();initial.init.participants[0].position=234;
+        initial.room.description.record[36]=3;
+        const auto cash=bankrupt?800U:20000U;
+        auto ledger=std::make_shared<RichonlineGameLedger>(std::vector<RichonlineGameFunds>{{cash,1000,150,{}},{100000,0,0,{}}});
+        auto resources=std::make_shared<const RichonlineChanceResources>(RichonlineChanceResources::load(root));
+        auto cards=std::make_shared<RichonlineBossCards>(resources,0x1234,RichonlineBossCardPolicy{"BS_1_1.emp",17,1038,{0,0}});
+        auto ground=std::make_shared<RichonlineGroundObjects>(std::vector<std::int16_t>{114});
+        RichonlineNpcSessionPolicy policy{{0,0,0,3,3,{0,1,3},0,0,0,0,false},17,{1038,1039},{25,-1},
+            {5,5},"fixture-zero",[](std::uint8_t,std::int8_t,const auto&){return std::int16_t{0};}};
+        policy.temple_aura_affix=std::array{affix,affix};
+        auto npcs=std::make_shared<RichonlineNpcSession>(0x1234,"BS_1_1.emp",RichonlineNpcRules::load(root),resources,
+            std::make_shared<const RichonlineChanceEventTable>(RichonlineChanceEventTable::load(root)),ledger,cards,ground,policy);
+        selected.npcs=npcs;selected.ledger=ledger;selected.npc_aura=RichonlineNpcAuraRules::load(root);
+        selected.npc_landing_preflight=[](const RichonlineLandingContext&){};
+        selected.npc_aura_raw_actor=[](std::uint8_t){return RichonlineRawActorState{-1,-1,-1,-1,true};};
+        unsigned attachments=0,terminals=0;
+        selected.landed=[&](const RichonlineLandingContext& context) {
+            RichonlineLandingResult result{{},RichonlineLandingProgress::complete};
+            if(context.actor_slot==source && !attachments++)
+                result.temple_change=RichonlineTemplePossessionChange{context.actor_status,false,0,10,npc};
+            return result;
+        };
+        selected.terminal=[&](const RichonlineTurnTerminalContext& context) {
+            ++terminals;
+            check(context.reason==RichonlineTerminalReason::npc_aura && context.bankrupt_actors==std::vector<std::uint8_t>{0},
+                "aura_terminal_reason_or_target_wrong");
+            check(ledger->snapshot(0).funds.cash==0 && ledger->snapshot(0).funds.deposit==1000,
+                "aura_terminal_did_not_preserve_surviving_deposit");
+            return RichonlineTurnTerminalResult{{Bytes{0xef,0x42}},true};
+        };
+        auto missing=selected;missing.terminal={};
+        rejects([&]{make_richonline_boss_turns(initial,map,missing);},"richonline_boss_npc_aura_capability_required");
+        auto plan=make_richonline_boss_turns(initial,map,selected);plan.map_ready();
+        plan.action({},request(0x11,235));
+        check(ledger->snapshot(0).funds.cash==cash,"aura_applied_on_attachment_turn");
+        plan.action({},request(0x10,0,4,0x4569));
+        auto next=plan.action({},request(0x11,233,2,0x4569));
+        if(source==0) next=plan.action({},request(0x11,234,2,0x456a));
+        const bool terminal_expected=bankrupt && npc==6 && affix>1;
+        const auto expected=affix==1?cash:npc==4?cash+800:cash-800;
+        check(ledger->snapshot(0).funds.cash==expected && ledger->snapshot(1).funds.cash==100000,
+            "aura_turn_amount_expiry_order_or_boss_exclusion_wrong");
+        check(terminals==(terminal_expected?1U:0U),"aura_cash_only_bankruptcy_wrong");
+        check(next.front()[0]==0x10 && (terminal_expected?next.back()==Bytes{0xef,0x42}:next[1][0]==0x0f),
+            "aura_invented_money_packet_or_rolled_after_bankruptcy");
+        if(terminal_expected) {
+            rejects([&]{plan.action({},request(0x11,234,2,0x456a));},"richonline_boss_session_closed");
+            check(terminals==1,"duplicate_terminal_mutated_aura");
+        }
+    }
+}
 }
 int main(int argc,char** argv) {
     try {
@@ -195,6 +291,8 @@ int main(int argc,char** argv) {
         boss_first_waits_for_endpoint(map); landing_waits_for_its_completion(map); terminal_and_failed_landings(map);
         final_junction_preserves_actor_and_next_route(map);
         upgrade_to_research_retires_both_requests(map);
+        encrypted_research_calendar_is_checked_before_dispatch(map);
+        temple_aura_turns(std::filesystem::path(argv[1]),map);
         portal_landing_acknowledges_entry_but_next_turn_starts_at_exit(std::filesystem::path(argv[1]));
         auto missing=rules(); missing.landed={};
         rejects([&] { make_richonline_boss_turns(startup(),map,missing); },"richonline_boss_turn_rules_required");

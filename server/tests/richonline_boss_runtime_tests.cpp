@@ -254,13 +254,18 @@ void runtime_selects_special_map_package_without_ordinary_fallback(const std::fi
     std::copy(stage.signature.begin(),stage.signature.end(),extension.begin()+32);
     put(extension,56,stage.wait_seconds); put(extension,60,stage.game_months);
     put(extension,64,stage.pawn_gold); put(extension,68,2);
-    rejects([&] { runtime->provider(19001,special); },"richonline_map_package_runtime_incomplete");
-    check(std::any_of(logs.begin(),logs.end(),[](const Json& entry) {
-        return entry.at("event")=="richonline_map_package_pending" &&
-            entry.at("fields").at("package")=="zhao_linger" && entry.at("fields").at("category")==2;
-    }),"special_map_did_not_reach_its_own_package");
+    auto special_plans=runtime->provider(19001,special);
+    check(special_plans.size()==1,"special_map_did_not_reach_its_own_package");
+    const auto init=plain(special_plans.front().admitted().back());
+    check(read_le(View(init).first(2))==0x4000 && init.size()==52 &&
+        read_le(View(init).subspan(22,2))==99 && read_le(View(init).subspan(38,2))==106,
+        "special_map_fell_back_to_ordinary_init");
+    special_plans.front().disconnected();
+    check(std::none_of(logs.begin(),logs.end(),[](const Json& entry) {
+        return entry.at("event")=="richonline_map_package_pending";
+    }),"verified_special_map_still_gated");
     auto ordinary=runtime->provider(19001,room(resources,actor));
-    check(ordinary.size()==1,"special_rejection_poisoned_next_ordinary_session");
+    check(ordinary.size()==1,"special_session_poisoned_next_ordinary_session");
     check(static_cast<bool>(ordinary.front().sent),"runtime_raw_whole_frame_observer_missing");
     ordinary.front().admitted();
     const auto ready=ordinary.front().message({},Bytes{0,0});

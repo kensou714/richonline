@@ -44,7 +44,9 @@ void validate(const RichonlineCombatSessionView& state,const RichonlineCombatWor
     std::set<std::uint32_t> properties;
     std::set<std::int16_t> property_positions;
     for (const auto& building:state.buildings) {
-        if (building.footprint.empty() || building.level>5 || !properties.insert(building.property).second ||
+        // Construction resources permit levels through 7; Zhao can upgrade to
+        // 6. The shared combat snapshot must accept those committed buildings.
+        if (building.footprint.empty() || building.level>7 || !properties.insert(building.property).second ||
             (building.owner && (*building.owner>=8 || !state.actors[*building.owner])))
             throw CodecError("richonline_combat_session_building_invalid");
         for (const auto position:building.footprint)
@@ -179,7 +181,7 @@ void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& worl
         if (action==RichonlineBossBlastBuildingEffect::none) continue;
         if (!world.building) throw CodecError("richonline_combat_session_building_adapter_missing");
         auto after=world.building(building,action);
-        if (after.property!=building.property || after.footprint!=building.footprint || after.level>5 ||
+        if (after.property!=building.property || after.footprint!=building.footprint || after.level>7 ||
             (action==RichonlineBossBlastBuildingEffect::remove_ownership && after.owner) ||
             (action==RichonlineBossBlastBuildingEffect::lower_one_level &&
                 (after.level+1!=building.level || after.owner!=building.owner)))
@@ -335,6 +337,58 @@ RichonlineCombatTurnPlan prepare_richonline_combat_stepped_mine(const Richonline
     chain(plan,world,root);
     finish(plan,true);
     return plan;
+}
+RichonlineCombatTurnPlan prepare_richonline_combat_fire_landing(const RichonlineCombatSessionView& before,
+    const RichonlineCombatWorld& world,std::int8_t owner,std::uint8_t victim,std::int16_t position,
+    std::uint32_t base) {
+    auto plan=initial(before,world);
+    if(owner < -1 || owner>=8 || (owner>=0 && !before.actors[static_cast<std::size_t>(owner)]) ||
+        victim>=8 || !before.actors[victim] || !before.actors[victim]->active ||
+        before.actors[victim]->position!=position || !world.resolve_terms ||
+        !std::ranges::any_of(before.dynamic_npcs,[&](const auto& npc){return npc.position==position && npc.type==26;}))
+        throw CodecError("richonline_combat_fire_landing_invalid");
+    refresh_terms(plan.after,world);
+    auto& target=*plan.after.actors[victim];
+    debit(target,damage(plan.after,owner,target,base));
+    finish(plan,true);return plan;
+}
+RichonlineCombatPoisonPlan prepare_richonline_combat_poison(const RichonlineCombatSessionView& before,
+    const RichonlineCombatWorld& world,const RichonlineResearchCardRequest& request,
+    const RichonlineResearchCardContext& context,std::uint32_t count,const RichonlinePoisonRules& rules,
+    std::span<const RichonlinePoisonCell> footprint,std::span<const RichonlineRawActorState> raw) {
+    auto combat=initial(before,world);
+    if(context.actor<0 || context.actor>=8 || !before.actors[static_cast<std::size_t>(context.actor)] ||
+        context.game!=before.game_id || raw.size()!=before.actors.size() || !world.resolve_terms)
+        throw CodecError("richonline_combat_poison_context_invalid");
+    const auto caster=static_cast<std::uint8_t>(context.actor);
+    const auto& hand=before.actors[caster]->inventory;
+    const auto initial_plan=plan_richonline_poison_card(request,context,hand,count,rules.base_damage,footprint,{});
+    combat.after.actors[caster]->inventory=initial_plan.after_inventory;
+    combat.packets.push_back(initial_plan.success);
+    std::vector<std::uint8_t> hit;
+    // Client processes cells then actors. Re-resolve cash-dependent terms for
+    // each occurrence against the updated local funds, without committing yet.
+    for(const auto& cell:footprint) for(std::uint8_t slot=0;slot<before.actors.size();++slot) {
+        auto& target=combat.after.actors[slot];
+        if(!target || !target->active || slot==caster || target->position!=cell.position) continue;
+        const auto& eligibility=raw[slot];
+        if(!eligibility.hospital1494 || !eligibility.jail1495 || !eligibility.kidnapped1497)
+            throw CodecError("richonline_combat_poison_raw_unknown");
+        if(*eligibility.hospital1494!=-1 || *eligibility.jail1495!=-1 || *eligibility.kidnapped1497!=-1) continue;
+        refresh_terms(combat.after,world);
+        const auto amount=damage(combat.after,context.actor,*target,rules.base_damage);
+        const RichonlinePoisonVictim victim{slot,cell.position,true,false,false,false,target->funds,amount};
+        const auto planned=plan_richonline_poison_card(request,context,hand,count,rules.base_damage,
+            std::span{&cell,1},std::span{&victim,1});
+        target->funds.funds=planned.funds.at(0).after;
+        if(std::ranges::find(hit,slot)==hit.end()) hit.push_back(slot);
+    }
+    for(const auto slot:hit) {
+        auto& target=*combat.after.actors[slot];
+        if(target.funds.funds.cash==0 && *target.funds.funds.deposit==0) target.active=false;
+    }
+    finish(combat,true);
+    return {std::move(combat),initial_plan.after_use_count,std::move(hit)};
 }
 bool commit_richonline_combat_plan(RichonlineCombatTurnPlan& plan,
     const std::function<bool(const RichonlineCombatTurnPlan&)>& atomic_commit) {

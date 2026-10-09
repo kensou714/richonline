@@ -142,9 +142,8 @@ void idle_shop_closes_and_stale_exit_is_narrow(std::shared_ptr<const OriginalMap
 int main() {
     try {
         const Network network;
-        constexpr std::string_view source_path = __FILE__;
-        const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end()))
-            .parent_path().parent_path().parent_path();
+        constexpr std::u8string_view source_path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+        const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end()));
         const auto map = std::make_shared<OriginalMapResources>(original_map_resources(
             load_original_emp(root / "Map" / "BS_1_1.emp"),10));
         require(std::find(map->edges.begin(),map->edges.end(),OriginalRoadEdge{179,178,1}) != map->edges.end() &&

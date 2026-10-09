@@ -10,6 +10,7 @@
 #include "richonline_game_payment.hpp"
 #include "richonline_hibernate_card.hpp"
 #include "richonline_raw_authority.hpp"
+#include "richonline_npc_aura.hpp"
 #include <chrono>
 
 namespace richnet {
@@ -24,6 +25,9 @@ struct RichonlineCombatCapabilities;
 struct RichonlineMotionCardRules;
 struct RichonlineTimedBombRules;
 struct RichonlineTimedBombStepContext;
+struct RichonlineResearchTrapRules;
+struct RichonlineFireTrapRules;
+struct RichonlinePoisonRules;
 struct RichonlineHibernateTurnPolicy {
     std::shared_ptr<const RichonlineChanceResources> resources;
     RichonlineHibernateRules rules;
@@ -56,14 +60,22 @@ enum class RichonlineLandingProgress { await_event, complete, finished };
 struct RichonlineLandingStatusChange {
     RichonlineActorStatus expected,updated;
 };
+struct RichonlineTemplePossessionChange {
+    RichonlineActorStatus expected;
+    bool extend;
+    std::int32_t days;
+    std::uint8_t maximum;
+    std::optional<std::int8_t> summon{};
+};
 struct RichonlineLandingResult {
     std::vector<Bytes> messages;
     RichonlineLandingProgress progress;
     // await_event 时记录下一条预期动作；由回合协调层控制后续请求分派。
     std::optional<std::uint16_t> pending_opcode = {};
     std::optional<RichonlineLandingStatusChange> status_change{};
+    std::optional<RichonlineTemplePossessionChange> temple_change{};
 };
-enum class RichonlineTerminalReason { npc_money, boss_attack, human_attack, mine_day, stepped_mine, timed_bomb };
+enum class RichonlineTerminalReason { npc_money, boss_attack, human_attack, mine_day, stepped_mine, timed_bomb, npc_aura, fire_trap, poison_card };
 struct RichonlineTurnTerminalContext {
     std::vector<std::uint8_t> bankrupt_actors;
     RichonlineTerminalReason reason;
@@ -127,6 +139,13 @@ struct RichonlineBossTurnRules {
     std::function<bool(std::uint8_t,std::int16_t,std::int16_t)> ground_card_visible{};
     std::shared_ptr<const RichonlineHibernateTurnPolicy> hibernate{};
     std::function<void(std::uint8_t)> research_turn_started{};
+    std::optional<RichonlineNpcAuraRules> npc_aura{};
+    std::function<RichonlineRawActorState(std::uint8_t)> npc_aura_raw_actor{};
+    // Enables only1181/NPC25; fire and poison require separate closed authority.
+    std::shared_ptr<const RichonlineResearchTrapRules> ice_traps{};
+    std::shared_ptr<const RichonlineFireTrapRules> fire_traps{};
+    std::shared_ptr<const RichonlinePoisonRules> poison{};
+    std::function<RichonlineRawActorState(std::uint8_t)> poison_raw_actor{};
 };
 // 双角色移动，支持显式配置的移动卡状态；动态物件与其他控制状态另行接入。
 // 每个落点都必须显式处理；未知事件不得直接推进回合。

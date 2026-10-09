@@ -159,8 +159,8 @@ void test_index_rejections() {
 
 int main() {
     try {
-        constexpr std::string_view source_path = __FILE__;
-        const auto root = std::filesystem::path(std::u8string(source_path.begin(), source_path.end())).parent_path().parent_path().parent_path();
+        constexpr std::u8string_view source_path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+        const auto root = std::filesystem::path(std::u8string(source_path.begin(), source_path.end()));
         const auto maps = richnet::OriginalMapCatalog::load(root / "protocol-analysis" / "board-startup" / "maps" / "index.json");
         test_real_catalog_and_opaque_preservation(maps);
         test_map_extensions(maps);

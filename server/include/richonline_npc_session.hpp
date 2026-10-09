@@ -41,6 +41,8 @@ struct RichonlineNpcSessionPolicy {
     std::optional<RichonlineNpcBadluckPolicy> badluck{};
     std::optional<RichonlineTicketChestRules> ticket_chest{};
     std::optional<RichonlineNpcSleepPolicy> sleep_deity{};
+    // Temple6051 only: these gods remain unavailable to ground/card dispatch.
+    std::optional<std::array<std::uint8_t,2>> temple_aura_affix{};
 };
 
 // One serialized room executor owns this coordinator, the ground container,
@@ -68,6 +70,7 @@ public:
         RichonlineActorStatus before_status_{},after_status_{};
         RichonlinePossessionClock before_clock_{},after_clock_{};
         bool committed_=false;
+        bool requires_idle_=false;
         friend class RichonlineNpcSession;
     };
     // External status/card/combat planners must prepare against the current
@@ -75,13 +78,16 @@ public:
     // possession duration or detaches it; new attachment belongs to NPC hooks.
     PreparedStatusChange prepare_status_change(std::uint8_t actor,
         const RichonlineActorStatus& before,const RichonlineActorStatus& after) const;
+    PreparedStatusChange prepare_temple_change(std::uint8_t actor,
+        const RichonlineTemplePossessionChange&) const;
     bool matches_status_change(const PreparedStatusChange&,const RichonlineActorStatus&) const noexcept;
     bool commit_status_change(PreparedStatusChange&,RichonlineActorStatus&) noexcept;
     void detach(std::uint8_t actor,RichonlineActorStatus& authoritative_status);
     // A handled ground event continues phase1; it is NOT a complete landing.
     // No matching implemented NPC leaves every shared object unchanged.
     std::optional<RichonlineNpcSessionResult> landing(const RichonlineLandingContext&,
-        std::uint16_t calendar,RichonlineActorStatus& authoritative_status);
+        std::uint16_t calendar,RichonlineActorStatus& authoritative_status,
+        const std::function<void(const RichonlineLandingContext&)>& preflight = {});
     RichonlineNpcSessionResult handle(View request,std::uint8_t actor,
         RichonlineActorStatus& authoritative_status);
     // The room may resolve its authoritative pending roulette at a configured

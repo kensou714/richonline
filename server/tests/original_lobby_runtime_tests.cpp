@@ -35,10 +35,10 @@ Json fixture() {
         {"login_template_hex",16},{"identity_template_hex",16},{"bank_template_hex",32},{"completion_template_hex",28}})
         config[key] = std::string(size*2,'a');
     config["bank_template_hex"] = original_bank_test::config_hex;
-    constexpr std::string_view source = __FILE__;
-    const auto options = (std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path()/"Data"/"Option.kpd").u8string();
+    constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto options = (std::filesystem::path(std::u8string(source.begin(),source.end()))/"Data"/"Option.kpd").u8string();
     config["client_options_path"] = std::string(options.begin(),options.end());
-    const auto maps = (std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path()/
+    const auto maps = (std::filesystem::path(std::u8string(source.begin(),source.end()))/
         "protocol-analysis"/"board-startup"/"maps"/"index.json").u8string();
     config["map_catalog_path"] = std::string(maps.begin(),maps.end());
     return config;

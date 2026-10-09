@@ -80,9 +80,13 @@ private:
 };
 struct RichonlinePossessionClock {
     std::optional<std::int8_t> npc;
+    // Raw actor1490 byte: temple arithmetic can wrap into the signed range.
     std::uint8_t turns=0;
     std::optional<std::uint64_t> last_actor_turn;
 };
+// Empty means detach. Mirrors NEW7F7E30 / 7D7430 -> 7F7CF0 byte arithmetic.
+std::optional<std::uint8_t> plan_richonline_temple_duration(std::uint8_t turns,
+    bool extend,std::int32_t days,std::uint8_t maximum);
 struct RichonlinePossessionTick {
     RichonlinePossessionClock clock;
     RichonlineActorStatus status;

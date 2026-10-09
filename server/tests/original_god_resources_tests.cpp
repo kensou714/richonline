@@ -12,8 +12,8 @@ template<class F> void rejects(F action, std::string_view reason) {
 }
 Bytes bytes(std::string_view text) { return Bytes(text.begin(),text.end()); }
 void actual_resources() {
-    constexpr std::string_view path = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(path.begin(),path.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(path.begin(),path.end()));
     const auto npcs = load_original_npc_resources(root/"Data"/"Npc.kpd");
     auto buildings = load_original_research_resources(root/"Data"/"BwbValue.kpd");
     const auto values = load_original_game_values(root/"Data"/"GValue.kpd");

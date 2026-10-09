@@ -197,6 +197,22 @@ void helmets_and_buildings() {
         {{RichonlineCombatEffect::safe_nuclear}});
     check(safe.after.actors[0]->funds.funds.cash==10000 && safe.after.actors[2]->funds.funds.cash==8500,
         "safe_nuclear_excludes_self_hits_other_actors");
+    for(const std::uint8_t level:{std::uint8_t{6},std::uint8_t{7}}) {
+        before.buildings={{219,{12},11,level,1,false}};
+        const auto continued=prepare_richonline_boss_combat_turn(before,map,0,random({0,0,0,0}));
+        check(continued.after.buildings[0].level==level,"high_level_property_stops_next_turn");
+        const auto high_missile=prepare_richonline_boss_combat_turn(before,map,0,random({90,0,0,0}));
+        check(high_missile.after.buildings[0].level==level,"missile_changed_high_level_property");
+        for(const auto effect:{RichonlineCombatEffect::nuclear,RichonlineCombatEffect::safe_nuclear}) {
+            const auto lowered=prepare_richonline_boss_combat_turn(before,map,0,random({90,0,0,0}),{{effect}});
+            check(lowered.after.buildings[0].level==level-1 && lowered.after.buildings[0].owner==1 &&
+                before.buildings[0].level==level,"high_level_nuclear_downgrade_not_atomic");
+        }
+    }
+    before.buildings[0].level=8;
+    rejects([&] { prepare_richonline_boss_combat_turn(before,map,0,random({0,0,0,0})); },
+        "richonline_combat_session_building_invalid");
+    before.buildings[0].level=6;
     map.building={};
     rejects([&] { prepare_richonline_boss_combat_turn(before,map,0,random({90,0,0,0}),
         {{RichonlineCombatEffect::nuclear}}); },"richonline_combat_session_building_adapter_missing");
@@ -343,12 +359,46 @@ void human_target_cards_are_direct_and_inventory_checked() {
         rejects([&] { parse_richonline_target_card(wire); },"richonline_target_card_wire_invalid");
     }
 }
+void poison_batch_and_live_terms() {
+    auto before=state();auto map=world();before.actors[0]->inventory[2]={1182,2};
+    before.actors[1]->funds.funds={500,2000,80,90};
+    before.actors[2]->funds.funds={2000,1,80,90};before.actors[2]->status.frozen=3;
+    map.resolve_terms=[](const auto&,const auto&){return RichonlineCombatWorld::ResolvedTerms{{},{},0,0};};
+    const RichonlineResearchCardRequest request{RichonlineResearchCard::poison1182,7,2,0,{},1,0xa5};
+    const RichonlineResearchCardContext context{0x1234,7,0,0,true,true};
+    std::array<RichonlineRawActorState,8> raw{};
+    for(auto& r:raw)r={-1,-1,-1,-1,true};
+    const std::array<RichonlinePoisonCell,3> footprint{{{12,0},{13,0},{14,1}}};
+    auto plan=prepare_richonline_combat_poison(before,map,request,context,0,{3,2500},footprint,raw);
+    check(plan.after_use_count==1 && plan.combat.bankrupt_actors==std::vector<std::uint8_t>{1} &&
+        plan.combat.after.actors[2]->funds.funds.cash==0 && plan.combat.after.actors[2]->funds.funds.deposit==1 &&
+        plan.combat.after.actors[0]->funds==before.actors[0]->funds &&
+        plan.combat.after.actors[0]->inventory[2].count==1 && plan.combat.packets==std::vector<Bytes>{{0xec,0x40,0x34,0x12,2,0,1,0xa5}},
+        "poison_batch_frozen_self_or_exact_funds");
+    check(before.actors[1]->funds.funds.cash==500 && before.actors[0]->inventory[2].count==2,"poison_prepare_mutated_source");
+    raw[1].hospital1494=0;raw[2].kidnapped1497=2;
+    plan=prepare_richonline_combat_poison(before,map,request,context,3,{3,2500},footprint,raw);
+    check(plan.hit_actors.empty() && plan.after_use_count==4,"poison_raw_exclusions");
+    raw[1].hospital1494.reset();
+    rejects([&]{prepare_richonline_combat_poison(before,map,request,context,0,{3,2500},footprint,raw);},"richonline_combat_poison_raw_unknown");
+    raw[1].hospital1494=-1;raw[2].kidnapped1497=-1;
+    before.actors[1]->funds.funds={5000,1000,80,90};
+    map.resolve_terms=[](const RichonlineCombatActorView& actor,const auto&){
+        RichonlineCombatWorld::ResolvedTerms terms{{},{},0,0};
+        if(actor.slot==1 && actor.funds.funds.cash<4000)terms.defense.equipment_percentage=50;
+        return terms;
+    };
+    const std::array<RichonlinePoisonCell,2> repeated{{{13,0},{13,0}}};
+    plan=prepare_richonline_combat_poison(before,map,request,context,0,{3,2500},repeated,raw);
+    check(plan.combat.after.actors[1]->funds.funds.cash==1250,"poison_did_not_refresh_cash_terms_between_hits");
+}
 }
 int main() {
     try {
         attacks(); mines(); supermines(); helmets_and_buildings(); helmet_limits_exclusions_and_usage_lifetime();
         atomic_commit(); live_modifiers_refresh_and_destroyed_building_sources();
         human_target_cards_are_direct_and_inventory_checked();
+        poison_batch_and_live_terms();
         std::cout<<"richonline combat session tests passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr<<error.what()<<'\n'; return 1; }

@@ -117,8 +117,8 @@ void test_invalid_boundaries() {
     rejects([&] { build_original_route(map,request(0,3,1),first); },"original_route_road_invalid");
 }
 void test_actual_boss_maps() {
-    constexpr std::string_view source_path = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source_path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end()));
     for (int stage = 1; stage <= 4; ++stage) {
         const auto map = std::make_shared<OriginalMapResources>(original_map_resources(
             load_original_emp(root / "Map" / ("BS_1_"+std::to_string(stage)+".emp")),10));

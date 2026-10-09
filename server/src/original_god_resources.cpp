@@ -84,15 +84,20 @@ OriginalGodRules original_god_rules(const OriginalNpcResources& npcs,
     const auto maximum = values.require(37);
     if (maximum < 1 || maximum > 127) throw CodecError("original_god_maximum_days_invalid");
     result.maximum_days = static_cast<std::int8_t>(maximum);
+    result.pyramid = original_pyramid_rules(buildings);
+    return result;
+}
+std::array<OriginalPyramidRule,7> original_pyramid_rules(const OriginalResearchResources& buildings) {
+    std::array<OriginalPyramidRule,7> result{};
     const auto mi = buildings.sections.find("MI");
     if (mi == buildings.sections.end()) throw CodecError("original_pyramid_section_missing");
-    for (std::size_t i = 0; i < result.pyramid.size(); ++i) {
+    for (std::size_t i = 0; i < result.size(); ++i) {
         const auto prefix = "level_"+std::to_string(i+1);
         const auto summon = row<2>(required(mi->second,prefix+"_zao"));
         const auto harmful = row<4>(required(mi->second,prefix+"_hai"));
         const auto beneficial = row<4>(required(mi->second,prefix+"_yi"));
         for (const auto kind : summon) if (kind < -1 || kind > 7) throw CodecError("original_pyramid_summon_invalid");
-        result.pyramid[i] = {static_cast<std::int8_t>(summon[0]),static_cast<std::int8_t>(summon[1]),
+        result[i] = {static_cast<std::int8_t>(summon[0]),static_cast<std::int8_t>(summon[1]),
             harmful[0],harmful[1],harmful[2],harmful[3],beneficial[0],beneficial[1],beneficial[2],beneficial[3]};
     }
     return result;

@@ -186,8 +186,8 @@ void optional_card_tables_and_sprite_casts() {
 }
 int main() {
     try {
-        constexpr std::string_view file = __FILE__;
-        const auto root = std::filesystem::path(std::u8string(file.begin(), file.end())).parent_path().parent_path().parent_path();
+        constexpr std::u8string_view file = RICHONLINE_LEGACY_RESOURCE_ROOT;
+        const auto root = std::filesystem::path(std::u8string(file.begin(), file.end()));
         synthetic_layout_and_directions();
         decoder_rejections();
         resource_rejections();

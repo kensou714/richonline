@@ -12,8 +12,8 @@ template<class F> void rejects(F action, std::string_view code) {
     throw std::runtime_error("missing rejection: "+std::string(code));
 }
 std::filesystem::path root() {
-    constexpr std::string_view path = __FILE__;
-    return std::filesystem::path(std::u8string(path.begin(),path.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    return std::filesystem::path(std::u8string(path.begin(),path.end()));
 }
 std::shared_ptr<OriginalMapResources> map() {
     return std::make_shared<OriginalMapResources>(original_map_resources(load_original_emp(root()/"Map"/"BS_1_1.emp"),10));

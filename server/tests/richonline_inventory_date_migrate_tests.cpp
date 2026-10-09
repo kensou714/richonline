@@ -25,10 +25,17 @@ RichonlineMailDelivery mail_fixture(std::uint32_t key,std::int64_t expiry){
 }
 }
 int wmain(int argc,wchar_t** argv){try{
-    test_check(argc==3,"verified compatible client and NEW resource root required");
-    const auto client=std::filesystem::path(argv[1]);const auto resource_root=std::filesystem::path(argv[2]);
-    const auto root=std::filesystem::absolute("native-server/build-auxiliary-ranking-20261009/fixtures/date-migration-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    test_check(argc==3,"original client and NEW resource root required");
+    const auto original_client=std::filesystem::path(argv[1]);const auto resource_root=std::filesystem::path(argv[2]);
+    const auto root=std::filesystem::absolute("fixtures/date-migration-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     std::filesystem::create_directories(root);
+    const auto client=root/"RnClient.date2021.exe";
+    const auto image=richonline_date_compatibility_image(file_bytes(original_client));
+    {
+        std::ofstream output(client,std::ios::binary);
+        output.write(reinterpret_cast<const char*>(image.data()),static_cast<std::streamsize>(image.size()));
+        test_check(static_cast<bool>(output),"compatibility fixture write failed");
+    }
     const auto source=root/"original.sqlite3",migrated=root/"modern.sqlite3",rolled=root/"rollback.sqlite3";
     constexpr std::int64_t future=1893456000; //2030-01-01 UTC, authoritative legacy fixture expiry.
     constexpr std::int64_t historical=1514764800; //2018-01-01 UTC.

@@ -141,6 +141,7 @@ void prices_are_projected_from_each_resource_record(const std::filesystem::path&
     std::filesystem::copy_file(root/"Data"/"Option.kpd",fixture/"Data"/"Option.kpd");
     std::filesystem::copy_file(root/"Data"/"Build.kpd",fixture/"Data"/"Build.kpd");
     std::filesystem::copy_file(root/"Data"/"BossWar.kpd",fixture/"Data"/"BossWar.kpd");
+    std::filesystem::copy_file(root/"Data"/"BwbValue.kpd",fixture/"Data"/"BwbValue.kpd");
     auto emp=load_original_emp(root/"Map"/"BS_1_1.emp");
     const auto offset=emp.property_offset+164U*88U+56U;
     emp.payload.at(offset)=17;

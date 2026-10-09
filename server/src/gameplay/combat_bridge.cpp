@@ -144,6 +144,41 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::timed_bomb_card(std::span<c
     return apply(refs,before,prepare_richonline_timed_bomb_card(before.combat,world_,actor,
         request,calendar,rules,raw,*consumption,opaque));
 }
+RichonlineCombatBridgeResult RichonlineCombatBridge::fire_landing(std::span<const RichonlineCombatActorRef> refs,
+    std::uint8_t victim,std::int16_t position,std::uint32_t base,const std::function<void()>& preflight) {
+    const auto before=snapshot(refs);
+    const auto found=before.ground.objects.find(position);
+    if(found==before.ground.objects.end() || found->second.npc!=26 || !preflight ||
+        (found->second.byte7!=255 && found->second.byte7>=2))
+        throw CodecError("richonline_combat_fire_ground_invalid");
+    const auto owner=found->second.byte7==255?std::int8_t{-1}:static_cast<std::int8_t>(found->second.byte7);
+    auto plan=prepare_richonline_combat_fire_landing(before.combat,world_,owner,victim,position,base);
+    if(plan.bankrupt_actors.empty()) preflight();
+    return apply(refs,before,std::move(plan));
+}
+RichonlineCombatBridgeResult RichonlineCombatBridge::poison_card(std::span<const RichonlineCombatActorRef> refs,
+    const RichonlineResearchCardRequest& request,const RichonlineResearchCardContext& context,std::uint32_t& count,
+    const RichonlinePoisonRules& rules,std::span<const RichonlinePoisonCell> footprint,
+    std::span<const RichonlineRawActorState> raw,std::span<std::array<std::uint8_t,8>> relations) {
+    if(context.actor!=0 || relations.size()!=2) throw CodecError("richonline_poison_bridge_actor_invalid");
+    const auto before=snapshot(refs);const auto expected_count=count;
+    const std::array expected_relations{relations[0],relations[1]};
+    auto plan=prepare_richonline_combat_poison(before.combat,world_,request,context,count,rules,footprint,raw);
+    auto after_relations=expected_relations;
+    for(const auto victim:plan.hit_actors) {
+        if(victim>=after_relations.size()) throw CodecError("richonline_poison_bridge_victim_invalid");
+        if(static_cast<std::int8_t>(after_relations[0][victim])>0) {
+            after_relations[0][victim]=0;after_relations[victim][0]=0;
+        }
+    }
+    if(count!=expected_count || relations[0]!=expected_relations[0] || relations[1]!=expected_relations[1])
+        throw CodecError("richonline_poison_bridge_stale");
+    auto result=apply(refs,before,std::move(plan.combat));
+    // No fallible work after the shared commit. This serialized owner owns the
+    // counter and relation arrays alongside the stores validated by apply.
+    count=plan.after_use_count;relations[0]=after_relations[0];relations[1]=after_relations[1];
+    return result;
+}
 RichonlineCombatBridgeResult RichonlineCombatBridge::timed_bomb_step(std::span<const RichonlineCombatActorRef> refs,
     const RichonlineTimedBombStepContext& context,const std::optional<RichonlineMoveCountdown12>& ack,
     std::uint16_t calendar,RichonlineTimedBombContinuationPolicy policy) {

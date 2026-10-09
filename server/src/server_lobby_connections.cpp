@@ -360,7 +360,7 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                 return peer.drain();
             }
             switch (frame.wire_type) {
-            case 3: case 4: case 5: case 6: case 9: case 10: case 23: case 27: case 60: break;
+            case 3: case 4: case 5: case 6: case 9: case 10: case 23: case 27: case 39: case 40: case 60: break;
             default: return authenticated_request(login, frame);
             }
             if (!peer.actor) throw CodecError("richonline_channel_selection_required");
@@ -416,14 +416,18 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
             // All three NEW senders register a failure callback on their own
             // request ID. -1 is the explicit generic refusal policy, not a
             // claimed reconstruction of the original server's status enum.
-            if(frame.wire_type==8||frame.wire_type==9||frame.wire_type==27)
+            if(frame.wire_type==8||frame.wire_type==9||frame.wire_type==27||frame.wire_type==39)
                 return std::vector<Frame>{richonline_lobby_failure(frame.wire_type,-1)};
+            // A duplicate/late ballot has no effect. The kick-vote client uses
+            // a different failure callback ID, so do not invent an ACK here.
+            if(frame.wire_type==40) return std::vector<Frame>{};
             throw;
         }
     };
     result.drain_outbound = [connections, connection, registry = game_registry_] {
         const std::lock_guard guard(connections->mutex);
         auto* rooms=connections->directory(connection);
+        if(rooms) connections->deliver(rooms->poll_votes());
         if (registry && rooms) {
             const auto room = rooms->room_key(connection);
             if(room) {

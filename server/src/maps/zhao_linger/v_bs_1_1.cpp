@@ -11,9 +11,16 @@ RichonlineBossCardPolicy configure(const RichonlineBossCardPolicy& legacy) {
 }
 }
 const RichonlineMapPackage& richonline_zhao_linger_package() {
-    static const RichonlineMapPackage package{"zhao_linger","V_BS_1_1.emp",true,2,1038,RichonlineMapReadiness::partial,false,load,configure,
-        std::nullopt,std::nullopt,std::nullopt,std::nullopt,
-        {{5,6,7,8,10,33,34,35,41,42,61,68,69,70}}};
+    static const RichonlineMapPackage package{"zhao_linger","V_BS_1_1.emp",true,2,1038,RichonlineMapReadiness::partial,true,load,configure,
+        RichonlineMapChancePolicy{{1038,1039,1040,1041},true},
+        RichonlineMapNpcPolicy{{0,1,2,3},4,1,2,5,3,true,{1038,1039},1000,
+            RichonlineMapBadluckPolicy{4,RichonlineMapBadluckSelection::uniform_inventory_units_without_replacement}},
+        RichonlineMapCombatPolicy{4,80,10,10,
+            {RichonlineMapProjectile::missile,RichonlineMapProjectile::nuclear,RichonlineMapProjectile::safe_nuclear},
+            true,true,true,false},
+        RichonlineMapOpeningHand{{{1038,1},{1044,1}},{}},
+        {{5,6,7,8,10,33,34,35,41,42,61,68,69,70}},
+        RichonlineMapRawStatusPolicy::closed_boss_initial_status};
     return package;
 }
 }

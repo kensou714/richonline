@@ -2,7 +2,7 @@ param([Parameter(Mandatory = $true)][string]$Workspace)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path -LiteralPath $Workspace).Path
 $live = Join-Path $root 'local-server/runtime/native-boss-live-20261009'
-$source = Join-Path $root 'native-server/build-integrated-candidate-20261009/RichOnline.Server.exe'
+$source = Join-Path $PSScriptRoot '../build/RichOnline.Server.exe'
 $target = Join-Path $live 'RichOnline.Server.channels.exe'
 if (Get-Process -Name 'RichOnline.Server.channels' -ErrorAction SilentlyContinue) { throw 'candidate_server_is_running' }
 $config = [IO.File]::ReadAllText((Join-Path $live 'lobby-bootstrap.json')) | ConvertFrom-Json -AsHashtable

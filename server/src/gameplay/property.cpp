@@ -5,6 +5,7 @@
 #include "richonline_property_resources.hpp"
 #include "richonline_boss_landing.hpp"
 #include "original_building_resources.hpp"
+#include "original_god_resources.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -49,6 +50,7 @@ RichonlineBossProperty::RichonlineBossProperty(const std::filesystem::path& root
     for (const auto& property:initial_properties(root,stage.map_name,topology_).properties)
         properties_.emplace(property.id,Property{property.price,property.owner,{property.kind,property.level}});
     const auto research=load_original_research_resources(root/"Data"/"BwbValue.kpd");
+    temple_rules_=original_pyramid_rules(research);
     for(std::size_t i=0;i<research_choices_.size();++i)
         research_choices_[i]={research.choices[i].card,research.choices[i].days};
 }
@@ -62,6 +64,39 @@ std::optional<std::uint8_t> RichonlineBossProperty::owner(std::int16_t ref) cons
 std::optional<std::uint32_t> RichonlineBossProperty::price(std::int16_t ref) const noexcept {
     const auto found=properties_.find(ref);
     return found == properties_.end() ? std::nullopt : std::optional{found->second.price};
+}
+bool RichonlineBossProperty::temple_supported(const RichonlineLandingContext& ctx,const Building& building,
+    bool friendly) const {
+    const auto& rule=temple_rules_.at(static_cast<std::size_t>(building.level-1));
+    if(!ctx.actor_status.possession) {
+        const auto npc=friendly ? rule.friendly_summon : rule.enemy_summon;
+        return npc==-1 || (temple_aura_summons_ && (npc==4 || npc==6));
+    }
+    if(!temple_maximum_) return false;
+    const auto npc=*ctx.actor_status.possession;
+    const bool beneficial=npc==0 || npc==3 || (temple_aura_summons_ && npc==4);
+    const bool harmful=npc==1 || npc==2 || npc==7 || (temple_aura_summons_ && npc==6);
+    return (beneficial || harmful) && (!(friendly ? beneficial : harmful) ||
+        (friendly ? rule.friendly_beneficial_effect : rule.enemy_harmful_effect)<=0);
+}
+RichonlineLandingResult RichonlineBossProperty::temple_result(const RichonlineLandingContext& ctx,
+    const Building& building,bool friendly,std::vector<Bytes> messages) const {
+    if(!temple_supported(ctx,building,friendly)) throw CodecError("richonline_temple_continuation_unsupported");
+    RichonlineLandingResult result{std::move(messages),RichonlineLandingProgress::complete};
+    const auto& rule=temple_rules_.at(static_cast<std::size_t>(building.level-1));
+    if(ctx.actor_status.possession) {
+        const auto npc=*ctx.actor_status.possession;
+        const bool beneficial=npc==0 || npc==3 || npc==4;
+        const bool extend=friendly ? beneficial : !beneficial;
+        const auto days=friendly ? (extend ? rule.friendly_beneficial_days : rule.friendly_harmful_days) :
+            (extend ? rule.enemy_harmful_days : rule.enemy_beneficial_days);
+        result.temple_change=RichonlineTemplePossessionChange{ctx.actor_status,extend,days,*temple_maximum_};
+    } else {
+        const auto summon=friendly ? rule.friendly_summon : rule.enemy_summon;
+        if(summon!=-1) result.temple_change=RichonlineTemplePossessionChange{
+            ctx.actor_status,false,0,*temple_maximum_,summon};
+    }
+    return result;
 }
 bool RichonlineBossProperty::validate_landing(const RichonlineLandingContext& ctx) const {
     const bool human = ctx.actor_slot == 0 && !ctx.synthetic_actor && static_cast<bool>(now_);
@@ -79,7 +114,18 @@ bool RichonlineBossProperty::validate_landing(const RichonlineLandingContext& ct
     if (!cell.walkable || ctx.static_type != cell.static_type ||
         ctx.property_ref != cell.property_ref || degree != ctx.road_degree) return false;
     if (deadline_) throw CodecError("richonline_property_decision_already_pending");
-    return !property.owner || *property.owner==ctx.actor_slot || property.building.kind!=16;
+    if (property.owner && property.building.kind==16) {
+        const bool friendly=*property.owner==ctx.actor_slot;
+        if(!temple_supported(ctx,property.building,friendly)) return false;
+        if(friendly && !richonline_landing_controlled(ctx.actor_status)) {
+            const auto skill=ctx.synthetic_actor ? construction_.synthetic_skills[5] : human_skills_[5];
+            if(property.building.level<construction_.scenario_caps[5] && property.building.level<skill) {
+                auto upgraded=property.building;++upgraded.level;
+                if(!temple_supported(ctx,upgraded,true)) return false;
+            }
+        }
+    }
+    return true;
 }
 std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const RichonlineLandingContext& ctx) {
     if (!validate_landing(ctx)) return {};
@@ -90,16 +136,18 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
     if((!property.owner || *property.owner==ctx.actor_slot) && richonline_landing_controlled(ctx.actor_status)) {
         Bytes stop; append_le(stop,0x4013,2); append_le(stop,game_id_,2);
         append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
+        if(property.owner && property.building.kind==16)
+            return temple_result(ctx,property.building,true,{std::move(stop)});
         return RichonlineLandingResult{{std::move(stop)},RichonlineLandingProgress::complete};
     }
     if (property.owner) {
         if (*property.owner != ctx.actor_slot) {
-            // NEW 7C6640: mode 3 enters LABEL_123 and returns without ordinary-mode
-            // rent. Kind 16 alone has opponent deity effects, handled separately.
-            if (property.building.kind==16) return {};
+            // NEW 7C6640 mode3 has no rent. Temple duration changes are committed
+            // by the turn owner against its authoritative NPC clock.
             Bytes stop;
             append_le(stop,0x4013,2); append_le(stop,game_id_,2);
             append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
+            if(property.building.kind==16) return temple_result(ctx,property.building,false,{std::move(stop)});
             return RichonlineLandingResult{{std::move(stop)},RichonlineLandingProgress::complete};
         }
         return owned_land(ctx,property);
@@ -124,6 +172,11 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
         }
     }
     return result;
+}
+void RichonlineBossProperty::enable_temple_possession(std::uint8_t maximum_days,bool aura_summons) {
+    if(!maximum_days || maximum_days>127) throw CodecError("richonline_temple_maximum_invalid");
+    temple_maximum_=maximum_days;
+    temple_aura_summons_=aura_summons;
 }
 void RichonlineBossProperty::enable_human_decisions(std::chrono::milliseconds timeout,Now now) {
     if (timeout.count() <= 0 || !now || deadline_) throw CodecError("richonline_property_timeout_invalid");

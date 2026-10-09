@@ -325,8 +325,8 @@ void three_channel_tcp_isolation(const std::filesystem::path& root) {
         return response;
     };
     check(channel_document().find("channelsum=3\n")!=std::string::npos,"runtime_http_catalog_not_wired");
-    const auto enter=[&](Peer& peer,std::uint32_t actor,std::uint32_t channel) {
-        peer.send({34,words({actor})}); check(peer.until(70).payload==words({actor}),"selection_not_confirmed");
+    const auto enter=[&](Peer& peer,std::uint32_t actor,std::uint32_t channel,bool select_role=true) {
+        if(select_role) { peer.send({34,words({actor})}); check(peer.until(70).payload==words({actor}),"selection_not_confirmed"); }
         peer.send({7,words({channel})});
         const auto identity=peer.receive();
         check(identity.wire_type==9 && read_le(View(identity.payload).subspan(4,4))==channel,"wrong_channel_identity");
@@ -349,7 +349,7 @@ void three_channel_tcp_isolation(const std::filesystem::path& root) {
     };
     Peer a(port,11,"channel0"); check(enter(a,id0,0)==0,"channel0_initial_rooms_wrong");
     Peer b(port,13,"channel1"); check(enter(b,id1,1)==0,"channel1_initial_rooms_wrong");
-    a.send({3,room_request()}); check(a.receive().wire_type==10,"other_channel_profile_leaked");
+    a.send({3,room_request()}); const auto created_a=a.receive(); check(created_a.wire_type==10,"other_channel_profile_leaked");
     b.send({3,room_request()}); check(b.receive().wire_type==10,"other_channel_room_leaked");
     Peer c(port,17,"channel2"); check(enter(c,id2,2)==0,"other_channel_snapshot_leaked");
     Peer observer(port,19,"watcher"); check(enter(observer,watcher,1)==1,"same_channel_snapshot_missing");
@@ -362,6 +362,23 @@ void three_channel_tcp_isolation(const std::filesystem::path& root) {
     b.send({10,words({8})});
     check(b.receive().wire_type==18 && observer.receive().wire_type==18,"same_channel_character_update_missing");
     c.send({3,room_request()}); check(c.receive().wire_type==10,"other_channel_character_leaked");
+    // Reproduce leaving a room and choosing a channel from the room list on
+    // the same authenticated socket. The former live binary closed C2S8.
+    a.send({6,words({1})});
+    verify_pair(a.until(14),id0,read_le(View(created_a.payload).first(4)));
+    check(a.receive().wire_type==57,"room_list_transition_missing_removal");
+    a.send({8,words({0})});
+    const auto left=a.receive();
+    check(left.wire_type==16 && left.payload.empty(),"channel_switch_missing16_or_closed_socket");
+    for(const auto destination:std::array<std::uint32_t,4>{2,0,2,0}) {
+        check(enter(a,id0,destination,false)==(destination==2?1U:0U),"channel_switch_stale_room_snapshot");
+        if(destination==2) check(c.receive().wire_type==7,"channel_switch_new_presence_missing");
+        a.send({8,words({0})});
+        const auto acknowledgement=a.receive();
+        check(acknowledgement.wire_type==16 && acknowledgement.payload.empty(),"repeated_channel_switch_closed_socket");
+        if(destination==2) check(c.receive().wire_type==55,"channel_switch_old_presence_retained");
+    }
+    check(enter(a,id0,0,false)==0,"channel_switch_cannot_return_without_relogin");
     a.close(); b.close(); c.close(); observer.close(); runtime.stop();
 }
 }

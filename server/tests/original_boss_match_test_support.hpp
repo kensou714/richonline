@@ -14,8 +14,8 @@ struct Fixture {
     std::shared_ptr<OriginalBossMatch> match;
     OriginalStartup expected_startup;
     explicit Fixture(OriginalBossSpawn human = {179,1}, OriginalBossSpawn boss = {123,1}, std::uint8_t attack_attempts = 0) {
-        constexpr std::string_view source = __FILE__;
-        const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+        constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+        const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
         const auto prop = load_original_prop_cards(root/"Data"/"Prop.kpd");
         std::set<std::int16_t> known;
         for (const auto& card : prop.cards) known.insert(card.id);

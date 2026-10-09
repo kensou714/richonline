@@ -155,15 +155,29 @@ RichonlineNpcSpawnResult RichonlineNpcSpawner::finish_round(RichonlineGroundObje
     if(!ground.commit(before,batch.after)) throw CodecError("richonline_ground_stale");
     random_=batch.random; last_round_=identity; return std::move(batch.result);
 }
+std::optional<std::uint8_t> plan_richonline_temple_duration(std::uint8_t turns,
+    bool extend,std::int32_t days,std::uint8_t maximum) {
+    if(!maximum || maximum>127) throw CodecError("richonline_temple_maximum_invalid");
+    const auto signed_byte=[](std::uint8_t value) {return value<128 ? static_cast<int>(value) : static_cast<int>(value)-256;};
+    if(extend) {
+        if(days<=0) return turns;
+        const auto added=static_cast<std::uint8_t>(static_cast<std::uint32_t>(turns)+static_cast<std::uint32_t>(days));
+        return signed_byte(added)>maximum ? maximum : added;
+    }
+    if(days<=0) return {};
+    const auto reduced=static_cast<std::uint8_t>(static_cast<std::uint32_t>(turns)-static_cast<std::uint32_t>(days)-1U);
+    return signed_byte(reduced)>0 ? std::optional{reduced} : std::nullopt;
+}
 RichonlinePossessionTick tick_richonline_possession(const RichonlinePossessionClock& clock,
     const RichonlineActorStatus& status,std::uint64_t identity) {
-    if(identity==0 || clock.npc!=status.possession || (clock.npc && (clock.turns==0 || clock.turns>127)) ||
+    if(identity==0 || clock.npc!=status.possession ||
         (!clock.npc && clock.turns!=0)) throw CodecError("richonline_possession_clock_invalid");
     if(clock.last_actor_turn && identity<*clock.last_actor_turn) throw CodecError("richonline_possession_turn_out_of_order");
     if(clock.last_actor_turn==identity) return {clock,status,{},true};
     RichonlinePossessionTick result{clock,status,{},false}; result.clock.last_actor_turn=identity;
-    if(result.clock.npc && --result.clock.turns==0) {
+    if(result.clock.npc && (--result.clock.turns==0 || result.clock.turns>127)) {
         result.expired=result.clock.npc; result.clock.npc.reset(); result.status.possession.reset();
+        result.clock.turns=0;
     }
     return result;
 }

@@ -6,6 +6,7 @@
 #include "richonline_construction_resources.hpp"
 #include "richonline_game_ledger.hpp"
 #include "richonline_combat_session.hpp"
+#include "original_god_state.hpp"
 #include <chrono>
 #include <map>
 
@@ -23,6 +24,8 @@ public:
     bool validate_landing(const RichonlineLandingContext& context) const;
     std::optional<RichonlineLandingResult> land(const RichonlineLandingContext& context);
     void enable_human_decisions(std::chrono::milliseconds timeout,Now now);
+    // Enable only when the turn owner has an authoritative NPC clock coordinator.
+    void enable_temple_possession(std::uint8_t maximum_days,bool aura_summons=false);
     void configure_construction(std::array<std::int8_t,10> human_skills,
         std::shared_ptr<RichonlineBossCards> cards = {});
     RichonlineLandingResult decide(View request);
@@ -87,6 +90,13 @@ private:
     struct ResearchChoice { std::int16_t card; std::int8_t days; };
     struct ResearchJob { std::int16_t property; std::int8_t choice; std::int16_t card; std::int8_t days; };
     std::array<ResearchChoice,7> research_choices_{};
+    std::array<OriginalPyramidRule,7> temple_rules_{};
+    std::optional<std::uint8_t> temple_maximum_{};
+    bool temple_aura_summons_=false;
+    std::optional<RichonlineLandingContext> pending_temple_context_{};
+    bool temple_supported(const RichonlineLandingContext&,const Building&,bool friendly) const;
+    RichonlineLandingResult temple_result(const RichonlineLandingContext&,const Building&,
+        bool friendly,std::vector<Bytes> messages) const;
     std::array<std::optional<ResearchJob>,64> research_jobs_{};
     RichonlineLandingResult await_research(std::vector<Bytes> messages,std::int16_t property);
     RichonlineLandingResult complete_research(std::int8_t selection);

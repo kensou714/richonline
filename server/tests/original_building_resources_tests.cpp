@@ -80,8 +80,8 @@ void test_research_fields_and_rejections() {
     }
 }
 void test_actual_resources() {
-    constexpr std::string_view source_path = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source_path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source_path.begin(),source_path.end()));
     const auto policies = load_original_building_policies(root / "Data" / "BossWar.kpd");
     check(policies.maps.size() == 8,"original BossWar oracle has eight MAP records");
     for (std::size_t i = 0; i < policies.maps.size(); ++i) {

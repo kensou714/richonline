@@ -103,8 +103,8 @@ void failed_logging_preserves_response(const RichonlineRoadTopology& topology,co
     check(result && result->messages.size()==1 && ledger->snapshot(0).funds==RichonlineGameFunds{3000,400,5,7},
         "failed_log_lost_response_or_commit");
 }
-void no_merchant_map_gate() {
-    const auto topology=load_richonline_road_topology("../Richonline/Map/BS_1_1.emp");
+void no_merchant_map_gate(const std::filesystem::path& root) {
+    const auto topology=load_richonline_road_topology(root/"Map/BS_1_1.emp");
     check(std::none_of(topology.cells().begin(),topology.cells().end(),[](const auto& cell){return cell.static_type==57;}),
         "BS_1_1_static_set_changed");
     const auto road=std::find_if(topology.cells().begin(),topology.cells().end(),[](const auto& cell){return cell.walkable;});
@@ -135,11 +135,13 @@ void explicit_authority(const RichonlineRoadTopology& topology,const RichonlineR
         "authority_not_read_at_each_admitted_landing");
 }
 }
-int main() {
+int main(int argc,char** argv) {
     try {
-        const auto topology=load_richonline_road_topology("../Richonline/Map/BS_3_1.emp");
+        check(argc==2,"resource_root_required");
+        const std::filesystem::path root(argv[1]);
+        const auto topology=load_richonline_road_topology(root/"Map/BS_3_1.emp");
         const auto& cell=merchant_cell(topology);
-        human_exchange(topology,cell);no_exchange_paths(topology,cell);topology_gate(topology,cell);no_merchant_map_gate();
+        human_exchange(topology,cell);no_exchange_paths(topology,cell);topology_gate(topology,cell);no_merchant_map_gate(root);
         failed_logging_preserves_response(topology,cell);
         explicit_authority(topology,cell);
         std::cout<<"PASS real BS_3_1 static57 session exchange, BS_1_1 map gate, controls, and audit log\n";

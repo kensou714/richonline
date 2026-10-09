@@ -30,18 +30,24 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
         if (property.building.level>=construction_.scenario_caps.at(index) || property.building.level>=skill) {
             if(!ctx.synthetic_actor && property.building.kind==11)
                 return await_research(std::move(result.messages),ctx.property_ref);
+            if(property.building.kind==16) return temple_result(ctx,property.building,true,std::move(result.messages));
             return result;
         }
     }
     if (ctx.synthetic_actor) {
         result.messages.push_back(empty ? richonline_construction_response(game_id_,construction_.default_kind) :
             richonline_upgrade_response(game_id_,true));
+        if(!empty && property.building.kind==16) {
+            auto upgraded=property.building;++upgraded.level;
+            result=temple_result(ctx,upgraded,true,std::move(result.messages));
+        }
         if (empty) property.building.kind=construction_.default_kind;
         ++property.building.level;
         ++property_revision_;
     } else {
         deadline_=now_()+timeout_;
         pending_property_=ctx.property_ref;
+        if(!empty && property.building.kind==16) pending_temple_context_=ctx;
         decision_=empty ? Decision::construction : Decision::upgrade;
         result.progress=RichonlineLandingProgress::await_event;
         result.pending_opcode=empty ? 0x37 : 0x38;
@@ -83,10 +89,15 @@ RichonlineLandingResult RichonlineBossProperty::complete_upgrade(bool accept) {
     const bool upgrade=accept && property.owner==0 && property.building.level>0 &&
         property.building.level<construction_.scenario_caps.at(index) && property.building.level<human_skills_.at(index);
     RichonlineLandingResult result{{richonline_upgrade_response(game_id_,upgrade)},RichonlineLandingProgress::complete};
+    if(property.building.kind==16) {
+        if(!pending_temple_context_) throw CodecError("richonline_temple_upgrade_context_missing");
+        auto building=property.building;if(upgrade) ++building.level;
+        result=temple_result(*pending_temple_context_,building,true,std::move(result.messages));
+    }
     if (upgrade) { ++property.building.level; ++property_revision_; }
     if(property.building.kind==11)
         return await_research(std::move(result.messages),*pending_property_);
-    deadline_.reset(); pending_property_.reset();
+    deadline_.reset(); pending_property_.reset(); pending_temple_context_.reset();
     return result;
 }
 RichonlineLandingResult RichonlineBossProperty::await_research(std::vector<Bytes> messages,std::int16_t property) {

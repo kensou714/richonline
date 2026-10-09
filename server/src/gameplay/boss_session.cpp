@@ -9,6 +9,8 @@
 #include "richonline_opening_hand.hpp"
 #include "richonline_mine_landing_policy.hpp"
 #include "richonline_portal_landing.hpp"
+#include "original_game_values.hpp"
+#include "richonline_research_cards.hpp"
 #include <algorithm>
 
 namespace richnet {
@@ -211,7 +213,10 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     }
     rules.ground=ground;
     rules.ground_card_visible=policy.ground_card_visible;
-    if (policy.npcs || policy.combat) {
+    if(rules.cards && ground && policy.ground_card_visible && chance &&
+        chance->automatic_card_eligible(stage.map_name,1181))
+        rules.ice_traps=std::make_shared<const RichonlineResearchTrapRules>(RichonlineResearchTrapRules::load(resources));
+    if (policy.npcs || policy.combat || rules.ice_traps) {
         if (!rules.cards || !chance) throw CodecError("richonline_npc_cards_required");
         // Validate the continuation before an NPC changes ground occupancy,
         // cards, possession or funds. This is a capability check, not a
@@ -244,6 +249,17 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         };
     }
     if (policy.npcs) {
+        const auto maximum=load_original_game_values(resources/"Data/GValue.kpd").require(37);
+        if(maximum<1 || maximum>127) throw CodecError("richonline_temple_maximum_invalid");
+        auto npc_policy=*policy.npcs;
+        const bool aura=rules.terminal && policy.hibernate_raw_actor;
+        if(aura) {
+            rules.npc_aura=RichonlineNpcAuraRules::load(resources);
+            rules.npc_aura_raw_actor=policy.hibernate_raw_actor;
+            npc_policy.temple_aura_affix=std::array{load_richonline_npc_affix(resources,4),
+                load_richonline_npc_affix(resources,6)};
+        }
+        property->enable_temple_possession(static_cast<std::uint8_t>(maximum),aura);
         // NEW112 sends no viewport or god position. The client checks its own
         // viewport; this explicit server policy chooses among present map gods.
         rules.npc_summon_candidates=[ground](const RichonlineLandingContext&) {
@@ -252,7 +268,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         rules.npcs=std::make_shared<RichonlineNpcSession>(startup.init.game_server_id,stage.map_name,
             RichonlineNpcRules::load(resources),chance,
             std::make_shared<const RichonlineChanceEventTable>(RichonlineChanceEventTable::load(resources)),
-            ledger,rules.cards,ground,*policy.npcs);
+            ledger,rules.cards,ground,std::move(npc_policy));
     }
     if (policy.combat) {
         if (!rules.cards || !rules.terminal || !startup.human_profile_slots || !package.combat)
@@ -280,6 +296,14 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             (std::uint8_t actor,const RichonlineActorStatus& status) {
             return capabilities(actor,status,true);
         };
+    }
+    if(rules.combat && rules.terminal && rules.cards && ground && policy.ground_card_visible && chance &&
+        chance->automatic_card_eligible(stage.map_name,1183))
+        rules.fire_traps=std::make_shared<const RichonlineFireTrapRules>(RichonlineFireTrapRules::load(resources));
+    if(rules.combat && rules.terminal && rules.cards && policy.hibernate_raw_actor && chance &&
+        chance->automatic_card_eligible(stage.map_name,1182)) {
+        rules.poison=std::make_shared<const RichonlinePoisonRules>(RichonlinePoisonRules::load(resources));
+        rules.poison_raw_actor=policy.hibernate_raw_actor;
     }
     if (policy.timed_bombs) {
         if (!rules.combat || !rules.cards || !policy.timed_bombs->resources ||

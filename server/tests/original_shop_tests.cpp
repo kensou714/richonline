@@ -97,8 +97,8 @@ void paid_refresh_and_fixed_deadline() {
     check(denied.closed && denied.account_charge == 0 && poor.wallet().account_reserve == 4,"insufficient account reserve does not charge");
 }
 void synthesis_and_actual_resources() {
-    constexpr std::string_view path = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(path.begin(),path.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view path = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(path.begin(),path.end()));
     const auto props = load_original_prop_cards(root/"Data"/"Prop.kpd");
     const auto map = original_map_resources(load_original_emp(root/"Map"/"BS_1_1.emp"),10);
     const auto combinations = std::make_shared<OriginalCardCombinations>(load_original_card_combinations(root/"Data"/"CombCard.kpd"));

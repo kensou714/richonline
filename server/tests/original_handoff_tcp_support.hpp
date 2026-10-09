@@ -38,8 +38,8 @@ inline void bootstrap(const std::filesystem::path& path) {
         {"login_template_hex",16},{"identity_template_hex",16},{"bank_template_hex",32},{"completion_template_hex",28}})
         config[key] = std::string(size*2,'a');
     config["bank_template_hex"] = original_bank_test::config_hex;
-    constexpr std::string_view source = __FILE__;
-    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end())).parent_path().parent_path().parent_path();
+    constexpr std::u8string_view source = RICHONLINE_LEGACY_RESOURCE_ROOT;
+    const auto root = std::filesystem::path(std::u8string(source.begin(),source.end()));
     const auto options = (root/"Data"/"Option.kpd").u8string();
     const auto maps = (root/"protocol-analysis"/"board-startup"/"maps"/"index.json").u8string();
     config["client_options_path"] = std::string(options.begin(),options.end());

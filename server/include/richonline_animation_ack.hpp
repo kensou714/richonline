@@ -1,7 +1,6 @@
 #pragma once
 
 #include "codec.hpp"
-#include <bitset>
 #include <chrono>
 
 namespace richnet {
@@ -17,6 +16,8 @@ struct RichonlineAnimationAckGates {
     bool player1499;
 };
 struct RichonlineAnimationAckContext {
+    // Captured by the owner when dispatching input, never decoded from wire21.
+    std::uint64_t event_token;
     std::uint64_t turn_sequence;
     RichonlineAnimationAckGates gates;
 };
@@ -40,9 +41,10 @@ struct RichonlineAnimationAckResult {
 // One instance per authenticated connection/game lifetime, never shared across games.
 // The caller registers only a proven ACK-producing transition, before exposing it
 // to the client, and supplies authoritative current context on receive.
-// Wire21 cannot distinguish animations with the same counter. Consequently each
-// 16-bit counter may be registered only once in this instance, even after wrap.
-// A fresh local epoch/sequence cannot authenticate a reused wire counter.
+// Experimental, not wired into Turns. Wire21 cannot distinguish repeated bytes
+// for two same-counter events. The owner must serialize triggers/completions on
+// one ordered connection, and establish that the client emits one ACK per event.
+// event_token protects stale server callbacks; it does NOT authenticate wire21.
 class RichonlineAnimationAck final {
 public:
     using Clock=std::chrono::steady_clock;
@@ -56,8 +58,13 @@ public:
     bool closed() const noexcept { return closed_; }
 private:
     std::optional<RichonlineAnimationAckTransition> pending_;
+    struct Retired {
+        RichonlineAnimationAckTransition transition;
+        RichonlineAnimationAckDisposition disposition;
+    };
+    std::optional<Retired> retired_;
     std::optional<std::uint64_t> last_turn_;
-    std::bitset<65536> registered_,completed_;
+    std::uint64_t last_token_=0;
     bool closed_=false;
 };
 }

@@ -21,12 +21,15 @@ void run(const std::filesystem::path& root) {
     const RichonlineBossCardPolicy policy{"BS_1_1.emp",17,1038,{0xa5,0x5a}};
     for (const auto* package:catalog) {
         check(package && names.emplace(package->special_category,package->map_name).second,"catalog_identity_duplicate");
-        check(package->closed_chance.has_value()==(package->map_name=="BS_1_1.emp"),
+        const bool configured=package->map_name=="BS_1_1.emp" || package->map_name=="BS_1_2.emp" ||
+            package->map_name=="BS_1_3.emp" || package->map_name=="BS_1_4.emp" || package->map_name=="V_BS_1_1.emp";
+        check(package->closed_chance.has_value()==configured,
             "unopened_map_inherited_closed_chance_policy");
-        check(package->closed_npcs.has_value()==(package->map_name=="BS_1_1.emp"),
+        check(package->closed_npcs.has_value()==configured,
             "unopened_map_inherited_closed_npc_policy");
-        check(package->combat.has_value()==(package->map_name=="BS_1_1.emp") &&
-            package->opening_hand.has_value()==(package->map_name=="BS_1_1.emp"),"unopened_map_inherited_combat_or_hand");
+        check(package->combat.has_value()==configured &&
+            package->opening_hand.has_value()==configured,"unopened_map_inherited_combat_or_hand");
+        check(package->runtime_enabled==(configured && package->map_name!="BS_1_3.emp"),"runtime_gate_wrong");
         const auto category=package->special_category ? 2U : 0U;
         check(&find_richonline_map_package(package->map_name,category)==package,"catalog_lookup_not_exact");
         const auto stage=package->load_stage(root,category);
@@ -34,7 +37,7 @@ void run(const std::filesystem::path& root) {
         check(stage.map_name==package->map_name && stage.category==category &&
             stage.map_id==read_le(View(map.header).subspan(23300,4)) && stage.signature==map.signature,
             "catalog_resource_metadata_mismatch");
-        if (package->map_name!="BS_1_1.emp" && package->map_name!="V_BS_1_1.emp") {
+        if (!configured) {
             check(!package->runtime_enabled && !package->chance_event && !package->reward_card,
                 "unimplemented_map_inherited_runtime_or_reward");
             rejects([&] { package->configure(policy); },"richonline_map_chance_policy_unimplemented");
