@@ -1,0 +1,377 @@
+{
+  "sources": [
+    "functions_raw.json"
+  ],
+  "counts": {
+    "部分分析": 5,
+    "局部语义已审阅": 13,
+    "复用已有审阅": 4
+  },
+  "functions": [
+    {
+      "va": "0x623ad0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "只核启动播种局部：623AD5 time(NULL)后623ADE srand(EAX)。",
+      "unknown": "后续IME、文字与输出器初始化引用事件文字记录器专题；不在此重复完成整个启动语义。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x695010",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "读取[对象+12]为数据指针，按index*2加载AX；retn4。",
+      "unknown": "上半EAX非返回契约；7ECA40明确movsx EAX,AX取得有符号short。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x695010",
+          "end_va": "0x695031",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x695040",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "读取入口ECX对象+0 DWORD，供7ECA40作为元素数量。",
+      "unknown": "该getter本身无范围检查；完整容器类型名未恢复。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x695040",
+          "end_va": "0x695057",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x6aa530",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "复用已有审阅",
+      "conclusion": "复用游戏时间与计时调度：timeGetTime播种，再按分支容器count取模选择。",
+      "unknown": "此专题补状态耦合边界；不增加既有函数审阅数。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x7d83d0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "先rand，再以机器32位b-a+1作有符号IDIV除数，返回a+余数；不检查倒序、宽度溢出或零除。",
+      "unknown": "外部仅一个未声明函数调用点7B2CBB；本批没有证明实机传入非法边界。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x7d83d0",
+          "end_va": "0x7d83f2",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x7e1420",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "保存ECX对象；rand经IDIV[对象+156]取余，读取[对象+160]+4*余数的DWORD。",
+      "unknown": "未确认数组元素业务类型；不证明调用者保证count>0和数组有效。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x7e1420",
+          "end_va": "0x7e1457",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x7e20a0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "入口ECX保存为this；最多执行有符号arg0次取样；前4过滤调用用this，第5用[this]作ECX；均看AL。全通过返回样本，否则到上限返回-1。",
+      "unknown": "本包装与取样器未显式移除元素；过滤器不改集合时可重复取样，外部副作用未闭合。过滤业务、完整this类及集合初始化未闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x7e20a0",
+          "end_va": "0x7e2161",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x7eca40",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "rand后以this+0x45C的count getter取除数；同一成员按余数索引读word，movsx为有符号short。",
+      "unknown": "本函数没有count=0保护、没有检查数据指针、没有过滤负short值。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x7eca40",
+          "end_va": "0x7eca8c",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x80e6b0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "复用已有审阅",
+      "conclusion": "复用股票与交易流程：float(rand%601-300)/100；本批补32768输出集合的取模基数。",
+      "unknown": "不宣称线上权威定价；二进制浮点不能保证每个百分之一精确表示。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x80e710",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "复用已有审阅",
+      "conclusion": "复用股票与交易流程：float(rand%1401-700)/100；本批补映射偏差。",
+      "unknown": "有效业务调用者仍依原专题边界，不套用到服务端行情。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x81f950",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "复用已有审阅",
+      "conclusion": "复用音频系统：音乐初始化成功路径81FA75 timeGetTime，81FA83重播种。",
+      "unknown": "同一CRT存储槽内会重置其它消费者序列；是否同线程/同fiber执行未由静态图确认。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x911ab0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "只核WM_INITDIALOG分支随机定位：time播种，rand分别取模父窗口尺寸减计算出的目标对话框宽高，再叠加父左上坐标给MoveWindow。目标宽高ACC41C+4388/+4384来自非客户区差值加布局虚表+32返回尺寸。",
+      "unknown": "整个对话框类/提交结果未闭合；余量为0时函数内无IDIV保护，但未证明实机可触发。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x913e90",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "只核输入后显示随机串：914090 time播种，按this+400真实文本长度生成rand%62字母数字串；发0xCC设置*掩码，再0x0C写显示文本。",
+      "unknown": "原文字仍在this+400；不把随机显示串误记为加密密码、挑战码或认证协议。其余按键处理未完整审阅。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x914220",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "只核另一输入处理尾部同样time播种、按真实文本长度生成62字符表随机串，更新显示控件。",
+      "unknown": "保存入口ECX的EBP在优化汇编中是对象基址；其余按键/焦点行为不宣称已完整闭合。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x9157f0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "部分分析",
+      "conclusion": "只核布局中的time播种及两处rand%16+10，结果作slot+36布局调用的宽度参数；Lower/Upper两组控件。",
+      "unknown": "大函数完整原证已导出，但构造/容器增长/异常清理和整套界面语义未逐函数群闭合。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x9208a0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "取得当前CRT存储块，直接把32位Seed写+20；种子0没有特殊处理。",
+      "unknown": "存储块由930960提供；不把该状态称作全进程全局随机种子。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9208a0",
+          "end_va": "0x9208b0",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9208c0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "从CRT块+20读取state，低32位乘214013并加2531011，写回；逻辑右移16并与0x7FFF返回。",
+      "unknown": "没有系统熵源、没有网络输入、没有在本函数加锁。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9208c0",
+          "end_va": "0x9208f6",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x930750",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "__crtTlsAlloc包装只调用TlsAlloc；不使用传入FLS callback，retn4清理参数。",
+      "unknown": "TLS回退本身不提供FLS自动回调语义；线程退出清理链需另核。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x930750",
+          "end_va": "0x93075d",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x930760",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "先mtinitlocks，动态查询kernel32四个Fls API；FlsGetValue缺失时选择TLS四入口。分配槽及0x8C块、设置成功后initptd与线程字段；失败走mtterm返回0。",
+      "unknown": "只在GetModuleHandleA成功分支进行FLS缺失回退；不能声称所有异常API环境都有完整兜底。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x930760",
+          "end_va": "0x9308a6",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x930940",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "初始化CRT块+84为A69ED8、+20种子为1。",
+      "unknown": "A69ED8具体运行库表语义未展开；这不是完整0x8C结构恢复。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x930940",
+          "end_va": "0x930959",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x930960",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "保存GetLastError；间接FLS/TLS get，空时calloc_dbg(1,0x8C)，设置槽后initptd，+0线程ID、+4=-1；分配/设置失败amsg_exit(16)。正常返回恢复LastError。",
+      "unknown": "间接函数指针由930760选择，不能只凭名字固定为FLS；终止处理和分配器内部未审。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x930960",
+          "end_va": "0x9309fb",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x930d40",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json"
+      ],
+      "review_status": "局部语义已审阅",
+      "conclusion": "索引不是-1时，以实参或当前槽值调用_freefls，再把当前槽置空；索引-1时不操作。",
+      "unknown": "_freefls外部多字段资源清理未在本专题完整审阅；不能把它描述成只清随机种子。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x930d40",
+          "end_va": "0x930d7b",
+          "is_main": true
+        }
+      ]
+    }
+  ],
+  "scope": "13项完整本函数局部语义；5项只审播种/取样局部；4项已有审阅复用"
+}

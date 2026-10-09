@@ -117,7 +117,11 @@ std::optional<RichonlineRoomSnapshot> RichonlineRoomDirectory::ready_game(std::u
     for (const auto& item : room.peers) snapshot.participants.push_back(item.second);
     return snapshot;
 }
-void RichonlineRoomDirectory::set_game_pending(std::uint64_t connection, bool pending) { room_for_peer(connection).game_pending = pending; }
+void RichonlineRoomDirectory::set_game_pending(std::uint64_t connection, bool pending) {
+    auto& room=room_for_peer(connection);
+    if(pending && room.vote.active()) throw CodecError("richonline_room_vote_active");
+    room.game_pending=pending;
+}
 bool RichonlineRoomDirectory::game_pending(std::uint64_t connection) const {
     const auto key=room_key(connection);
     return key && rooms_.at(*key).game_pending;
@@ -151,10 +155,12 @@ std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::select_character(
         throw CodecError("richonline_character_selection_while_ready");
     auto response = broadcast(scalars(18, {observer->second.actor, character}));
     persist();
+    auto result=cancel_vote(room);
     auto& profile = observer->second.profile.payload;
     for (std::size_t i = 0; i < 4; ++i) profile[40+i] = static_cast<std::uint8_t>(character >> (i*8));
     log("room_character_selected key=" + std::to_string(room.key));
-    return response;
+    append(result,std::move(response));
+    return result;
 }
 std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::enter(std::uint64_t connection, std::uint32_t actor, Frame profile) {
     if (observers_.contains(connection)) throw CodecError("richonline_channel_already_entered");
@@ -302,7 +308,8 @@ std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::select_team(std::ui
     auto& room=room_for_peer(connection);
     auto& peer=room.peers.at(connection);
     if(room.game_pending||peer.ready) throw CodecError("richonline_room_team_while_ready");
-    auto result=broadcast(encode_richonline_room_team17(peer.actor,team));
+    auto result=cancel_vote(room);
+    append(result,broadcast(encode_richonline_room_team17(peer.actor,team)));
     peer.team=team;
     profile_location(connection,room.key,team);
     log("room_team_selected key="+std::to_string(room.key)+" team="+std::to_string(team));
@@ -355,6 +362,11 @@ std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::resolve_vote(const 
         if(observer!=observers_.end() && observer->second.actor==member.actor)
             result.push_back({member.connection,result_frame});
     }
+    const auto reason=resolution.reason==RichonlineVoteEnd::complete?"complete":
+        resolution.reason==RichonlineVoteEnd::timeout?"timeout":"room_changed";
+    log("room_vote_resolved key="+std::to_string(resolution.scope.room)+" reason="+reason+
+        " agree="+std::to_string(resolution.agree)+" oppose="+std::to_string(resolution.oppose)+
+        " abstain="+std::to_string(resolution.abstain));
     if(!resolution.approved()) return result;
     auto& room=rooms_.at(resolution.scope.room);
     // Poll/reply checked the electorate under the directory owner's lock. Map

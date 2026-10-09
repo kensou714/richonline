@@ -63,6 +63,8 @@ def main():
         unrecognized_code_ranges=coverage.get('unrecognized_code_ranges', []),
         unrecognized_range_reviews=review_data.get('unrecognized_range_reviews', []),
         unrecognized_range_action='另行核验函数边界/控制流；不能静默并入29019入口或标已分析',
+        navigation_windows=coverage.get('navigation_windows', []),
+        navigation_window_action='人工划定原字节窗口，与声明函数和已命名未声明范围分别保留',
         next_candidates=[row['va'] for row in order[:100]], functions=rows)
     (ROOT / 'followup_queue.json').write_text(json.dumps(result, ensure_ascii=False, indent=2),
                                            encoding='utf-8')

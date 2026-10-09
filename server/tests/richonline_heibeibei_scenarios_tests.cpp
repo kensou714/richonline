@@ -387,24 +387,27 @@ int main(int argc,char** argv) {
                     require(attempt.disposition==RichonlineChanceLandingDisposition::prepared && attempt.prepared.has_value(),"chance_color_has_no_closed_event");
                 }
             }
-            if(!package.runtime_enabled) {
-                require(level==3,"unexpected_disabled_scenario");
-                std::cout<<Json{{"event","resource_only_runtime_gated"},{"map",name},
-                    {"reason","opponent_prebuilt_temple_kind16_requires_shared_landing_handler"}}.dump()<<'\n';
-                continue;
-            }
             const auto fixture=output/(name+"-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".sqlite3");
             Storage storage(fixture,ClientProfile::richonline);
             const auto actor=storage.dispatch("accounts.create",{{"username","multi-fixture"},{"password","local-only"}}).at("account").at("role_id").get<std::uint32_t>();
             Totals totals;std::optional<std::uint16_t> pending_property;
+            unsigned opponent_properties=0,temple_landings=0,graceful_exits=0;
             std::vector<Json> diagnostics;
+            std::ofstream trace(output/(name+".trace.jsonl"));require(trace.good(),"trace_open_failed");
             auto runtime=load_richonline_boss_runtime(storage,bootstrap,[&](const std::string& event,const Json& values) {
-                if(event=="richonline_property_landed" && values.at("pending_opcode").get<unsigned>()!=0)
-                    pending_property=values.at("pending_opcode").get<std::uint16_t>();
-                if(values.value("level","")=="warning")diagnostics.push_back({{"event",event},{"values",values}});
+                if(event=="richonline_property_landed") {
+                    if(values.at("pending_opcode").get<unsigned>()!=0)
+                        pending_property=values.at("pending_opcode").get<std::uint16_t>();
+                    const auto owner=values.at("owner").get<unsigned>();
+                    if(owner<2 && owner!=values.at("actor_slot").get<unsigned>()) ++opponent_properties;
+                    if(values.at("building_kind")==16) ++temple_landings;
+                    trace<<Json{{"event",event},{"values",values}}.dump()<<'\n';
+                }
+                const bool expected_cleanup=event=="richonline_terminal_cleanup" && values.value("reason","")=="game_connection_closed";
+                if(values.value("level","")=="warning" && !expected_cleanup)
+                    diagnostics.push_back({{"event",event},{"values",values}});
             });
             require(runtime.has_value(),"runtime_not_loaded");
-            std::ofstream trace(output/(name+".trace.jsonl"));require(trace.good(),"trace_open_failed");
             const auto prebuilt_count=std::count_if(rules.properties.properties.begin(),rules.properties.properties.end(),
                 [](const auto& property){return property.level>0;});
             require(prebuilt_count==2,"prebuilt_count_changed");
@@ -412,11 +415,19 @@ int main(int argc,char** argv) {
                 {"human_cash",rules.stage.human.cash},{"events",news.size(name)},{"closed_events",chance_policy.entries.size()},
                 {"playable_reward_cards",cards.tile_reward_cards()},{"prebuilt_count",prebuilt_count},{"source_card_rows",rules.card_weights.size()}}.dump()<<'\n';
             for(unsigned session=0;session<3;++session) {
+                const auto losses_before=storage.roles_for_username("multi-fixture").at(0).at("losses").get<std::uint32_t>();
                 auto plans=runtime->provider(19001,make_room(resources,actor,name));require(plans.size()==1,"missing_plan");
                 auto transport=std::make_unique<TcpPlan>(plans.front());
                 Driver driver{transport->facade,rules.topology,totals,pending_property,combat,trace,storage,actor,news,name,status};
                 driver.positions={rules.conservative_spawns->at(0).position,rules.conservative_spawns->at(1).position};
-                try {driver.run(160,static_cast<std::uint8_t>(rules.stage.boss.max_dice));}
+                try {
+                    driver.run(level==3?320U:160U,static_cast<std::uint8_t>(rules.stage.boss.max_dice));
+                    if(!driver.terminal) {
+                        driver.send(Bytes{0x0a,0x00});
+                        require(driver.has(0x4006),"map_graceful_leave_ack_missing");
+                        ++graceful_exits;
+                    }
+                }
                 catch(const std::exception& error) {
                     std::cerr<<Json{{"event","driver_failed"},{"map",name},{"session",session},{"calendar",driver.calendar},
                         {"actor",driver.actor},{"positions",driver.positions},{"last_request",driver.last_request},
@@ -425,11 +436,17 @@ int main(int argc,char** argv) {
                     transport.reset();plans.front().disconnected();throw;
                 }
                 transport.reset();plans.front().disconnected();
-                if(driver.terminal)require(storage.pending_game_settlements("multi-fixture",actor).empty(),"terminal_database_outbox_pending");
+                if(!driver.terminal)
+                    require(storage.roles_for_username("multi-fixture").at(0).at("losses").get<std::uint32_t>()==losses_before+1,
+                        "map_graceful_leave_loss_not_exactly_once");
+                require(storage.pending_game_settlements("multi-fixture",actor).empty(),"terminal_database_outbox_pending");
                 std::cout<<Json{{"event","session_complete"},{"map",name},{"session",session},{"terminal",driver.terminal},{"totals",totals.json()}}.dump()<<'\n';
             }
             require(totals.turns>=40 && totals.attacks>0 && totals.controlled_cards>0 && totals.selected_dice>=3,"insufficient_map_runtime_coverage");
+            require(totals.returns+graceful_exits==3 && opponent_properties>0,"map_exit_or_opponent_property_coverage_missing");
+            require(diagnostics.empty(),"map_runtime_warnings");
             std::cout<<Json{{"event","map_pass"},{"map",name},{"transport","encrypted GameService TCP"},{"totals",totals.json()},
+                {"opponent_property_landings",opponent_properties},{"temple_landings",temple_landings},{"graceful_exits",graceful_exits},
                 {"database",utf8(fixture)},{"client_ui_verified",false},{"live_data_touched",false}}.dump()<<'\n';
         }
     } catch(const std::exception& error) {std::cerr<<"FAIL "<<error.what()<<'\n';return 1;}

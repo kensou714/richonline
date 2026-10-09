@@ -30,13 +30,22 @@ def main():
     machine.mem_map(STOP, 0x1000)
     visited = set()
     state = dict(check=False)
+    tables = json.loads((HERE / '证据/跳表原证.json').read_text(encoding='utf-8'))['tables']
+    table_slots = {int(t['va'],16)+offset for t in tables for offset in range(0,t['size'],4)}
     def on_code(uc, address, size, _):
         if 0x9213A0 <= address < 0x921AED:
             visited.add(address)
     def on_memory(uc, access, address, size, value, _):
-        if state['check'] and DATA <= address < DATA + 0x10000:
-            start = state['src'] if access == unicorn.UC_MEM_READ else state['dst']
-            assert start <= address and address + size <= start + state['n'], (hex(address), size, state)
+        if not state['check']:
+            return
+        reading = access == unicorn.UC_MEM_READ
+        start = state['src'] if reading else state['dst']
+        in_data = start <= address and address + size <= start + state['n']
+        # 核心只压入EBP/EDI/ESI三个DWORD；读允许保存寄存器、返回地址及三参数。
+        in_stack = (size == 4 and address % 4 == 0 and
+                    esp - 12 <= address and address + size <= esp + (16 if reading else 0))
+        in_table = reading and size == 4 and address in table_slots
+        assert in_data or in_stack or in_table, (hex(address),size,access,state)
     machine.hook_add(UC_HOOK_CODE, on_code)
     machine.hook_add(UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, on_memory)
     esp = STACK + 0x8000
@@ -73,7 +82,9 @@ def main():
                     count += 1
         # 零长度允许未映射指针；本实现不得解引用它们。
         for src, dst in [(0,0), (1,2), (0xFFFFFFFC, 0xFFFFFFFE)]:
+            state.update(check=True, src=src, dst=dst, n=0)
             eax, df = invoke(entry, [dst, src, 0])
+            state['check'] = False
             assert eax == dst and df == 0
             count += 1
         counts[hex(entry)] = count
@@ -102,21 +113,24 @@ def main():
     # 非ABI输入只作边界反证：无REP的小复制不清DF；正向REP依赖调用方DF=0。
     df_probes = []
     for entry in (0x9213A0,0x9217B0):
-        for n,delta in [(0,64),(3,64),(32,64),(32,1),(64,1)]:
+        for n,delta,expected_df,expected_equal in [(0,64,1,True),(3,64,1,True),
+                                                   (32,64,1,False),(32,1,1,True),(64,1,0,True)]:
             src,dst=DATA+0x2200,DATA+0x2200+delta
             machine.mem_write(DATA,arena)
             expected=bytearray(arena)
             expected[dst-DATA:dst-DATA+n]=arena[src-DATA:src-DATA+n]
             eax,df=invoke(entry,[dst,src,n],df=1)
+            equal = machine.mem_read(DATA,len(arena)) == expected
+            assert eax == dst and df == expected_df and equal == expected_equal
             df_probes.append(dict(entry=hex(entry),n=n,delta=delta,df_in=1,df_out=df,
-                                  bytes_equal=machine.mem_read(DATA,len(arena))==expected,returned_dst=eax==dst))
+                                  bytes_equal=equal,returned_dst=eax==dst))
     result = dict(engine='Unicorn '+unicorn.__version__, scope='原机器码离线仿真；非游戏实机',
                   disk_sha256=hashlib.sha256(blob).hexdigest(), copy_cases=counts,
                   copy_total=sum(counts.values()), erase_cases=erase_count, lengths=LENGTHS,
                   src_alignment=list(range(4)), deltas=list(range(-8,9))+[-5000,5000],
-                  checked='全缓冲结果、读写区间、EAX、ESP、ESI/EDI/EBP/EBX、DF=0',
+                  checked='核心全访存白名单(精确src/dst、12B保存栈/参数读、跳表DWORD读)、全缓冲结果、EAX、ESP、ESI/EDI/EBP/EBX、DF=0；删除链检查结果与寄存器；DF反证断言',
                   df_non_abi_probes=df_probes, visited_core_addresses=[hex(x) for x in sorted(valid_visited)], errors=[])
-    (HERE / '离线仿真结果.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+    (HERE / '离线仿真结果.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8',newline='\n')
     print(json.dumps({k:v for k,v in result.items() if k not in ['visited_core_addresses','lengths']},ensure_ascii=False))
 
 

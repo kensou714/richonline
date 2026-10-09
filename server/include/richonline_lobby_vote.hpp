@@ -53,8 +53,9 @@ struct RichonlineVoteResolution {
     bool approved() const noexcept { return reason!=RichonlineVoteEnd::room_changed && agree>oppose; }
 };
 
-// One instance per channel/room. The caller serializes access and validates map
-// resources before beginning; only an approved resolution may apply the action.
+// One instance per channel/room. The caller serializes access and validates the
+// client preview layout before beginning. Gameplay admission still validates
+// resources and runtime support; approving a map never grants admission.
 class RichonlineLobbyVote final {
 public:
     using Clock=std::chrono::steady_clock;

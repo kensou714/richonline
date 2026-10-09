@@ -1,0 +1,42 @@
+// CRT随机状态与FLS/TLS边界
+// ============================================================================
+// 路径：608763 -> 9208A0 srand；60AE14 -> 9208C0 rand。
+// 二者均经602DA9 -> 930960 _getptd取运行库数据块P。
+//
+// 本批确认的P字段，完整分配大小0x8C
+//   P+0   DWORD  创建/初始化时的GetCurrentThreadId。
+//   P+4   DWORD  初始化为FFFFFFFF，正式成员名未在本批恢复。
+//   P+20  DWORD  rand状态；srand写入，rand更新，initptd设1。
+//   P+84  指针   initptd写A69ED8，具体表语义未展开。
+//   其余字段属于CRT错误、locale或其它状态，不能仅凭块大小猜结构名与用途。
+//
+// 初始化930760
+//   先mtinitlocks；失败调用mtterm并返回0。
+//   取得kernel32.dll模块后，逐个GetProcAddress查FlsAlloc/GetValue/SetValue/Free。
+//   若FlsGetValue为0，选择__crtTlsAlloc、TlsGetValue、TlsSetValue、TlsFree。
+//   __crtTlsAlloc地址桥60E519 -> 930750只调用TlsAlloc，不使用callback参数。
+//   FlsAlloc指针在ACDB34、GetValue在ACDB38；名称不能证明运行态当前目标。
+//   分配槽结果写A69D94；磁盘初始值FFFFFFFF，表示尚未分配。
+//   分配槽、calloc_dbg(1,0x8C)、SetValue全部成功才initptd，并初始化线程字段。
+//   失败走mtterm返回0。GetModuleHandleA失败分支没有同一TLS回退动作，不能夸大兜底。
+//   没有把所有Fls函数指针逐个检查；本批只描述实际的GetValue非空判定。
+//
+// 懒初始化930960
+//   先保存GetLastError，再读当前槽值；已有P直接使用。
+//   为空则分配0x8C、写入当前槽、调用930940，种子变为1。
+//   分配或写槽失败调用amsg_exit(16)；这是错误终止分支，不是返回伪随机值0。
+//   正常返回前SetLastError恢复进入时错误码；不宣称终止路径也会返回恢复。
+//
+// 存储归属
+//   当前OS支持并选中FLS时，值属于当前fiber对应槽；未用fiber时表现为线程独立。
+//   TLS回退时按当前线程槽取值；P+0记录线程ID不改变FLS本身的归属规则。
+//   不能将A69D94这个全局槽索引误当作所有线程共享的一份种子。
+//   930D40在索引有效时释放实参或当前槽P，随后把当前槽置0。
+//   下一次空槽取值重新分配并设种子1；_freefls内部多字段清理不在本批完整展开。
+//   TLS适配器忽略callback，不意味着自动获得FLS退出回调；完整线程退出链待另核。
+//
+// 状态算术
+//   9208D2 IMUL 0x343FD，9208D8 ADD 0x269EC3；x86低32位结果自然回绕。
+//   9208EA SHR 16是逻辑右移，9208ED AND 0x7FFF保证返回非负15位整数。
+//   种子0也参与相同递推；没有特殊避零，没有加密随机源。
+//   重置同一种子会重现序列；同槽其它rand消耗会改变后续位置。

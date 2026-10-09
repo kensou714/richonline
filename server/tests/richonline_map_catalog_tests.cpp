@@ -29,7 +29,7 @@ void run(const std::filesystem::path& root) {
             "unopened_map_inherited_closed_npc_policy");
         check(package->combat.has_value()==configured &&
             package->opening_hand.has_value()==configured,"unopened_map_inherited_combat_or_hand");
-        check(package->runtime_enabled==(configured && package->map_name!="BS_1_3.emp"),"runtime_gate_wrong");
+        check(package->runtime_enabled==configured,"runtime_gate_wrong");
         const auto category=package->special_category ? 2U : 0U;
         check(&find_richonline_map_package(package->map_name,category)==package,"catalog_lookup_not_exact");
         const auto stage=package->load_stage(root,category);

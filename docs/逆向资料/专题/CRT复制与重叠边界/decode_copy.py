@@ -44,14 +44,14 @@ def main():
                     continue
             pending.append(a+ins.size)
         local_visited={a for a in visited if start<=a<end}
-        assert local_visited<=set(instructions), '仿真访问了独立解码未覆盖的地址'
+        assert local_visited == set(instructions), '仿真实际地址与独立可达指令集合不一致'
         runs.append(dict(entry=hex(start),end=hex(end),instructions=[instructions[a] for a in sorted(instructions)],
                          reachable_instruction_count=len(instructions),emulated_instruction_count=len(local_visited),
                          unexecuted=[hex(a) for a in sorted(set(instructions)-local_visited)]))
     result=dict(decoder='Capstone '+__import__('capstone').__version__,
                 method='函数入口与12张跳表目标为种子，追踪条件/直接跳转与顺序边；间接跳表目标单列为种子。',
                 disk_sha256=hashlib.sha256(blob).hexdigest(),functions=runs)
-    (HERE/'证据/独立机器码解码.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+    (HERE/'证据/独立机器码解码.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8',newline='\n')
     print(json.dumps([{k:v for k,v in f.items() if k!='instructions'} for f in runs]))
 
 

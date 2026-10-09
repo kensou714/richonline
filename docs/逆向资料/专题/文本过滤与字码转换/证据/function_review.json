@@ -1,0 +1,660 @@
+{
+  "sources": [
+    "functions_raw.json",
+    "caller_functions.json"
+  ],
+  "counts": {
+    "部分分析": 9,
+    "局部语义已审阅": 22
+  },
+  "functions": [
+    {
+      "va": "0x623ad0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对ChsTb启动调用，忽略加载返回值；其余初始化保留原汇编。",
+      "unknown": "IME、随机数、输出器等后续语义不在此全审。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x623ee0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对Filter先于FilterN加载，任一返回0即启动返回0。",
+      "unknown": "大量其他资源加载与后续启动语义未全审。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x627160",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "ABABB8懒分配0x18968字节，无构造初始化。",
+      "unknown": "分配失败与加载失败后使用路径未闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x627160",
+          "end_va": "0x62719f",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x628ef0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "懒分配16字节过滤对象，构造后存A76738；全局无同步。",
+      "unknown": "分配失败处理与调用线程来源未闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x628ef0",
+          "end_va": "0x628f8a",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa116c0",
+          "end_va": "0xa116d5",
+          "is_main": false
+        }
+      ]
+    },
+    {
+      "va": "0x647610",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "转交三参数到strncmp真实实现9228E0。",
+      "unknown": "CRT实现细节仅覆盖本专题实际调用语义。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x647610",
+          "end_va": "0x647630",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x648c20",
+      "sources": [
+        "caller_functions.json"
+      ],
+      "evidence": [
+        "caller_functions.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对聊天载荷语言比较、前反向转换、过滤、显示邻域顺序。",
+      "unknown": "其余UI、命令及聊天分支未全审。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x64a9f0",
+      "sources": [
+        "caller_functions.json"
+      ],
+      "evidence": [
+        "caller_functions.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对另一聊天载荷的语言比较、转换、过滤和格式化邻域。",
+      "unknown": "其余UI、命令及聊天分支未全审。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x64c460",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "只清对象+4、+C两指针，不清+0、+8计数。",
+      "unknown": "未成功加载前的上层使用顺序未闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64c460",
+          "end_va": "0x64c489",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x64c490",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "两非空词条数组delete[]后清指针，计数保持。",
+      "unknown": "销毁后是否再次过滤未闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64c490",
+          "end_va": "0x64c50c",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x64c510",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "第一套词条：数ITEM，按count<<6分配，初始化首字节，再顺序读str。",
+      "unknown": "解析及解包依赖只审相关调用；异常资源实机行为未验证。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64c510",
+          "end_va": "0x64c743",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa11a35",
+          "end_va": "0xa11a60",
+          "is_main": false
+        }
+      ]
+    },
+    {
+      "va": "0x64c770",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "第二套词条：字段+8/+C，按64字节槽加载；与第一套同型。",
+      "unknown": "解析及解包依赖只审相关调用；异常资源实机行为未验证。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64c770",
+          "end_va": "0x64c9a8",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa11a60",
+          "end_va": "0xa11a8b",
+          "is_main": false
+        }
+      ]
+    },
+    {
+      "va": "0x64c9e0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "第一套词条首命中优先，原地memset星号；高位首字节步进2。",
+      "unknown": "所有调用者长度和编码未闭合；不宣称真实输入已触发边界。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64c9e0",
+          "end_va": "0x64cadb",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x64cae0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "第二套词条同型过滤，使用+8/+C，返回AL命中标记。",
+      "unknown": "所有调用者长度和编码未闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64cae0",
+          "end_va": "0x64cbdc",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x64cdc0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "按mode逐字节25与01互换，不识别双字节或Unicode。",
+      "unknown": "上层是否存在嵌入01及容量契约未闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64cdc0",
+          "end_va": "0x64ce4f",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x64ed90",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "读取对象+18964系统语言标签。",
+      "unknown": "标签不等于字符串编码或CP_ACP。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64ed90",
+          "end_va": "0x64edab",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x64f000",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "比较语言标签是否1，以AL返回。",
+      "unknown": "调用者的语言约束未全闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64f000",
+          "end_va": "0x64f023",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x64f030",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "比较语言标签是否2，以AL返回。",
+      "unknown": "调用者的语言约束未全闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64f030",
+          "end_va": "0x64f053",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x64f220",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "每个64字节词条槽仅首字节写0。",
+      "unknown": "其余槽字节取决于分配器，非完整清零。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x64f220",
+          "end_va": "0x64f23b",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x6aab50",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对过滤、百分号转义、语言单字节和参数四字节组包、本地消息13。",
+      "unknown": "全局发送缓冲容量及消息13到网络的路径未闭合。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x6c14e0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对RACE的name/desc局部缓冲128/1024与语言1时前向转换。",
+      "unknown": "其余RACE字段加载、尾块与失败处理未全审。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x818d70",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "打开解包资源，固定复制0x7FC8/0x1099C，再存系统语言标签。",
+      "unknown": "解包器异常路径只部分审阅；没有证明所有资源失败恢复。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x818d70",
+          "end_va": "0x818e83",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa15b40",
+          "end_va": "0xa15b52",
+          "is_main": false
+        }
+      ]
+    },
+    {
+      "va": "0x818ea0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "合成16位值，判断A1A1..A9FE或B0A1..F7FE，不独立验尾字节。",
+      "unknown": "全局ABAA40使函数非重入；实机并发未证明。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x818ea0",
+          "end_va": "0x818f08",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x818f10",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "合成16位值，判断三个反向整数区间，不独立验尾字节。",
+      "unknown": "格网含编码孔洞；实机输入来源未闭合。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x818f10",
+          "end_va": "0x818f95",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x818fa0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "前向原地双字节查表，376行步长，目标为记录+2/+3。",
+      "unknown": "无容量与孤立高位字节保护；输入可达性未验证。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x818fa0",
+          "end_va": "0x8190a9",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x8190b0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "反向原地双字节查表，后表起点7FC8、764行步长。",
+      "unknown": "无容量与孤立高位字节保护；输入可达性未验证。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x8190b0",
+          "end_va": "0x8191c6",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x8198e0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "从解析游标读至LF，转换反引号n、高位复制两字节，先写后断言容量。",
+      "unknown": "解析器完整对象与资源异常路径见资源专题，不在此全审。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x8198e0",
+          "end_va": "0x819a20",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x81ad80",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对818D70结尾ECX指向栈资源对象后调用析构。",
+      "unknown": "完整资源析构及调用环境未全审；非映射对象析构。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x81b4c0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对资源读取、首字节差分还原和解包调用邻域。",
+      "unknown": "完整资源对象生命周期及所有错误分支未全审。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x81b7f0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "full_dependency_closure": false,
+      "review_status": "部分分析",
+      "conclusion": "核对LZO解包参数与声明尺寸使用。",
+      "unknown": "解压核心、异常输出长度与所有依赖未全审。",
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x81c450",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "GetSystemDefaultLangID：804/1004为1，404/C04/1404为2，其余0。",
+      "unknown": "未推断实际ACP或输入编码。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x81c450",
+          "end_va": "0x81c4db",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9228e0",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "full_dependency_closure": false,
+      "review_status": "局部语义已审阅",
+      "conclusion": "最多N字节扫描Str1至NUL，再比较对应字节，N=0直接相等。",
+      "unknown": "仅该比较实现已读汇编；未全审所有CRT与运行时依赖。",
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9228e0",
+          "end_va": "0x922919",
+          "is_main": true
+        }
+      ]
+    }
+  ]
+}

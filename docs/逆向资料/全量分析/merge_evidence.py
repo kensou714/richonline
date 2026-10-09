@@ -8,6 +8,7 @@ TOPICS = ROOT.parent / "专题"
 def main():
     records={}
     instruction_observations={}
+    navigation_windows={}
     segments=json.loads((ROOT/'segments.json').read_text(encoding='utf-8'))
     code_ranges=[(int(s['start_va'],16),int(s['end_va'],16))
                  for s in segments if s['permission'] & 1]
@@ -17,6 +18,38 @@ def main():
             if isinstance(node,list):
                 for child in node: walk(child)
             elif isinstance(node,dict):
+                # 人工窗口可能包含相邻函数、尾指令或数据；不能把start_va当函数入口。
+                # 保存独立导航，按完整字节长度与代码段边界筛选，不提升语义状态。
+                # 新窗口原证用va/end_va，完整字节放在byte_range；兼容旧的扁平格式。
+                window_start=node.get('start_va')
+                window_bytes=node
+                nested_window=(isinstance(node.get('byte_range'),dict)
+                               and isinstance(node.get('kind'),str)
+                               and ('未定义' in node['kind'] or '未声明' in node['kind']))
+                if window_start is None and nested_window:
+                    window_start=node.get('va')
+                    window_bytes=node['byte_range']
+                if (window_start is not None and 'end_va' in node
+                        and isinstance(node.get('assembly'), list) and 'idb_hex' in window_bytes):
+                    try:
+                        start=int(window_start,16)
+                        end=int(node['end_va'],16)
+                        nested_valid=(not nested_window or (
+                            int(window_bytes['va'],16) == start and window_bytes['size'] == end-start
+                            and window_bytes.get('matching') is True
+                            and window_bytes['idb_hex'] == window_bytes['disk_hex']))
+                        if (nested_valid and end > start
+                                and len(bytes.fromhex(window_bytes['idb_hex'])) == end-start
+                                and any(a <= start < end <= b for a,b in code_ranges)):
+                            item=navigation_windows.setdefault((start,end),dict(
+                                start_va=hex(start),end_va=hex(end),size=end-start,evidence=[],
+                                scope='人工代码导航窗口；不确认函数入口、边界或完整语义',
+                                source_scopes=[]))
+                            item['evidence'].append(path.relative_to(ROOT.parent).as_posix())
+                            if isinstance(node.get('scope'),str):
+                                item['source_scopes'].append(node['scope'])
+                    except (KeyError,ValueError,TypeError):
+                        pass
                 va=node.get("va") or node.get("address") or node.get("ea") or address_key
                 bodies=[node.get(key) for key in ('pseudocode','disassembly','assembly','instructions')]
                 # 单条字面/立即数扫描的assembly是字符串，只有指令站点而非函数范围。
@@ -61,6 +94,9 @@ def main():
         walk(data)
     for record in list(records.values())+list(instruction_observations.values()):
         record["evidence"]=sorted(set(record["evidence"]))
+    for record in navigation_windows.values():
+        record['evidence']=sorted(set(record['evidence']))
+        record['source_scopes']=sorted(set(record['source_scopes']))
     functions=json.loads((ROOT/"functions.json").read_text(encoding="utf-8"))
     known={r["va"] for r in functions}
     unidentified=sorted(set(records)-known)
@@ -70,8 +106,10 @@ def main():
                 unrecognized_code_ranges=[records[va] for va in unidentified],
                 instruction_observation_count=len(instruction_observations),
                 instruction_observations=sorted(instruction_observations.values(),key=lambda r:int(r['va'],16)),
+                navigation_window_count=len(navigation_windows),
+                navigation_windows=[navigation_windows[key] for key in sorted(navigation_windows)],
                 note="证据导出不是逐函数已分析数量；人工状态见各专题函数清单",
                 functions=sorted((record for va,record in records.items() if va in known),key=lambda r:int(r["va"],16)))
     (ROOT/"evidence_coverage.json").write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding="utf-8")
-    print(json.dumps({k:v for k,v in result.items() if k not in {"functions","unrecognized_code_ranges","instruction_observations"}},ensure_ascii=False))
+    print(json.dumps({k:v for k,v in result.items() if k not in {"functions","unrecognized_code_ranges","instruction_observations","navigation_windows"}},ensure_ascii=False))
 if __name__=="__main__":main()

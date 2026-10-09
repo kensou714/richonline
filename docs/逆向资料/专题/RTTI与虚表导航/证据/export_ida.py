@@ -84,6 +84,13 @@ rt_seh = rt_identity(0xa31bc8, 12)
 rt_seh.update(kind='type_info析构SEH scope table',
               fields=list(struct.unpack('<iII', rt_disk(0xa31bc8, 12))))
 rt_result['supplemental_data'] = [rt_seh]
+for rt_va, rt_size, rt_text in [(0xa31b70, 18, 'Unknown exception'),
+                               (0xa319bc, 2, '*'),
+                               (0xa2265c, 19, 'vector<T> too long')]:
+    rt_row = rt_identity(rt_va, rt_size)
+    rt_row.update(kind='正文引用ASCII字面量', text=rt_text)
+    assert rt_disk(rt_va, rt_size) == rt_text.encode('ascii') + b'\0'
+    rt_result['supplemental_data'].append(rt_row)
 (RT_ROOT / '证据/ida_navigation.json').write_text(json.dumps(rt_result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 dict(data_records=len(rt_data), data_mismatches=sum(not r['matching'] for r in rt_data),
      tables=len(rt_xrefs), function_export=rt_export)

@@ -1,0 +1,264 @@
+{
+  "scope": "完整函数字节已核验；各函数仅将所列局部语义纳入人工结论，外部依赖另核。",
+  "functions": [
+    {
+      "va": "0x691ab0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "构造栈键，对this+0x2F0默认插入查询，释放键后返回V。",
+      "unknown": "R的创建和根析构未核。",
+      "evidence": "证据/functions.json#0x691ab0"
+    },
+    {
+      "va": "0x6950d0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "lower_bound后检查end/键顺序；缺失时构造空V和pair并提示插入，返回payload+28。",
+      "unknown": "键比较底层、树分配器及erase未完整恢复。",
+      "evidence": "证据/functions.json#0x6950d0"
+    },
+    {
+      "va": "0x695300",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "转6953E0构造V并返回this。",
+      "unknown": "首字段运行含义未明。",
+      "evidence": "证据/functions.json#0x695300"
+    },
+    {
+      "va": "0x695330",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "转695440析构V。",
+      "unknown": "最终分配器释放实现另核。",
+      "evidence": "证据/functions.json#0x695330"
+    },
+    {
+      "va": "0x695360",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "先析构this+28处V，再析构this处键字符串；含异常清理尾块。",
+      "unknown": "整树erase的接入未核。",
+      "evidence": "证据/functions.json#0x695360"
+    },
+    {
+      "va": "0x6953e0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "调用分配器辅助后以0调用696190，建立空V。",
+      "unknown": "6962F0/696330辅助未采集。",
+      "evidence": "证据/functions.json#0x6953e0"
+    },
+    {
+      "va": "0x695440",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "转696250清理V。",
+      "unknown": "697070/697170内部另核。",
+      "evidence": "证据/functions.json#0x695440"
+    },
+    {
+      "va": "0x695520",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "验证提示位置后调用696660插入，不合适时转6963F0；保存编译期跳过分支原证。",
+      "unknown": "外部迭代器helper未全采；不把不可达分支当当前执行路径。",
+      "evidence": "证据/functions.json#0x695520"
+    },
+    {
+      "va": "0x695cb0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "转696BF0查候选，包装输出迭代器。",
+      "unknown": "迭代器helper实现未全采。",
+      "evidence": "证据/functions.json#0x695cb0"
+    },
+    {
+      "va": "0x695d00",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "转698430比较两个键对象。",
+      "unknown": "6986F0最终比较细节未采。",
+      "evidence": "证据/functions.json#0x695d00"
+    },
+    {
+      "va": "0x695e40",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "转696E80取得迭代器payload。",
+      "unknown": "不证明外部索引有效性。",
+      "evidence": "证据/functions.json#0x695e40"
+    },
+    {
+      "va": "0x695ea0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "直接返回*this，取迭代器持有的节点地址。",
+      "unknown": "无本地合法性校验。",
+      "evidence": "证据/functions.json#0x695ea0"
+    },
+    {
+      "va": "0x695ec0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "分别复制键和this+28处V。",
+      "unknown": "V元素复制下游另核。",
+      "evidence": "证据/functions.json#0x695ec0"
+    },
+    {
+      "va": "0x696010",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "转696050复制V并返回this。",
+      "unknown": "底层元素复制另核。",
+      "evidence": "证据/functions.json#0x696010"
+    },
+    {
+      "va": "0x696050",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "按源size分配目标V，复制源区间并设置end；含失败清理与重抛尾块。",
+      "unknown": "698460元素复制实现未采。",
+      "evidence": "证据/functions.json#0x696050"
+    },
+    {
+      "va": "0x696190",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "清begin/end/capacity_end；正条数分配136*n，begin=end。",
+      "unknown": "697040/6970B0/6971B0最大值与分配实现另核。",
+      "evidence": "证据/functions.json#0x696190"
+    },
+    {
+      "va": "0x696250",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "清理[begin,end)，按capacity释放begin，再清三个指针。",
+      "unknown": "697070/697170内部未采；整树生命周期未核。",
+      "evidence": "证据/functions.json#0x696250"
+    },
+    {
+      "va": "0x696370",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "返回传入node+12，即payload地址。",
+      "unknown": "node合法性由调用者保证。",
+      "evidence": "证据/functions.json#0x696370"
+    },
+    {
+      "va": "0x6963f0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "沿键比较定位，前驱检查排除重复，返回(iterator,bool)插入结果。",
+      "unknown": "外部字段getter/前驱迭代器helper未全采。",
+      "evidence": "证据/functions.json#0x6963f0"
+    },
+    {
+      "va": "0x696660",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "最大节点数门控、分配节点、更新根/极值/计数、红黑树旋转着色及异常尾块。",
+      "unknown": "697650分配和整树删除实现未采；不是资源读取。",
+      "evidence": "证据/functions.json#0x696660"
+    },
+    {
+      "va": "0x696bf0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "lower_bound形态：node.key<key走右，否则保存候选走左，遇哨兵返回。",
+      "unknown": "字段getter和键比较最终实现另核。",
+      "evidence": "证据/functions.json#0x696bf0"
+    },
+    {
+      "va": "0x696e80",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "从*this取节点，再转696370返回payload。",
+      "unknown": "无本地end/空节点检查。",
+      "evidence": "证据/functions.json#0x696e80"
+    },
+    {
+      "va": "0x696fe0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "begin非空时返回(end-begin)/136，否则0。",
+      "unknown": "不核指针损坏输入。",
+      "evidence": "证据/functions.json#0x696fe0"
+    },
+    {
+      "va": "0x697ce0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "复制已有payload的键及+28处V；含键清理尾块。",
+      "unknown": "节点分配完整实现另核。",
+      "evidence": "证据/functions.json#0x697ce0"
+    },
+    {
+      "va": "0x698430",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "以字符串比较返回值<0作为严格小于谓词。",
+      "unknown": "最终字节比较6986F0未采，不推断区域排序规则。",
+      "evidence": "证据/functions.json#0x698430"
+    },
+    {
+      "va": "0x698570",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "取右键长度/缓冲，将this键长度和右键交6986F0比较。",
+      "unknown": "6986F0边界和编码比较规则另核。",
+      "evidence": "证据/functions.json#0x698570"
+    },
+    {
+      "va": "0x7afe70",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "打开、解包、逐行解析，记录清零后按地图名查V并追加；成功/失败析构路径已保存。",
+      "unknown": "读取器、转码及动画解析另核；无sscanf成功数校验。",
+      "evidence": "证据/functions.json#0x7afe70"
+    },
+    {
+      "va": "0x7b4b50",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "memset(this,0,136)，返回this。",
+      "unknown": "不包含业务字段验证。",
+      "evidence": "证据/functions.json#0x7b4b50"
+    },
+    {
+      "va": "0x7b4b90",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "size<capacity时追加1条并改end，否则经7B4D60插入扩容。",
+      "unknown": "最终元素构造7B6A00另核。",
+      "evidence": "证据/functions.json#0x7b4b90"
+    },
+    {
+      "va": "0x7b4cc0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "begin非空时返回(capacity_end-begin)/136，否则0。",
+      "unknown": "无指针有效性校验。",
+      "evidence": "证据/functions.json#0x7b4cc0"
+    },
+    {
+      "va": "0x7b4d20",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "取end建立输出迭代器。",
+      "unknown": "696D10具体迭代器包装未采。",
+      "evidence": "证据/functions.json#0x7b4d20"
+    },
+    {
+      "va": "0x7b4d60",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "保存插入位置下标，调用7B5000插入1条，再据新begin恢复结果迭代器。",
+      "unknown": "695470/695DB0/7B57A0辅助另核；IDA安全数组签名误识别。",
+      "evidence": "证据/functions.json#0x7b4d60"
+    },
+    {
+      "va": "0x7b4e20",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "调用复制构造n条，返回start+136*n。",
+      "unknown": "7B6A00实际构造另核。",
+      "evidence": "证据/functions.json#0x7b4e20"
+    },
+    {
+      "va": "0x7b5000",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "136字节栈临时保源、原地或扩容插入、1.5倍容量候选及异常清理；更新三个指针。",
+      "unknown": "区间复制/赋值/销毁底层未全采。",
+      "evidence": "证据/functions.json#0x7b5000"
+    },
+    {
+      "va": "0x7b6750",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "先调用类型辅助，再转7B6A00构造记录区间。",
+      "unknown": "6988A0/7B6A00内部未采。",
+      "evidence": "证据/functions.json#0x7b6750"
+    },
+    {
+      "va": "0x7b6980",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "先经7B69D0销毁payload，删除标志低位为1时operator delete(this)。",
+      "unknown": "树erase/根析构是否调用此包装未核。",
+      "evidence": "证据/functions.json#0x7b6980"
+    },
+    {
+      "va": "0x7b69d0",
+      "status": "局部语义已审阅，完整字节已核验",
+      "conclusion": "转695360销毁payload。",
+      "unknown": "调用者完整生命周期未核。",
+      "evidence": "证据/functions.json#0x7b69d0"
+    }
+  ]
+}

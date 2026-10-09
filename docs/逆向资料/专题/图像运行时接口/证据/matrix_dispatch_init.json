@@ -1,0 +1,532 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "baseline_reference": "全量分析/版本核验_第二批.json",
+  "scope": "当前IDA数据库；逐块保存指令范围与声明块原始字节，两者重叠不相加；块内数据语义及外部依赖另核",
+  "functions": [
+    {
+      "va": "0x977a09",
+      "end_va": "0x977b05",
+      "name": "sub_977A09",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __stdcall sub_977A09(DWORD Type)",
+        "{",
+        "  DWORD v2; // [esp+Ch] [ebp-4h] BYREF",
+        "",
+        "  if ( Type != 0 )",
+        "  {",
+        "    if ( dword_A6B820 == 0xFFFF )",
+        "    {",
+        "      dword_A6B820 = 0;",
+        "      qmemcpy(&off_A6AA80, &off_A6ABA0, 284);",
+        "      sub_60D76D(a1: (int)&off_A6AA80);",
+        "      if ( !sub_97779F(a1: (BYTE *)4, lpValueName: \"DisablePSGP\", (BYTE *)&Type, cbData: 4u) )",
+        "        Type = 0;",
+        "      if ( sub_97779F(a1: (BYTE *)4, lpValueName: \"DisableD3DXPSGP\", Type: (BYTE *)&v2, cbData: 4u) )",
+        "        Type = v2;",
+        "      if ( Type != 1 )",
+        "      {",
+        "        if ( Type == 2 || !IsProcessorFeaturePresent(ProcessorFeature: 7u) )",
+        "        {",
+        "          if ( (sub_97791D() & 8) != 0 )",
+        "          {",
+        "            sub_6124BB(a1: (int)&off_A6AA80);",
+        "            dword_A6B820 = 2;",
+        "          }",
+        "          else if ( IsProcessorFeaturePresent(ProcessorFeature: 6u) )",
+        "          {",
+        "            sub_60BC7E(a1: (int)&off_A6AA80);",
+        "            dword_A6B820 = 3;",
+        "          }",
+        "        }",
+        "        else",
+        "        {",
+        "          sub_6048A7(a1: (int)&off_A6AA80);",
+        "          dword_A6B820 = 1;",
+        "        }",
+        "      }",
+        "    }",
+        "  }",
+        "  else",
+        "  {",
+        "    dword_A6B820 = 0xFFFF;",
+        "    qmemcpy(&off_A6AA80, &off_A6ABA0, 284);",
+        "  }",
+        "  return dword_A6B820;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x977a09",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x977a0a",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x977a0c",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x977a0d",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x977a0e",
+          "text": "cmp     [ebp+Type], 0"
+        },
+        {
+          "va": "0x977a12",
+          "text": "push    esi"
+        },
+        {
+          "va": "0x977a13",
+          "text": "push    edi"
+        },
+        {
+          "va": "0x977a14",
+          "text": "jnz     short loc_977A34"
+        },
+        {
+          "va": "0x977a16",
+          "text": "push    47h ; 'G'"
+        },
+        {
+          "va": "0x977a18",
+          "text": "pop     ecx"
+        },
+        {
+          "va": "0x977a19",
+          "text": "mov     esi, offset off_A6ABA0"
+        },
+        {
+          "va": "0x977a1e",
+          "text": "mov     edi, offset off_A6AA80"
+        },
+        {
+          "va": "0x977a23",
+          "text": "mov     dword_A6B820, 0FFFFh"
+        },
+        {
+          "va": "0x977a2d",
+          "text": "rep movsd"
+        },
+        {
+          "va": "0x977a2f",
+          "text": "jmp     loc_977AFA"
+        },
+        {
+          "va": "0x977a34",
+          "text": "cmp     dword_A6B820, 0FFFFh"
+        },
+        {
+          "va": "0x977a3e",
+          "text": "jnz     loc_977AFA"
+        },
+        {
+          "va": "0x977a44",
+          "text": "and     dword_A6B820, 0"
+        },
+        {
+          "va": "0x977a4b",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x977a4c",
+          "text": "push    47h ; 'G'"
+        },
+        {
+          "va": "0x977a4e",
+          "text": "pop     ecx"
+        },
+        {
+          "va": "0x977a4f",
+          "text": "mov     ebx, offset off_A6AA80"
+        },
+        {
+          "va": "0x977a54",
+          "text": "mov     esi, offset off_A6ABA0"
+        },
+        {
+          "va": "0x977a59",
+          "text": "mov     edi, ebx"
+        },
+        {
+          "va": "0x977a5b",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x977a5c",
+          "text": "rep movsd"
+        },
+        {
+          "va": "0x977a5e",
+          "text": "call    sub_60D76D"
+        },
+        {
+          "va": "0x977a63",
+          "text": "push    4"
+        },
+        {
+          "va": "0x977a65",
+          "text": "pop     esi"
+        },
+        {
+          "va": "0x977a66",
+          "text": "push    esi; cbData"
+        },
+        {
+          "va": "0x977a67",
+          "text": "lea     eax, [ebp+Type]"
+        },
+        {
+          "va": "0x977a6a",
+          "text": "push    eax; Type"
+        },
+        {
+          "va": "0x977a6b",
+          "text": "push    offset aDisablepsgp; \"DisablePSGP\""
+        },
+        {
+          "va": "0x977a70",
+          "text": "push    esi; int"
+        },
+        {
+          "va": "0x977a71",
+          "text": "call    sub_97779F"
+        },
+        {
+          "va": "0x977a76",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x977a78",
+          "text": "jnz     short loc_977A7D"
+        },
+        {
+          "va": "0x977a7a",
+          "text": "and     [ebp+Type], eax"
+        },
+        {
+          "va": "0x977a7d",
+          "text": "push    esi; cbData"
+        },
+        {
+          "va": "0x977a7e",
+          "text": "lea     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x977a81",
+          "text": "push    eax; Type"
+        },
+        {
+          "va": "0x977a82",
+          "text": "push    offset aDisabled3dxpsg; \"DisableD3DXPSGP\""
+        },
+        {
+          "va": "0x977a87",
+          "text": "push    esi; int"
+        },
+        {
+          "va": "0x977a88",
+          "text": "call    sub_97779F"
+        },
+        {
+          "va": "0x977a8d",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x977a8f",
+          "text": "jz      short loc_977A97"
+        },
+        {
+          "va": "0x977a91",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x977a94",
+          "text": "mov     [ebp+Type], eax"
+        },
+        {
+          "va": "0x977a97",
+          "text": "cmp     [ebp+Type], 1"
+        },
+        {
+          "va": "0x977a9b",
+          "text": "jz      short loc_977AF9"
+        },
+        {
+          "va": "0x977a9d",
+          "text": "mov     esi, ds:IsProcessorFeaturePresent; KERNEL32"
+        },
+        {
+          "va": "0x977aa3",
+          "text": "push    2"
+        },
+        {
+          "va": "0x977aa5",
+          "text": "pop     edi"
+        },
+        {
+          "va": "0x977aa6",
+          "text": "cmp     [ebp+Type], edi"
+        },
+        {
+          "va": "0x977aa9",
+          "text": "jz      short loc_977AC5"
+        },
+        {
+          "va": "0x977aab",
+          "text": "push    7; ProcessorFeature"
+        },
+        {
+          "va": "0x977aad",
+          "text": "call    esi ; IsProcessorFeaturePresent; KERNEL32"
+        },
+        {
+          "va": "0x977aaf",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x977ab1",
+          "text": "jz      short loc_977AC5"
+        },
+        {
+          "va": "0x977ab3",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x977ab4",
+          "text": "call    sub_6048A7"
+        },
+        {
+          "va": "0x977ab9",
+          "text": "mov     dword_A6B820, 1"
+        },
+        {
+          "va": "0x977ac3",
+          "text": "jmp     short loc_977AF8"
+        },
+        {
+          "va": "0x977ac5",
+          "text": "call    sub_97791D"
+        },
+        {
+          "va": "0x977aca",
+          "text": "and     eax, 8"
+        },
+        {
+          "va": "0x977acd",
+          "text": "mov     [ebp+var_8], eax"
+        },
+        {
+          "va": "0x977ad0",
+          "text": "jz      short loc_977AE0"
+        },
+        {
+          "va": "0x977ad2",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x977ad3",
+          "text": "call    sub_6124BB"
+        },
+        {
+          "va": "0x977ad8",
+          "text": "mov     dword_A6B820, edi"
+        },
+        {
+          "va": "0x977ade",
+          "text": "jmp     short loc_977AF8"
+        },
+        {
+          "va": "0x977ae0",
+          "text": "push    6; ProcessorFeature"
+        },
+        {
+          "va": "0x977ae2",
+          "text": "call    esi ; IsProcessorFeaturePresent; KERNEL32"
+        },
+        {
+          "va": "0x977ae4",
+          "text": "test    eax, eax"
+        },
+        {
+          "va": "0x977ae6",
+          "text": "jz      short loc_977AF9"
+        },
+        {
+          "va": "0x977ae8",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x977ae9",
+          "text": "call    sub_60BC7E"
+        },
+        {
+          "va": "0x977aee",
+          "text": "mov     dword_A6B820, 3"
+        },
+        {
+          "va": "0x977af8",
+          "text": "pop     ecx"
+        },
+        {
+          "va": "0x977af9",
+          "text": "pop     ebx"
+        },
+        {
+          "va": "0x977afa",
+          "text": "mov     eax, dword_A6B820"
+        },
+        {
+          "va": "0x977aff",
+          "text": "pop     edi"
+        },
+        {
+          "va": "0x977b00",
+          "text": "pop     esi"
+        },
+        {
+          "va": "0x977b01",
+          "text": "leave"
+        },
+        {
+          "va": "0x977b02",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x977a5e",
+          "target": "0x60d76d",
+          "implementation": "0x9804e5",
+          "thunks": [
+            "0x60d76d"
+          ]
+        },
+        {
+          "site": "0x977a71",
+          "target": "0x97779f",
+          "implementation": "0x97779f",
+          "thunks": []
+        },
+        {
+          "site": "0x977a88",
+          "target": "0x97779f",
+          "implementation": "0x97779f",
+          "thunks": []
+        },
+        {
+          "site": "0x977aad",
+          "target": "0xad3d64",
+          "implementation": "0xad3d64",
+          "thunks": []
+        },
+        {
+          "site": "0x977ab4",
+          "target": "0x6048a7",
+          "implementation": "0x9846e6",
+          "thunks": [
+            "0x6048a7"
+          ]
+        },
+        {
+          "site": "0x977ac5",
+          "target": "0x97791d",
+          "implementation": "0x97791d",
+          "thunks": []
+        },
+        {
+          "site": "0x977ad3",
+          "target": "0x6124bb",
+          "implementation": "0x98440c",
+          "thunks": [
+            "0x6124bb"
+          ]
+        },
+        {
+          "site": "0x977ae2",
+          "target": "0xad3d64",
+          "implementation": "0xad3d64",
+          "thunks": []
+        },
+        {
+          "site": "0x977ae9",
+          "target": "0x60bc7e",
+          "implementation": "0x984204",
+          "thunks": [
+            "0x60bc7e"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x6058d3",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x977a09",
+          "end_va": "0x977b05",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x977a09",
+          "size": 252,
+          "idb_hex": "558bec5151837d08005657751e6a4759bea0aba600bf80aaa600c70520b8a600ffff0000f3a5e9c6000000813d20b8a600ffff00000f85b6000000832520b8a60000536a4759bb80aaa600bea0aba6008bfb53f3a5e80a5dc9ff6a045e568d45085068cc0da40056e829fdffff85c07503214508568d45fc5068b80da40056e812fdffff85c074068b45fc894508837d0801745c8b35643dad006a025f397d08741a6a07ffd685c0741253e8eecdc8ffc70520b8a60001000000eb33e853feffff83e0088945f8740e53e8e3a9c9ff893d20b8a600eb186a06ffd685c0741153e89041c9ffc70520b8a60003000000595ba120b8a6005f5ec9c20400",
+          "disk_hex": "558bec5151837d08005657751e6a4759bea0aba600bf80aaa600c70520b8a600ffff0000f3a5e9c6000000813d20b8a600ffff00000f85b6000000832520b8a60000536a4759bb80aaa600bea0aba6008bfb53f3a5e80a5dc9ff6a045e568d45085068cc0da40056e829fdffff85c07503214508568d45fc5068b80da40056e812fdffff85c074068b45fc894508837d0801745c8b35643dad006a025f397d08741a6a07ffd685c0741253e8eecdc8ffc70520b8a60001000000eb33e853feffff83e0088945f8740e53e8e3a9c9ff893d20b8a600eb186a06ffd685c0741153e89041c9ffc70520b8a60003000000595ba120b8a6005f5ec9c20400",
+          "matching": true
+        }
+      ],
+      "chunk_byte_ranges": [
+        {
+          "va": "0x977a09",
+          "size": 252,
+          "idb_hex": "558bec5151837d08005657751e6a4759bea0aba600bf80aaa600c70520b8a600ffff0000f3a5e9c6000000813d20b8a600ffff00000f85b6000000832520b8a60000536a4759bb80aaa600bea0aba6008bfb53f3a5e80a5dc9ff6a045e568d45085068cc0da40056e829fdffff85c07503214508568d45fc5068b80da40056e812fdffff85c074068b45fc894508837d0801745c8b35643dad006a025f397d08741a6a07ffd685c0741253e8eecdc8ffc70520b8a60001000000eb33e853feffff83e0088945f8740e53e8e3a9c9ff893d20b8a600eb186a06ffd685c0741153e89041c9ffc70520b8a60003000000595ba120b8a6005f5ec9c20400",
+          "disk_hex": "558bec5151837d08005657751e6a4759bea0aba600bf80aaa600c70520b8a600ffff0000f3a5e9c6000000813d20b8a600ffff00000f85b6000000832520b8a60000536a4759bb80aaa600bea0aba6008bfb53f3a5e80a5dc9ff6a045e568d45085068cc0da40056e829fdffff85c07503214508568d45fc5068b80da40056e812fdffff85c074068b45fc894508837d0801745c8b35643dad006a025f397d08741a6a07ffd685c0741253e8eecdc8ffc70520b8a60001000000eb33e853feffff83e0088945f8740e53e8e3a9c9ff893d20b8a600eb186a06ffd685c0741153e89041c9ffc70520b8a60003000000595ba120b8a6005f5ec9c20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    }
+  ],
+  "thunks": [
+    {
+      "va": "0x60d76d",
+      "size": 5,
+      "idb_hex": "e9732d3700",
+      "disk_hex": "e9732d3700",
+      "matching": true,
+      "target": "0x9804e5"
+    },
+    {
+      "va": "0x6048a7",
+      "size": 5,
+      "idb_hex": "e93afe3700",
+      "disk_hex": "e93afe3700",
+      "matching": true,
+      "target": "0x9846e6"
+    },
+    {
+      "va": "0x6124bb",
+      "size": 5,
+      "idb_hex": "e94c1f3700",
+      "disk_hex": "e94c1f3700",
+      "matching": true,
+      "target": "0x98440c"
+    },
+    {
+      "va": "0x60bc7e",
+      "size": 5,
+      "idb_hex": "e981853700",
+      "disk_hex": "e981853700",
+      "matching": true,
+      "target": "0x984204"
+    }
+  ]
+}

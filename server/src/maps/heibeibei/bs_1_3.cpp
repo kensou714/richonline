@@ -13,7 +13,7 @@ RichonlineBossCardPolicy configure(const RichonlineBossCardPolicy& transport) {
 const RichonlineMapPackage& richonline_heibeibei_1_3_package() {
     static const RichonlineMapPackage package{
         "heibeibei_1_3","BS_1_3.emp",false,17,1038,
-        RichonlineMapReadiness::partial,false,load,configure,
+        RichonlineMapReadiness::partial,true,load,configure,
         RichonlineMapChancePolicy{{1038,1039,1040,1041},true},
         RichonlineMapNpcPolicy{{0,1,2,3},4,1,2,5,3,true,{1038,1039},1000,
             RichonlineMapBadluckPolicy{4,RichonlineMapBadluckSelection::uniform_inventory_units_without_replacement}},

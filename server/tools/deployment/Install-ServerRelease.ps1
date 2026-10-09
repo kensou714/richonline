@@ -31,7 +31,7 @@ try {
     }
 } finally { $zip.Dispose() }
 [IO.Compression.ZipFile]::ExtractToDirectory($Archive, $release)
-$manifest = Get-Content -LiteralPath (Join-Path $release 'manifest.json') -Raw | ConvertFrom-Json
+$manifest = Get-Content -LiteralPath (Join-Path $release 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 if ($manifest.releaseId -ne $ReleaseId) { throw 'Manifest release ID mismatch.' }
 foreach ($file in $manifest.files) {
     $path = [IO.Path]::GetFullPath((Join-Path $release $file.path))
@@ -40,7 +40,16 @@ foreach ($file in $manifest.files) {
 }
 $control = Join-Path $release 'Invoke-NativeControl.ps1'
 $configPath = Join-Path $data 'lobby-bootstrap.json'
-$previous = if (Test-Path -LiteralPath $currentPath) { Get-Content -LiteralPath $currentPath -Raw | ConvertFrom-Json } else { $null }
+$invokeControl = {
+    param([string]$operation, [string]$expectedInstance = '')
+    $arguments = @('-PipeName', $pipeName, '-Command', $operation)
+    if ($expectedInstance) { $arguments += @('-ExpectedInstance', $expectedInstance) }
+    # Windows PowerShell can emit a VoidTaskResult from async writes in older releases.
+    $results = @(& $control @arguments | ConvertFrom-Json)
+    if (!$results) { throw "Control command returned no JSON: $operation" }
+    $results | Select-Object -Last 1
+}
+$previous = if (Test-Path -LiteralPath $currentPath) { Get-Content -LiteralPath $currentPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 $oldTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
 if ($oldTask -and !$previous) { throw 'Existing task has no deployment manifest; manual reconciliation required.' }
 if (!$previous -and (Test-Path -LiteralPath $configPath)) { throw 'Unmanaged runtime configuration exists; refusing to overwrite.' }
@@ -50,10 +59,10 @@ New-Item -ItemType Directory -Path $backup | Out-Null
 $oldTaskXml = if ($oldTask) { Export-ScheduledTask -TaskName $taskName } else { $null }
 if ($oldTaskXml) { [IO.File]::WriteAllText((Join-Path $backup 'scheduled-task.xml'), $oldTaskXml) }
 if ($previous) {
-    $state = & $control -PipeName $pipeName -Command status | ConvertFrom-Json
+    $state = & $invokeControl status
     if ($state.authenticatedSessions -ne 0) { throw 'Active players are connected; deployment refuses to stop their sessions.' }
-    & $control -PipeName $pipeName -Command database.backup | Out-Null
-    & $control -PipeName $pipeName -Command stop -ExpectedInstance $state.instanceId | Out-Null
+    & $invokeControl database.backup | Out-Null
+    & $invokeControl stop $state.instanceId | Out-Null
     $deadline = (Get-Date).AddSeconds(20)
     while (Get-Process -Id $state.pid -ErrorAction SilentlyContinue) {
         if ((Get-Date) -gt $deadline) { throw 'Previous process did not stop.' }
@@ -69,9 +78,9 @@ $ports = @(18600,18602,18605,18606,18680)
 try {
     if ($previous) {
         # Preserve operator policy on subsequent releases; only switch resources.
-        $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+        $config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
     } else {
-        $config = Get-Content -LiteralPath (Join-Path $release 'lobby-bootstrap.template.json') -Raw | ConvertFrom-Json
+        $config = Get-Content -LiteralPath (Join-Path $release 'lobby-bootstrap.template.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     }
     $config.network.bind_host = '127.0.0.1'
     $config.network.advertised_host = $PublicAddress
@@ -87,7 +96,7 @@ try {
     Start-ScheduledTask -TaskName $taskName
     $deadline = (Get-Date).AddSeconds(45)
     do {
-        try { $state = & $control -PipeName $pipeName -Command status | ConvertFrom-Json } catch { $state = $null }
+        try { $state = & $invokeControl status } catch { $state = $null }
         if ($state -and $state.lobbyReady -and $state.httpReady -and $state.gameListenerReady -and $state.blackReady -and $state.introReady -and $state.inquiryReady) { break }
         Start-Sleep -Milliseconds 500
     } while ((Get-Date) -lt $deadline)
@@ -120,8 +129,8 @@ try {
     foreach ($port in $createdProxies) { & netsh interface portproxy delete v4tov4 "listenaddress=$PublicAddress" "listenport=$port" | Out-Null }
     if ($createdFirewall) { Remove-NetFirewallRule -Name $firewallName }
     try {
-        $failedState = & $control -PipeName $pipeName -Command status | ConvertFrom-Json
-        & $control -PipeName $pipeName -Command stop -ExpectedInstance $failedState.instanceId | Out-Null
+        $failedState = & $invokeControl status
+        & $invokeControl stop $failedState.instanceId | Out-Null
     } catch { Write-Warning ('Graceful cleanup did not complete: ' + $_.Exception.Message) }
     if ($oldTaskXml) {
         Register-ScheduledTask -TaskName $taskName -Xml $oldTaskXml -Force | Out-Null

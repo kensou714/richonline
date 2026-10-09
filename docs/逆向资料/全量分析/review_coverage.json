@@ -33587,8 +33587,8 @@
           "source": "专题/游戏时间与计时调度/函数审阅清单.json",
           "json_pointer": "/functions/6",
           "status": "局部语义已审阅",
-          "conclusion": "槽构造只清this+32附属指针。",
-          "unknown": "未消费字段不能认定已整体初始化。",
+          "conclusion": "槽构造以memset清零完整36字节，含寿命、起点与附属指针。",
+          "unknown": "字段清零不代表全部业务语义已恢复。",
           "evidence": "证据/functions.json#0x6bc110"
         }
       ]
@@ -71135,8 +71135,8 @@
           "source": "专题/游戏时间与计时调度/函数审阅清单.json",
           "json_pointer": "/functions/55",
           "status": "局部语义已审阅",
-          "conclusion": "累加WORD及可选末BYTE，两次折叠进位并取反返回16位校验和。",
-          "unknown": "网络字节序与长度异常样本未实机验证。",
+          "conclusion": "累加WORD及可选末BYTE，两次折叠进位并not EAX返回；发送者取AX作为16位校验和。",
+          "unknown": "返回寄存器为DWORD，不误写整个函数只返回WORD；网络字节序与异常长度未实测。",
           "evidence": "证据/functions.json#0x81ef20"
         }
       ]
@@ -81143,8 +81143,8 @@
           "source": "专题/控件树与对象生命周期/function_review.json",
           "json_pointer": "/functions/15",
           "status": "局部语义已审阅",
-          "conclusion": "负层归0；摘下同链再按降序插入，同层放旧节点前。",
-          "unknown": "所有调用方和重入导致的链状态未验证",
+          "conclusion": "负层归0；摘下同链后跨过严格较高层节点再插入；既有链降序时保持降序，同层插前。",
+          "unknown": "创建直接插头可能打破全链降序；所有调用方和重入链状态未验证",
           "evidence": [
             "证据/创建与链表.json"
           ]
@@ -81351,8 +81351,8 @@
           "source": "专题/控件树与对象生命周期/function_review.json",
           "json_pointer": "/functions/22",
           "status": "复用已审阅",
-          "conclusion": "兄弟先绘制；本节点visible门控制自身及首子，层序后插同层显示靠前。",
-          "unknown": "全部绘制回调与派生渲染行为复用控件回调专题",
+          "conclusion": "兄弟先绘制；本节点visible门控制自身及首子；降序链中低层先画，同层前节点后画。",
+          "unknown": "任意时刻全链降序不成立；全部绘制回调与派生渲染行为复用控件回调专题",
           "evidence": [
             "证据/状态与销毁.json"
           ]

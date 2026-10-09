@@ -1,0 +1,240 @@
+{
+  "mapping_examples": [
+    {
+      "input": "中国",
+      "source_hex": "d6d0b9fa",
+      "target_hex": "a4a4b0ea",
+      "target_cp950": "中國",
+      "back_hex": "d6d0b9fa",
+      "roundtrip": true
+    },
+    {
+      "input": "汉语",
+      "source_hex": "babad3ef",
+      "target_hex": "ba7ebb79",
+      "target_cp950": "漢語",
+      "back_hex": "babad3ef",
+      "roundtrip": true
+    },
+    {
+      "input": "台湾",
+      "source_hex": "cca8cde5",
+      "target_hex": "a578c657",
+      "target_cp950": "台灣",
+      "back_hex": "cca8cde5",
+      "roundtrip": true
+    },
+    {
+      "input": "游戏",
+      "source_hex": "d3cecfb7",
+      "target_hex": "b4e5c0b8",
+      "target_cp950": "游戲",
+      "back_hex": "d3cecfb7",
+      "roundtrip": true
+    },
+    {
+      "input": "音乐",
+      "source_hex": "d2f4c0d6",
+      "target_hex": "adb5bcd6",
+      "target_cp950": "音樂",
+      "back_hex": "d2f4c0d6",
+      "roundtrip": true
+    },
+    {
+      "input": "后发",
+      "source_hex": "baf3b7a2",
+      "target_hex": "a65ab56f",
+      "target_cp950": "后發",
+      "back_hex": "baf3b7a2",
+      "roundtrip": true
+    }
+  ],
+  "filter_cases": [
+    {
+      "title": "顺序短词优先",
+      "input_hex": "61626300",
+      "words": [
+        "6162",
+        "616263"
+      ],
+      "result": {
+        "output": "2a2a6300",
+        "status": "到达零终止",
+        "steps": [
+          {
+            "offset": 0,
+            "advance": 2,
+            "word": 0
+          },
+          {
+            "offset": 2,
+            "advance": 1,
+            "word": null
+          }
+        ],
+        "changed": true
+      }
+    },
+    {
+      "title": "顺序长词优先",
+      "input_hex": "61626300",
+      "words": [
+        "616263",
+        "6162"
+      ],
+      "result": {
+        "output": "2a2a2a00",
+        "status": "到达零终止",
+        "steps": [
+          {
+            "offset": 0,
+            "advance": 3,
+            "word": 0
+          }
+        ],
+        "changed": true
+      }
+    },
+    {
+      "title": "区分大小写",
+      "input_hex": "41626300",
+      "words": [
+        "616263"
+      ],
+      "result": {
+        "output": "41626300",
+        "status": "到达零终止",
+        "steps": [
+          {
+            "offset": 0,
+            "advance": 1,
+            "word": null
+          },
+          {
+            "offset": 1,
+            "advance": 1,
+            "word": null
+          },
+          {
+            "offset": 2,
+            "advance": 1,
+            "word": null
+          }
+        ],
+        "changed": false
+      }
+    },
+    {
+      "title": "空词条",
+      "input_hex": "7800",
+      "words": [
+        ""
+      ],
+      "result": {
+        "output": "7800",
+        "status": "零长度命中导致不前进",
+        "steps": [
+          {
+            "offset": 0,
+            "advance": 0,
+            "word": 0
+          }
+        ],
+        "changed": true
+      }
+    },
+    {
+      "title": "尾部孤立高位字节",
+      "input_hex": "8100",
+      "words": [],
+      "result": {
+        "output": "8100",
+        "status": "读过已提供缓冲区",
+        "steps": [
+          {
+            "offset": 0,
+            "advance": 2,
+            "word": null
+          }
+        ],
+        "changed": false
+      }
+    },
+    {
+      "title": "不从双字节第二字节起配",
+      "input_hex": "81616200",
+      "words": [
+        "6162"
+      ],
+      "result": {
+        "output": "81616200",
+        "status": "到达零终止",
+        "steps": [
+          {
+            "offset": 0,
+            "advance": 2,
+            "word": null
+          },
+          {
+            "offset": 2,
+            "advance": 1,
+            "word": null
+          }
+        ],
+        "changed": false
+      }
+    },
+    {
+      "title": "短输入不会按长词覆盖",
+      "input_hex": "616200",
+      "words": [
+        "61626364"
+      ],
+      "result": {
+        "output": "616200",
+        "status": "到达零终止",
+        "steps": [
+          {
+            "offset": 0,
+            "advance": 1,
+            "word": null
+          },
+          {
+            "offset": 1,
+            "advance": 1,
+            "word": null
+          }
+        ],
+        "changed": false
+      }
+    }
+  ],
+  "table_surveys": [
+    {
+      "direction": "前向",
+      "records": 8178,
+      "source_grid_matches": 8178,
+      "zero_targets": 0,
+      "question_targets": 0,
+      "source_codec": "gb2312",
+      "source_decode_success": 7445,
+      "target_codec": "cp950",
+      "target_decode_success": 7385,
+      "table_lookup_roundtrip_equal": 6988,
+      "note": "往返只查表，未套用入口范围判定；不能据此宣称全部输入可运行转换"
+    },
+    {
+      "direction": "反向",
+      "records": 16999,
+      "source_grid_matches": 16999,
+      "zero_targets": 0,
+      "question_targets": 0,
+      "source_codec": "cp950",
+      "source_decode_success": 13752,
+      "target_codec": "gb2312",
+      "target_decode_success": 13752,
+      "table_lookup_roundtrip_equal": 6929,
+      "note": "往返只查表，未套用入口范围判定；不能据此宣称全部输入可运行转换"
+    }
+  ]
+}

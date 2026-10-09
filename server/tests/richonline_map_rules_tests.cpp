@@ -162,7 +162,7 @@ nlohmann::json run(const std::filesystem::path& root) {
         check(stage.map_name==package->map_name && resources.properties.width==stage.width &&
             resources.properties.height==stage.height,"rule_resources_cross_map_binding");
         const bool enabled=package->map_name=="BS_1_1.emp" || package->map_name=="BS_1_2.emp" ||
-            package->map_name=="BS_1_4.emp" || package->map_name=="V_BS_1_1.emp";
+            package->map_name=="BS_1_3.emp" || package->map_name=="BS_1_4.emp" || package->map_name=="V_BS_1_1.emp";
         check(package->runtime_enabled==enabled,"runtime_gate_widened_without_integration");
         const auto expected=std::find_if(expected_spawns.begin(),expected_spawns.end(),[&](const auto& item) {
             return item.map==package->map_name;

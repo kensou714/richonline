@@ -17,7 +17,7 @@ def main():
                  unknown='未实机；不证明无效/回绕指针或任意DF输入，不证明所有CRT实例。',
                  evidence='证据/crt_copy.json') for a,s,c in ROWS]
     payload=dict(counts={'静态契约已审阅':4,'复用并闭合局部契约':1},functions=rows)
-    (HERE/'函数审阅清单.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding='utf-8')
+    (HERE/'函数审阅清单.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding='utf-8',newline='\n')
 
 
 if __name__ == '__main__':

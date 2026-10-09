@@ -58,7 +58,7 @@ def main():
                   union_bytes=len(covered), tables=len(tables), table_entries=sum(t['size']//4 for t in tables),
                   note='跳表位于函数块内，不重复增加覆盖。IDA指令清单含误识别数据，不计为正确解码覆盖。',
                   disk_sha256=hashlib.sha256(blob).hexdigest(), errors=[])
-    (HERE / '字节验证.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+    (HERE / '字节验证.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8', newline='\n')
     print(json.dumps(result, ensure_ascii=False))
 
 

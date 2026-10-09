@@ -107,3 +107,28 @@
 - `V_BS_1_1.emp`现已开放runtime，仍标记partial。竞技2真实provider及加密TCP三局验收覆盖普通/对手地产、研究、Boss攻击、自然终局及正常退出只记账一次。focused通过2/2、48.79秒，三局723回合、37次对手地产；最终全套第二次独立运行也通过。证据见`evidence/zhao-admission/README.md`。按月份到期结算尚未实现，实机UI未验收。
 - 严格全构建`build/zhao-channel-final-build.log`通过，全套`build/zhao-channel-final-tests.log`204/204通过、73.00秒。候选`RichOnline.Server.exe` SHA256：`793F75F7F37961B43D6F995A677C28CE32321582A8ACE74BAA32E9641CBDF427`。上一候选备份`build-migration-backup/RichOnline.Server.before-zhao-channel.exe`；清单`zhao-channel-candidate.json`。尚未部署在线服务。
 - goal保持进行中：大厅投票、黑贝贝1-3独立长局验收，以及月份终局契约仍需继续。
+
+## GUI 迁移与当前目录启动（2026-10-10）
+
+- 用户要求先恢复 GUI 启动。已将旧 `F:/大富翁online/admin` 的 WinForms 源码迁至 `server/admin`，适配 server 同目录布局及客户端根目录兼容入口，增加自包含构建安装工具和显式账号迁移工具。
+- 原根目录 GUI 配置指向旧 `local-server/runtime/native-boss-live-20261009/RichOnline.Server.channels.exe`；现两个入口均指向当前 `server/RichOnline.Server.exe`、`server/data`。原 EXE/配置备份在 `build-migration-backup/admin-d1e4e150eb6a4df094714fad00828769`。
+- 通过服务端只读 SQLite backup 迁入 26 个账号，15 张原有表逐行一致，`integrity_check=ok`；未改写旧数据。采用当前已验证三频道 gameplay 配置并重定位客户端资源，客户端哈希保持已验证值。
+- GUI 严格发布通过；真实 WinForms 消息循环与按钮回归通过：启动、状态与 PID、四类监听、账号及设置读取、停止、重启、关闭窗体清理。独立空库控制接口自测覆盖账号创建、小数余额、冲突、配置 revision、在线备份、停止及客户端 KPD 参数。证据见 `evidence/admin-gui/README.md`。
+- 本次没有重建或覆盖尚未验收的大堂投票增量；GUI 使用已通过 204/204 测试的赵灵儿/频道修复候选，SHA256 仍为 `793F75F7F37961B43D6F995A677C28CE32321582A8ACE74BAA32E9641CBDF427`。投票接入的工作区改动保留，后续必须完成专门回归后再更新候选。goal仍进行中。
+
+## 大厅39/40投票通信闭环
+
+- 已完成每频道/房间的换图、踢人投票接入。提议者收到75，其余成员收到74，完成或10秒超时收到80；批准后另发26/27。支持非房主提议、投票踢房主后的所有权转移、同频道观察者缓存更新。
+- 成员/准备/地图/队伍/角色成功变更作废本轮，失败请求保留；迟到、重复、外人和其他generation投票不能改写已作废状态。取消计数0/0/N是因80缺少取消字段而采用的显式本地策略。协议缺少nonce导致同提议者同类型连续轮次旧40不可区分的限制仍如实记录。
+- 新增确定性投票测试及真实加密TCP场景，含无人操作的实际10秒超时；投票批准后仍保留开局资源/runtime门禁。协议反编译、测试范围及边界见`evidence/lobby-vote/README.md`。
+- 严格全构建和最终全套205/205通过，65.43秒；日志`build/lobby-vote-final-build.log`、`build/lobby-vote-final-tests.log`。实际客户端投票界面尚未交互验收。
+- 已更新GUI指向的`server/RichOnline.Server.exe`，SHA256：`3B381B9F73AECE7F2138D45B02F3A07E8A06B5428E65DB0042D3AF6DA9042777`；上一候选`build-migration-backup/RichOnline.Server.before-lobby-vote.exe`，清单`lobby-vote-candidate.json`。更新时仅GUI运行、没有服务实例；下次GUI启动加载新版，没有触碰旧运行目录。
+- goal继续：黑贝贝1-3独立长局验收、月份终局契约、其他未闭合地图/协议仍未完成。
+
+## 黑贝贝1-3独立长局验收
+
+- 删除资源检查后跳过BS_1_3的测试捷径，先捕获真实provider门禁失败，再启用该地图runtime。保留partial标记；其余章节门禁不变。
+- 独立三局真实加密GameService TCP累计544回合、142次Boss攻击、50次对手地产、4次神庙落点、17次研究决定。两局自然结算，一局320回合后0A/4006正常退出；主动退出loss只登记一次，outbox为空。详细资源/协议边界及证据见`evidence/heibeibei13-admission/README.md`。
+- 严格全构建通过。全套204/205通过（112.02秒），唯一失败为误改的BS_3_1传送测试门禁断言；恢复原断言后补验1/1通过。205项均有通过结果，原失败保留在`build/heibeibei13-final-tests.log`，补验`build/heibeibei13-portal-tests.log`。
+- 当前GUI候选SHA256：`0DB9D9B8B1029F4DF187510D9F4C0CD7555FCC43E1FBA5F934206378A8A92D68`；备份`build-migration-backup/RichOnline.Server.before-heibeibei13.exe`。更新时无服务实例，不涉及在线重启或旧目录覆盖。
+- goal继续：月份到期终局、其他BOSS章节、剩余实际网络请求与游戏分支仍需实现及验证；用户实机UI验收与服务端自动测试分开记录。

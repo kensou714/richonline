@@ -9,11 +9,33 @@ and remaining work are recorded in [DEVELOPMENT.md](DEVELOPMENT.md).
 The C++20 service includes SQLite accounts, administration, lobby and auxiliary
 listeners, and partial BOSS gameplay. The wave25 dice, mine configuration,
 random shop/card rewards, research selection and event-color fixes are retained.
-Black Beibei 1-1, 1-2, 1-4 and Zhao Ling'er have partial runtimes. Zhao Ling'er
+Black Beibei 1-1 through 1-4 and Zhao Ling'er have partial runtimes. Zhao Ling'er
 now passes independent encrypted multi-turn validation, including level-6
-construction and opponent-property continuations. Black Beibei 1-3 remains
-gated pending its independent multi-turn acceptance.
+construction and opponent-property continuations. Black Beibei 1-3 now passes
+independent encrypted multi-turn validation with opponent properties, temple
+landings, research, natural terminal and graceful-leave paths. Month-limit
+settlement remains unimplemented; other BOSS chapters retain their runtime gates.
 `gameReady:false` continues to mean full gameplay coverage has not been achieved.
+Lobby map/kick voting (39/40 → 74/75/80 → 26/27) now includes member identity,
+ten-second timeout, room-change cancellation and approved actions. Deterministic
+and encrypted TCP regressions are documented in [vote evidence](evidence/lobby-vote/README.md).
+Approval does not bypass gameplay resource or runtime admission gates.
+
+## Windows GUI
+
+Open `server/RichOnline.Admin.exe` and click **启动服务端**. The compatible
+`RichOnline.Admin.exe` entry in the client root uses the same current server and
+`server/data` directory. GUI sources now live in [admin](admin/README.md).
+The self-contained build needs no separately installed .NET runtime.
+
+```powershell
+./server/tools/Build-Admin.ps1 -InstallClientEntry
+```
+
+The current local account database was migrated through SQLite backup and its
+original rows verified unchanged. [GUI migration evidence](evidence/admin-gui/README.md)
+records the verified executable and startup checks. GUI builds do not replace
+the separately validated server executable.
 
 Build and test from the current repository root with CMake, Ninja and LLVM-MinGW:
 

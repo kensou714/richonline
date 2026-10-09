@@ -18,7 +18,7 @@ function Invoke-ControlRequest([string]$Operation) {
         foreach ($part in @($header, $body)) {
             $write = $pipe.WriteAsync($part, 0, $part.Length)
             if (-not $write.Wait([Math]::Max(0, 5000 - [int]$elapsed.ElapsedMilliseconds))) { throw 'control_write_timeout' }
-            $write.GetAwaiter().GetResult()
+            $null = $write.GetAwaiter().GetResult()
         }
         $length = 4
         $reply = $null

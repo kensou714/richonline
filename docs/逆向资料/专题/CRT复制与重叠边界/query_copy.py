@@ -23,5 +23,5 @@ def run(db):
             rows.append(dict(va=hex(va + delta), purpose=purpose, size=len(raw),
                              idb_hex=raw.hex(), targets=[hex(t) for t in targets]))
     payload = dict(note='从完整块原字节独立解析；表项不是可执行指令。', tables=rows)
-    (HERE / '证据/跳表原证.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+    (HERE / '证据/跳表原证.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8', newline='\n')
     return dict(export=result, tables=len(rows))

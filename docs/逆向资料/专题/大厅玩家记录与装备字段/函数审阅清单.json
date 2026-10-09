@@ -1,0 +1,505 @@
+{
+  "scope": "审阅范围以每项scope为准；导出完整函数不代表所有业务路径已审阅",
+  "functions": [
+    {
+      "va": "0x628270",
+      "status": "主体已审阅",
+      "scope": "单例分配与返回",
+      "conclusion": "分配0xABC字节，保存A76728并返回L",
+      "unknown": "构造函数内部字段与全局销毁时机未展开",
+      "evidence": [
+        "证据/equipment_actions.json"
+      ]
+    },
+    {
+      "va": "0x629e30",
+      "status": "主体已审阅",
+      "scope": "完整短访问函数",
+      "conclusion": "返回L+1264自身玩家ID",
+      "unknown": "无运行时ID合法性保证",
+      "evidence": [
+        "证据/record_access.json"
+      ]
+    },
+    {
+      "va": "0x64f090",
+      "status": "主体已审阅",
+      "scope": "完整短访问函数",
+      "conclusion": "返回table[self]，不判空、不检查范围",
+      "unknown": "外层初始化顺序需调用方保证",
+      "evidence": [
+        "证据/record_access.json"
+      ]
+    },
+    {
+      "va": "0x64f0c0",
+      "status": "主体已审阅",
+      "scope": "完整短访问函数",
+      "conclusion": "有记录则返回R+112名字地址，否则0",
+      "unknown": "不验证ID范围、编码或终止符",
+      "evidence": [
+        "证据/record_access.json"
+      ]
+    },
+    {
+      "va": "0x64f120",
+      "status": "主体已审阅",
+      "scope": "完整短访问函数",
+      "conclusion": "只判断table[id]非NULL",
+      "unknown": "没有表指针和ID范围检查",
+      "evidence": [
+        "证据/record_access.json"
+      ]
+    },
+    {
+      "va": "0x6a2350",
+      "status": "主体已审阅",
+      "scope": "五个数组释放路径",
+      "conclusion": "释放L的五个数组并各置NULL，不释放记录视图",
+      "unknown": "底层U销毁顺序不在本函数",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6a2480",
+      "status": "主体已审阅",
+      "scope": "五个数组分配路径",
+      "conclusion": "从L+1228取得容量；仅主记录表在此清零",
+      "unknown": "四个旁表用途与分配失败处理未恢复",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6a25e0",
+      "status": "主体已审阅",
+      "scope": "按名字查ID循环",
+      "conclusion": "按容量遍历已存在记录，strcmp后返回首个ID，未命中-1",
+      "unknown": "字符串算法与名字唯一性由外层保证",
+      "evidence": [
+        "证据/equipment_actions.json"
+      ]
+    },
+    {
+      "va": "0x6a2d90",
+      "status": "主体已审阅",
+      "scope": "按名字查ID循环",
+      "conclusion": "与6A25E0等价的首匹配查找",
+      "unknown": "未将近似实现自动视为同一入口",
+      "evidence": [
+        "证据/equipment_actions.json"
+      ]
+    },
+    {
+      "va": "0x6a2e30",
+      "status": "字段路径已审阅",
+      "scope": "自身ID与selector复制长度",
+      "conclusion": "case3设置自身ID，R+76复制到L+1292，case43/45复制28/32字节",
+      "unknown": "两个复制区完整含义未恢复",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6a32a0",
+      "status": "主体已审阅",
+      "scope": "穿戴与先卸后穿分支",
+      "conclusion": "signed oldRaw<=0提交命令52；否则保存待办并提交卸下",
+      "unknown": "高位编码有效域与并发请求规则未恢复",
+      "evidence": [
+        "证据/equipment_actions.json"
+      ]
+    },
+    {
+      "va": "0x6a3390",
+      "status": "主体已审阅",
+      "scope": "卸下本地命令构造",
+      "conclusion": "12字节xData={self,slot,raw}，命令53，保存最后slot",
+      "unknown": "下层不消费xData[2]，不可当线上payload",
+      "evidence": [
+        "证据/equipment_actions.json"
+      ]
+    },
+    {
+      "va": "0x6a3490",
+      "status": "主体已审阅",
+      "scope": "32槽完整值比较",
+      "conclusion": "完整DWORD匹配；输入0也能匹配空槽",
+      "unknown": "外层输入限制未恢复",
+      "evidence": [
+        "证据/equipment_actions.json"
+      ]
+    },
+    {
+      "va": "0x6a3500",
+      "status": "主体已审阅",
+      "scope": "首个过期槽筛选",
+      "conclusion": "遍历32槽，首个raw非0且bit16置位时提交卸下并保存提示状态",
+      "unknown": "bit16生成端与时间计算未恢复",
+      "evidence": [
+        "证据/equipment_actions.json"
+      ]
+    },
+    {
+      "va": "0x6a71c0",
+      "status": "局部路径已审阅",
+      "scope": "背包O来源与8字节条目结构",
+      "conclusion": "从selector19重取L+1596；后续按8字节条目建立分类视图",
+      "unknown": "所有分类自然名称、全部分配清理策略未展开",
+      "evidence": [
+        "证据/bag_refresh.json"
+      ]
+    },
+    {
+      "va": "0x6a7900",
+      "status": "主体已审阅",
+      "scope": "背包与已装备条件循环",
+      "conclusion": "先找未过期的编号；可选再检查自身32槽编号",
+      "unknown": "8字节背包行第二DWORD语义未恢复",
+      "evidence": [
+        "证据/record_access.json"
+      ]
+    },
+    {
+      "va": "0x6aaef0",
+      "status": "字段路径已审阅",
+      "scope": "记录新增与列表通知",
+      "conclusion": "p+4取signed WORD ID，重取R并保存，通知界面刷新",
+      "unknown": "外层网络事件与所有UI细节未展开",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6ab0d0",
+      "status": "字段路径已审阅",
+      "scope": "记录移除与名字复制",
+      "conclusion": "复制名字32字节，清table[id]；RTC rName实际33字节",
+      "unknown": "未确认外层名字终止契约；不推导通知长度",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6ab340",
+      "status": "字段路径已审阅",
+      "scope": "记录重绑定",
+      "conclusion": "p+4玩家ID重取R并通知详情与列表刷新",
+      "unknown": "其他UI消息字段未完整恢复",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6ac1d0",
+      "status": "字段路径已审阅",
+      "scope": "记录重绑定及条件刷新",
+      "conclusion": "重取R；按房间和自身条件通知相关UI",
+      "unknown": "完整房间业务未展开",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6adec0",
+      "status": "字段路径已审阅",
+      "scope": "WORD输入与记录刷新",
+      "conclusion": "输入玩家ID与低12位类型参与分支，最终重取R",
+      "unknown": "完整输入结构与全部业务类型未恢复",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6ae370",
+      "status": "局部路径已审阅",
+      "scope": "装备成功后的本人分支与刷新边界",
+      "conclusion": "本地通知63，读取p+2/p+4；本人显示RichStr622并刷新",
+      "unknown": "外人房间条件及底层模型更新来源未全追",
+      "evidence": [
+        "证据/equipment_success.json"
+      ]
+    },
+    {
+      "va": "0x6ae5a0",
+      "status": "局部路径已审阅",
+      "scope": "卸下成功后待办与过期路径",
+      "conclusion": "本地通知64；优先待换装，其次角色改变，再次过期继续扫描",
+      "unknown": "所有房间UI分支及网络通知来源未全追",
+      "evidence": [
+        "证据/equipment_flow.json"
+      ]
+    },
+    {
+      "va": "0x6b14f0",
+      "status": "局部路径已审阅",
+      "scope": "卸下失败提示及待办复位",
+      "conclusion": "RichStr621提示并清L+1272",
+      "unknown": "外层错误事件映射及后续通用消息未展开",
+      "evidence": [
+        "证据/equipment_flow.json"
+      ]
+    },
+    {
+      "va": "0x6b7900",
+      "status": "主体已审阅",
+      "scope": "完整短访问函数",
+      "conclusion": "返回L+1228容量配置",
+      "unknown": "容量写入来源未恢复",
+      "evidence": [
+        "证据/capacity.json"
+      ]
+    },
+    {
+      "va": "0x6b7970",
+      "status": "主体已审阅",
+      "scope": "完整装备原值getter",
+      "conclusion": "有记录返回R+144+4*slot的DWORD，否则0",
+      "unknown": "不验证slot或id上下界",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6b7a20",
+      "status": "主体已审阅",
+      "scope": "完整装备编号getter",
+      "conclusion": "有记录读取同一槽并&0xFFF，否则0",
+      "unknown": "未定义被屏蔽高位的全部含义",
+      "evidence": [
+        "证据/record_access.json"
+      ]
+    },
+    {
+      "va": "0x6b7a90",
+      "status": "主体已审阅",
+      "scope": "完整短字段getter",
+      "conclusion": "返回R+52，缺记录0",
+      "unknown": "字段自然名称未确认",
+      "evidence": [
+        "证据/record_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x6be2e0",
+      "status": "局部路径已审阅",
+      "scope": "通知2/5/8/20/63/64分派",
+      "conclusion": "使用L单例路由记录与装备成功通知",
+      "unknown": "其他通知仅归档，网络到本地事件映射未全审",
+      "evidence": [
+        "证据/notification_dispatch.json"
+      ]
+    },
+    {
+      "va": "0x732920",
+      "status": "局部路径已审阅",
+      "scope": "slot15到图像标识调用",
+      "conclusion": "从玩家装备slot15取编号送733330",
+      "unknown": "其余列表UI逻辑与控件树未审",
+      "evidence": [
+        "证据/equipment_flow.json"
+      ]
+    },
+    {
+      "va": "0x733330",
+      "status": "主体已审阅",
+      "scope": "535/540相关短图像选择函数",
+      "conclusion": "编号540选择图像(10,51,61/62)，否则关闭显示",
+      "unknown": "图像装载器与物品自然名称未确认",
+      "evidence": [
+        "证据/equipment_flow.json"
+      ]
+    },
+    {
+      "va": "0x734c70",
+      "status": "局部路径已审阅",
+      "scope": "slot14到图像标识调用",
+      "conclusion": "从玩家装备slot14取编号送735910",
+      "unknown": "其余列表UI逻辑与控件树未审",
+      "evidence": [
+        "证据/equipment_flow.json"
+      ]
+    },
+    {
+      "va": "0x735910",
+      "status": "主体已审阅",
+      "scope": "535/540相关短图像选择函数",
+      "conclusion": "编号535选择图像(10,51,63/66)，否则关闭显示",
+      "unknown": "图像装载器与物品自然名称未确认",
+      "evidence": [
+        "证据/equipment_flow.json"
+      ]
+    },
+    {
+      "va": "0x828f60",
+      "status": "局部路径已审阅",
+      "scope": "命令52/53分派",
+      "conclusion": "52传slot和newRaw；53仅传slot",
+      "unknown": "其他命令、任务系统与所有异常路径业务未展开",
+      "evidence": [
+        "证据/equipment_actions.json"
+      ]
+    },
+    {
+      "va": "0x82b090",
+      "status": "局部路径已审阅",
+      "scope": "case0/3/19/43/45数据来源",
+      "conclusion": "case0返回U内部视图；case3取得自身ID；19取背包视图",
+      "unknown": "其他case及全部底层getter未审",
+      "evidence": [
+        "证据/record_sources.json"
+      ]
+    },
+    {
+      "va": "0x82bee0",
+      "status": "主体已审阅",
+      "scope": "完整短访问函数",
+      "conclusion": "返回对象+8，selector3在自身玩家对象上使用",
+      "unknown": "该getter也可能被其他对象复用",
+      "evidence": [
+        "证据/record_sources.json"
+      ]
+    },
+    {
+      "va": "0x8403b0",
+      "status": "主体已审阅",
+      "scope": "完整短访问函数",
+      "conclusion": "返回装备对象+8原值，卸下构造调用此值",
+      "unknown": "完整装备对象结构未恢复",
+      "evidence": [
+        "证据/equipment_requests.json"
+      ]
+    },
+    {
+      "va": "0x84b550",
+      "status": "局部路径已审阅",
+      "scope": "穿戴任务建立与调用参数",
+      "conclusion": "注册84B8A0回调后调用8AC920(slot,newRaw)",
+      "unknown": "通用异步任务框架未展开",
+      "evidence": [
+        "证据/equipment_flow.json"
+      ]
+    },
+    {
+      "va": "0x84b8a0",
+      "status": "主体已审阅",
+      "scope": "回调与全局复位",
+      "conclusion": "A6779C/A677A0置-1，间接回调业务码51",
+      "unknown": "间接回调安装者与完整参数自然名称未恢复",
+      "evidence": [
+        "证据/equipment_requests.json"
+      ]
+    },
+    {
+      "va": "0x84b950",
+      "status": "局部路径已审阅",
+      "scope": "卸下任务建立与调用参数",
+      "conclusion": "注册84BC20回调后调用8ACC20(slot)",
+      "unknown": "通用异步任务框架未展开",
+      "evidence": [
+        "证据/equipment_flow.json"
+      ]
+    },
+    {
+      "va": "0x84bc20",
+      "status": "主体已审阅",
+      "scope": "回调与全局复位",
+      "conclusion": "A6779C/A677A0置-1，间接回调业务码52",
+      "unknown": "间接回调安装者与完整参数自然名称未恢复",
+      "evidence": [
+        "证据/equipment_requests.json"
+      ]
+    },
+    {
+      "va": "0x856c30",
+      "status": "局部路径已审阅",
+      "scope": "R视图生成、名字和装备区",
+      "conclusion": "返回U+128；名字U+240；32槽区U+272先清零再填值",
+      "unknown": "其他属性getter和完整U结构未恢复",
+      "evidence": [
+        "证据/record_sources.json"
+      ]
+    },
+    {
+      "va": "0x868530",
+      "status": "主体已审阅",
+      "scope": "参数字节宽度与返回",
+      "conclusion": "从栈参数地址写入4字节，返回this，ret4",
+      "unknown": "底层动态缓冲区增长策略未展开",
+      "evidence": [
+        "证据/packet_fields.json"
+      ]
+    },
+    {
+      "va": "0x8ab120",
+      "status": "局部路径已审阅",
+      "scope": "按槽查询装备的返回边界",
+      "conclusion": "查询成功返回关联节点+4指针，未找到0",
+      "unknown": "容器结构与比较器内部未展开",
+      "evidence": [
+        "证据/equipment_requests.json"
+      ]
+    },
+    {
+      "va": "0x8ac920",
+      "status": "主体路径已审阅",
+      "scope": "穿戴参数转发、构造和交付",
+      "conclusion": "操作51上下文，构造8ACA40，交付发送边界",
+      "unknown": "实际线上封装及发送结果处理未展开",
+      "evidence": [
+        "证据/equipment_requests.json"
+      ]
+    },
+    {
+      "va": "0x8aca40",
+      "status": "主体路径已审阅",
+      "scope": "构造参数顺序与写入宽度",
+      "conclusion": "穿戴派生构造按DWORD写入1、slot、newRaw",
+      "unknown": "异常尾块已保存，基础缓冲区语义仅作边界",
+      "evidence": [
+        "证据/equipment_requests.json"
+      ]
+    },
+    {
+      "va": "0x8acc20",
+      "status": "主体路径已审阅",
+      "scope": "卸下查询与构造",
+      "conclusion": "按slot查现有对象，非空时用对象+8构造卸下请求",
+      "unknown": "查不到对象时的上层用户体验未动态验证",
+      "evidence": [
+        "证据/equipment_requests.json"
+      ]
+    },
+    {
+      "va": "0x8acd70",
+      "status": "主体路径已审阅",
+      "scope": "构造参数顺序与写入宽度",
+      "conclusion": "卸下派生构造按DWORD写入1、slot、当前装备原值",
+      "unknown": "实际线上包布局未恢复",
+      "evidence": [
+        "证据/equipment_requests.json"
+      ]
+    },
+    {
+      "va": "0x8acf50",
+      "status": "主体路径已审阅",
+      "scope": "完整立即数与基础构造参数",
+      "conclusion": "容量参数+12，完整常量0x10A1D85F，操作51",
+      "unknown": "长度写入器与最终发送封装未展开",
+      "evidence": [
+        "证据/packet_fields.json"
+      ]
+    },
+    {
+      "va": "0x8ad030",
+      "status": "主体路径已审阅",
+      "scope": "完整立即数与基础构造参数",
+      "conclusion": "容量参数+12，完整常量0x10A1D85F，操作52",
+      "unknown": "长度写入器与最终发送封装未展开",
+      "evidence": [
+        "证据/packet_fields.json"
+      ]
+    }
+  ]
+}

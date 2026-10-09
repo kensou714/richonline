@@ -104,6 +104,7 @@ Bytes words(std::initializer_list<std::uint32_t> values) {
     for (const auto value : values) append_le(bytes,value,4);
     return bytes;
 }
+Frame vote_request(std::uint32_t type,Bytes inner);
 void put(Bytes& bytes,std::size_t offset,std::uint32_t value) {
     for (std::size_t i=0;i<4;++i) bytes.at(offset+i)=static_cast<std::uint8_t>(value>>(i*8));
 }
@@ -209,6 +210,14 @@ void rejected_game_start_keeps_room_connected(const std::filesystem::path& root)
     peer.send({34,words({actor})}); peer.until(70); peer.send({7,words({0})}); peer.until(30);
     peer.send({3,room_request()}); const auto created=peer.until(10);
     const auto room=read_le(View(created.payload).first(4));
+    auto voted_description=room_request();put(voted_description,32,0x40);put(voted_description,60,actor);put(voted_description,64,0);
+    auto voted_edit=words({room});voted_edit.insert(voted_edit.end(),voted_description.begin(),voted_description.end());
+    peer.send(vote_request(23,voted_edit));
+    check(peer.receive().wire_type==75,"solo_vote_not_started");
+    const auto result=peer.receive();
+    check(result.wire_type==80 && result.payload==words({actor,1,0,0}),"solo_vote_not_resolved");
+    const auto applied=peer.receive();
+    check(applied.wire_type==26 && applied.payload==voted_edit,"solo_vote_map_not_applied");
     for (unsigned attempt=0;attempt<2;++attempt) {
         peer.send({5,{}});
         verify_pair(peer.receive(),actor,room);
@@ -381,6 +390,104 @@ void three_channel_tcp_isolation(const std::filesystem::path& root) {
     check(enter(a,id0,0,false)==0,"channel_switch_cannot_return_without_relogin");
     a.close(); b.close(); c.close(); observer.close(); runtime.stop();
 }
+Frame vote_request(std::uint32_t type,Bytes inner) {
+    const auto length=static_cast<std::uint32_t>(inner.size()+8);
+    auto bytes=words({length,0,type,length});bytes.insert(bytes.end(),inner.begin(),inner.end());
+    return {39,std::move(bytes)};
+}
+void encrypted_tcp_votes(const std::filesystem::path& root) {
+    auto bootstrap_config=config();bootstrap_config["channels"]=Json::array();
+    for(std::uint32_t channel=0;channel<2;++channel)
+        bootstrap_config["channels"].push_back({{"key",channel},{"name_utf8","vote"+std::to_string(channel)},
+            {"room_capacity",8},{"player_capacity",100},{"lobby_type",channel},{"status",1},
+            {"min_gold",0},{"max_gold",1e9},{"min_level",0},{"max_level",999},{"wire_record_hex",std::string(160,'0')}});
+    const auto bootstrap=root/"vote-bootstrap.json";
+    {std::ofstream file(bootstrap);file<<bootstrap_config;check(file.good(),"vote_fixture_write_failed");}
+    Storage storage(root/"votes.sqlite3");
+    const auto create=[&](const char* user) {return storage.dispatch("accounts.create",{{"username",user},{"password","p"}})
+        .at("account").at("role_id").get<std::uint32_t>();};
+    const auto id_a=create("vote-a"),id_b=create("vote-b"),id_c=create("vote-c"),id_d=create("vote-d"),id_e=create("vote-e");
+    std::atomic_int rejected{0};
+    LobbyRuntime runtime(storage,bootstrap,[&](const std::string& event,const Json&) {
+        if(event=="richonline_request_rejected") ++rejected;
+    });
+    const auto port=runtime.status().at("lobbyPort").get<std::uint16_t>();
+    const auto enter=[](Peer& peer,std::uint32_t actor,std::uint32_t channel) {
+        peer.send({34,words({actor})});peer.until(70);peer.send({7,words({channel})});peer.until(30);
+    };
+    Peer a(port,11,"vote-a");enter(a,id_a,0);
+    Peer b(port,13,"vote-b");enter(b,id_b,0);
+    Peer c(port,17,"vote-c");enter(c,id_c,0);
+    Peer observer(port,19,"vote-d");enter(observer,id_d,0);
+    Peer other_channel(port,23,"vote-e");enter(other_channel,id_e,1);
+    const auto same_channel=std::array<Peer*,4>{&a,&b,&c,&observer};
+    auto description=room_request();put(description,40,4);put(description,72,4);
+    a.send({3,description});const auto created=a.until(10);const auto room=read_le(View(created.payload).first(4));
+    b.until(10);c.until(10);observer.until(10);
+    for(const auto member:std::array<std::pair<Peer*,std::uint32_t>,2>{{{&b,id_b},{&c,id_c}}}) {
+        member.first->send({4,words({room,1,1})});
+        for(auto* peer:same_channel) verify_pair(peer->receive(),member.second,room);
+    }
+    const auto map=[&](std::uint32_t owner,char variant) {
+        auto edited=description;put(edited,32,0x40);put(edited,60,owner);put(edited,64,0);edited[133]=static_cast<std::uint8_t>(variant);
+        auto inner=words({room});inner.insert(inner.end(),edited.begin(),edited.end());return inner;
+    };
+    const auto expect=[&](Peer& peer,std::uint32_t type,const Bytes& payload) {
+        const auto frame=peer.receive();
+        if(frame.wire_type!=type || frame.payload!=payload)
+            throw std::runtime_error("vote_tcp_response: expected "+std::to_string(type)+"/"+std::to_string(payload.size())+
+                " got "+std::to_string(frame.wire_type)+"/"+std::to_string(frame.payload.size()));
+    };
+    const auto prompt=[&](Peer& peer,std::uint32_t proposer,std::uint32_t type,const Bytes& inner) {
+        const auto length=static_cast<std::uint32_t>(inner.size()+8);
+        auto payload=words({proposer,type,length,0,type,length});payload.insert(payload.end(),inner.begin(),inner.end());
+        expect(peer,74,payload);
+    };
+    const auto changed=map(id_a,'2');a.send(vote_request(23,changed));expect(a,75,words({23}));
+    prompt(b,id_a,23,changed);prompt(c,id_a,23,changed);
+    b.send({40,words({id_a,23,0})});c.send({40,words({id_a,23,1})});
+    for(auto* peer:std::array<Peer*,3>{&a,&b,&c}) {
+        expect(*peer,80,words({id_a,2,1,0}));expect(*peer,26,changed);
+    }
+    expect(observer,26,changed); // An idle observer receives the action, no ballot/result dialog.
+    auto kick=words({id_b,room,id_a});kick.resize(44);kick[12]='x';
+    b.send(vote_request(27,kick));expect(b,75,words({27}));prompt(a,id_b,27,kick);prompt(c,id_b,27,kick);
+    a.send({40,words({id_b,27,1})});c.send({40,words({id_b,27,0})});
+    auto applied_kick=words({id_b,id_b,room,id_a});applied_kick.push_back('x');applied_kick.push_back(0);
+    for(auto* peer:std::array<Peer*,3>{&a,&b,&c}) {
+        expect(*peer,80,words({id_b,2,1,0}));expect(*peer,27,applied_kick);
+    }
+    expect(observer,27,applied_kick);
+    a.send({4,words({room,0,1})});for(auto* peer:same_channel) expect(*peer,12,words({id_a,room,0,1}));
+    const auto next=map(id_b,'4');b.send(vote_request(23,next));expect(b,75,words({23}));
+    prompt(a,id_b,23,next);prompt(c,id_b,23,next);
+    c.send({6,words({1})});
+    for(auto* peer:std::array<Peer*,3>{&a,&b,&c}) {
+        expect(*peer,80,words({id_b,0,0,3}));expect(*peer,14,words({id_c,room,id_b}));
+    }
+    expect(observer,14,words({id_c,room,id_b}));
+    // A cancelled ballot cannot mutate the room, and the connection remains usable.
+    a.send({40,words({id_b,23,0})});a.send({9,words({2})});
+    for(auto* peer:same_channel) expect(*peer,17,words({id_a,2}));
+    c.send({4,words({room,1,1})});for(auto* peer:same_channel) expect(*peer,12,words({id_c,room,1,1}));
+    a.send({39,Bytes(15)});const auto failure=a.receive();
+    check(failure.wire_type==0xffffffffU && read_le(View(failure.payload).first(4))==39,"malformed_vote_not_refused_on39");
+    // No further client packet is sent during the actual ten-second timeout.
+    const DWORD timeout=15000;
+    check(setsockopt(a.socket,SOL_SOCKET,SO_RCVTIMEO,reinterpret_cast<const char*>(&timeout),sizeof(timeout))==0,"vote_timeout_option");
+    const auto started=std::chrono::steady_clock::now();
+    a.send(vote_request(23,next));expect(a,75,words({23}));prompt(b,id_a,23,next);prompt(c,id_a,23,next);
+    expect(a,80,words({id_a,1,0,2}));
+    check(std::chrono::steady_clock::now()-started>=std::chrono::milliseconds(9900),"vote_expired_before_deadline");
+    expect(a,26,next);
+    for(auto* peer:std::array<Peer*,2>{&b,&c}) {expect(*peer,80,words({id_a,1,0,2}));expect(*peer,26,next);}
+    expect(observer,26,next);
+    b.send({40,words({id_a,23,1})});b.send({9,words({3})});
+    for(auto* peer:same_channel) expect(*peer,17,words({id_b,3}));
+    other_channel.send({3,description});check(other_channel.receive().wire_type==10,"vote_leaked_across_channels");
+    check(rejected>=3,"late_or_invalid_votes_not_recorded");
+    for(auto* peer:same_channel) peer->close();other_channel.close();runtime.stop();
+}
 }
 int main() {
     try {
@@ -431,6 +538,7 @@ int main() {
         rejected_game_start_keeps_room_connected(root);
         first_login_registers_and_reuses_persistent_credentials(root);
         three_channel_tcp_isolation(root);
+        encrypted_tcp_votes(root);
         std::cout << "PASS SQLite encrypted TCP rooms and first-login registration/persistent credential policy\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << "FAIL " << error.what() << '\n'; return 1; }
