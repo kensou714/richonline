@@ -1,0 +1,5 @@
+.echo NEW selected role numeric state
+.if (dwo(0xACBB50) != 0) { .printf "manager_root=%08x context=%08x\n", dwo(0xACBB50), dwo(dwo(0xACBB50)+0x50) }
+.if (dwo(0xACBB50) != 0) { .if (dwo(dwo(0xACBB50)+0x50) != 0) { .printf "account_manager=%08x\n", dwo(dwo(dwo(0xACBB50)+0x50)+0x18) } }
+.if (dwo(0xACBB50) != 0) { .if (dwo(dwo(0xACBB50)+0x50) != 0) { .if (dwo(dwo(dwo(0xACBB50)+0x50)+0x18) != 0) { .printf "account_vtable=%08x selected_role=%08x\n", dwo(dwo(dwo(dwo(0xACBB50)+0x50)+0x18)), dwo(dwo(dwo(dwo(0xACBB50)+0x50)+0x18)+0x14) } } }
+qd

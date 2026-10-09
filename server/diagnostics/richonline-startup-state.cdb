@@ -1,0 +1,10 @@
+.echo NEW Richonline startup numeric state snapshot
+.printf "phase[A6723C]=%u game[A7672C]=%08x ui[A76728]=%08x network[A76724]=%08x\n", dwo(0xA6723C), dwo(0xA7672C), dwo(0xA76728), dwo(0xA76724)
+.if (dwo(0xA76724) != 0) { .printf "network_enabled=%u\n", by(dwo(0xA76724)) }
+.if (dwo(0xA7672C) != 0) { .printf "init_entered=%u instance=%u local_slot=%d participants=%u preload_handle=%08x\n", by(dwo(0xA7672C)+0x38), wo(dwo(0xA7672C)+0x14784), dwo(dwo(0xA7672C)+8), dwo(dwo(0xA7672C)+0xE20), dwo(dwo(0xA7672C)+0x14) }
+.if (dwo(0xA7672C) != 0) { .printf "queue_pause=%u queue_read=%u queue_write=%u delay_ms=%u delay_started=%u calendar=%u\n", by(dwo(0xA7672C)+0x14777), dwo(dwo(0xA7672C)+0x64C), dwo(dwo(0xA7672C)+0x650), dwo(dwo(0xA7672C)+0xC), dwo(dwo(0xA7672C)+0x10), dwo(dwo(0xA7672C)+0xC48) }
+.if (dwo(0xA7672C) != 0) { .printf "loaded_map_mode=%u loaded_map_id=%u boss_record=%08x human_player=%08x synthetic_player=%08x\n", dwo(dwo(0xA7672C)+0x674), dwo(dwo(0xA7672C)+0x6CC), dwo(dwo(0xA7672C)+0xDF8), dwo(dwo(0xA7672C)+0xE00), dwo(dwo(0xA7672C)+0xE04) }
+.if (dwo(0xA76728) != 0) { .printf "profile_table=%08x profile_capacity=%u\n", dwo(dwo(0xA76728)+0x4D4), dwo(dwo(0xA76728)+0x4D8) }
+.if (dwo(0xA76728) != 0) { .if (dwo(dwo(0xA76728)+0x4D4) != 0) { .if (dwo(dwo(0xA76728)+0x4D8) > 26) { .printf "profile_slot26_pointer=%08x\n", dwo(dwo(dwo(0xA76728)+0x4D4)+0x68) } } }
+.echo Snapshot complete; detaching without terminating target
+qd

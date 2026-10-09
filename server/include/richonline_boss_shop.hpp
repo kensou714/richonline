@@ -1,0 +1,58 @@
+#pragma once
+
+// 新版 BOSS 商店事件：维护当前点数、商品及等待期限，共用对局卡包。
+#include "richonline_boss_cards.hpp"
+#include "richonline_shop_catalog.hpp"
+#include "richonline_game_payment.hpp"
+#include "richonline_game_ledger.hpp"
+#include <chrono>
+
+namespace richnet {
+class RichonlineBossShop final {
+public:
+    using Clock = std::chrono::steady_clock;
+    using Now = std::function<Clock::time_point()>;
+    using ChargeReserve = std::function<bool(std::uint32_t)>;
+    // Live sessions pass their authoritative RNG here. An omitted chooser keeps
+    // stable catalog order only for standalone deterministic compatibility callers.
+    // 客户端未读取货架偏移 4/5 字节；这是显式兼容策略，没有已确认的游戏含义。
+    RichonlineBossShop(const std::filesystem::path& root,RichonlineBossCards& cards,
+        std::uint16_t game_id,Now now,std::array<std::uint8_t,2> stock_opaque = {0,255},
+        RichonlineShopCatalog::Choose choose = {});
+    RichonlineBossShop(const std::filesystem::path& root,RichonlineBossCards& cards,
+        std::uint16_t game_id,std::shared_ptr<RichonlineGameLedger> ledger,Now now,
+        std::array<std::uint8_t,2> stock_opaque = {0,255},RichonlineShopCatalog::Choose choose = {});
+    // Atomic reserve charge supplied by the authoritative account/session owner.
+    void enable_refresh(ChargeReserve charge) { charge_reserve_=std::move(charge); }
+    void configure_refresh(const RichonlineGoldCharges& client_values,ChargeReserve charge);
+    // Pure preflight: false means this shop does not handle the landing; invalid state throws.
+    bool validate_landing(const RichonlineLandingContext& context) const;
+    std::optional<RichonlineLandingResult> land(const RichonlineLandingContext& context,std::uint32_t points);
+    std::optional<RichonlineLandingResult> land(const RichonlineLandingContext& context);
+    // 调用方须先校验已认证角色、回合计数及当前待处理商店，再分派请求。
+    RichonlineLandingResult handle(View request);
+    std::optional<RichonlineLandingResult> poll();
+    bool active() const noexcept { return deadline_.has_value(); }
+    std::uint32_t points() const { return ledger_ ? ledger_->snapshot(0).funds.tickets : points_; }
+    std::uint32_t price() const { return catalog_.price(1038); }
+    std::optional<std::uint32_t> refresh_cost() const noexcept { return refresh_cost_; }
+    const RichonlineShopStock& offers() const noexcept { return offers_; }
+private:
+    RichonlineBossCards& cards_;
+    std::uint16_t game_id_;
+    Now now_;
+    std::array<std::uint8_t,2> stock_opaque_;
+    RichonlineShopCatalog catalog_;
+    RichonlineShopCatalog::Choose choose_;
+    ChargeReserve charge_reserve_;
+    RichonlineShopStock offers_{};
+    std::optional<std::uint32_t> refresh_cost_;
+    std::uint32_t points_ = 0;
+    std::shared_ptr<RichonlineGameLedger> ledger_;
+    unsigned refreshes_ = 0;
+    std::optional<Clock::time_point> deadline_;
+    Bytes response(std::uint16_t opcode,std::int8_t index) const;
+    Bytes stock(const RichonlineShopStock& offers,bool refreshed) const;
+    RichonlineLandingResult close();
+};
+}
