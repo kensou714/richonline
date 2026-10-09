@@ -1,0 +1,68 @@
+/*
+ * 用通信链路定位卡局，而不是从画面猜测服务状态
+ * 核对日期：2026-10-09；不包含任何真实账号或登录载荷。
+ */
+
+// 找到正确实例
+// 从管理器配置确认 server 和 data-dir，记录 status 的 pid、instanceId。
+// 当前日志为 data-dir/logs/native-PID.jsonl，不以目录名判断版本。
+// 时间使用 UTC，格式带 Z；北京时间需加八小时。
+// 新日志和旧日志可能同处一目录，按实际启动 PID 和 ready 事件关联。
+// 依据：../native-server/src/server_main.cpp:timestamp、wmain。
+
+// 日志层级
+// ready / stopped：正式服务生命周期。
+// startup_or_runtime_failed：入口异常，进程将以失败状态退出。
+// listener_failed：某个监听器工作线程失败，查看 service 与 reason。
+// control_completed / control_failed：本机管理命令结果。
+// lobby_transport / game_transport：传输层消息文本。
+// richonline_boss_startup：房间内初始化与游戏 opcode 收发文本。
+// richonline_boss_landing_rejected：落点拒绝，携带地图和演员上下文。
+// richonline_property_landed：地产归属、建筑类型、等级及等待 opcode。
+// richonline_property_timeout / richonline_shop_timeout：超时后的决定。
+// 依据：control.cpp、lobby_runtime.cpp、richonline_boss_runtime.cpp。
+
+// 按时间整理一次动作
+// 记录触发动作、地图、房间、当前行动者、预期弹窗或下一回合。
+// 向前找到该连接准入、地图加载及最近一次回合起始。
+// 找出最后一个 game_received 和 richonline_game_received。
+// 前者报告外层 type，后者报告内层 opcode，两者不是同一个字段。
+// 查找其后的 richonline_game_sent、game_sent、reject 与 connection close。
+// 不把单一外层 299 包视为某个固定业务事件。
+
+// opcode 阅读方式
+// 日志中的 opcode 由 std::to_string 输出十进制。
+// 17 等于 0x0011，即普通移动结束确认。
+// 16403 等于 0x4013，即对应落点停止响应。
+// 55 等于 0x0037，56 等于 0x0038，即建筑选择及升级选择。
+// 报告中同时写十六进制语义和原日志值，避免转换错误。
+// 依据：richonline_game_startup.cpp:Startup::received、Startup::frame。
+
+// 常见定位分支
+// 没有看到请求：核对客户端目标地址、连接状态及是否停在本地交互。
+// 看见外层请求却没有业务 opcode：检查帧、内层解码和准入阶段错误。
+// 看见业务请求后出现 rejected：从 reason 定位业务边界，不先改超时。
+// 回包存在却仍等待：核对内层字段、长度、计数器、顺序和接收函数。
+// 弹窗仍开着：核对 await_event、pending_opcode 与 deadline。
+// 游戏连接关闭而大厅还在：分别检查两个连接，不能宣称全服务停机。
+
+// 地产卡局所需上下文
+// room、actor_slot、position、static_type、property_ref、road_degree。
+// occupied 是否有另一角色重叠，以及 owner、building_kind、building_level。
+// pending_opcode 是否为购买、建筑选择或升级选择。
+// 只有地点编号不足以区分无主地、自己的地、对方地产和重叠事件。
+// 玩家等待选择与 BOSS 自动处理是不同的业务分支。
+// 依据：richonline_boss_runtime.cpp 中 landed 与 poll 的日志。
+
+// 故障报告最小内容
+// 客户端文件基准及版本、服务程序 SHA256、源码修订和启动 profile。
+// 复现操作与时间、房间、行动者、最后请求及预期响应。
+// 覆盖动作前后的连续日志片段、reason 与相关源码函数。
+// 修复后的同场景结果，以及取消、超时、重复请求回归结果。
+// 若只有静态分析或单元测试，应明确尚未完成实机验证。
+
+// 日志安全与缺口
+// 不记录明文密码、账号校验值、完整登录包或可重放准入 token。
+// 当前日志不保证包含原始字节；缺少字段时添加必要结构化上下文。
+// 不向日志塞整份对象来替代针对性诊断。
+// 并行排查共享 runtime 前先核对操作者，避免重启打断另一人的证据链。

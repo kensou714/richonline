@@ -1,0 +1,172 @@
+// ====================================================================
+// 窗口工厂逐槽导航：160个槽，124对工厂，117条配置
+// ====================================================================
+// 表中的名称来自当前Intf.kpd的file，不把文件名自动翻译为已恢复产品语义。
+// 创建/释放地址均为实现；跳板、构造器及完整资源字段见ui_batch2_verification.json。
+// 本轮仅对同型工厂做结构核对；除91/94外的业务方法不计为深入分析完成。
+// 版本边界及局部字节一致性见控件类型与双资料窗口.txt。
+//
+// 000  G_TopBar.ui               创建0x6e6d00  释放0x6eb2c0  大小0x1B4
+// 001  G_GoBar.ui                创建0x6e6d90  释放0x6eb330  大小0xE0
+// 002  G_Station.ui              创建0x6e6e20  释放0x6eb3a0  大小0x4C
+// 003  G_BuyLand.ui              创建0x6e6eb0  释放0x6eb410  大小0x48
+// 004  G_MsgBox.ui               创建0x6e6f40  释放0x6eb480  大小0x48
+// 005  G_UpvLand.ui              创建0x6e6fd0  释放0x6eb4f0  大小0x4C
+// 006  G_NpcAffix.ui             创建0x6e7060  释放0x6eb560  大小0x48
+// 007  G_LaBar.ui                创建0x6e70f0  释放0x6eb5d0  大小0x80
+// 008  G_SelectStock.ui          创建0x6e7180  释放0x6eb640  大小0x4C
+// 009  G_PaoPao.ui               创建0x6e7210  释放0x6eb6b0  大小0x48
+// 010  G_ChatButton.ui           创建0x6e72a0  释放0x6eb720  大小0x90
+// 011  G_RentHint.ui             创建0x6e7330  释放0x6eb790  大小0x48
+// 012  G_CardBar.ui              创建0x6e73c0  释放0x6eb800  大小0x274
+// 013  G_SelectBuild.ui          创建0x6e7450  释放0x6eb870  大小0x48
+// 014  G_YanJiuSuo.ui            创建0x6e74e0  释放0x6eb8e0  大小0x48
+// 015  G_MaoYi.ui                创建0x6e7570  释放0x6eb950  大小0x8C
+// 016  G_FanDian.ui              创建0x6e7600  释放0x6eb9c0  大小0x8C
+// 017  G_Bank.ui                 创建0x6e7690  释放0x6eba30  大小0x60
+// 018  G_JoyXuan.ui              创建0x6e7720  释放0x6ebaa0  大小0x48
+// 019  G_JoyKai.ui               创建0x6e77b0  释放0x6ebb10  大小0x5C
+// 020  G_PropStore.ui            创建0x6e7840  释放0x6ebb80  大小0x2D4
+// 021  G_FWallowHint.ui          创建0x6e78d0  释放0x6ebbf0  大小0x5C
+// 022  G_DoffCard.ui             创建0x6e7960  释放0x6ebc60  大小0x4C
+// 023  G_PaoPaoUC.ui             创建0x6e79f0  释放0x6ebcd0  大小0x4C
+// 024  G_YaoKongDice.ui          创建0x6e7a80  释放0x6ebd40  大小0x4C
+// 025  G_SelectPlayer.ui         创建0x6e7b10  释放0x6ebdb0  大小0x4C
+// 026  G_RobCard.ui              创建0x6e7ba0  释放0x6ebe20  大小0x50
+// 027  G_JiaHuo.ui               创建0x6e7c30  释放0x6ebe90  大小0x58
+// 028  G_ChaKanCard.ui           创建0x6e7cc0  释放0x6ebf00  大小0x48
+// 029  G_ZanJiList.ui            创建0x6e7d50  释放0x6ebf70  大小0x1134
+// 030  G_News.ui                 创建0x6e7de0  释放0x6ebfe0  大小0x214
+// 031  G_SelectDir.ui            创建0x6e7e70  释放0x6ec050  大小0x48
+// 032  G_MyStock.ui              创建0x6e7f00  释放0x6ec0c0  大小0x60
+// 033  G_ExitDlg.ui              创建0x6e7f90  释放0x6ec130  大小0x48
+// 034  G_YaBao.ui                创建0x6e8020  释放0x6ec1a0  大小0x50
+// 035  G_Stock.ui                创建0x6e80b0  释放0x6ec210  大小0x70
+// 036  G_GameOver.ui             创建0x6e8140  释放0x6ec280  大小0x4C
+// 037  G_GameStart.ui            创建0x6e81d0  释放0x6ec2f0  大小0x5C
+// 038  G_ExitRecord.ui           创建0x6e8260  释放0x6ec360  大小0x48
+// 039  G_RecordOut.ui            创建0x6e82f0  释放0x6ec3d0  大小0x48
+// 040  G_TeachBox.ui             创建0x6e8380  释放0x6ec440  大小0x25C
+// 041  G_SelBuildBS.ui           创建0x6e8410  释放0x6ec4b0  大小0x48
+// 042  G_YanJiuSuoBS.ui          创建0x6e84a0  释放0x6ec520  大小0x48
+// 043  G_Invest.ui               创建0x6e8530  释放0x6ec590  大小0x48
+// 044  G_BossState.ui            创建0x6e85c0  释放0x6ec600  大小0x64
+// 045  G_MsgBoxBS.ui             创建0x6e8650  释放0x6ec670  大小0x48
+// 046  当前Intf无配置                 0x6E6080未绑定工厂
+// 047  当前Intf无配置                 0x6E6080未绑定工厂
+// 048  当前Intf无配置                 0x6E6080未绑定工厂
+// 049  当前Intf无配置                 0x6E6080未绑定工厂
+// 050  当前Intf无配置                 0x6E6080未绑定工厂
+// 051  当前Intf无配置                 0x6E6080未绑定工厂
+// 052  当前Intf无配置                 0x6E6080未绑定工厂
+// 053  当前Intf无配置                 0x6E6080未绑定工厂
+// 054  当前Intf无配置                 0x6E6080未绑定工厂
+// 055  当前Intf无配置                 0x6E6080未绑定工厂
+// 056  当前Intf无配置                 0x6E6080未绑定工厂
+// 057  当前Intf无配置                 0x6E6080未绑定工厂
+// 058  当前Intf无配置                 0x6E6080未绑定工厂
+// 059  当前Intf无配置                 0x6E6080未绑定工厂
+// 060  当前Intf无配置                 0x6E6080未绑定工厂
+// 061  当前Intf无配置                 0x6E6080未绑定工厂
+// 062  当前Intf无配置                 0x6E6080未绑定工厂
+// 063  当前Intf无配置                 0x6E6080未绑定工厂
+// 064  L_ErrorMsg.ui             创建0x6e86e0  释放0x6ec6e0  大小0x48
+// 065  L_SelectServer.ui         创建0x6e8770  释放0x6ec750  大小0x90
+// 066  L_Login.ui                创建0x6e8800  释放0x6ec7c0  大小0x1FC
+// 067  L_InputName.ui            创建0x6e8890  释放0x6ec830  大小0xC8
+// 068  L_LobbyButton.ui          创建0x6e8920  释放0x6ec8a0  大小0x70
+// 069  L_StartUp.ui              创建0x6e89b0  释放0x6ec910  大小0x48
+// 070  L_ChannelWait.ui          创建0x6e8a40  释放0x6ec980  大小0x48
+// 071  L_MsgDialog.ui            创建0x6e8ad0  释放0x6ec9f0  大小0x48
+// 072  L_ShortcutHelp.ui         创建0x6e8b60  释放0x6eca60  大小0x5C
+// 073  L_SelectChannel.ui        创建0x6e8bf0  释放0x6ecad0  大小0xA8
+// 074  L_Room.ui                 创建0x6e8c80  释放0x6ecb40  大小0x74
+// 075  L_PlayerList.ui           创建0x6e8d10  释放0x6ecbb0  大小0xF4
+// 076  L_Chat.ui                 创建0x6e8da0  释放0x6ecc20  大小0xA4
+// 077  L_WaitPlayer.ui           创建0x6e8e30  释放0x6ecc90  大小0x48
+// 078  L_PutonDlg.ui             创建0x6e8ec0  释放0x6ecd00  大小0x50
+// 079  L_GameWait.ui             创建0x6e8f50  释放0x6ecd70  大小0x93C
+// 080  L_PopMenuGW.ui            创建0x6e8fe0  释放0x6ecde0  大小0x4C
+// 081  L_KickAsk.ui              创建0x6e9070  释放0x6ece50  大小0xCC
+// 082  L_VoteKick0.ui            创建0x6e9100  释放0x6ecec0  大小0x4C
+// 083  L_VoteKick1.ui            创建0x6e9190  释放0x6ecf30  大小0x58
+// 084  L_SelectMap.ui            创建0x6e9220  释放0x6ecfa0  大小0x15C
+// 085  L_VoteMap1.ui             创建0x6e92b0  释放0x6ed010  大小0x5C
+// 086  L_ErrorMsg2.ui            创建0x6e9340  释放0x6ed080  大小0x48
+// 087  L_LobbyShop.ui            创建0x6e93d0  释放0x6ed0f0  大小0x2FC
+// 088  L_BuyProp.ui              创建0x6e9460  释放0x6ed160  大小0x54
+// 089  L_ExchgMoney0.ui          创建0x6e94f0  释放0x6ed1d0  大小0x60
+// 090  L_ExchgMoney1.ui          创建0x6e9580  释放0x6ed240  大小0x50
+// 091  L_MyInfo.ui               创建0x6e9610  释放0x6ed2b0  大小0x294
+// 092  L_PopMenuMY.ui            创建0x6e96a0  释放0x6ed320  大小0x4C
+// 093  L_PopMenuPL.ui            创建0x6e9730  释放0x6ed390  大小0x4C
+// 094  L_PlayerInfo.ui           创建0x6e97c0  释放0x6ed400  大小0x2F4
+// 095  L_AddFriend0.ui           创建0x6e9850  释放0x6ed470  大小0x4C
+// 096  L_AddFriend1.ui           创建0x6e98e0  释放0x6ed4e0  大小0x4C
+// 097  L_AddFriend2.ui           创建0x6e9970  释放0x6ed550  大小0x48
+// 098  L_FriendList.ui           创建0x6e9a00  释放0x6ed5c0  大小0x60
+// 099  L_PopMenuFL.ui            创建0x6e9a90  释放0x6ed630  大小0x4C
+// 100  L_DoffDlg.ui              创建0x6e9b20  释放0x6ed6a0  大小0x4C
+// 101  L_DelFriendDlg.ui         创建0x6e9bb0  释放0x6ed710  大小0x4C
+// 102  L_InvitePlay0.ui          创建0x6e9c40  释放0x6ed780  大小0x50
+// 103  L_InvitePlay1.ui          创建0x6e9cd0  释放0x6ed7f0  大小0x48
+// 104  L_SysSetup.ui             创建0x6e9d60  释放0x6ed860  大小0x74
+// 105  L_OrderList.ui            创建0x6e9df0  释放0x6ed8d0  大小0x54
+// 106  L_GamePassword.ui         创建0x6e9e80  释放0x6ed940  大小0x4C
+// 107  L_SendProp.ui             创建0x6e9f10  释放0x6ed9b0  大小0x54
+// 108  L_MailSystem.ui           创建0x6e9fa0  释放0x6eda20  大小0x5C0
+// 109  L_ExitDlg.ui              创建0x6ea030  释放0x6eda90  大小0x48
+// 110  L_CreateGame.ui           创建0x6ea0c0  释放0x6edb00  大小0x70
+// 111  L_DropConnect.ui          创建0x6ea150  释放0x6edb70  大小0x48
+// 112  L_FillJDFail.ui           创建0x6ea1e0  释放0x6edbe0  大小0x48
+// 113  L_FillJDOK.ui             创建0x6ea270  释放0x6edc50  大小0x48
+// 114  L_ExchgMoneyOK.ui         创建0x6ea300  释放0x6edcc0  大小0x48
+// 115  L_SysBroadcast.ui         创建0x6ea390  释放0x6edd30  大小0x50
+// 116  L_PopMenuRecord.ui        创建0x6ea420  释放0x6edda0  大小0x4C
+// 117  L_RecordName.ui           创建0x6ea4b0  释放0x6ede10  大小0x4C
+// 118  L_DeleteRecord.ui         创建0x6ea540  释放0x6ede80  大小0x50
+// 119  L_RecordIn.ui             创建0x6ea5d0  释放0x6edef0  大小0x48
+// 120  L_ChouJiang.ui            创建0x6ea660  释放0x6edf60  大小0x68
+// 121  L_FriendMes.ui            创建0x6ea6f0  释放0x6edfd0  大小0x284
+// 122  L_AddBlackDlg.ui          创建0x6ea780  释放0x6ee040  大小0x6C
+// 123  L_PopMenuBL.ui            创建0x6ea810  释放0x6ee0b0  大小0x6C
+// 124  L_DelBlackDlg.ui          创建0x6ea8a0  释放0x6ee120  大小0x6C
+// 125  L_GoldBank.ui             创建0x6ea930  释放0x6ee190  大小0x7C
+// 126  L_IntroGameUI.ui          创建0x6ea9c0  释放0x6ee200  大小0x4C
+// 127  L_WindowBar.ui            创建0x6eaa50  释放0x6ee270  大小0x48
+// 128  L_LobbyBack.ui            创建0x6eaae0  释放0x6ee2e0  大小0x48
+// 129  L_NewPlayerMsg.ui         创建0x6eab70  释放0x6ee350  大小0x4C
+// 130  L_MakeBlack.ui            创建0x6eac00  释放0x6ee3c0  大小0x48
+// 131  L_Active.ui               创建0x6eac90  释放0x6ee430  大小0x50
+// 132  L_ChouJiang2.ui           创建0x6ead20  释放0x6ee4a0  大小0x4C
+// 133  L_LvAskDlg.ui             创建0x6eadb0  释放0x6ee510  大小0x48
+// 134  L_TeachBoard.ui           创建0x6eae40  释放0x6ee580  大小0x58
+// 135  当前Intf无配置                 创建0x6eaed0  释放0x6ee5f0  大小0x48
+// 136  当前Intf无配置                 创建0x6eaf60  释放0x6ee660  大小0x4C
+// 137  当前Intf无配置                 创建0x6eaff0  释放0x6ee6d0  大小0x2F0
+// 138  当前Intf无配置                 创建0x6eb080  释放0x6ee740  大小0x54
+// 139  当前Intf无配置                 创建0x6eb110  释放0x6ee7b0  大小0x58
+// 140  当前Intf无配置                 创建0x6eb1a0  释放0x6ee820  大小0x54
+// 141  当前Intf无配置                 创建0x6eb230  释放0x6ee890  大小0x2EC
+// 142  当前Intf无配置                 0x6E6080未绑定工厂
+// 143  当前Intf无配置                 0x6E6080未绑定工厂
+// 144  当前Intf无配置                 0x6E6080未绑定工厂
+// 145  当前Intf无配置                 0x6E6080未绑定工厂
+// 146  当前Intf无配置                 0x6E6080未绑定工厂
+// 147  当前Intf无配置                 0x6E6080未绑定工厂
+// 148  当前Intf无配置                 0x6E6080未绑定工厂
+// 149  当前Intf无配置                 0x6E6080未绑定工厂
+// 150  当前Intf无配置                 0x6E6080未绑定工厂
+// 151  当前Intf无配置                 0x6E6080未绑定工厂
+// 152  当前Intf无配置                 0x6E6080未绑定工厂
+// 153  当前Intf无配置                 0x6E6080未绑定工厂
+// 154  当前Intf无配置                 0x6E6080未绑定工厂
+// 155  当前Intf无配置                 0x6E6080未绑定工厂
+// 156  当前Intf无配置                 0x6E6080未绑定工厂
+// 157  当前Intf无配置                 0x6E6080未绑定工厂
+// 158  当前Intf无配置                 0x6E6080未绑定工厂
+// 159  当前Intf无配置                 0x6E6080未绑定工厂
+//
+// 配置有而工厂无：0项。工厂有而当前配置无：135..141，共7项。
+// 36个未绑定槽不代表可直接复用：仍需审计其他硬编码ID、默认对象与销毁调用。
+// 不能只新增file就扩展产品功能；必须有工厂、事件回调和服务端数据消费契约。

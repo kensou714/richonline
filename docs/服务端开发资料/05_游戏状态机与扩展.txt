@@ -1,0 +1,78 @@
+/*
+ * NEW 游戏状态机：在正确阶段回复正确的包
+ * 核对日期：2026-10-09；当前仅 BOSS 1-1 地图包开放 runtime，其他包另行注册。
+ */
+
+// 准入先于玩法
+// 大厅准备房间快照与游戏跳转，registry 保存预期准入信息。
+// GameSession 分为 awaiting_admission、admitted、departing、closed 四种传输状态。
+// departing 保留已编码的离开响应，传输发送后由 finish() 释放准入和房间状态。
+// 首包经 authorize_admission 校验，之后才允许解析 299 内层业务包。
+// 业务异常可使会话关闭；服务进程存活不能证明游戏连接仍然有效。
+// 依据：../native-server/src/game_session.cpp:receive、feed、close。
+
+// 初始化与地图加载
+// 授权成功后发送游戏确认及 0x4000 棋盘初始化。
+// 客户端 opcode 0 表示地图就绪，随后发送 0x4004 快照并启动回合。
+// 重复地图就绪不重复初始化；地图未加载前不接受普通动作。
+// 请求中的动作计数器与服务状态核对，不是任意可复用的请求编号。
+// 输出的 0x4010 影响计数器推进，输出封装统一由 Startup::output 处理。
+// 依据：richonline_game_startup.cpp:Startup::received、output、authorize。
+
+// 回合阶段
+// loading：等待客户端地图加载完成。
+// roll：等待玩家掷骰或支持的卡片请求。
+// moving：已发路径，等待客户端移动结束确认。
+// stationary：停留状态不发送零步移动包，等待当前位置的 0x0011。
+// bank：等待途经或落点银行决定，完成后恢复移动或结束落点。
+// landing：落点业务等待玩家选择或业务超时。
+// junction：落点已处理，等待玩家确认后续方向或超时。
+// finished：游戏业务结束；closed：连接释放后的终止状态。
+// 当前参与者为玩家 slot 0 与合成 BOSS slot 1，BOSS 先手。
+// 依据：gameplay/boss_turns.cpp:Phase、Turns、make_richonline_boss_turns。
+
+// 移动链路
+// begin_turn 发送 0x4010 与 0x420f；没有停留状态时 BOSS 自动生成移动路径。
+// 玩家 0x0010 进入 move；普通参数必须为 0。
+// move 输出 0x4011，并保存服务端计算的路线。
+// 0x0011 在 moving 或 stationary 阶段到达；终点须匹配路线终点或停留位置。
+// 路面类型、地产引用、道路度数和角色重叠状态组成 LandingContext。
+// 0x0012、0x0028、0x002a 的中途效果不能充当普通结束确认。
+// 0x0028 对应已保存路线中的途经银行检查点；银行开启时由 0x0027 处理选择。
+// 落点银行先于通用事件处理；其他落点依次尝试 chance_landing、cards、landed。
+// 依据：gameplay/boss_turns.cpp:Turns::begin_turn、move、action。
+
+// 落点协议契约
+// RichonlineLandingResult 包含消息列表、progress 以及可选 pending_opcode。
+// await_event 保留落点阶段，complete 才能进入方向选择或下一回合。
+// finished 表示游戏结束，不能继续使用普通 advance。
+// landed、event、poll 分别处理触发、玩家答复和到期决定。
+// 不要为了让画面继续而把未知落点直接返回 complete。
+// 依据：include/richonline_boss_turns.hpp:RichonlineBossTurnRules。
+
+// 自有地产
+// RichonlineBossProperty 先校验地图、演员、归属及是否已有等待中的决定。
+// BOSS 自有空地自动建默认建筑；已有建筑未达上限时自动升级。
+// 玩家自有空地等待 0x0037 建筑选择；已有建筑等待 0x0038 升级选择。
+// 满级判断同时考虑场景上限和角色技能上限。
+// 选择、取消或超时完成后，清理 pending_property 与 deadline。
+// 建造响应为 0x403d，升级响应为 0x403e；默认选择和取消不可混淆。
+// 非默认建筑还需对应许可证库存；不得只验证按钮可见性。
+// 当前模式 3 的对方地产，非 16 类建筑返回停止包并完成落点，不收普通租金。
+// 16 类对方建筑仍返回未处理，后续可能拒绝；这不代表对方地产效果全部实现。
+// 依据：gameplay/property.cpp:land、decide、poll。
+// 依据：gameplay/construction.cpp:owned_land、complete_construction。
+
+// 重复和迟到消息
+// Turns 保存已退役决定的计数器及 opcode，供 Startup 的迟到消息检查使用。
+// 对新事件应明确答复归属、合法长度、超时处理与重复处理策略。
+// 当前允许哪些重复消息，由 retired 与 Startup::received 共同决定。
+// 不把动作计数器校验整体放宽为“接受任何旧包”。
+
+// 扩展步骤
+// 先记录新版 IDA 函数、字段偏移及客户端等待条件。
+// 在独立 wire 模块实现解析和响应，再实现不依赖 socket 的事件状态。
+// 把事件接入 runtime 的 landed / event / poll，统一接回 Turns::resolve。
+// 回归成功、取消、超时、非法输入、重复答复、断线释放及下一回合。
+// 最后用真实客户端观察交互结束，保存对应请求和回包日志。
+// 具体文件接线、地图包开放条件及最小回归见 08_事件与地图扩展实作.txt。

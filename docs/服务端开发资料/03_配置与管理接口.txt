@@ -1,0 +1,70 @@
+/*
+ * 配置分层与本机管理协议
+ * 核对日期：2026-10-09；协议键名保留原文，说明使用中文。
+ */
+
+// 服务启动参数
+// server_main.cpp:wmain 逐对读取参数，不接受无值开关。
+// --data-dir：必填绝对路径，包含数据库、日志和 bootstrap。
+// --pipe：正常运行必填；名称只允许字母、数字、短横线、点、下划线。
+// --client-profile：当前开发固定使用 richonline；这是程序默认值。
+// original 仅为保留的历史兼容选项，不是当前客户端开发目标。
+// --adopt-client-profile：显式确认无 profile 标签的旧数据库来源。
+// adoption 必须与当前 profile 一致，不能绕过已有 profile 不匹配。
+// --import-db：只读源数据库并复制到目标；该模式不能同时启动管道。
+// 导入不能和 adoption 合用，目标数据库必须不存在。
+
+// 管理器配置
+// ../admin/AdminLaunchSettings.cs:Load 读取程序目录的 RichOnline.Admin.launch.json。
+// 支持 server、data-dir、client、client-config、client-profile 五个字符串键。
+// 文件中的相对路径以管理器程序目录为基准；命令行参数覆盖文件。
+// 命令行路径通过当前进程工作目录转换为绝对路径。
+// 未配置时 server 默认为程序目录下 server/RichOnline.Server.exe。
+// 管理器每次启动生成唯一管道名，不依赖固定公共管道。
+// ../admin/ServerProcess.cs:StartAsync 负责读取 ready 并核验 status。
+
+// bootstrap 与数据库配置不能混为一谈
+// lobby-bootstrap.json 位于 data-dir，决定网络、资源及协议策略。
+// config.get / config.update 管理 SQLite 中的业务默认值及公告。
+// bootstrap 在 runtime 建立时读取；修改文件不等于活动对局热更新。
+// NEW network 使用 bind_host、advertised_host、lobby_port、http_port、black_port。
+// 历史兼容路径有独立 network 校验，不应用其配置覆盖新版配置。
+// 依据：../native-server/src/lobby_runtime.cpp:LobbyRuntime。
+
+// NEW BOSS 启动配置
+// richonline_boss_game 与 richonline_boss_turn_policy 必须成对提供。
+// 可选 richonline_boss_card_policy 启用对应卡片策略与商店集成。
+// client_root 的相对路径以 bootstrap 所在目录为基准。
+// host 校验 version、provenance、advertised_ipv4、port、manager、admission_ttl_ms。
+// manager 当前必须是 0；准入有效期范围为 1 至 300000 毫秒。
+// spawn_policy 必须为 resource-straight-road-farthest-v1。
+// token_policy 必须为 system-random-echo。
+// filler_policy 必须为 system-random-unconsumed。
+// wire 与 turn policy 中的 opaque 字段必须有来源，不应填写猜测值。
+// scope 当前为 ordinary-movement-unimplemented-landings-rejected。
+// 依据：richonline_boss_host.cpp:policy；richonline_boss_runtime.cpp:policy。
+
+// 管理传输
+// 命名管道路径为 \\.\pipe\NAME，仅当前 Windows 用户可访问，拒绝远程客户端。
+// 每条消息为四字节小端正文长度，然后是 UTF-8 JSON；正文 1 至 65536 字节。
+// 一次连接只提交一个请求；收到响应后客户端关闭连接。
+// 服务端 I/O 使用连接后五秒截止时间，管理器也设置五秒操作超时。
+// 依据：control_pipe.cpp:ControlPipe；../admin/ControlClient.cs:SendAsync。
+
+// 请求与响应结构
+// 请求示例：{"version":1,"requestId":"local-check","command":"status","payload":{}}
+// 成功响应包含 version、同一 requestId、ok:true 和 result 对象。
+// 失败响应包含 ok:false 以及 error.code、error.message。
+// requestId 长度 1 至 128；command 长度 1 至 64，仅小写字母、点、下划线。
+// status 与 stop 由 control.cpp:run_control 处理。
+// accounts.list / accounts.create / accounts.update 由 Storage 分派。
+// config.get / config.update / database.backup 由 Storage 分派。
+// capabilities 不能替代源码命令分派检查，新增命令需同步管理器调用方。
+
+// 配置修改并发控制
+// config.get 返回 revision 和 settings。
+// config.update 要求 expectedRevision 与完整 settings，过期版本拒绝写入。
+// settings 包含公告、注册开关、教程开关、default_role、十项 max_building_skills。
+// 建筑技能每项范围 0 至 7，公告 UTF-8 字节数最多 1024。
+// 已开局的建筑技能来自启动快照；不要宣称更新配置能修改现有棋盘。
+// 依据：storage_settings.cpp:validate_settings、Storage::update_config。

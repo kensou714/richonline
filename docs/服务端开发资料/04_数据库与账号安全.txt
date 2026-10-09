@@ -1,0 +1,74 @@
+/*
+ * SQLite 生命周期、迁移与账号语义
+ * 核对日期：2026-10-09；当前目标为 richonline。
+ */
+
+// 数据库位置与访问
+// 正式文件是 data-dir/richonline.sqlite3，服务持有同目录 server.lock。
+// Storage 使用 FULLMUTEX，设置五秒 busy_timeout，使用 WAL 日志模式。
+// Storage 的管理分派及账号入口另有对象级互斥，写入由事务封装。
+// 不应绕开 Storage 在活动数据库中手工修改余额、角色或配置。
+// 依据：../native-server/src/storage.cpp:Storage::Storage、Storage::dispatch。
+
+// 核心表
+// metadata：schema_version、client_profile、next_role_id 等元数据。
+// accounts：用户名、盐、密码校验值及客户端设置。
+// roles：账号关联角色、模型、等级、经验、三类余额及统计数据。
+// room_records：保留的房间记录十六进制资料。
+// audit：字段前后值、操作者来源、原因及操作标识。
+// operations：银行和兑换等操作记录，支撑相关业务的重复请求处理。
+// native_settings：单行版本化业务设置，包含 revision 和 JSON settings。
+// lobby_inventory：按账号保存 encoded_item 与 expires_at。
+// lobby_equipment：按角色及槽位保存装备项。
+// 依据：../native-server/src/storage.cpp:schema、Storage::Storage。
+
+// 数据约束
+// roles.role_id 范围 1 至 2147483647；等级范围 0 至 20。
+// NEW 模型编号范围 0 至 8；VIP 范围 0 至 3。
+// 余额必须非负，入口拒绝 NaN 和无穷值。
+// 库存项范围 1 至 4294967295，装备槽位范围 0 至 31。
+// 角色及库存关系使用外键；默认构建启用 SQLite 外键约束。
+// 具体业务范围还需读取对应入口，不能只依赖数据库 CHECK。
+// 依据：storage_accounts.cpp:validate_role；storage.cpp 的表定义。
+
+// 迁移流程
+// 构造阶段仅接受 schema_version 为 5 或 6。
+// richonline 的版本 5 会迁移到 6，核心变化为模型上限 4 扩大到 8。
+// 非新建库迁移前使用 SQLite backup 生成 before-model-v6 备份。
+// 迁移检查原 roles 表结构，复制列，恢复索引、触发器及已有序列。
+// 迁移前后执行 foreign_key_check 与 integrity_check，事务失败则回滚。
+// 不识别的表约束会拒绝迁移，不会猜测并重建整个数据库。
+// 依据：storage_migration.cpp:migrate_richonline_models、check_integrity。
+
+// profile 是数据库来源声明
+// 新库自动写入 richonline 标签；已有不匹配标签会拒绝启动。
+// 无标签旧库需要明确 adoption，不能从密码校验值推断其字符集来源。
+// adoption 只声明既有数据来源，不会转换密码、重置账号或修复乱码。
+// 修改 profile 字符串不能替代真实编码迁移。
+
+// 备份与导入
+// database.backup 使用 SQLite backup API，而非直接复制活动主文件。
+// 备份位于 data-dir/backups/accounts-时间标识.sqlite3。
+// 导入以只读方式打开来源，要求目标数据库不存在，并验证版本号。
+// 导入动作仅复制；正常启动时才处理 profile 及迁移约束。
+// 恢复时先停止目标实例，保留原数据和日志，再选择明确的备份副本。
+// 不应只复制 WAL 模式中正在写入的主文件作为可靠备份。
+// 依据：storage.cpp:copy_database、Storage::backup、Storage::import_database。
+
+// 密码与字符集
+// 管理接口输入 UTF-8，richonline 客户端字段通过 Big5 / CP950 转换。
+// 无法精确表示的字符直接拒绝；禁止使用近似字符替换后继续创建账号。
+// 用户名转换后少于 32 字节；密码转换后少于 64 字节且不能为空。
+// 保存随机 16 字节盐与 scrypt 派生结果，不保存明文密码。
+// 参数为 N=16384、r=8、p=1、输出 64 字节，随机源为 Windows BCrypt。
+// 登录直接验证客户端密码字节；不要对已编码字节再次进行 UTF-8 转换。
+// 依据：credentials.cpp:client_text、create_verifier、verify_password。
+
+// 账号创建与并发编辑
+// 首次登录可自动注册，受 registration_enabled 控制。
+// 已有账号密码错误返回 password_mismatch，不会覆盖原密码。
+// accounts.update 要求 role_id、expected、changes、reason。
+// expected 与现存字段不一致时返回 role_changed_refresh_required。
+// 管理器应刷新后重新提交，不能悄悄丢弃 expected 以强制覆盖。
+// 文档、日志和测试报告禁止粘贴明文密码、盐或完整密码校验值。
+// 依据：storage_accounts.cpp:Storage::login、Storage::update_account。

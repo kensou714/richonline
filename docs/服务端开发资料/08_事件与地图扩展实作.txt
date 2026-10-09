@@ -1,0 +1,89 @@
+/*
+ * 新增落点事件与地图包：从证据到可回归的最小路径
+ * 核对日期：2026-10-09；按当前 C++ runtime 接口说明，不承诺完整玩法。
+ */
+
+// 先确定扩展归属
+// 新业务会话逻辑在 ../native-server/src/gameplay/，对外接口在 include/。
+// 新请求/响应字节布局进入独立 richonline_*_wire 模块及对应测试。
+// 地图差异进入 src/maps/<维护名>/；公共回合及事件逻辑不复制进地图工厂。
+// 资源解码进入 src/resources/；避免业务状态直接扫描 KPD、EMP 原始数据。
+// CMakeLists.txt 将具体源文件连接到 library；target 依赖也需明确。
+
+// 落点分派的现有顺序
+// gameplay/boss_session.cpp 的 landed 回调依序询问 property、shop、balances。
+// 模块返回 optional 空值表示“我不处理”，不是“事件已完成”。
+// property/shop 未处理时进入 balances；它处理玩家空白/点券格，BOSS 走空落点规则。
+// 未识别的格、产权引用或角色碰撞会拒绝，不是任意事件都作为空格完成。
+// 完整落点入口在 boss_turns.cpp：银行先处理，其他格先尝试 chance_landing、
+// cards，再调用上述 landed 回调；新增事件须同时核对这层优先级。
+// 新事件若与地产或商店争用同一格，必须先定义所有权及分派优先级。
+// 不可让已识别但未实现的事件掉入空格处理并误推进回合。
+// event 回调按请求 opcode 分派；property 目前处理 0x20、0x37、0x38。
+// 没有匹配时记录 richonline_boss_event_unimplemented 并拒绝请求。
+// poll 回调负责到期状态；bank/junction 有各自的回合轮询分支。
+// plan.disconnected 当前由 boss_turns.cpp 关闭阶段并清空路线；不会逐项重置事件对象。
+// 新事件的断线清理须显式设计，不能假定 boss_session 已提供统一清理回调。
+
+// RichonlineBossTurnRules 契约
+// landed(RichonlineLandingContext) 返回消息与 progress，可附 pending_opcode。
+// await_event 留在 landing 阶段，pending_opcode 标记预期动作。
+// event(View) 只在对应等待阶段解析玩家答复；不自行操作 TCP/socket。
+// complete 才允许落点后续方向选择或下一回合；finished 代表结束对局。
+// poll() 的 optional 空值表示尚无到期决定；有值时应完成或明确结束等待。
+// 时间从 steady_clock 取得，测试通过注入 now 控制，不用真实 sleep。
+// 规则回调由 gameplay/boss_turns.cpp 统一推进计数器和阶段。
+// 不要在事件模块中伪造新计数器、越过 Startup::output 或复用已退役动作。
+
+// 一个事件最少实现清单
+// 1. 记录新版 IDA 函数、请求与响应 opcode、长度、字段、触发条件及等待对象。
+// 2. 区分确定字段与 opaque 字段；opaque 值要有捕获/静态来源及适用版本。
+// 3. 在 include/richonline_<event>.hpp 定义独立状态接口与输入上下文。
+// 4. 在 src/gameplay/<event>.cpp 实现纯业务状态转换，显式处理取消与超时。
+// 5. 在 src/gameplay/boss_session.cpp 接入 landed、event、poll；需断线释放的状态
+//    同时核对 src/gameplay/boss_turns.cpp 的 plan.disconnected 与对象生命周期。
+// 6. 若出入包有独立格式，在 include/src 的 *_wire 文件中编码解码并做边界检查。
+// 7. 在 CMakeLists.txt 加入实现和测试；沿用现有 richnet_richonline_boss_host 依赖。
+// 8. 新增纯状态测试、TCP 集成测试；通过后再真实客户端复测及查看连续通信日志。
+
+// 接口分工与应避免的耦合
+// wire 负责校验字节数、端序、字段范围、请求应答字节；不知道玩家现金归属。
+// gameplay 模块负责合法阶段、所有权、资源扣加、pending 状态及结束条件。
+// boss_session 负责接线顺序与共享对象生命周期；不要把新协议塞入通用 codec。
+// boss_turns 负责权威阶段与动作计数；事件模块不能直接访问 socket 或全局 runtime。
+// runtime/host 负责读取配置、地图会话与准入，不解析每一种事件载荷。
+// Storage 管理账号及持久业务数据；单局现金、地产不应未经设计写进账号库。
+// 管理器配置协议和客户端协议属于不同边界，不能为了游戏动作改本机管道协议。
+
+// 当前自有地产行为可作为等待型事件的参照
+// RichonlineBossProperty::land 返回未处理、即时结果或 pending_opcode。
+// BOSS 自有地产执行自动建造/升级；玩家自有地产分别等待 0x37 / 0x38。
+// Startup/Turns 校验阶段、动作计数器及已退役决定；property::decide 根据保存的
+// 决策类型选择请求解码器，再检查选择及截止时间，完成后清理等待状态。
+// poll 到期按取消建造或拒绝升级完成事件；选择和超时都应只推进一次。
+// richonline_owned_property_tcp 覆盖通过加密 TCP 的答复、超时、取消及重放。
+// 这只是一个状态转换范例，不意味着其他地产格、收费或所有地图均可用。
+
+// 地图包扩展路径
+// 现有接口：include/richonline_map_package.hpp 的 RichonlineMapPackage。
+// 工厂声明放 src/maps/package_factories.hpp，地图实现放 src/maps/<维护名>/。
+// 包字段包含 id、地图名、分类、事件/卡片绑定、readiness、runtime_enabled。
+// load_stage 读取该包指定地图和关卡类别；configure 生成地图绑定的策略。
+// 在 src/maps/registry.cpp 注册名字与类别组合；不匹配必须拒绝而非猜测。
+// 在 CMakeLists.txt 将新工厂加入 richnet_richonline_map_packages。
+// stage 和地图签名匹配由 gameplay/boss_session.cpp 再次校验。
+// runtime_enabled=false 的包会记录 richonline_map_package_pending 后拒绝建局。
+// 只有资源解析及局部测试通过，还不足以把该标记改为 true。
+// 当前证据：BS_1_1.emp 标记 partial/true；V_BS_1_1.emp 标记 partial/false。
+// 另外已注册 BS_1_2 至 BS_1_4、BS_2_1 至 BS_2_4、BS_3_1 至 BS_3_4，均为 partial/false。
+// registry 单测验证包身份、类别隔离、资源差异和策略绑定，不验证实机玩法完整性。
+
+// 回归闭环
+// 编码测试：合法输入、截短、超长、非法枚举、边界数值及尾部字节。
+// 状态测试：触发、玩家接受、取消、超时、错误 opcode、越权选择、重复/迟到回复。
+// 状态结果检查：现金/点数、地产及等级、pending 清理、下个行动者和计数器。
+// 集成测试：从准入、地图就绪、移动到事件应答，至少验证一条真实 TCP 流程。
+// 当前可参考 tests/richonline_boss_property_tests.cpp 与 *_owned_property_tcp_tests.cpp。
+// 先执行精确 CTest 名，再执行完整 CTest；名称以 ctest -N 的构建快照为准。
+// 实机复测记录客户端文件哈希、复现步骤、请求/响应、截图或观察和最后进程状态。
+// 自动测试通过只能证明代码所覆盖的夹具与协议路径，不等于客户端验收。

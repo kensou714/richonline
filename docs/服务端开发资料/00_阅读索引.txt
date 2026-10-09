@@ -1,0 +1,67 @@
+/*
+ * 服务端开发资料：阅读入口与事实边界
+ * 核对日期：2026-10-09；路径均相对当前 Richonline 工作目录。
+ */
+
+// 这组资料面向维护 C++ 服务、管理器以及协议接入的协作者。
+// 以当前源码为依据；历史记录、测试结果与正在运行的程序分别核对。
+// 源码存在某个处理器，不等于真实客户端已经完整验证该玩法。
+// 当前服务源码位于 ../native-server，管理器源码位于 ../admin。
+// 下文省略目录的 .cpp 文件默认位于 ../native-server/src。
+// include/ 与 tests/ 引用默认以 ../native-server 为基准。
+
+// 阅读顺序
+// 01_架构与模块职责.txt
+//    先辨认控制平面、大厅、游戏、持久化及新旧协议边界。
+// 02_构建测试与运行.txt
+//    建立独立构建目录，执行 CTest，启动自己的隔离实例。
+// 03_配置与管理接口.txt
+//    理解启动参数、bootstrap、管理器配置及本机管道协议。
+// 04_数据库与账号安全.txt
+//    理解 schema、版本迁移、备份、并发修改与密码编码。
+// 05_游戏状态机与扩展.txt
+//    从大厅准入一路追踪地图加载、回合、落点及玩家决策。
+// 06_通信日志与故障定位.txt
+//    用同一进程、房间及动作上下文定位缺包、拒绝和断线。
+// 07_支持边界与协作回归.txt
+//    明确当前实现范围、测试入口和交接需要的最小证据。
+// 08_事件与地图扩展实作.txt
+//    按现有接线点新增落点事件或地图包，明确所有权与验收闭环。
+// 09_启动配置错误速查.txt
+//    用错误码找到配置层、资源前提与对应源码校验点。
+
+// 版本词汇
+// NEW / richonline：当前繁体客户端，ClientVersion::richonline。
+// ORIGINAL / original：已弃用客户端的历史兼容资料，不是当前开发目标。
+// ClientProfile 管理账号字符集及数据库来源，不能只看文件名前缀。
+// original_emp / original_options 等资源工具也被 NEW 模块复用。
+// 复用资源读取器不代表两个客户端的网络字段完全相同。
+
+// 事实等级
+// 源码事实：给出相对路径及函数、类型或 CMake 测试名。
+// 自动化证据：给出实际命令、构建目录、退出结果及对应源码版本。
+// 实机证据：给出客户端基准、复现操作、服务日志及观察到的结果。
+// 未验证：尚无匹配的运行证据，不用“已完整支持”替代说明。
+
+// 实施入口
+// ../native-server/CMakeLists.txt：构建目标、平台条件与测试注册。
+// ../native-server/src/server_main.cpp:wmain：正式服务进程入口。
+// ../native-server/src/control.cpp:run_control：控制与服务生命周期。
+// ../native-server/src/lobby_runtime.cpp:LobbyRuntime：监听器组装。
+// ../native-server/src/richonline_boss_runtime.cpp:load_richonline_boss_runtime
+//    NEW BOSS 游戏当前组装入口。
+// ../native-server/src/gameplay/boss_session.cpp:make_richonline_boss_session
+//    地图包之上的共用玩法装配入口。
+// ../native-server/src/maps/registry.cpp:find_richonline_map_package
+//    已知地图包选择及运行边界。
+// ../admin/ServerProcess.cs:StartAsync：管理器持有的服务实例。
+
+// 维护方式
+// 协议变化先补逆向依据，再更新实现、回归和本目录对应条目。
+// 文档用中文解释职责及限制；函数、字段、命令保留原名便于检索。
+// 不复制账号库、密码、登录包和机器私有路径作为示例。
+// 不把旧 Python 服务当作当前产品的启动前提。
+// 上级目录保留历史资料及当前服务源码，不能把整个上级目录视为旧代码。
+// 既有历史 Markdown 仅作为历史证据，本目录不沿用其排版。
+// 并行开发中先声明模块归属，交接时重新读取实际源码。
+// 更换运行程序需要单独记录，不能从构建成功推断已经部署。

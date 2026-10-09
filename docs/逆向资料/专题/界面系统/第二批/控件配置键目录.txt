@@ -1,0 +1,106 @@
+// ====================================================================
+// 13类控件：虚表、属性解析器和直接字符串引用
+// ====================================================================
+// 地址是IDB VA；字节比对见ui_batch2_verification.json。
+// 下列字段为解析器的直接字符串引用；继承层公共字段需要沿父解析器合并。
+// 仅确定配置入口与已列偏移，未恢复每个虚方法。完整虚表前缀在原始JSON。
+//
+// 类型00 plane；分配0x240；构造0x90e9b0；虚表0xa31430；+124解析器0x8e4ff0。
+//   ID, HintText, HintFontSize, HintBColor, HintNormalBColor
+//   HintMouseInBColor, HintMouseDownBColor, HintDisableBColor, HintFColor, HintNormalFColor
+//   HintMouseInFColor, HintMouseDownFColor, HintDisableFColor, HintUseCtlText, BColor
+//   NormalBColor, MouseInBColor, MouseDownBColor, DisableBColor, BorderType
+//   NormalPic, MouseOnPic, MouseDownPic, DisablePic, NormalPic2
+//   MouseOnPic2, MouseDownPic2, DisablePic2, NormalPicName, MouseOnPicName
+//   MouseDownPicName, DisablePicName, NormalTu1, NormalTv1, NormalTu2
+//   NormalTv2, MouseOnTu1, MouseOnTv1, MouseOnTu2, MouseOnTv2
+//   MouseDownTu1, MouseDownTv1, MouseDownTu2, MouseDownTv2, DisableTu1
+//   DisableTv1, DisableTu2, DisableTv2, PicType, CheckType
+//   Enabled, Visible, Ignore, TabIndex, Index
+//   MoveOut, EnableFlag, CanDrag, Attract, EdgeSize
+//   InHighLight, MousePressTime, MousePressSpaceTime, MouseStopTime
+//
+// 类型01 label；分配0x250；构造0x90b800；虚表0xa3131c；+124解析器0x90d9b0。
+//   UseCtlText, NormalCapFontFColor, MouseInCapFontFColor, MouseDownCapFontFColor, DisableCapFontFColor
+//   NormalCapFontBColor, MouseInCapFontBColor, MouseDownCapFontBColor, DisableCapFontBColor, CapFontSize
+//   CapFontType, AutoSize, ALignH, ALignV, MultiLine
+//   Space, CapText
+//
+// 类型02 title；分配0x250；构造0x90ac80；虚表0xa310f4；+124解析器0x90d9b0。
+//   UseCtlText, NormalCapFontFColor, MouseInCapFontFColor, MouseDownCapFontFColor, DisableCapFontFColor
+//   NormalCapFontBColor, MouseInCapFontBColor, MouseDownCapFontBColor, DisableCapFontBColor, CapFontSize
+//   CapFontType, AutoSize, ALignH, ALignV, MultiLine
+//   Space, CapText
+//
+// 类型03 button；分配0x268；构造0x90b0a0；虚表0xa31208；+124解析器0x90b500。
+//   DownSound, InSound, OutSound, DownOffsetX, DownOffsetY
+//   CoolDown
+//
+// 类型04 edit；分配0x384；构造0x8fa350；虚表0xa30914；+124解析器0x900cd0。
+//   ShowTime, HideTime, PassWordChar, TextType, CheckColor
+//   Paste, ImeType, ReadOnly
+//
+// 类型05 radiobutton；分配0x268；构造0x902090；虚表0xa30b64；+124解析器0x902580。
+//   CancelCheck
+//
+// 类型06 checkbox；分配0x264；构造0x90a1d0；虚表0xa30fe0；+124解析器0x90a8f0。
+//   Checked, CheckColor, DownSound, InSound, OutSound
+//
+// 类型07 groupbox；分配0x250；构造0x9099a0；虚表0xa30ecc；+124解析器0x90a170。
+//
+// 类型08 scrollbar；分配0x490；构造0x8eacd0；虚表0xa306c0；+124解析器0x8ee7b0。
+//   Kind, MidSize, SideSize, Max, Min
+//   Value, PageSize, SmallChange, LargeChange, DownSound
+//   InSound, OutSound, ChangeSound, Btn0BorderType, Btn0BColor
+//   Btn0NormalPic, Btn0MouseOnPic, Btn0MouseDownPic, Btn0DisablePic, Btn0NormalPic2
+//   Btn0MouseOnPic2, Btn0MouseDownPic2, Btn0DisablePic2, Btn0NormalPicName, Btn0MouseOnPicName
+//   Btn0MouseDownPicName, Btn0DisablePicName, Btn0PicType, Btn0CheckType, Btn0NormalTu1
+//   Btn0NormalTv1, Btn0NormalTu2, Btn0NormalTv2, Btn0MouseOnTu1, Btn0MouseOnTv1
+//   Btn0MouseOnTu2, Btn0MouseOnTv2, Btn0MouseDownTu1, Btn0MouseDownTv1, Btn0MouseDownTu2
+//   Btn0MouseDownTv2, Btn0DisableTu1, Btn0DisableTv1, Btn0DisableTu2, Btn0DisableTv2
+//   Btn1BorderType, Btn1BColor, Btn1NormalPic, Btn1MouseOnPic, Btn1MouseDownPic
+//   Btn1DisablePic, Btn1NormalPic2, Btn1MouseOnPic2, Btn1MouseDownPic2, Btn1DisablePic2
+//   Btn1NormalPicName, Btn1MouseOnPicName, Btn1MouseDownPicName, Btn1DisablePicName, Btn1PicType
+//   Btn1CheckType, Btn1NormalTu1, Btn1NormalTv1, Btn1NormalTu2, Btn1NormalTv2
+//   Btn1MouseOnTu1, Btn1MouseOnTv1, Btn1MouseOnTu2, Btn1MouseOnTv2, Btn1MouseDownTu1
+//   Btn1MouseDownTv1, Btn1MouseDownTu2, Btn1MouseDownTv2, Btn1DisableTu1, Btn1DisableTv1
+//   Btn1DisableTu2, Btn1DisableTv2, Btn2BorderType, Btn2BColor, Btn2NormalPic
+//   Btn2MouseOnPic, Btn2MouseDownPic, Btn2DisablePic, Btn2NormalPic2, Btn2MouseOnPic2
+//   Btn2MouseDownPic22, Btn2MouseDownPic2, Btn2DisablePic2, Btn2NormalPicName, Btn2MouseOnPicName
+//   Btn2MouseDownPicName, Btn2DisablePicName, Btn2PicType, Btn2CheckType, Btn2NormalTu1
+//   Btn2NormalTv1, Btn2NormalTu2, Btn2NormalTv2, Btn2MouseOnTu1, Btn2MouseOnTv1
+//   Btn2MouseOnTu2, Btn2MouseOnTv2, Btn2MouseDownTu1, Btn2MouseDownTv1, Btn2MouseDownTu2
+//   Btn2MouseDownTv2, Btn2DisableTu1, Btn2DisableTv1, Btn2DisableTu2, Btn2DisableTv2
+//
+// 类型09 progress；分配0x268；构造0x901630；虚表0xa30a50；+124解析器0x901d30。
+//   Max, Min, Step, TopColor, Position
+//   Kind
+//
+// 类型10 listbox；分配0x340；构造0x8f30a0；虚表0xa307d4；+124解析器0x8f8080。
+//   NorBColor, DownBColor, InBColor, DisBColor, NorBPic
+//   DownBPic, InBPic, DisBPic, NorBPic2, DownBPic2
+//   InBPic2, DisBPic2, NorBPicName, DownBPicName, InBPicName
+//   DisBPicName, ShowPic, ListNormalTu1, ListNormalTv1, ListNormalTu2
+//   ListNormalTv2, ListMouseOnTu1, ListMouseOnTv1, ListMouseOnTu2, ListMouseOnTv2
+//   ListMouseDownTu1, ListMouseDownTv1, ListMouseDownTu2, ListMouseDownTv2, ListDisableTu1
+//   ListDisableTv1, ListDisableTu2, ListDisableTv2, PicType, CheckType
+//   NorFontColor, DownFontColor, InFontColor, DisFontColor, NorFontBColor
+//   DownFontBColor, InFontBColor, DisFontBColor, MultiSelect, MaxRow
+//   AutoChangeLine, DownSound, InSound, OutSound, MaxCount
+//   CapText
+//
+// 类型11 slider；分配0x32C；构造0x902750；虚表0xa30c78；+124解析器0x904480。
+//   Kind, MidSize, LineWidth, Max, Min
+//   Value, SmallChange, LargeChange, DownSound, InSound
+//   OutSound, ChangeSound, BtnBorderType, BtnBColor, BtnNormalPic
+//   BtnMouseOnPic, BtnMouseDownPic, BtnDisablePic, BtnNormalPic2, BtnMouseOnPic2
+//   BtnMouseDownPic2, BtnDisablePic2, BtnNormalPicName, BtnMouseOnPicName, BtnMouseDownPicName
+//   BtnDisablePicName, BtnPicType, BtnCheckType, BtnNormalTu1, BtnNormalTv1
+//   BtnNormalTu2, BtnNormalTv2, BtnMouseOnTu1, BtnMouseOnTv1, BtnMouseOnTu2
+//   BtnMouseOnTv2, BtnMouseDownTu1, BtnMouseDownTv1, BtnMouseDownTu2, BtnMouseDownTv2
+//   BtnDisableTu1, BtnDisableTv1, BtnDisableTu2, BtnDisableTv2
+//
+// 类型12 tree；分配0x364；构造0x906090；虚表0xa30d8c；+124解析器0x908f80。
+//   Retract, ShowLine, LineType, LineColor, ShowPlus
+//   PlusColor, PlusBColor, ShowIcon, CapText
+//

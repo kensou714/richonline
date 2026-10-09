@@ -1,0 +1,86 @@
+/*
+ * 当前边界、回归入口与协作验收
+ * 核对日期：2026-10-09；测试名称来自 CMake 注册，不代表本轮已运行。
+ */
+
+// 当前支持口径
+// 默认开发目标为当前 Richonline 客户端，配置 profile 使用 richonline。
+// 正式入口已组装管理、存储、大厅、辅助服务及可配置游戏监听器。
+// status 中 gameReady 固定 false，gameListenerReady 独立反映监听状态。
+// 地图包注册表目前有 13 包：BS_1_1 至 BS_1_4、BS_2_1 至 BS_2_4、
+// BS_3_1 至 BS_3_4，以及 V_BS_1_1；扩展名均为 .emp。
+// BS_1_1.emp 标记 partial 且 runtime_enabled=true；只表示现有范围可进入运行路径。
+// 其余 12 包标记 partial 且 runtime_enabled=false，启动时会显式拒绝会话。
+// 分类 2 的 V_BS_1_2.emp 另有明确资源缺失错误，不属于已注册包。
+// runtime_client_verified=false 是源码内的保守标记，不能自行改成真。
+// 完整 BOSS 技能、全部地图、全部落点及中途效果不在已完成承诺中。
+// 依据：../native-server/src/control.cpp:run_control。
+// 依据：lobby_runtime.cpp:status；maps/registry.cpp、maps/*、gameplay/boss_session.cpp。
+
+// 已有具体实现入口
+// 地产购买、自有地建造和升级：gameplay/property.cpp、gameplay/construction.cpp。
+// 商店买卖、退出与超时：gameplay/shop.cpp；卡片库存：gameplay/cards.cpp。
+// 普通骰子、卡片遥控骰、付费骰与恢复响应：gameplay/boss_turns.cpp。
+// 路口选择：gameplay/junction.cpp；玩家建筑上限由开局技能快照约束。
+// 单局资金：gameplay/ledger.cpp；银行等待：gameplay/bank.cpp。
+// 机会落点与有限状态效果：gameplay/chance_landing.cpp、actor_status.cpp。
+// 这些入口有状态和资源前提，不等于所有变种都支持。
+// runtime 已向会话注入账户扣费接口；付费骰成功扣款后提交预先计算的移动。
+// 没有 payment 或余额不足时返回恢复响应；重复事务/待恢复状态会拒绝继续。
+// 依据：richonline_boss_runtime.cpp:load_richonline_boss_runtime；boss_turns.cpp:action。
+// runtime 日志仍含 paid_rolls_supported=false，不能用该历史字段否定上述源码路径。
+// 模式 3 对方地产通常无普通租金；16 类建筑及未支持落点仍可能进入拒绝路径。
+// combat、npc、settlement、game_end 等模块存在不等于已接入全部 runtime 分支。
+
+// 传输与准入回归
+// native_codec：外层及内层编解码，tests/codec_tests.cpp。
+// native_game_admission：准入结构，tests/game_admission_tests.cpp。
+// native_game_session：会话生命周期，tests/game_session_tests.cpp。
+// native_game_service：实际 TCP 服务，tests/game_service_tests.cpp。
+// 测试文件路径均相对 ../native-server。
+
+// 大厅与运行组装回归
+// native_lobby_auth_failure、native_lobby_delivery、native_lobby_adapter。
+// native_richonline_room_protocol、native_richonline_room_directory。
+// native_richonline_game_registry、native_richonline_game_channel。
+// native_richonline_room_runtime、native_richonline_control_runtime。
+// 对应 tests 目录同名或近似命名源码，以 CMakeLists.txt 为精确映射。
+
+// 地产与回合回归
+// native_richonline_property_wire：richonline_property_wire_tests.cpp。
+// native_richonline_construction_wire：richonline_construction_wire_tests.cpp。
+// native_richonline_boss_property：richonline_boss_property_tests.cpp。
+// native_richonline_boss_construction：richonline_boss_construction_tests.cpp。
+// native_richonline_owned_property_tcp：richonline_owned_property_tcp_tests.cpp。
+// native_richonline_boss_turns_tcp：richonline_boss_turns_tcp_tests.cpp。
+// native_richonline_junction：richonline_junction_tests.cpp。
+// native_richonline_map_package：richonline_map_package_tests.cpp。
+// native_richonline_junction_flow：richonline_junction_flow_tests.cpp。
+// 新增玩法不能只补序列化测试，还需验证等待与回合恢复。
+
+// 持久化与管理回归
+// native_storage、native_storage_login、native_model_storage。
+// native_model_migration、native_lobby_inventory、native_preferences。
+// native_bank_storage、native_exchange_storage、native_control。
+// 模型、库存或配置改动需同时核对账号表、大厅记录和开局参与者数据。
+// 测试总数会变化，用 ctest -N 记录当前构建，避免永久写死总数。
+
+// 模块协作约定
+// wire 负责人维护字节布局、边界值和 IDA 证据，不代替业务归属决策。
+// 玩法负责人维护阶段与权威状态，不能越过 Startup 任意推进计数器。
+// 存储负责人维护事务、迁移、审计与 profile，避免直接改活动数据库。
+// 管理器负责人维护请求契约、版本冲突提示和实例身份核验。
+// runtime 负责人维护配置接线、日志和服务生命周期。
+// 负责人是任务分工，不是源码中已经存在的固定人员名单。
+
+// 合并或交接时提供
+// 改动范围与未改动的已知限制；相关源文件及函数。
+// NEW 客户端依据、输入资源基准和协议字段来源。
+// 构建目录、命令、退出状态、失败原因及可复现的测试记录。
+// 部署 exe 的路径及哈希，或明确“尚未切换运行版本”。
+// 实机观察结果；无法验证时明确缺少的环境或操作条件。
+// 不把旧会话的“测试通过”继承为当前共享源码的验证结论。
+
+// 扩展许可边界
+// 本目录只描述工程事实，不推定第三方客户端、资源或逆向产物可再分发。
+// 发布前应独立核对源码和各依赖的许可；缺少许可依据时保留待确认状态。

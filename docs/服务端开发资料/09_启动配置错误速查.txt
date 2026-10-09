@@ -1,0 +1,72 @@
+/*
+ * bootstrap 配置错误速查与本机排障
+ * 核对日期：2026-10-09；错误码来自当前源码检查，不是完整配置模板。
+ */
+
+// 先找失败发生在哪一层
+// startup_or_runtime_failed：看 reason；启动异常可能发生在 ready 之前。
+// ready 出现后查询 status，分别检查 lobbyReady、httpReady、blackReady。
+// gameListenerReady 仅表示游戏 TCP listener 正在监听，不表示对局可玩。
+// listener_failed 表示某个工作线程异常；status 中 listenerFailure 给出服务名。
+// richonline_boss_host_configured 表示 host 配置可加载，不表示客户端验收。
+// richonline_boss_plan_prepared 表示房间计划准备完成，不代表地图已加载。
+
+// 文件和 profile
+// bootstrap_file_open_failed：确认 data-dir/lobby-bootstrap.json 可读且不是目录。
+// richonline_boss_runtime_client_profile_invalid：当前 BOSS runtime 要求 richonline。
+// original_* 配置属于保留的历史兼容路径，不要与 Richonline 配置字段混用。
+// 启动 profile 默认 richonline；既有数据库标签不匹配会在 Storage 初始化时报错。
+
+// host 必填配置错误
+// richonline_boss_runtime_config_incomplete：boss_game 与 turn_policy 必须成对。
+// richonline_boss_host_config_fields_invalid：字段缺失或出现未允许字段，核对精确键名。
+// richonline_boss_host_policy_unsupported：version、manager 或三项固定策略不匹配。
+// richonline_boss_host_number_invalid：整数类型或允许范围不符；整数不能写成小数。
+// richonline_boss_host_calendar_invalid：年月日组合无效，不只检查各字段范围。
+// richonline_boss_host_provenance_required：来源说明为字符串，长度 8 至 4096 字节。
+// 不要删除 provenance 或用“经验值”代替证据；保留来源文件、版本及字段依据。
+
+// 资源根目录及房间载荷
+// richonline_boss_host_resource_path_invalid：client_root 为空或含 NUL。
+// 相对 client_root 以 bootstrap 文件所在目录解析，不以当前工作目录解析。
+// richonline_boss_host_resource_missing：至少要有 Map/BS_1_1.emp、Data/BossWar.kpd、Data/Prop.kpd。
+// richonline_boss_host_rooms_required：bootstrap blobs 缺少 room_unknown_prefix。
+// richonline_boss_E88_invalid：当前会话房间扩展不是预期 88 字节。
+// richonline_map_package_missing：地图名和类别没有匹配注册包。
+// richonline_map_package_runtime_incomplete：包已识别，但 runtime_enabled=false。
+// richonline_map_package_room_mismatch：房间地图名/签名与资源阶段不匹配。
+// 不要复制另一张图的签名、类别或 unknown 字段绕过上述错误。
+
+// turn_policy 错误
+// richonline_boss_turn_policy_fields_invalid：键集合必须精确匹配当前 schema。
+// richonline_boss_turn_policy_scope_invalid：scope 字符串与源码声明不一致。
+// richonline_boss_turn_policy_number_invalid：整数超界或不是整数。
+// richonline_boss_turn_policy_array_invalid：固定长度数组项数不一致。
+// richonline_boss_turn_policy_tail_invalid：optional_tail_hex 非偶数长度、非法 hex 或超长。
+// richonline_boss_card_policy_fields_invalid：卡片策略键集合不匹配。
+// 卡片 event_id/card_id/opaque 字段超界时复用 richonline_boss_turn_policy_number_invalid。
+// 值的格式通过校验并不代表值的协议语义正确，必须保留 provenance 并做抓包对照。
+
+// 监听器与端口
+// lobby_network_port_invalid：端口必须为 0 至 65535 的整数；0 表示请求系统分配。
+// richonline_game_listener_not_ready：房间请求到达时游戏 listener 尚未绑定成功。
+// listener_start_timeout：监听器未在 5 秒内报告就绪；查前序 listener_failed。
+// richonline_runtime_game_manager_mismatch：当前新版 runtime 仅接受 manager=0。
+// advertised_host / advertised_ipv4 必须是客户端可到达地址，bind_host 是本机绑定地址。
+// 本机回环地址只适用于本机测试；远程客户端使用时需要实际可达地址与防火墙规则。
+
+// 管理器配置和生效方式
+// AdminLaunchSettings 从管理器 exe 同目录读取 RichOnline.Admin.launch.json。
+// 文件相对路径以 exe 目录为准；CLI 参数优先，CLI 相对路径以工作目录解析。
+// server、data-dir、client、client-config、client-profile 是管理器启动键。
+// 修改 lobby-bootstrap.json 后应受控重启服务；不能假设活动 runtime 热重载。
+// 每次启动重新核对管理器实际 server 路径、SHA256、data-dir、PID、instanceId。
+// 测试只能使用全新隔离 data-dir，不复用真实账号库或别人的运行目录。
+
+// 代码追踪入口
+// 控制进程和 bootstrap：../native-server/src/server_main.cpp、src/control.cpp。
+// 管理器启动设置：../admin/AdminLaunchSettings.cs、ServerProcess.cs。
+// Host 校验及资源存在性：../native-server/src/richonline_boss_host.cpp:policy。
+// Turn/card 策略校验：../native-server/src/richonline_boss_runtime.cpp:policy。
+// 服务和监听器装配：../native-server/src/lobby_runtime.cpp:LobbyRuntime。
+// 将报错写入配置注释或交接记录时，禁止粘贴真实用户名、口令或可重放 token。

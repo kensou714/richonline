@@ -1,0 +1,69 @@
+/*
+ * 服务端架构：按边界查找代码与协作接口
+ * 核对日期：2026-10-09；不是完整玩法已完成声明。
+ */
+
+// 产品入口
+// RichOnline.Server 是 Windows C++20 服务进程。
+// richnet_protocol 是标准输入协议诊断工具，并带可信 Lua 策略实验入口。
+// richnet_game_service 是独立游戏传输工具，不等同于完整产品服务。
+// admin 是 .NET 8 Windows Forms 管理器，通过本机命名管道访问服务。
+// 依据：../native-server/CMakeLists.txt；../admin/RichOnline.Admin.csproj。
+
+// 生命周期
+// server_main.cpp:wmain 解析路径、profile，建立 JSONL 日志。
+// control.cpp:run_control 获取数据目录独占锁，创建 Storage。
+// run_control 加载游戏 runtime，再创建 LobbyRuntime 与 ControlPipe。
+// 管理 stop 命令结束监听线程；随后输出 stopped 事件。
+// 管理器校验 PID、instanceId、profile 和协议版本，避免连错实例。
+// 依据：../admin/ServerProcess.cs:StartAsync、StopAsync。
+
+// 传输与编解码
+// frame.cpp、inner.cpp、handshake.cpp 负责帧、内层及握手。
+// game_admission.cpp 解析版本相关准入信息。
+// game_session.cpp:GameSession 把字节流转换为授权、消息及轮询回调。
+// service.cpp:GameService 负责游戏 TCP 服务，不直接决定地产规则。
+// lobby.cpp、lobby_service.cpp 负责大厅会话与传输。
+// 修改这层会影响多个玩法，必须保留分片、粘包和非法长度检查。
+
+// 大厅业务与游戏交接
+// server_lobby_adapter.cpp、server_lobby_connections.cpp 连接账号与 NEW 大厅。
+// richonline_room_protocol.cpp：房间请求和记录的网络表达。
+// richonline_room_directory.cpp：房间成员、状态与快照。
+// richonline_game_registry.cpp：把大厅启动与游戏连接关联。
+// richonline_game_redirect.cpp：NEW 游戏跳转与预期准入信息。
+// pending_game_admissions.cpp：待消费准入记录与有效期。
+// 这些模块共同决定谁可以接入哪一局；不能以客户端自报身份放行。
+
+// NEW 游戏职责
+// richonline_boss_host.cpp：配置、资源及房间启动计划。
+// richonline_boss_startup.cpp：棋盘初始化及参与者数据。
+// richonline_game_startup.cpp：加载确认、动作计数器、输出封装。
+// gameplay/boss_session.cpp：统一装配地图包、地产、商店、落点与回合。
+// gameplay/boss_turns.cpp：回合阶段、移动、落点后续决策。
+// gameplay/property.cpp / gameplay/construction.cpp：地产及建筑。
+// gameplay/shop.cpp / gameplay/cards.cpp：商店及卡片状态。
+// gameplay/junction.cpp：路口方向选择与超时。
+// maps/registry.cpp 与 maps/*：地图包选择、场景读取及开放状态。
+// resources/*：BOSS 关卡、机会与建筑资源读取。
+// richonline_*_wire.cpp：请求解析与响应字节布局，避免混入业务状态。
+
+// 持久化与控制
+// storage*.cpp：账号、配置、角色、库存、银行和兑换事务。
+// credentials.cpp：字符集转换、随机盐和 scrypt 校验。
+// control_pipe.cpp：本机传输权限与帧边界。
+// control.cpp：管理请求校验及命令分派。
+// auxiliary_service.cpp / auxiliary_protocol.cpp：HTTP 与 black 辅助服务。
+// blacklist_store.cpp / original_blacklist.cpp：旧版黑名单资料与响应。
+
+// 历史兼容代码的位置
+// original_lobby_adapter.cpp 与 original_lobby_policy.cpp 维护旧大厅协议。
+// original_game_host.cpp 与 original_boss_match*.cpp 维护旧游戏路径。
+// 原始资源读取器可能被两条路径共用，网络包不能按名称直接照搬。
+// local-server 内的 Python 实现可供历史对照，不是当前 C++ 运行依赖。
+
+// 并发修改接点
+// 改回合时先确认 property、shop、junction 对 await_event 的契约。
+// 改角色字段时同时核对 storage、lobby record 与棋盘参与者快照。
+// 改管理命令时同时核对 control.cpp 与 ../admin/ControlClient.cs 调用方。
+// 改共享编解码或资源读取器时，核对已有兼容测试，避免破坏共同依赖。

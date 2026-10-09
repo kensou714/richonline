@@ -1,0 +1,69 @@
+/*
+ * 从源码到隔离服务实例
+ * 核对日期：2026-10-09；下列命令是操作说明，不是本轮执行记录。
+ */
+
+// 前置条件
+// 正式服务和多数集成测试以 Windows 为构建条件。
+// 准备 CMake 3.24 以上、支持 C++20 的 Windows 工具链及 Ninja。
+// CMake 会下载 Lua 5.4.8，并按固定 SHA256 验证下载内容。
+// SQLite amalgamation、nlohmann JSON、lzokay 由 vendor 提供。
+// Windows 链接依赖包括 ws2_32、bcrypt、advapi32。
+// 管理器构建另需 .NET 8 SDK 与 Windows 桌面目标支持。
+// 依据：../native-server/CMakeLists.txt；../admin/RichOnline.Admin.csproj。
+
+// 统一工作目录
+// 所有相对命令从当前 Richonline 目录执行。
+// 当前 C++ 源码在 ../native-server，管理器源码在 ../admin。
+// 使用新的 build-docs 目录，避免改写他人正在使用的 CMakeCache。
+// 不同编译器或生成器不能复用同一个已配置构建目录。
+
+// LLVM-MinGW 与 Ninja 示例，在 Git Bash 中执行
+// 先确认 clang、clang++、cmake、ninja 均来自预期 Windows 工具链。
+// cmake -S ../native-server -B ../native-server/build-docs -G Ninja \
+//   -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+//   -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+// cmake --build ../native-server/build-docs --parallel 4
+// ctest --test-dir ../native-server/build-docs --output-on-failure
+// 如使用其他工具链，按其要求替换生成器及编译器选择。
+// 多配置生成器在 build 与 ctest 阶段显式指定 Release 配置。
+// 不把只编译 codec 的非 Windows 结果记为正式服务构建成功。
+
+// 测试选择
+// ctest --test-dir ../native-server/build-docs -N
+// ctest --test-dir ../native-server/build-docs \
+//   -R "native_richonline_.*property|native_richonline_.*construction" \
+//   --output-on-failure
+// ctest --test-dir ../native-server/build-docs \
+//   -R "native_storage|native_model_migration|native_control" --output-on-failure
+// 当前 NEW 资源测试通过 CMake 指向当前 Richonline 目录。
+// 地图与 KPD 资源缺失时，应补齐合法本地输入并记录来源。
+// 不把删除测试或换用空资源当作完成验证。
+
+// 管理器构建
+// dotnet build ../admin/RichOnline.Admin.csproj -c Release
+// 产物位置随 .NET 输出配置变化，启动前核对真实输出目录。
+// 可执行文件的启动配置读取规则见 03_配置与管理接口.txt。
+
+// 隔离运行
+// 为自己的实例准备新的绝对 DATA_DIR，且不指向真实账号库。
+// 下行的 DATA_DIR 是占位符，替换为本机独立数据目录的绝对路径。
+// ../native-server/build-docs/RichOnline.Server.exe --data-dir "DATA_DIR" \
+//   --pipe richonline-docs-test --client-profile richonline
+// 未提供 lobby-bootstrap.json 时，只启动管理能力，不开放完整游戏链路。
+// 需要大厅和游戏时，使用有来源的 bootstrap 并检查资源路径与端口。
+// DATA_DIR/server.lock 的独占句柄限制同一目录被多个服务占用。
+// 日志位于 DATA_DIR/logs/native-PID.jsonl，PID 在每次启动后重新核对。
+
+// 运行验收
+// 先观察 ready，再经管理接口读取 status，核对 PID 和 instanceId。
+// 同时查看 lobbyReady、httpReady、blackReady、gameListenerReady。
+// gameReady 当前固定为 false，不应用它替代端口监听状态。
+// 启动成功不等于地图和回合完成；还需真实客户端复现目标场景。
+
+// 切换版本
+// 记录源码修订、构建命令、测试结果及 exe 的 SHA256。
+// 核对管理器 server 配置指向的 exe；构建目录不等于部署目录。
+// 停服和替换运行程序应与当前测试操作者协调，避免中断他人对局。
+// 保留旧程序及数据备份，再进行受控切换与场景复测。
+// 本文不认定任何现存 runtime 目录已经使用当前源码。

@@ -1,0 +1,31 @@
+/*
+ * Git 仓库范围与源码快照
+ * 核对日期：2026-10-09
+ */
+
+// 仓库内容
+// docs/ 保存项目开发资料、逆向结论与文本证据。
+// server/ 保存 C++ 服务端源码、测试、工具、Lua 规则和第三方源码依赖。
+// 客户端原有资源、可执行文件、构建产物、日志、账号数据库不提交。
+// 管理器 ../admin、历史原型 ../local-server 和外部 protocol-analysis 不在本次范围内。
+
+// 本次导入来源
+// server/ 的源码从本机 ../native-server 复制，复制时逐文件校验 SHA256。
+// 原开发目录没有搬移；原 server/RichOnline.Server.exe 保留在本地并由 Git 忽略。
+// 既有资料中的 ../native-server 对应本仓库 server/；历史操作记录保留原路径。
+// 上游开发目录的后续修改不会自动同步，提交前必须核对并导入所需变更。
+
+// 从仓库构建，在仓库根目录执行
+// 准备 CMake 3.24+、Windows C++20 工具链和 Ninja，首次配置需要下载已锁定哈希的 Lua。
+// cmake -S server -B server/build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+// cmake --build server/build --parallel 4
+// ctest --test-dir server/build --output-on-failure
+// RICHONLINE_CLIENT_DIR 默认为仓库根目录；可在配置时以 -DRICHONLINE_CLIENT_DIR="客户端绝对路径" 指定合法本地资源。
+// 原版客户端和 protocol-analysis 相关测试仍需外部历史输入；纯源码克隆不包含这些资源。
+// 本次为版本归档，不代表完成全部测试或服务端上线。
+
+// 本次验证
+// server/build-git-import 隔离目录的 CMake 配置成功，使用 clang 22.1.3 与 Ninja。
+// cmake --build server/build-git-import --target RichOnline.Server --parallel 4 编译通过。
+// Git 暂存内容检查通过：仅 .gitignore、docs 和 server 文本文件，无客户端二进制或数据库。
+// 未执行完整 CTest 或真实客户端验收，未切换正在运行的服务。
