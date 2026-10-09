@@ -1,0 +1,34 @@
+/*
+ * Windows 服务端发布
+ * 连接与游戏服务分离，版本程序与持久化数据分离。
+ */
+
+// 发布包
+// 从固定 Git 暂存快照构建并运行 CTest，提交对应源码后记录 sourceCommit。
+// 包内包含 RichOnline.Server.exe、Invoke-NativeControl.ps1、lobby-bootstrap.template.json、
+// resources/Data 与 resources/Map，以及包含每个文件 SHA256 的 manifest.json。
+// manifest.json 字段为 releaseId、sourceCommit、files；files 元素包含 path 与 sha256。
+// 程序和客户端运行资源只经 SSH 上传目标服务器，不发布到 GitHub。
+
+// 安装
+// Install-ServerRelease.ps1 在服务器管理员身份下运行，参数包括 Archive、ArchiveSha256、
+// ReleaseId、PublicAddress 和 Root（默认 D:\richonline）。PublicAddress 必须是本机 IPv4。
+// 先校验包及逐文件哈希，再启动固定版本目录下的程序。
+// 使用 RichOnline-Server 计划任务，S4U 登录，不在脚本中保存账号密码。
+// 配置开机启动、无限运行时长和异常重试，正常运行不依赖 SSH 会话保持连接。
+// 管理管道 richonline-production 仅属于运行账户，仍通过已验证的 SSH 通道访问。
+
+// 公网监听
+// 服务本身保持 127.0.0.1，Windows PortProxy 在公网地址开放 18600、18602、18605、18606、18680。
+// 对应大厅、游戏、角色介绍查询、排行查询、频道列表HTTP。
+// 未认证黑名单接口18604保持本机范围，不通过代理公开。
+// 客户端频道列表入口为 http://服务器地址:18680/gameinfo/RichNetLogin.txt。
+// 云安全组如有额外限制，应单独放行这些 TCP 端口；不开放管理管道或数据库。
+
+// 持久数据与回退
+// shared/data 包含账号数据库、bootstrap和日志，更新发布时保留。
+// 首次部署遇到已有未纳管配置或数据库会停止，避免误覆盖。
+// 后续更新要求无在线认证会话，先经管理接口备份数据库并正常停止旧实例。
+// 失败时恢复旧任务及配置；不自动降级数据库结构，数据库恢复需独立核对迁移兼容性。
+// current-release.json 保留当前程序哈希、源提交、监听状态和上一个版本记录。
+// gameReady=false 为源码尚未完成全部玩法的能力标记；上线健康检查分别核对各监听器。

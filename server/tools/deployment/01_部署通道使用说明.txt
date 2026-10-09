@@ -1,0 +1,30 @@
+/*
+ * 从本机通过 SSH 执行命令与传输文件
+ * 连接配置和私钥保存在本机用户目录，不提交到仓库。
+ */
+
+// 连接前提
+// 使用已通过主机指纹验证的 SSH 连接，别名 richonline-deploy。
+// 专用配置：%USERPROFILE%\.ssh\richonline_deploy_config。
+// 私钥：%USERPROFILE%\.ssh\richonline_deploy_ed25519。
+// 主机指纹文件：%USERPROFILE%\.ssh\richonline_known_hosts。
+// 不从未知连接自动接受或替换主机密钥。
+
+// 在项目根目录的 PowerShell 执行
+// & .\server\tools\deployment\Invoke-DeployChannel.ps1
+// 默认执行 whoami，验证密钥登录及远程命令通道。
+// & .\server\tools\deployment\Invoke-DeployChannel.ps1 -Command 'hostname'
+// & .\server\tools\deployment\Invoke-DeployChannel.ps1 -ScriptPath '.\本地检查脚本.ps1'
+// & .\server\tools\deployment\Invoke-DeployChannel.ps1 -Upload '.\待上传文件.zip' -Destination 'D:/richonline/incoming/release.zip'
+// & .\server\tools\deployment\Invoke-DeployChannel.ps1 -Download 'D:/richonline/deploy/deployment-status.txt' -Destination '.\deployment-status.txt'
+// 以上文件名是示例，按实际文件替换。远程传输路径只接受无空格的绝对路径。
+// 当前远端 Windows OpenSSH 7.7 使用 scp -O，传输依然通过加密 SSH 完成。
+
+// 服务器目录约定
+// D:\richonline\incoming：待校验上传包。
+// D:\richonline\releases：独立版本程序。
+// D:\richonline\shared：运行数据与配置，不随程序包覆盖。
+// D:\richonline\backups：上线前备份。
+// D:\richonline\deploy：部署脚本与记录。
+// 通道建立不代表服务已经上线；首次发布仍需运行配置、客户端资源及健康检查。
+// 初始化和修复脚本只用于安装连接入口，日常传输使用 Invoke-DeployChannel.ps1。
