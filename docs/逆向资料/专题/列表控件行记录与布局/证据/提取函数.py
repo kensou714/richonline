@@ -24,3 +24,11 @@ def export_dependencies(db):
                  0x8F5DE0, 0x8F5E60, 0x8F6B00, 0x8F6B50, 0x8F6C10,
                  0x8E1620, 0x8E1800, 0x8E2260, 0x8E0AA0, 0x8F8080]
     return namespace['export_group'](db, addresses, HERE / 'list_dependencies.json')
+
+
+def export_lifecycle(db):
+    namespace = {}
+    script = ROOT / 'docs/逆向资料/全量分析/export_function_group.py'
+    exec(compile(script.read_text(encoding='utf-8-sig'), str(script), 'exec'), namespace)
+    addresses = [0x8F3020, 0x8F32C0, 0x8F35D0, 0x8F3E20, 0x8F3F10, 0x8F3FD0]
+    return namespace['export_group'](db, addresses, HERE / 'list_lifecycle.json')

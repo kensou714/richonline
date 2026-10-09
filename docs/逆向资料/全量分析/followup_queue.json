@@ -4,7 +4,7 @@
   "counts": {
     "all_entries": 29019,
     "direct_thunks": 14191,
-    "entries_without_explicit_review": 25126,
+    "entries_without_explicit_review": 24958,
     "game_handlers": 310
   },
   "unrecognized_code_ranges": [
@@ -104,6 +104,20 @@
       "va": "0x887310",
       "evidence": [
         "专题/登录与大厅状态/证据/unrecognized_event_ranges.json"
+      ],
+      "status": "已导出待按专题清单复核"
+    },
+    {
+      "va": "0x8e14f0",
+      "evidence": [
+        "专题/关联控件绑定与未声明边界/证据/未声明窗口与全段候选.json"
+      ],
+      "status": "已导出待按专题清单复核"
+    },
+    {
+      "va": "0x8e15f0",
+      "evidence": [
+        "专题/关联控件绑定与未声明边界/证据/未声明窗口与全段候选.json"
       ],
       "status": "已导出待按专题清单复核"
     },
@@ -273,6 +287,36 @@
       ]
     },
     {
+      "va": "0x8e14f0",
+      "evidence": [
+        "专题/关联控件绑定与未声明边界/证据/未声明窗口与全段候选.json"
+      ],
+      "reviews": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/code_windows/0",
+          "status": "局部语义已审阅",
+          "conclusion": "thiscall一参数；数量变化先删旧数组，再按正count分配4*count；不清槽；同数量保留；count原值保存。",
+          "unknown": "两入口跳板无入xref，业务可达性未确认；分配失败和溢出未动态验证。"
+        }
+      ]
+    },
+    {
+      "va": "0x8e15f0",
+      "evidence": [
+        "专题/关联控件绑定与未声明边界/证据/未声明窗口与全段候选.json"
+      ],
+      "reviews": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/code_windows/1",
+          "status": "局部语义已审阅",
+          "conclusion": "thiscall(value,index)，retn8；仅signed index>count拒绝；写links[index-1]，一基无下界/空指针门。",
+          "unknown": "实际注册调用未发现，异常index路径未动态验证；不能定性为已复现漏洞。"
+        }
+      ]
+    },
+    {
       "va": "0x8e23c0",
       "evidence": [
         "专题/提示文本生命周期/证据/data.json"
@@ -349,6 +393,26 @@
       "source_scopes": [
         "人工划定导航窗口，包含可能的相邻代码/非指令；不声称这些就是函数边界"
       ]
+    },
+    {
+      "start_va": "0x8e14f0",
+      "end_va": "0x8e1542",
+      "size": 82,
+      "evidence": [
+        "专题/关联控件绑定与未声明边界/证据/未声明窗口与全段候选.json"
+      ],
+      "scope": "人工代码导航窗口；不确认函数入口、边界或完整语义",
+      "source_scopes": []
+    },
+    {
+      "start_va": "0x8e15f0",
+      "end_va": "0x8e160f",
+      "size": 31,
+      "evidence": [
+        "专题/关联控件绑定与未声明边界/证据/未声明窗口与全段候选.json"
+      ],
+      "scope": "人工代码导航窗口；不确认函数入口、边界或完整语义",
+      "source_scopes": []
     }
   ],
   "navigation_window_action": "人工划定原字节窗口，与声明函数和已命名未声明范围分别保留",
@@ -658,8 +722,14 @@
       "direct_incoming_edges": 0,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/0",
+          "status": "跳板字节已核验"
+        }
+      ],
       "next_action": "沿已证目标分析；跳板识别不代表目标业务已完成",
       "target_va": "0x95e75e"
     },
@@ -177284,8 +177354,14 @@
       "direct_incoming_edges": 0,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/1",
+          "status": "跳板字节已核验"
+        }
+      ],
       "next_action": "沿已证目标分析；跳板识别不代表目标业务已完成",
       "target_va": "0x95c7d6"
     },
@@ -201250,7 +201326,7 @@
       "direct_incoming_edges": 104,
       "unresolved_indirect_sites": 1,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -201343,6 +201419,21 @@
           "source": "专题/录像文件与执行链/function_review.json",
           "json_pointer": "/functions/2",
           "status": "局部用途核验"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "部分分析"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "局部分支确认"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "部分分析"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -201406,6 +201497,11 @@
           "source": "专题/神明附身与元数据/函数审阅清单.json",
           "json_pointer": "/functions/0",
           "status": "局部字段或调用链已审阅"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "局部分支确认"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -201459,6 +201555,11 @@
           "source": "专题/启动线程与退出/证据/startup_exit_review.json",
           "json_pointer": "/functions/4",
           "status": "已分析"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "部分分析"
         },
         {
           "source": "专题/游戏时间与计时调度/函数审阅清单.json",
@@ -201884,9 +201985,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "局部语义确认"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x625d30",
@@ -202112,6 +202219,11 @@
           "source": "专题/事件文字记录器/证据/function_review.json",
           "json_pointer": "/functions/4",
           "status": "部分分析"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "局部语义已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -202817,6 +202929,11 @@
           "status": "已分析"
         },
         {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/0",
+          "status": "主体已审阅"
+        },
+        {
           "source": "专题/录像文件与执行链/function_review.json",
           "json_pointer": "/functions/21",
           "status": "仅导出候选"
@@ -203123,9 +203240,15 @@
       "direct_incoming_edges": 49,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x628fb0",
@@ -204071,8 +204194,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/1",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x629e60",
@@ -204160,9 +204289,15 @@
       "direct_incoming_edges": 37,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "字段访问器确认"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x629f20",
@@ -204173,9 +204308,15 @@
       "direct_incoming_edges": 60,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "字段访问器确认"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x629f50",
@@ -204186,9 +204327,15 @@
       "direct_incoming_edges": 59,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/5",
+          "status": "字段访问器确认"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x629f80",
@@ -204205,6 +204352,11 @@
           "source": "专题/输入与快捷键/函数审阅清单.json",
           "json_pointer": "/24",
           "status": "静态局部语义已审阅"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/6",
+          "status": "字段访问器确认"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -204218,9 +204370,15 @@
       "direct_incoming_edges": 5,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/7",
+          "status": "字段访问器确认"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x629fc0",
@@ -208937,9 +209095,15 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/2",
+          "status": "局部消费契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x638030",
@@ -215136,9 +215300,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x647630",
@@ -215246,9 +215416,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/5",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x649a30",
@@ -215447,9 +215623,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/6",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64b880",
@@ -215609,9 +215791,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/7",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64c490",
@@ -215622,9 +215810,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/8",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64c510",
@@ -215635,9 +215829,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/9",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64c770",
@@ -215648,9 +215848,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/10",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64c9e0",
@@ -215661,9 +215867,15 @@
       "direct_incoming_edges": 26,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/11",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64cae0",
@@ -215674,9 +215886,15 @@
       "direct_incoming_edges": 6,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/12",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64cbe0",
@@ -215700,9 +215918,15 @@
       "direct_incoming_edges": 12,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/13",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64ce50",
@@ -215878,9 +216102,15 @@
       "direct_incoming_edges": 8,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/14",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64edc0",
@@ -216080,6 +216310,11 @@
           "source": "专题/字体与文本渲染/函数审阅清单.json",
           "json_pointer": "/functions/23",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/15",
+          "status": "局部语义已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -216099,6 +216334,11 @@
           "source": "专题/字体与文本渲染/函数审阅清单.json",
           "json_pointer": "/functions/24",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/16",
+          "status": "局部语义已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -216132,8 +216372,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/2",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64f0c0",
@@ -216145,8 +216391,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/3",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64f120",
@@ -216158,8 +216410,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/4",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64f160",
@@ -216263,9 +216521,15 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/17",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x64f250",
@@ -228177,6 +228441,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/0",
+          "status": "局部语义已审阅，完整字节已核验"
+        },
+        {
           "source": "专题/短字符串与缓冲所有权/函数审阅清单.json",
           "json_pointer": "/functions/3",
           "status": "局部消费契约已审阅"
@@ -234061,6 +234330,11 @@
           "source": "专题/40EE系列事件/证据/function_review.json",
           "json_pointer": "/helpers/63",
           "status": "仅导出"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "局部语义已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -234080,6 +234354,11 @@
           "source": "专题/40EE系列事件/证据/function_review.json",
           "json_pointer": "/helpers/64",
           "status": "仅导出"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "局部语义已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -234112,9 +234391,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/1",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695260",
@@ -234163,9 +234448,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/2",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695330",
@@ -234176,9 +234467,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/3",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695360",
@@ -234189,9 +234486,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/4",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6953e0",
@@ -234202,9 +234505,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/5",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695440",
@@ -234215,9 +234524,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/6",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695470",
@@ -234273,9 +234588,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/7",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695cb0",
@@ -234286,9 +234607,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/8",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695d00",
@@ -234299,9 +234626,15 @@
       "direct_incoming_edges": 42,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/9",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695d40",
@@ -234369,9 +234702,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/10",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695e70",
@@ -234395,9 +234734,15 @@
       "direct_incoming_edges": 30,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/11",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695ec0",
@@ -234408,9 +234753,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/12",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x695f50",
@@ -234459,9 +234810,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/13",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x696050",
@@ -234472,9 +234829,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/14",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x696190",
@@ -234485,9 +234848,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/15",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x696250",
@@ -234498,9 +234867,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/16",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6962f0",
@@ -234563,9 +234938,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/17",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x696380",
@@ -234602,9 +234983,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/18",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x696660",
@@ -234615,9 +235002,15 @@
       "direct_incoming_edges": 17,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/19",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x696bf0",
@@ -234628,9 +235021,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/20",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x696cc0",
@@ -234776,9 +235175,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/21",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x696ec0",
@@ -234872,9 +235277,15 @@
       "direct_incoming_edges": 9,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/22",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x697040",
@@ -235321,6 +235732,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/23",
+          "status": "局部语义已审阅，完整字节已核验"
+        },
+        {
           "source": "专题/基础对象与分派/第二批_函数审阅清单.json",
           "json_pointer": "/functions/13",
           "status": "仅导出"
@@ -235552,6 +235968,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/24",
+          "status": "局部语义已审阅，完整字节已核验"
+        },
+        {
           "source": "专题/基础对象与分派/第二批_函数审阅清单.json",
           "json_pointer": "/functions/22",
           "status": "仅导出"
@@ -235646,6 +236067,11 @@
       "game_message_codes": [],
       "has_exported_evidence": true,
       "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/25",
+          "status": "局部语义已审阅，完整字节已核验"
+        },
         {
           "source": "专题/基础对象与分派/第二批_函数审阅清单.json",
           "json_pointer": "/functions/27",
@@ -237102,7 +237528,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237128,7 +237554,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237154,7 +237580,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237180,7 +237606,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237206,7 +237632,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237219,7 +237645,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237232,7 +237658,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237245,7 +237671,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237271,7 +237697,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237297,7 +237723,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237323,7 +237749,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237349,7 +237775,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237375,7 +237801,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237388,7 +237814,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237401,7 +237827,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -237414,7 +237840,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -238251,8 +238677,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/5",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a2480",
@@ -238264,8 +238696,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/6",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a25a0",
@@ -238290,8 +238728,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/7",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a2890",
@@ -238381,8 +238825,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/8",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a2e30",
@@ -238394,8 +238844,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/9",
+          "status": "字段路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a2f30",
@@ -238498,8 +238954,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/10",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a3390",
@@ -238511,8 +238973,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/11",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a3420",
@@ -238537,8 +239005,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/12",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a3500",
@@ -238550,8 +239024,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/13",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a35b0",
@@ -239164,9 +239644,15 @@
       "direct_incoming_edges": 11,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/14",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6a76e0",
@@ -239222,6 +239708,11 @@
           "source": "专题/主界面角色通知/函数审阅清单.json",
           "json_pointer": "/functions/20",
           "status": "局部分析"
+        },
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/15",
+          "status": "主体已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -239650,6 +240141,11 @@
           "source": "专题/游戏时间与计时调度/函数审阅清单.json",
           "json_pointer": "/functions/4",
           "status": "局部分支已审阅"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "复用已有审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -239767,9 +240263,15 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/18",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6aaca0",
@@ -239821,6 +240323,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/16",
+          "status": "字段路径已审阅"
+        },
+        {
           "source": "专题/登录与大厅状态/证据/函数审阅清单.json",
           "json_pointer": "/3",
           "status": "已采集待深入"
@@ -239857,8 +240364,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/17",
+          "status": "字段路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6ab280",
@@ -239883,8 +240396,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/18",
+          "status": "字段路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6ab4c0",
@@ -240066,8 +240585,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/19",
+          "status": "字段路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6ac390",
@@ -240358,8 +240883,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/20",
+          "status": "字段路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6ae080",
@@ -240428,9 +240959,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/21",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6ae5a0",
@@ -240442,8 +240979,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/22",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6ae980",
@@ -241067,6 +241610,11 @@
           "source": "专题/事件文字记录器/证据/function_review.json",
           "json_pointer": "/functions/37",
           "status": "部分分析"
+        },
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/23",
+          "status": "局部路径已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -241604,9 +242152,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/24",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6b7930",
@@ -241631,8 +242185,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/25",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6b79e0",
@@ -241657,8 +242217,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/26",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6b7a90",
@@ -241670,8 +242236,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/27",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6b7af0",
@@ -244711,6 +245283,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/28",
+          "status": "局部路径已审阅"
+        },
+        {
           "source": "专题/游戏分派桥接/证据/property_and_6021_handlers.json",
           "json_pointer": "/functions/19",
           "status": "原证辅助导出，未全函数业务分析"
@@ -246095,9 +246672,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/19",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6c1840",
@@ -246147,7 +246730,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -246686,7 +247269,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -247349,7 +247932,7 @@
       "direct_incoming_edges": 17,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -252979,6 +253562,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/3",
+          "status": "局部消费契约已审阅"
+        },
+        {
           "source": "专题/角色与精灵动画/函数审阅清单.json",
           "json_pointer": "/functions/47",
           "status": "部分审阅"
@@ -253144,9 +253732,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/4",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dc1a0",
@@ -253270,9 +253864,15 @@
       "direct_incoming_edges": 10,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/5",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dc730",
@@ -253283,9 +253883,15 @@
       "direct_incoming_edges": 8,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/6",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dc7d0",
@@ -253296,9 +253902,15 @@
       "direct_incoming_edges": 25,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/7",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dc850",
@@ -253309,9 +253921,15 @@
       "direct_incoming_edges": 18,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/8",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dc8f0",
@@ -253322,9 +253940,15 @@
       "direct_incoming_edges": 8,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/9",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dc9e0",
@@ -253421,9 +254045,15 @@
       "direct_incoming_edges": 19,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/10",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dcc00",
@@ -253434,9 +254064,15 @@
       "direct_incoming_edges": 12,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/11",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dcc40",
@@ -253447,9 +254083,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/12",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dcca0",
@@ -253479,9 +254121,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/13",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dcdd0",
@@ -253492,9 +254140,15 @@
       "direct_incoming_edges": 8,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/14",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dcf00",
@@ -253518,7 +254172,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -253830,6 +254484,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/15",
+          "status": "既有专题审阅复核"
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/70",
           "status": "静态已证"
@@ -253846,9 +254505,15 @@
       "direct_incoming_edges": 8,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/16",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dfb00",
@@ -253872,9 +254537,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/17",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6dfba0",
@@ -256092,9 +256763,15 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/18",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6e5160",
@@ -256105,9 +256782,15 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/19",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x6e51d0",
@@ -280489,8 +281172,14 @@
       "unresolved_indirect_sites": 10,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/29",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x733330",
@@ -280502,8 +281191,14 @@
       "unresolved_indirect_sites": 2,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/30",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x733410",
@@ -280736,8 +281431,14 @@
       "unresolved_indirect_sites": 9,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/31",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x735910",
@@ -280749,8 +281450,14 @@
       "unresolved_indirect_sites": 2,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/32",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7359f0",
@@ -293134,6 +293841,11 @@
           "source": "专题/输入与快捷键/函数审阅清单.json",
           "json_pointer": "/12",
           "status": "静态局部语义已审阅"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/8",
+          "status": "局部分支确认"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -293314,6 +294026,11 @@
           "source": "专题/启动线程与退出/证据/startup_exit_review.json",
           "json_pointer": "/functions/43",
           "status": "局部分支已分析"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/20",
+          "status": "局部消费契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -293430,9 +294147,15 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/9",
+          "status": "字段访问器确认"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7a4840",
@@ -297936,6 +298659,11 @@
           "status": "静态局部语义已审阅"
         },
         {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/26",
+          "status": "局部语义已审阅，完整字节已核验"
+        },
+        {
           "source": "全量分析/异常尾块与清理契约/function_review.json",
           "json_pointer": "/functions/151",
           "status": "异常尾块局部契约已核"
@@ -298448,9 +299176,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/27",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b4b90",
@@ -298461,9 +299195,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/28",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b4c40",
@@ -298500,9 +299240,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/29",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b4d20",
@@ -298513,9 +299259,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/30",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b4d60",
@@ -298526,9 +299278,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/31",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b4e20",
@@ -298539,9 +299297,15 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/32",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b4e80",
@@ -298591,9 +299355,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/33",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b5540",
@@ -298838,9 +299608,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/34",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b67b0",
@@ -298955,9 +299731,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/35",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b69d0",
@@ -298968,9 +299750,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/36",
+          "status": "局部语义已审阅，完整字节已核验"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7b6a00",
@@ -304927,8 +305715,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7d8400",
@@ -306595,8 +307389,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/5",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7e14a0",
@@ -306892,8 +307692,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/6",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7e2320",
@@ -309379,8 +310185,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/7",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x7ecaa0",
@@ -323639,7 +324451,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -324159,7 +324971,7 @@
       "direct_incoming_edges": 17,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -325387,8 +326199,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/8",
+          "status": "复用已有审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x80e710",
@@ -325400,8 +326218,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/9",
+          "status": "复用已有审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x80e770",
@@ -326328,9 +327152,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/21",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8134f0",
@@ -326347,6 +327177,11 @@
           "source": "专题/图像资源/第二批函数审阅清单.json",
           "json_pointer": "/functions/9",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/22",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -326366,6 +327201,11 @@
           "source": "专题/图像资源/第二批函数审阅清单.json",
           "json_pointer": "/functions/0",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/23",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -326385,6 +327225,11 @@
           "source": "专题/图像资源/第二批函数审阅清单.json",
           "json_pointer": "/functions/6",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/24",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -326417,9 +327262,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/25",
+          "status": "局部消费契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x813c70",
@@ -326452,6 +327303,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/26",
+          "status": "既有专题审阅复核"
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/84",
           "status": "部分审阅"
@@ -326468,9 +327324,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/27",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8141a0",
@@ -326500,9 +327362,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/28",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x814400",
@@ -326519,6 +327387,11 @@
           "source": "专题/图像资源/第二批函数审阅清单.json",
           "json_pointer": "/functions/8",
           "status": "部分审阅"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/29",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -326570,9 +327443,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/30",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x814970",
@@ -326583,9 +327462,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 6,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/31",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x814c10",
@@ -326596,9 +327481,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 2,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/32",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x814c80",
@@ -326628,9 +327519,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 4,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/33",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x814ec0",
@@ -326641,9 +327538,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 9,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/34",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x815060",
@@ -326912,6 +327815,11 @@
           "source": "专题/图像资源/第三批函数审阅清单.json",
           "json_pointer": "/functions/14",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/35",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -326931,6 +327839,11 @@
           "source": "专题/图像资源/第二批函数审阅清单.json",
           "json_pointer": "/functions/4",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/36",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -326950,6 +327863,11 @@
           "source": "专题/图像资源/第二批函数审阅清单.json",
           "json_pointer": "/functions/5",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/37",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -326969,6 +327887,11 @@
           "source": "专题/图像资源/第二批函数审阅清单.json",
           "json_pointer": "/functions/2",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/38",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -326982,9 +327905,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/39",
+          "status": "静态契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x818c40",
@@ -327001,6 +327930,11 @@
           "source": "专题/图像资源/第二批函数审阅清单.json",
           "json_pointer": "/functions/7",
           "status": "静态已证"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/40",
+          "status": "静态契约已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -327078,9 +328012,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/20",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x818ea0",
@@ -327091,9 +328031,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/21",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x818f10",
@@ -327110,6 +328056,11 @@
           "source": "专题/事件文字记录器/证据/function_review.json",
           "json_pointer": "/functions/73",
           "status": "局部语义已审阅"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/22",
+          "status": "局部语义已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -327123,9 +328074,15 @@
       "direct_incoming_edges": 7,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/23",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8190b0",
@@ -327147,6 +328104,11 @@
           "source": "专题/字体与文本渲染/函数审阅清单.json",
           "json_pointer": "/functions/22",
           "status": "部分审阅"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/24",
+          "status": "局部语义已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -327350,6 +328312,11 @@
           "source": "专题/全局数值配置/函数审阅清单.json",
           "json_pointer": "/functions/58",
           "status": "仅导出"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/25",
+          "status": "局部语义已审阅"
         },
         {
           "source": "全量分析/首批人工审阅迁移.json",
@@ -327601,6 +328568,11 @@
           "status": "仅导出"
         },
         {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/26",
+          "status": "部分分析"
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/166",
           "status": "S"
@@ -327745,6 +328717,11 @@
           "status": "局部用途核验"
         },
         {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/27",
+          "status": "部分分析"
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/75",
           "status": "边界辅助"
@@ -327806,6 +328783,11 @@
           "source": "专题/全局数值配置/函数审阅清单.json",
           "json_pointer": "/functions/63",
           "status": "仅导出"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/28",
+          "status": "部分分析"
         },
         {
           "source": "全量分析/首批人工审阅迁移.json",
@@ -328249,9 +329231,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/29",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x81c580",
@@ -328915,6 +329903,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/10",
+          "status": "复用已有审阅"
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/2",
           "status": "已分析"
@@ -329461,7 +330454,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329474,7 +330467,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329487,7 +330480,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329500,7 +330493,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -329513,7 +330506,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329526,7 +330519,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329539,7 +330532,7 @@
       "direct_incoming_edges": 5,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329552,7 +330545,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -329565,7 +330558,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329578,7 +330571,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329591,7 +330584,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329604,7 +330597,7 @@
       "direct_incoming_edges": 19,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -329617,7 +330610,7 @@
       "direct_incoming_edges": 40,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329630,7 +330623,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329643,7 +330636,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329656,7 +330649,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329669,7 +330662,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -329682,7 +330675,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329695,7 +330688,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329708,7 +330701,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329721,7 +330714,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329734,7 +330727,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329747,7 +330740,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329760,7 +330753,7 @@
       "direct_incoming_edges": 6,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -329773,7 +330766,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329786,7 +330779,7 @@
       "direct_incoming_edges": 9,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -329799,7 +330792,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330307,7 +331300,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330320,7 +331313,7 @@
       "direct_incoming_edges": 7,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330333,7 +331326,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330346,7 +331339,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -330359,7 +331352,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330372,7 +331365,7 @@
       "direct_incoming_edges": 6,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330385,7 +331378,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330398,7 +331391,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -330411,7 +331404,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330424,7 +331417,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330437,7 +331430,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330450,7 +331443,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -330463,7 +331456,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330476,7 +331469,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330489,7 +331482,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330502,7 +331495,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330515,7 +331508,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -330528,7 +331521,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -330541,9 +331534,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 1,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/10",
+          "status": "导入包装核对"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8275a4",
@@ -330554,9 +331553,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 1,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/11",
+          "status": "导入包装核对"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8275aa",
@@ -330567,9 +331572,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 1,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/12",
+          "status": "导入包装核对"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8275b0",
@@ -330580,9 +331591,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 1,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/13",
+          "status": "导入包装核对"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8275b6",
@@ -330593,9 +331610,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 1,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/14",
+          "status": "导入包装核对"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x827850",
@@ -330858,6 +331881,11 @@
       "game_message_codes": [],
       "has_exported_evidence": true,
       "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/33",
+          "status": "局部路径已审阅"
+        },
         {
           "source": "专题/文本解析高频接口/函数审阅清单.json",
           "json_pointer": "/functions/0",
@@ -331203,8 +332231,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/34",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x82bac0",
@@ -331385,8 +332419,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/35",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x82bf20",
@@ -337056,8 +338096,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/36",
+          "status": "主体已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8403f0",
@@ -340359,8 +341405,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/37",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x84b700",
@@ -340413,6 +341465,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/38",
+          "status": "主体已审阅"
+        },
+        {
           "source": "专题/登录与大厅状态/证据/函数审阅清单.json",
           "json_pointer": "/55",
           "status": "回调类别局部复核"
@@ -340430,8 +341487,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/39",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x84baf0",
@@ -340457,6 +341520,11 @@
       "game_message_codes": [],
       "has_exported_evidence": true,
       "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/40",
+          "status": "主体已审阅"
+        },
         {
           "source": "专题/登录与大厅状态/证据/函数审阅清单.json",
           "json_pointer": "/56",
@@ -343620,8 +344688,14 @@
       "unresolved_indirect_sites": 3,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/41",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8570b0",
@@ -349416,6 +350490,11 @@
           "source": "专题/二进制读写游标/函数审阅清单.json",
           "json_pointer": "/functions/44",
           "status": "静态契约已审阅"
+        },
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/42",
+          "status": "主体已审阅"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -369132,8 +370211,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/43",
+          "status": "局部路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8ab210",
@@ -369535,8 +370620,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/44",
+          "status": "主体路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8aca40",
@@ -369548,8 +370639,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/45",
+          "status": "主体路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8acb10",
@@ -369600,8 +370697,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/46",
+          "status": "主体路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8acd70",
@@ -369613,8 +370716,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/47",
+          "status": "主体路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8ace40",
@@ -369665,8 +370774,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/48",
+          "status": "主体路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8ad030",
@@ -369678,8 +370793,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/49",
+          "status": "主体路径已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x8ad110",
@@ -373998,7 +375119,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374076,7 +375197,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374089,7 +375210,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374167,7 +375288,7 @@
       "direct_incoming_edges": 6,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374199,7 +375320,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374212,7 +375333,7 @@
       "direct_incoming_edges": 13,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374238,7 +375359,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374433,7 +375554,7 @@
       "direct_incoming_edges": 15,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374511,7 +375632,7 @@
       "direct_incoming_edges": 18,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374524,7 +375645,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374537,7 +375658,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374563,7 +375684,7 @@
       "direct_incoming_edges": 9,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374576,7 +375697,7 @@
       "direct_incoming_edges": 12,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374589,7 +375710,7 @@
       "direct_incoming_edges": 16,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374602,7 +375723,7 @@
       "direct_incoming_edges": 69,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374888,7 +376009,7 @@
       "direct_incoming_edges": 6,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374901,7 +376022,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -374914,7 +376035,7 @@
       "direct_incoming_edges": 31,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375044,7 +376165,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375096,7 +376217,7 @@
       "direct_incoming_edges": 30,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375109,7 +376230,7 @@
       "direct_incoming_edges": 45,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375122,7 +376243,7 @@
       "direct_incoming_edges": 66,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375135,7 +376256,7 @@
       "direct_incoming_edges": 46,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375148,7 +376269,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375174,7 +376295,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375187,7 +376308,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375200,7 +376321,7 @@
       "direct_incoming_edges": 17,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375213,7 +376334,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375226,7 +376347,7 @@
       "direct_incoming_edges": 16,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375772,7 +376893,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375811,7 +376932,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -375824,7 +376945,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376032,7 +377153,7 @@
       "direct_incoming_edges": 47,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376045,7 +377166,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376058,7 +377179,7 @@
       "direct_incoming_edges": 6,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376071,7 +377192,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376084,7 +377205,7 @@
       "direct_incoming_edges": 6,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376097,7 +377218,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376344,7 +377465,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376552,7 +377673,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376565,7 +377686,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376864,7 +377985,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -376968,7 +378089,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -384056,7 +385177,7 @@
       "direct_incoming_edges": 7,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -384071,6 +385192,11 @@
       "game_message_codes": [],
       "has_exported_evidence": true,
       "review_sources": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "复用已审阅"
+        },
         {
           "source": "专题/控件回调与事件表/function_review.json",
           "json_pointer": "/functions/8",
@@ -384095,6 +385221,11 @@
       "game_message_codes": [],
       "has_exported_evidence": true,
       "review_sources": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "复用已审阅"
+        },
         {
           "source": "专题/控件回调与事件表/function_review.json",
           "json_pointer": "/functions/9",
@@ -384409,7 +385540,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -384640,6 +385771,11 @@
       "has_exported_evidence": true,
       "review_sources": [
         {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "复用已审阅"
+        },
+        {
           "source": "专题/控件回调与事件表/function_review.json",
           "json_pointer": "/functions/12",
           "status": "部分分析"
@@ -384662,6 +385798,11 @@
           "source": "专题/控件树与对象生命周期/function_review.json",
           "json_pointer": "/functions/10",
           "status": "局部语义已审阅"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/15",
+          "status": "复用局部核对"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -384677,6 +385818,11 @@
       "game_message_codes": [],
       "has_exported_evidence": true,
       "review_sources": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "复用已审阅"
+        },
         {
           "source": "专题/控件树与对象生命周期/function_review.json",
           "json_pointer": "/functions/11",
@@ -384700,6 +385846,11 @@
           "source": "专题/40A0系列事件/function_review.json",
           "json_pointer": "/functions/48",
           "status": "部分分析"
+        },
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "复用已审阅"
         },
         {
           "source": "专题/控件树与对象生命周期/function_review.json",
@@ -385736,6 +386887,11 @@
           "source": "专题/输入与快捷键/函数审阅清单.json",
           "json_pointer": "/11",
           "status": "静态局部语义已审阅"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/16",
+          "status": "局部分支确认"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -386914,7 +388070,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -386951,7 +388107,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 3,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -386964,7 +388120,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -386977,7 +388133,7 @@
       "direct_incoming_edges": 15,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -386990,7 +388146,7 @@
       "direct_incoming_edges": 13,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387003,7 +388159,7 @@
       "direct_incoming_edges": 75,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387016,7 +388172,7 @@
       "direct_incoming_edges": 35,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387029,7 +388185,7 @@
       "direct_incoming_edges": 39,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387042,7 +388198,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387055,7 +388211,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 3,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387068,7 +388224,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387081,7 +388237,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 1,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387094,7 +388250,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387107,7 +388263,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387120,7 +388276,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387133,7 +388289,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387146,7 +388302,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387159,7 +388315,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387172,7 +388328,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387185,7 +388341,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387198,7 +388354,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387211,7 +388367,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387224,7 +388380,7 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387237,7 +388393,7 @@
       "direct_incoming_edges": 92,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387250,7 +388406,7 @@
       "direct_incoming_edges": 10,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387263,7 +388419,7 @@
       "direct_incoming_edges": 53,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387276,7 +388432,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387289,7 +388445,7 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387302,7 +388458,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387315,7 +388471,7 @@
       "direct_incoming_edges": 11,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387328,7 +388484,7 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 1,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387419,7 +388575,7 @@
       "direct_incoming_edges": 4,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387432,7 +388588,7 @@
       "direct_incoming_edges": 6,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387458,7 +388614,7 @@
       "direct_incoming_edges": 9,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387471,7 +388627,7 @@
       "direct_incoming_edges": 7,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -387484,7 +388640,7 @@
       "direct_incoming_edges": 10,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "逐函数确认职责、字段、调用前提和未知项"
     },
@@ -390993,8 +392149,14 @@
       "unresolved_indirect_sites": 3,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/11",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x911e40",
@@ -391435,8 +392597,14 @@
       "unresolved_indirect_sites": 2,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/12",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x914220",
@@ -391453,6 +392621,11 @@
           "source": "专题/输入与快捷键/函数审阅清单.json",
           "json_pointer": "/10",
           "status": "仅导出或按键候选定位"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/13",
+          "status": "部分分析"
         }
       ],
       "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
@@ -391615,8 +392788,14 @@
       "unresolved_indirect_sites": 29,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/14",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9169b0",
@@ -391789,9 +392968,15 @@
       "direct_incoming_edges": 1,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/41",
+          "status": "局部消费契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9174e0",
@@ -394952,7 +396137,7 @@
       "direct_incoming_edges": 7,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -394965,7 +396150,7 @@
       "direct_incoming_edges": 574,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -395387,8 +396572,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/15",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9208c0",
@@ -395400,8 +396591,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/16",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x920910",
@@ -396253,9 +397450,15 @@
       "direct_incoming_edges": 31,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/30",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x922930",
@@ -397610,7 +398813,7 @@
       "direct_incoming_edges": 65,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
+      "has_exported_evidence": true,
       "review_sources": [],
       "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
     },
@@ -399275,8 +400478,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/17",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x930760",
@@ -399288,8 +400497,14 @@
       "unresolved_indirect_sites": 2,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/18",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x930900",
@@ -399314,8 +400529,14 @@
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/19",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x930960",
@@ -399327,8 +400548,14 @@
       "unresolved_indirect_sites": 2,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/20",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x930a30",
@@ -399353,8 +400580,14 @@
       "unresolved_indirect_sites": 2,
       "game_message_codes": [],
       "has_exported_evidence": true,
-      "review_sources": [],
-      "next_action": "先复核自动库识别；存在MFC误名，不能整体排除"
+      "review_sources": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/21",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x930d90",
@@ -406273,9 +407506,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/42",
+          "status": "局部消费契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x95c7eb",
@@ -406286,9 +407525,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/43",
+          "status": "局部消费契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x95c7f1",
@@ -406936,9 +408181,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/44",
+          "status": "局部消费契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x95e781",
@@ -406949,9 +408200,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/45",
+          "status": "局部消费契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x95e787",
@@ -411597,9 +412854,15 @@
       "direct_incoming_edges": 42,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/46",
+          "status": "局部消费契约已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x977b50",
@@ -415253,9 +416516,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x98e1db",
@@ -415422,9 +416691,15 @@
       "direct_incoming_edges": 71,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x98e9bc",
@@ -415786,9 +417061,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x991999",
@@ -416033,9 +417314,15 @@
       "direct_incoming_edges": 252,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x993ee6",
@@ -416150,9 +417437,15 @@
       "direct_incoming_edges": 23,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x994e76",
@@ -416202,9 +417495,15 @@
       "direct_incoming_edges": 346,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/5",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x99558e",
@@ -423139,9 +424438,15 @@
       "direct_incoming_edges": 7,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/6",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9ca953",
@@ -423191,9 +424496,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/7",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9cac27",
@@ -423230,9 +424541,15 @@
       "direct_incoming_edges": 116,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/8",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9cadec",
@@ -423295,9 +424612,15 @@
       "direct_incoming_edges": 62,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/9",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9cafa3",
@@ -423607,9 +424930,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/10",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9cb6ff",
@@ -423633,9 +424962,15 @@
       "direct_incoming_edges": 2,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/11",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9cb771",
@@ -424062,9 +425397,15 @@
       "direct_incoming_edges": 92,
       "unresolved_indirect_sites": 0,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/12",
+          "status": "局部语义已审阅"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0x9d0b02",
@@ -428378,9 +429719,15 @@
       "direct_incoming_edges": 3,
       "unresolved_indirect_sites": 3,
       "game_message_codes": [],
-      "has_exported_evidence": false,
-      "review_sources": [],
-      "next_action": "逐函数确认职责、字段、调用前提和未知项"
+      "has_exported_evidence": true,
+      "review_sources": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/13",
+          "status": "部分分析"
+        }
+      ],
+      "next_action": "复用已有局部结论，按原清单未知项补闭环；不重复从零导出"
     },
     {
       "va": "0xa0b9f8",

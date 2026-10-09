@@ -260,6 +260,50 @@ def audit(db=None):
         boundary_results.append((len(accepted), invalid, aliases, len(outside)))
     assert surveys == [(7445, 7385, 6988), (13752, 13752, 6929)]
     assert boundary_results == [(20412, 12798, 12731, 67), (21949, 5460, 5460, 0)]
+    simulation = load('simulation.json')
+    assert surveys == [(r['source_decode_success'], r['target_decode_success'], r['table_lookup_roundtrip_equal'])
+                       for r in simulation['table_surveys']]
+    for example in simulation['mapping_examples']:
+        source = example['input'].encode('gb2312')
+        mapped, returned = bytearray(), bytearray()
+        assert source.hex() == example['source_hex']
+        for hi, lo in zip(source[::2], source[1::2]):
+            at = (hi-0xA1)*376+(lo-0xA1)*4
+            mapped.extend(table[at+2:at+4])
+        for hi, lo in zip(mapped[::2], mapped[1::2]):
+            at = 0x7FC8+(hi-0xA1)*764+(lo-0x40)*4
+            returned.extend(table[at+2:at+4])
+        assert mapped.hex() == example['target_hex'] and mapped.decode('cp950') == example['target_cp950']
+        assert returned == source and returned.hex() == example['back_hex'] and example['roundtrip'] is True
+        checks['mapping_examples'] += 1
+
+    def filter_model(data, words):
+        buf, cursor, changed, steps = bytearray(data), 0, False, []
+        while cursor < len(buf) and buf[cursor] != 0:
+            advance, which = 1+(buf[cursor] >= 128), None
+            for word_index, word in enumerate(words):
+                # CRT scans Str1 through its first NUL or N bytes, then compares that span.
+                span = 0
+                while span < len(word):
+                    assert cursor+span < len(buf)
+                    span += 1
+                    if buf[cursor+span-1] == 0:
+                        break
+                if bytes(buf[cursor:cursor+span]) == word[:span]:
+                    buf[cursor:cursor+len(word)] = b'*'*len(word)
+                    advance, which, changed = len(word), word_index, True
+                    break
+            steps.append(dict(offset=cursor, advance=advance, word=which))
+            if advance == 0:
+                return dict(output=buf.hex(), status='零长度命中导致不前进', steps=steps, changed=changed)
+            cursor += advance
+        return dict(output=buf.hex(), status='到达零终止' if cursor < len(buf) else '读过已提供缓冲区',
+                    steps=steps, changed=changed)
+
+    for case in simulation['filter_cases']:
+        result = filter_model(bytes.fromhex(case['input_hex']), [bytes.fromhex(w) for w in case['words']])
+        assert result == case['result']
+        checks['filter_models'] += 1
     negative = boundaries[0]['outside_region']
     assert negative == [{'input': hex(v), 'offset': -268+4*(v-0xA200)} for v in range(0xA200, 0xA243)]
     addresses = [row['offset']+delta for row in negative for delta in [2, 3]]

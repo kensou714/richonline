@@ -132,3 +132,9 @@
 - 严格全构建通过。全套204/205通过（112.02秒），唯一失败为误改的BS_3_1传送测试门禁断言；恢复原断言后补验1/1通过。205项均有通过结果，原失败保留在`build/heibeibei13-final-tests.log`，补验`build/heibeibei13-portal-tests.log`。
 - 当前GUI候选SHA256：`0DB9D9B8B1029F4DF187510D9F4C0CD7555FCC43E1FBA5F934206378A8A92D68`；备份`build-migration-backup/RichOnline.Server.before-heibeibei13.exe`。更新时无服务实例，不涉及在线重启或旧目录覆盖。
 - goal继续：月份到期终局、其他BOSS章节、剩余实际网络请求与游戏分支仍需实现及验证；用户实机UI验收与服务端自动测试分开记录。
+
+## GUI 当前候选复验与待修回归
+
+- server及根目录GUI入口均通过真实WinForms消息循环/按钮自测，读取26个迁入账号，确认当前server/data、PID/实例及六类监听就绪，停止/重启/关闭清理正常。最新证据见`evidence/admin-gui/README.md`。
+- 全构建成功；完整独立回归`build/heibeibei13-confirmed-tests.log`为204/205通过、199.28秒。黑贝贝1-3长局及恢复的传送门断言均通过，但赵灵儿长局calendar35的Boss落点165报`richonline_boss_landing_unsupported`并断开；原trace保留在`build/scenario-evidence/zhao_scenarios/V_BS_1_1.emp.trace.jsonl`。
+- 此失败尚未定位并修复，当前候选不能声称完整205/205通过。GUI恢复已验收，玩法问题继续纳入通信协议goal，不替换或撤销其他会话改动。

@@ -1,0 +1,302 @@
+{
+  "sources": [
+    "functions_raw.json",
+    "identity_callers.json"
+  ],
+  "counts": {
+    "局部语义已审阅": 11,
+    "部分分析": 3
+  },
+  "functions": [
+    {
+      "va": "0x98e170",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "len+5节点头插，+0旧头/+4含NUL文本；计字节不计NUL。",
+      "unknown": "链表导出/销毁/最终显示顺序未闭合。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x98e170",
+          "end_va": "0x98e1c6",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x98e8c1",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "4096字节行缓冲、文件/行号/错误号前缀、LF/NUL、先加条数再追加节点。",
+      "unknown": "原CRT/输入来源未全闭合；异常Format实机行为未测试。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x98e8c1",
+          "end_va": "0x98e98a",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9916f1",
+      "sources": [
+        "identity_callers.json"
+      ],
+      "evidence": [
+        "identity_callers.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "review_status": "部分分析",
+      "conclusion": "核对D3DX9 Shader Assembler字符串指针和调用98E8C1的同函数出处。",
+      "unknown": "其余汇编目标及输出组织未全审。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x993ec8",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "非零uint32计数时rep stosd写FFFFFFFF；返回0/retn8。",
+      "unknown": "调用者缓冲容量与误传负计数路径未全审。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x993ec8",
+          "end_va": "0x993ee0",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x994de3",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "256字节格式化并强制末NUL，tag5/12选来源，写上下文+34错误标记。",
+      "unknown": "与9D0A78布局不同；源节点枚举/上层恢复未闭合。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x994de3",
+          "end_va": "0x994e59",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x995011",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "review_status": "部分分析",
+      "conclusion": "已读控制流并恢复操作码分解、输入引用计数、结果条目与诊断邻域。",
+      "unknown": "操作记录与类型描述表依赖未闭合，未恢复源码签名和所有操作码名。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": []
+    },
+    {
+      "va": "0x9ca930",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "空析构跳板后按删除标志bit0调用operator delete；返回this。",
+      "unknown": "原C++类型名与外部生命周期未恢复。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9ca930",
+          "end_va": "0x9ca94c",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9caa68",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "count==capacity扩容，有限数值属性分类，登记条目并返回索引。",
+      "unknown": "x87非有限数值/__ftol边界及完整类型表未闭合。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9caa68",
+          "end_va": "0x9cabce",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9cad79",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "入口ECX池；分配96字节、初始化、登记，失败删除条目并返回-1。",
+      "unknown": "池完整类型和外部输入来源未恢复。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9cad79",
+          "end_va": "0x9cadd5",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9caf88",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "无符号索引>=count返回0，否则加载指针数组槽。",
+      "unknown": "合法空槽与越界都返回0；池全生命周期未闭合。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9caf88",
+          "end_va": "0x9caf9e",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9cb6fc",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "仅mov EAX,ECX后返回；无初始化操作。",
+      "unknown": "不能因此声称完整记录已初始化。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9cb6fc",
+          "end_va": "0x9cb6ff",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9cb700",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "填写类型/两个参数/double，固定哨兵及零字段，恒返回0。",
+      "unknown": "条目+5C未写，多个字段精确业务语义未恢复。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9cb700",
+          "end_va": "0x9cb75b",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0x9d0a78",
+      "sources": [
+        "functions_raw.json"
+      ],
+      "evidence": [
+        "functions_raw.json",
+        "navigation_data.json"
+      ],
+      "status": "局部语义已审阅",
+      "review_status": "局部语义已审阅",
+      "conclusion": "256字节格式化并强制末NUL，tag2/12选来源，写对象+38错误标记。",
+      "unknown": "忽略消息存储失败；源节点完整枚举未恢复。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": [
+        {
+          "start_va": "0x9d0a78",
+          "end_va": "0x9d0ae7",
+          "is_main": true
+        }
+      ]
+    },
+    {
+      "va": "0xa0b1aa",
+      "sources": [
+        "identity_callers.json"
+      ],
+      "evidence": [
+        "identity_callers.json",
+        "navigation_data.json"
+      ],
+      "status": "部分分析",
+      "review_status": "部分分析",
+      "conclusion": "核对D3DX9 Shader Compiler字符串指针和调用9D0A78的同函数出处。",
+      "unknown": "其余着色器目标及编译输出组织未全审。",
+      "full_dependency_closure": false,
+      "reviewed_chunks": []
+    }
+  ]
+}

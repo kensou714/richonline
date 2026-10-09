@@ -2,13 +2,15 @@
   "scope": "合并专题JSON显式人工记录及首批主条目迁移；无原结论的迁移项保留null",
   "warning": "同一函数可能有多份局部审阅；不选最高状态，不自动合成为全函数已分析",
   "total_identified_functions": 29019,
-  "unique_functions_with_explicit_reviews": 3893,
-  "review_record_count": 6824,
+  "unique_functions_with_explicit_reviews": 4061,
+  "review_record_count": 7047,
   "raw_status_counts": {
     "A": 62,
     "B": 3,
     "C": 1,
     "S": 33,
+    "主体已审阅": 25,
+    "主体路径已审阅": 6,
     "仅入口复核": 1,
     "仅原证留档": 31,
     "仅导出": 706,
@@ -32,14 +34,18 @@
     "复用契约并补验": 5,
     "复用审阅": 88,
     "复用导航": 26,
+    "复用局部核对": 1,
     "复用已分析": 3,
-    "复用已审阅": 115,
-    "复用已有审阅": 4,
+    "复用已审阅": 120,
+    "复用已有审阅": 8,
     "复用并闭合局部契约": 1,
     "复用接口局部已核": 9,
     "复用接口补证": 7,
     "复用既有专题结论": 5,
+    "字段访问器确认": 6,
+    "字段路径已审阅": 6,
     "完整窄函数核验": 11,
+    "导入包装核对": 5,
     "导航": 16,
     "局部": 44,
     "局部分支": 27,
@@ -47,16 +53,20 @@
     "局部分支已分析": 30,
     "局部分支已审阅": 7,
     "局部分支核验": 19,
+    "局部分支确认": 4,
     "局部分析": 37,
     "局部字段或调用链已审阅": 19,
     "局部审阅": 25,
     "局部已分析": 87,
     "局部已审阅": 9,
     "局部控制流已审阅": 8,
-    "局部消费契约已审阅": 17,
+    "局部消费契约已审阅": 27,
     "局部用途核验": 32,
     "局部语义审阅": 39,
-    "局部语义已审阅": 903,
+    "局部语义已审阅": 949,
+    "局部语义已审阅，完整字节已核验": 37,
+    "局部语义确认": 1,
+    "局部路径已审阅": 13,
     "局部路径已核": 9,
     "局部静态语义已审阅": 64,
     "已分析": 752,
@@ -71,7 +81,7 @@
     "异常尾块局部契约已核": 239,
     "待深入": 1,
     "待验证": 6,
-    "既有专题审阅复核": 4,
+    "既有专题审阅复核": 6,
     "桥接ABI局部核对": 13,
     "桥接ABI模板核对": 310,
     "桥接复用": 24,
@@ -80,16 +90,17 @@
     "版本分岔已证": 1,
     "行为复核": 109,
     "调用约定桥接已核对": 6,
+    "跳板字节已核验": 2,
     "跳板目标已核对": 357,
     "边界辅助": 7,
     "邻近候选仅导出": 48,
     "邻近或运行库仅导出": 9,
-    "部分分析": 109,
+    "部分分析": 126,
     "部分审阅": 27,
     "静态主干已审阅": 7,
     "静态函数体已读；磁盘局部字节一致": 23,
     "静态函数语义已审阅": 67,
-    "静态契约已审阅": 124,
+    "静态契约已审阅": 157,
     "静态局部审阅": 37,
     "静态局部语义已审阅": 771,
     "静态已证": 125
@@ -252,6 +263,36 @@
       ]
     },
     {
+      "va": "0x8e14f0",
+      "evidence": [
+        "专题/关联控件绑定与未声明边界/证据/未声明窗口与全段候选.json"
+      ],
+      "reviews": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/code_windows/0",
+          "status": "局部语义已审阅",
+          "conclusion": "thiscall一参数；数量变化先删旧数组，再按正count分配4*count；不清槽；同数量保留；count原值保存。",
+          "unknown": "两入口跳板无入xref，业务可达性未确认；分配失败和溢出未动态验证。"
+        }
+      ]
+    },
+    {
+      "va": "0x8e15f0",
+      "evidence": [
+        "专题/关联控件绑定与未声明边界/证据/未声明窗口与全段候选.json"
+      ],
+      "reviews": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/code_windows/1",
+          "status": "局部语义已审阅",
+          "conclusion": "thiscall(value,index)，retn8；仅signed index>count拒绝；写links[index-1]，一基无下界/空指针门。",
+          "unknown": "实际注册调用未发现，异常index路径未动态验证；不能定性为已复现漏洞。"
+        }
+      ]
+    },
+    {
       "va": "0x8e23c0",
       "evidence": [
         "专题/提示文本生命周期/证据/data.json"
@@ -292,6 +333,21 @@
           "conclusion": "0x5ff04b直接跳转0x6552a0，仅核对地址连接，不计作独立业务实现。",
           "unknown": "目标0x6552a0完整业务以其审阅状态为准；跳板不证明目标副作用。",
           "evidence": "ida_cards_raw.json/functions/0x5ff04b"
+        }
+      ]
+    },
+    {
+      "va": "0x5ff055",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/0",
+          "status": "跳板字节已核验",
+          "conclusion": "E9到95E75E。",
+          "unknown": "只证明固定E9目标；跳板不计新增算法函数。",
+          "evidence": [
+            "证据/matrix_implementations.json#/functions/0"
+          ]
         }
       ]
     },
@@ -4729,6 +4785,21 @@
       ]
     },
     {
+      "va": "0x6106e3",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/1",
+          "status": "跳板字节已核验",
+          "conclusion": "E9到95C7D6。",
+          "unknown": "只证明固定E9目标；跳板不计新增算法函数。",
+          "evidence": [
+            "证据/matrix_implementations.json#/functions/1"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x610706",
       "reviews": [
         {
@@ -5273,6 +5344,37 @@
           "evidence": [
             "证据/controls_and_queue_navigation.json"
           ]
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "部分分析",
+          "conclusion": "核对ChsTb启动调用，忽略加载返回值；其余初始化保留原汇编。",
+          "unknown": "IME、随机数、输出器等后续语义不在此全审。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "局部分支确认",
+          "conclusion": "ImmGetContext(HWND)返回值写A76504，不检查失败",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_dependencies.json"
+          ]
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "部分分析",
+          "conclusion": "只核启动播种局部：623AD5 time(NULL)后623ADE srand(EAX)。",
+          "unknown": "后续IME、文字与输出器初始化引用事件文字记录器专题；不在此重复完成整个启动语义。",
+          "evidence": [
+            "functions_raw.json"
+          ]
         }
       ]
     },
@@ -5345,6 +5447,16 @@
           "conclusion": "仅核启动初始化调用7B74C0发生在返回主循环前。",
           "unknown": "未实机；未声明代码、别名及批量写入、调用节拍、全部UI/技能分支不计完成。",
           "evidence": "证据/config_order_partial.json"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "局部分支确认",
+          "conclusion": "进入其他初始化前调用623AD0；其他初始化依赖未完整分析",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_init_caller.json"
+          ]
         }
       ]
     },
@@ -5399,6 +5511,17 @@
             "只读静态分析；未实机验证线程调度、锁等待或退出竞态。"
           ],
           "evidence": "startup_exit_functions.json"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "部分分析",
+          "conclusion": "核对Filter先于FilterN加载，任一返回0即启动返回0。",
+          "unknown": "大量其他资源加载与后续启动语义未全审。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         },
         {
           "source": "专题/游戏时间与计时调度/函数审阅清单.json",
@@ -5850,6 +5973,21 @@
       ]
     },
     {
+      "va": "0x625c10",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "局部语义确认",
+          "conclusion": "焦点下沿位置、四次HIMC访问、Get/Set不检查BOOL及候选参数保留边界",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_seeds.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x625d30",
       "reviews": [
         {
@@ -6063,6 +6201,17 @@
           "conclusion": "字符转换对象单例ABABB8；仅分配0x18968字节，初始化在其它路径。",
           "unknown": "外部依赖及动态运行未完整闭合。",
           "evidence": null
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "局部语义已审阅",
+          "conclusion": "ABABB8懒分配0x18968字节，无构造初始化。",
+          "unknown": "分配失败与加载失败后使用路径未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -6826,6 +6975,16 @@
           "evidence": "证据/notify_contract.json"
         },
         {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/0",
+          "status": "主体已审阅",
+          "conclusion": "分配0xABC字节，保存A76728并返回L",
+          "unknown": "构造函数内部字段与全局销毁时机未展开",
+          "evidence": [
+            "证据/equipment_actions.json"
+          ]
+        },
+        {
           "source": "专题/录像文件与执行链/function_review.json",
           "json_pointer": "/functions/21",
           "status": "仅导出候选",
@@ -6955,6 +7114,22 @@
           "evidence": [
             "cleanup_contracts.json#/records/9",
             "cleanup_evidence.json#/records/9"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x628ef0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "局部语义已审阅",
+          "conclusion": "懒分配16字节过滤对象，构造后存A76738；全局无同步。",
+          "unknown": "分配失败处理与调用线程来源未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
           ]
         }
       ]
@@ -7537,6 +7712,21 @@
       ]
     },
     {
+      "va": "0x629e30",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/1",
+          "status": "主体已审阅",
+          "conclusion": "返回L+1264自身玩家ID",
+          "unknown": "无运行时ID合法性保证",
+          "evidence": [
+            "证据/record_access.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x629ea0",
       "reviews": [
         {
@@ -7565,6 +7755,51 @@
       ]
     },
     {
+      "va": "0x629ef0",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "字段访问器确认",
+          "conclusion": "返回ECX对象+356的DWORD",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_seeds.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x629f20",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "字段访问器确认",
+          "conclusion": "返回ECX对象+360的DWORD；自动RibbonButton识别不作为真实类型",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_seeds.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x629f50",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/5",
+          "status": "字段访问器确认",
+          "conclusion": "返回ECX对象+364的DWORD",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_seeds.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x629f80",
       "reviews": [
         {
@@ -7574,6 +7809,31 @@
           "conclusion": "返回UI引擎DWORD[U+20716]，即当前键盘焦点控件指针。",
           "unknown": "焦点对象动态生命周期需结合析构及窗口隐藏路径。",
           "evidence": "ida_input_raw.json/functions/0x629f80"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/6",
+          "status": "字段访问器确认",
+          "conclusion": "返回ECX对象+20716焦点指针；没有this空检查",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_seeds.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x629fb0",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/7",
+          "status": "字段访问器确认",
+          "conclusion": "读取全局A76504的DWORD",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_seeds.json"
+          ]
         }
       ]
     },
@@ -9545,6 +9805,21 @@
           "unknown": "未人工审阅完整业务语义。",
           "evidence": [
             "证据/closures.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x637e20",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/2",
+          "status": "局部消费契约已审阅",
+          "conclusion": "先绕对象支点旋转12度并绘制，再按计时条件移动。",
+          "unknown": "仅图像消费片段；运动、计时状态未闭环。",
+          "evidence": [
+            "证据/consumer_functions.json#/functions/0"
           ]
         }
       ]
@@ -15190,6 +15465,22 @@
       ]
     },
     {
+      "va": "0x647610",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "局部语义已审阅",
+          "conclusion": "转交三参数到strncmp真实实现9228E0。",
+          "unknown": "CRT实现细节仅覆盖本专题实际调用语义。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x647890",
       "reviews": [
         {
@@ -15199,6 +15490,22 @@
           "conclusion": "诊断文本绘制后检查Ctrl+K+A+N保持/G释放翻转+5473，并检查两组组合键提交两字节记录。",
           "unknown": "两条记录包号与内部诊断功能未确认，不作为可用游戏指令发布。",
           "evidence": "ida_input_raw.json/functions/0x647890"
+        }
+      ]
+    },
+    {
+      "va": "0x648c20",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/5",
+          "status": "部分分析",
+          "conclusion": "核对聊天载荷语言比较、前反向转换、过滤、显示邻域顺序。",
+          "unknown": "其余UI、命令及聊天分支未全审。",
+          "evidence": [
+            "caller_functions.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -15263,6 +15570,22 @@
       ]
     },
     {
+      "va": "0x64a9f0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/6",
+          "status": "部分分析",
+          "conclusion": "核对另一聊天载荷的语言比较、转换、过滤和格式化邻域。",
+          "unknown": "其余UI、命令及聊天分支未全审。",
+          "evidence": [
+            "caller_functions.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x64b880",
       "reviews": [
         {
@@ -15272,6 +15595,118 @@
           "conclusion": "430像素分行界面文字、512项门后送128；12字节记录+4为原输入字符串。",
           "unknown": "外部依赖及动态运行未完整闭合。",
           "evidence": null
+        }
+      ]
+    },
+    {
+      "va": "0x64c460",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/7",
+          "status": "局部语义已审阅",
+          "conclusion": "只清对象+4、+C两指针，不清+0、+8计数。",
+          "unknown": "未成功加载前的上层使用顺序未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64c490",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/8",
+          "status": "局部语义已审阅",
+          "conclusion": "两非空词条数组delete[]后清指针，计数保持。",
+          "unknown": "销毁后是否再次过滤未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64c510",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/9",
+          "status": "局部语义已审阅",
+          "conclusion": "第一套词条：数ITEM，按count<<6分配，初始化首字节，再顺序读str。",
+          "unknown": "解析及解包依赖只审相关调用；异常资源实机行为未验证。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64c770",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/10",
+          "status": "局部语义已审阅",
+          "conclusion": "第二套词条：字段+8/+C，按64字节槽加载；与第一套同型。",
+          "unknown": "解析及解包依赖只审相关调用；异常资源实机行为未验证。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64c9e0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/11",
+          "status": "局部语义已审阅",
+          "conclusion": "第一套词条首命中优先，原地memset星号；高位首字节步进2。",
+          "unknown": "所有调用者长度和编码未闭合；不宣称真实输入已触发边界。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64cae0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/12",
+          "status": "局部语义已审阅",
+          "conclusion": "第二套词条同型过滤，使用+8/+C，返回AL命中标记。",
+          "unknown": "所有调用者长度和编码未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64cdc0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/13",
+          "status": "局部语义已审阅",
+          "conclusion": "按mode逐字节25与01互换，不识别双字节或Unicode。",
+          "unknown": "上层是否存在嵌入01及容量契约未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -15351,6 +15786,22 @@
       ]
     },
     {
+      "va": "0x64ed90",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/14",
+          "status": "局部语义已审阅",
+          "conclusion": "读取对象+18964系统语言标签。",
+          "unknown": "标签不等于字符串编码或CP_ACP。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x64efa0",
       "reviews": [
         {
@@ -15414,6 +15865,17 @@
           "conclusion": "语言状态==1",
           "unknown": "配置对象偏移",
           "evidence": "证据/20261009_字体文本函数群.json"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/15",
+          "status": "局部语义已审阅",
+          "conclusion": "比较语言标签是否1，以AL返回。",
+          "unknown": "调用者的语言约束未全闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -15427,6 +15889,17 @@
           "conclusion": "语言状态==2",
           "unknown": "配置对象偏移",
           "evidence": "证据/20261009_字体文本函数群.json"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/16",
+          "status": "局部语义已审阅",
+          "conclusion": "比较语言标签是否2，以AL返回。",
+          "unknown": "调用者的语言约束未全闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -15441,6 +15914,51 @@
           "unknown": "完整动态路径、派生覆盖与实机行为未验证",
           "evidence": [
             "证据/游戏界面桥接.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64f090",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/2",
+          "status": "主体已审阅",
+          "conclusion": "返回table[self]，不判空、不检查范围",
+          "unknown": "外层初始化顺序需调用方保证",
+          "evidence": [
+            "证据/record_access.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64f0c0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/3",
+          "status": "主体已审阅",
+          "conclusion": "有记录则返回R+112名字地址，否则0",
+          "unknown": "不验证ID范围、编码或终止符",
+          "evidence": [
+            "证据/record_access.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x64f120",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/4",
+          "status": "主体已审阅",
+          "conclusion": "只判断table[id]非NULL",
+          "unknown": "没有表指针和ID范围检查",
+          "evidence": [
+            "证据/record_access.json"
           ]
         }
       ]
@@ -15497,6 +16015,22 @@
           "conclusion": "返回状态对象+100指针，不是直接取地图mode",
           "unknown": null,
           "evidence": "证据/shop_edges.json"
+        }
+      ]
+    },
+    {
+      "va": "0x64f220",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/17",
+          "status": "局部语义已审阅",
+          "conclusion": "每个64字节词条槽仅首字节写0。",
+          "unknown": "其余槽字节取决于分配器，非完整清零。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -25632,6 +26166,14 @@
       "va": "0x691ab0",
       "reviews": [
         {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/0",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "构造栈键，对this+0x2F0默认插入查询，释放键后返回V。",
+          "unknown": "R的创建和根析构未核。",
+          "evidence": "证据/functions.json#0x691ab0"
+        },
+        {
           "source": "专题/短字符串与缓冲所有权/函数审阅清单.json",
           "json_pointer": "/functions/3",
           "status": "局部消费契约已审阅",
@@ -30697,6 +31239,16 @@
           "conclusion": "直接调用辅助函数完整原证；未凭导出量宣称全函数语义完成。",
           "unknown": null,
           "evidence": "专题/40EE系列事件/证据/direct_helpers.json"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "局部语义已审阅",
+          "conclusion": "读取[对象+12]为数据指针，按index*2加载AX；retn4。",
+          "unknown": "上半EAX非返回契约；7ECA40明确movsx EAX,AX取得有符号short。",
+          "evidence": [
+            "functions_raw.json"
+          ]
         }
       ]
     },
@@ -30710,6 +31262,16 @@
           "conclusion": "直接调用辅助函数完整原证；未凭导出量宣称全函数语义完成。",
           "unknown": null,
           "evidence": "专题/40EE系列事件/证据/direct_helpers.json"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "局部语义已审阅",
+          "conclusion": "读取入口ECX对象+0 DWORD，供7ECA40作为元素数量。",
+          "unknown": "该getter本身无范围检查；完整容器类型名未恢复。",
+          "evidence": [
+            "functions_raw.json"
+          ]
         }
       ]
     },
@@ -30725,6 +31287,19 @@
           "evidence": [
             "证据/dispatch_dependencies.json/functions/0x695060"
           ]
+        }
+      ]
+    },
+    {
+      "va": "0x6950d0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/1",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "lower_bound后检查end/键顺序；缺失时构造空V和pair并提示插入，返回payload+28。",
+          "unknown": "键比较底层、树分配器及erase未完整恢复。",
+          "evidence": "证据/functions.json#0x6950d0"
         }
       ]
     },
@@ -30757,6 +31332,71 @@
       ]
     },
     {
+      "va": "0x695300",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/2",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "转6953E0构造V并返回this。",
+          "unknown": "首字段运行含义未明。",
+          "evidence": "证据/functions.json#0x695300"
+        }
+      ]
+    },
+    {
+      "va": "0x695330",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/3",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "转695440析构V。",
+          "unknown": "最终分配器释放实现另核。",
+          "evidence": "证据/functions.json#0x695330"
+        }
+      ]
+    },
+    {
+      "va": "0x695360",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/4",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "先析构this+28处V，再析构this处键字符串；含异常清理尾块。",
+          "unknown": "整树erase的接入未核。",
+          "evidence": "证据/functions.json#0x695360"
+        }
+      ]
+    },
+    {
+      "va": "0x6953e0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/5",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "调用分配器辅助后以0调用696190，建立空V。",
+          "unknown": "6962F0/696330辅助未采集。",
+          "evidence": "证据/functions.json#0x6953e0"
+        }
+      ]
+    },
+    {
+      "va": "0x695440",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/6",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "转696250清理V。",
+          "unknown": "697070/697170内部另核。",
+          "evidence": "证据/functions.json#0x695440"
+        }
+      ]
+    },
+    {
       "va": "0x695470",
       "reviews": [
         {
@@ -30768,6 +31408,45 @@
           "evidence": [
             "证据/consumers_lookup.json/functions/0x695470"
           ]
+        }
+      ]
+    },
+    {
+      "va": "0x695520",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/7",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "验证提示位置后调用696660插入，不合适时转6963F0；保存编译期跳过分支原证。",
+          "unknown": "外部迭代器helper未全采；不把不可达分支当当前执行路径。",
+          "evidence": "证据/functions.json#0x695520"
+        }
+      ]
+    },
+    {
+      "va": "0x695cb0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/8",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "转696BF0查候选，包装输出迭代器。",
+          "unknown": "迭代器helper实现未全采。",
+          "evidence": "证据/functions.json#0x695cb0"
+        }
+      ]
+    },
+    {
+      "va": "0x695d00",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/9",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "转698430比较两个键对象。",
+          "unknown": "6986F0最终比较细节未采。",
+          "evidence": "证据/functions.json#0x695d00"
         }
       ]
     },
@@ -30817,6 +31496,45 @@
       ]
     },
     {
+      "va": "0x695e40",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/10",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "转696E80取得迭代器payload。",
+          "unknown": "不证明外部索引有效性。",
+          "evidence": "证据/functions.json#0x695e40"
+        }
+      ]
+    },
+    {
+      "va": "0x695ea0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/11",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "直接返回*this，取迭代器持有的节点地址。",
+          "unknown": "无本地合法性校验。",
+          "evidence": "证据/functions.json#0x695ea0"
+        }
+      ]
+    },
+    {
+      "va": "0x695ec0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/12",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "分别复制键和this+28处V。",
+          "unknown": "V元素复制下游另核。",
+          "evidence": "证据/functions.json#0x695ec0"
+        }
+      ]
+    },
+    {
       "va": "0x695f50",
       "reviews": [
         {
@@ -30843,6 +31561,110 @@
           "evidence": [
             "证据/consumers_lookup.json/functions/0x695f80"
           ]
+        }
+      ]
+    },
+    {
+      "va": "0x696010",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/13",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "转696050复制V并返回this。",
+          "unknown": "底层元素复制另核。",
+          "evidence": "证据/functions.json#0x696010"
+        }
+      ]
+    },
+    {
+      "va": "0x696050",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/14",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "按源size分配目标V，复制源区间并设置end；含失败清理与重抛尾块。",
+          "unknown": "698460元素复制实现未采。",
+          "evidence": "证据/functions.json#0x696050"
+        }
+      ]
+    },
+    {
+      "va": "0x696190",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/15",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "清begin/end/capacity_end；正条数分配136*n，begin=end。",
+          "unknown": "697040/6970B0/6971B0最大值与分配实现另核。",
+          "evidence": "证据/functions.json#0x696190"
+        }
+      ]
+    },
+    {
+      "va": "0x696250",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/16",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "清理[begin,end)，按capacity释放begin，再清三个指针。",
+          "unknown": "697070/697170内部未采；整树生命周期未核。",
+          "evidence": "证据/functions.json#0x696250"
+        }
+      ]
+    },
+    {
+      "va": "0x696370",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/17",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "返回传入node+12，即payload地址。",
+          "unknown": "node合法性由调用者保证。",
+          "evidence": "证据/functions.json#0x696370"
+        }
+      ]
+    },
+    {
+      "va": "0x6963f0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/18",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "沿键比较定位，前驱检查排除重复，返回(iterator,bool)插入结果。",
+          "unknown": "外部字段getter/前驱迭代器helper未全采。",
+          "evidence": "证据/functions.json#0x6963f0"
+        }
+      ]
+    },
+    {
+      "va": "0x696660",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/19",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "最大节点数门控、分配节点、更新根/极值/计数、红黑树旋转着色及异常尾块。",
+          "unknown": "697650分配和整树删除实现未采；不是资源读取。",
+          "evidence": "证据/functions.json#0x696660"
+        }
+      ]
+    },
+    {
+      "va": "0x696bf0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/20",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "lower_bound形态：node.key<key走右，否则保存候选走左，遇哨兵返回。",
+          "unknown": "字段getter和键比较最终实现另核。",
+          "evidence": "证据/functions.json#0x696bf0"
         }
       ]
     },
@@ -30892,6 +31714,19 @@
       ]
     },
     {
+      "va": "0x696e80",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/21",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "从*this取节点，再转696370返回payload。",
+          "unknown": "无本地end/空节点检查。",
+          "evidence": "证据/functions.json#0x696e80"
+        }
+      ]
+    },
+    {
       "va": "0x696ec0",
       "reviews": [
         {
@@ -30933,6 +31768,19 @@
           "evidence": [
             "证据/consumer_helpers.json/functions/0x696f40"
           ]
+        }
+      ]
+    },
+    {
+      "va": "0x696fe0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/22",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "begin非空时返回(end-begin)/136，否则0。",
+          "unknown": "不核指针损坏输入。",
+          "evidence": "证据/functions.json#0x696fe0"
         }
       ]
     },
@@ -31020,6 +31868,14 @@
     {
       "va": "0x697ce0",
       "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/23",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "复制已有payload的键及+28处V；含键清理尾块。",
+          "unknown": "节点分配完整实现另核。",
+          "evidence": "证据/functions.json#0x697ce0"
+        },
         {
           "source": "专题/基础对象与分派/第二批_函数审阅清单.json",
           "json_pointer": "/functions/13",
@@ -31277,6 +32133,14 @@
       "va": "0x698430",
       "reviews": [
         {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/24",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "以字符串比较返回值<0作为严格小于谓词。",
+          "unknown": "最终字节比较6986F0未采，不推断区域排序规则。",
+          "evidence": "证据/functions.json#0x698430"
+        },
+        {
           "source": "专题/基础对象与分派/第二批_函数审阅清单.json",
           "json_pointer": "/functions/22",
           "status": "仅导出",
@@ -31361,6 +32225,14 @@
     {
       "va": "0x698570",
       "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/25",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "取右键长度/缓冲，将this键长度和右键交6986F0比较。",
+          "unknown": "6986F0边界和编码比较规则另核。",
+          "evidence": "证据/functions.json#0x698570"
+        },
         {
           "source": "专题/基础对象与分派/第二批_函数审阅清单.json",
           "json_pointer": "/functions/27",
@@ -32485,6 +33357,141 @@
       ]
     },
     {
+      "va": "0x6a2350",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/5",
+          "status": "主体已审阅",
+          "conclusion": "释放L的五个数组并各置NULL，不释放记录视图",
+          "unknown": "底层U销毁顺序不在本函数",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6a2480",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/6",
+          "status": "主体已审阅",
+          "conclusion": "从L+1228取得容量；仅主记录表在此清零",
+          "unknown": "四个旁表用途与分配失败处理未恢复",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6a25e0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/7",
+          "status": "主体已审阅",
+          "conclusion": "按容量遍历已存在记录，strcmp后返回首个ID，未命中-1",
+          "unknown": "字符串算法与名字唯一性由外层保证",
+          "evidence": [
+            "证据/equipment_actions.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6a2d90",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/8",
+          "status": "主体已审阅",
+          "conclusion": "与6A25E0等价的首匹配查找",
+          "unknown": "未将近似实现自动视为同一入口",
+          "evidence": [
+            "证据/equipment_actions.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6a2e30",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/9",
+          "status": "字段路径已审阅",
+          "conclusion": "case3设置自身ID，R+76复制到L+1292，case43/45复制28/32字节",
+          "unknown": "两个复制区完整含义未恢复",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6a32a0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/10",
+          "status": "主体已审阅",
+          "conclusion": "signed oldRaw<=0提交命令52；否则保存待办并提交卸下",
+          "unknown": "高位编码有效域与并发请求规则未恢复",
+          "evidence": [
+            "证据/equipment_actions.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6a3390",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/11",
+          "status": "主体已审阅",
+          "conclusion": "12字节xData={self,slot,raw}，命令53，保存最后slot",
+          "unknown": "下层不消费xData[2]，不可当线上payload",
+          "evidence": [
+            "证据/equipment_actions.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6a3490",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/12",
+          "status": "主体已审阅",
+          "conclusion": "完整DWORD匹配；输入0也能匹配空槽",
+          "unknown": "外层输入限制未恢复",
+          "evidence": [
+            "证据/equipment_actions.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6a3500",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/13",
+          "status": "主体已审阅",
+          "conclusion": "遍历32槽，首个raw非0且bit16置位时提交卸下并保存提示状态",
+          "unknown": "bit16生成端与时间计算未恢复",
+          "evidence": [
+            "证据/equipment_actions.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x6a3c60",
       "reviews": [
         {
@@ -32552,6 +33559,21 @@
       ]
     },
     {
+      "va": "0x6a71c0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/14",
+          "status": "局部路径已审阅",
+          "conclusion": "从selector19重取L+1596；后续按8字节条目建立分类视图",
+          "unknown": "所有分类自然名称、全部分配清理策略未展开",
+          "evidence": [
+            "证据/bag_refresh.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x6a7900",
       "reviews": [
         {
@@ -32561,6 +33583,16 @@
           "conclusion": "本篇545、末参0路径：8字节记录低12位ID与bit16",
           "unknown": "末参非0的32槽关联查找、第二DWORD和资格来源待查",
           "evidence": "证据/notify_helpers.json"
+        },
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/15",
+          "status": "主体已审阅",
+          "conclusion": "先找未过期的编号；可选再检查自身32槽编号",
+          "unknown": "8字节背包行第二DWORD语义未恢复",
+          "evidence": [
+            "证据/record_access.json"
+          ]
         }
       ]
     },
@@ -32589,6 +33621,32 @@
           "conclusion": "每次srand(timeGetTime)，按资格/选项分九组rand取模并调用6AA450。",
           "unknown": "表长零、文本内容、随机分布与6AA450内部未审。",
           "evidence": "证据/functions.json#0x6aa530"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "复用已有审阅",
+          "conclusion": "复用游戏时间与计时调度：timeGetTime播种，再按分支容器count取模选择。",
+          "unknown": "此专题补状态耦合边界；不增加既有函数审阅数。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6aab50",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/18",
+          "status": "部分分析",
+          "conclusion": "核对过滤、百分号转义、语言单字节和参数四字节组包、本地消息13。",
+          "unknown": "全局发送缓冲容量及消息13到网络的路径未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -32622,6 +33680,16 @@
       "va": "0x6aaef0",
       "reviews": [
         {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/16",
+          "status": "字段路径已审阅",
+          "conclusion": "p+4取signed WORD ID，重取R并保存，通知界面刷新",
+          "unknown": "外层网络事件与所有UI细节未展开",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
+        },
+        {
           "source": "专题/登录与大厅状态/证据/函数审阅清单.json",
           "json_pointer": "/3",
           "status": "已采集待深入",
@@ -32644,6 +33712,36 @@
             "Hex-Rays反编译失败；不调整IDB函数边界或类型。"
           ],
           "evidence": "startup_exit_functions.json"
+        }
+      ]
+    },
+    {
+      "va": "0x6ab0d0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/17",
+          "status": "字段路径已审阅",
+          "conclusion": "复制名字32字节，清table[id]；RTC rName实际33字节",
+          "unknown": "未确认外层名字终止契约；不推导通知长度",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6ab340",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/18",
+          "status": "字段路径已审阅",
+          "conclusion": "p+4玩家ID重取R并通知详情与列表刷新",
+          "unknown": "其他UI消息字段未完整恢复",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
         }
       ]
     },
@@ -32737,6 +33835,21 @@
       ]
     },
     {
+      "va": "0x6ac1d0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/19",
+          "status": "字段路径已审阅",
+          "conclusion": "重取R；按房间和自身条件通知相关UI",
+          "unknown": "完整房间业务未展开",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x6accf0",
       "reviews": [
         {
@@ -32753,6 +33866,21 @@
       ]
     },
     {
+      "va": "0x6adec0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/20",
+          "status": "字段路径已审阅",
+          "conclusion": "输入玩家ID与低12位类型参与分支，最终重取R",
+          "unknown": "完整输入结构与全部业务类型未恢复",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x6ae100",
       "reviews": [
         {
@@ -32762,6 +33890,36 @@
           "conclusion": "已保存完整函数伪码、汇编和交叉引用，用于本批调用链辅助定位；尚不登记完整行为结论。",
           "unknown": "需逐分支复核输入字段、状态写入、所有权、后继以及失败路径。",
           "evidence": "证据/login_wait_completion.json"
+        }
+      ]
+    },
+    {
+      "va": "0x6ae370",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/21",
+          "status": "局部路径已审阅",
+          "conclusion": "本地通知63，读取p+2/p+4；本人显示RichStr622并刷新",
+          "unknown": "外人房间条件及底层模型更新来源未全追",
+          "evidence": [
+            "证据/equipment_success.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6ae5a0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/22",
+          "status": "局部路径已审阅",
+          "conclusion": "本地通知64；优先待换装，其次角色改变，再次过期继续扫描",
+          "unknown": "所有房间UI分支及网络通知来源未全追",
+          "evidence": [
+            "证据/equipment_flow.json"
+          ]
         }
       ]
     },
@@ -33062,6 +34220,16 @@
           "conclusion": "事件33生产者：把输入a2写记录+4并force0送Sys；UI文本索引621，外围业务部分分析。",
           "unknown": "外部依赖及动态运行未完整闭合。",
           "evidence": null
+        },
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/23",
+          "status": "局部路径已审阅",
+          "conclusion": "RichStr621提示并清L+1272",
+          "unknown": "外层错误事件映射及后续通用消息未展开",
+          "evidence": [
+            "证据/equipment_flow.json"
+          ]
         }
       ]
     },
@@ -33127,6 +34295,66 @@
           "conclusion": "事件56生产者：把输入a2写记录+4并force0送Sys；UI文本索引593，外围业务部分分析。",
           "unknown": "外部依赖及动态运行未完整闭合。",
           "evidence": null
+        }
+      ]
+    },
+    {
+      "va": "0x6b7900",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/24",
+          "status": "主体已审阅",
+          "conclusion": "返回L+1228容量配置",
+          "unknown": "容量写入来源未恢复",
+          "evidence": [
+            "证据/capacity.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6b7970",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/25",
+          "status": "主体已审阅",
+          "conclusion": "有记录返回R+144+4*slot的DWORD，否则0",
+          "unknown": "不验证slot或id上下界",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6b7a20",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/26",
+          "status": "主体已审阅",
+          "conclusion": "有记录读取同一槽并&0xFFF，否则0",
+          "unknown": "未定义被屏蔽高位的全部含义",
+          "evidence": [
+            "证据/record_access.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6b7a90",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/27",
+          "status": "主体已审阅",
+          "conclusion": "返回R+52，缺记录0",
+          "unknown": "字段自然名称未确认",
+          "evidence": [
+            "证据/record_lifecycle.json"
+          ]
         }
       ]
     },
@@ -34240,6 +35468,16 @@
       "va": "0x6be2e0",
       "reviews": [
         {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/28",
+          "status": "局部路径已审阅",
+          "conclusion": "使用L单例路由记录与装备成功通知",
+          "unknown": "其他通知仅归档，网络到本地事件映射未全审",
+          "evidence": [
+            "证据/notification_dispatch.json"
+          ]
+        },
+        {
           "source": "专题/游戏分派桥接/证据/property_and_6021_handlers.json",
           "json_pointer": "/functions/19",
           "status": "原证辅助导出，未全函数业务分析",
@@ -34737,6 +35975,22 @@
       ]
     },
     {
+      "va": "0x6c14e0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/19",
+          "status": "部分分析",
+          "conclusion": "核对RACE的name/desc局部缓冲128/1024与语言1时前向转换。",
+          "unknown": "其余RACE字段加载、尾块与失败处理未全审。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x6c5510",
       "reviews": [
         {
@@ -34971,6 +36225,16 @@
       "va": "0x6daa10",
       "reviews": [
         {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/3",
+          "status": "局部消费契约已审阅",
+          "conclusion": "十二名称前缀拆为类型0..11及atoi参数，交6DBA40；缺下划线/长度无防护。",
+          "unknown": "名称解析分支已审；6DBA40完整映射分配与输入可达性未在此证明。",
+          "evidence": [
+            "证据/draw_mapping_dependencies.json#/functions/0"
+          ]
+        },
+        {
           "source": "专题/角色与精灵动画/函数审阅清单.json",
           "json_pointer": "/functions/47",
           "status": "部分审阅",
@@ -35107,6 +36371,21 @@
       ]
     },
     {
+      "va": "0x6dc090",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/4",
+          "status": "静态契约已审阅",
+          "conclusion": "固定loaded/4轮扫描，选最后合格槽；阈值FFFFFFFF不更新，无候选仍释放0。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/frame_dependencies.json#/functions/0"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x6dc210",
       "reviews": [
         {
@@ -35210,6 +36489,81 @@
           "unknown": "完整分支与外部资源仍待专题分析；原证导出不计作完成。",
           "evidence": [
             "证据/monster_helpers.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dc650",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/5",
+          "status": "静态契约已审阅",
+          "conclusion": "就绪、槽检查及按需加载后转float矩形并绘制，随后无条件递增槽使用计数。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dc730",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/6",
+          "status": "静态契约已审阅",
+          "conclusion": "就绪、槽检查及按需加载后按对象位置绘制，随后递增使用计数。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/1"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dc7d0",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/7",
+          "status": "静态契约已审阅",
+          "conclusion": "就绪后将整数矩形转float，转交全局无纹理图像的颜色与矩形绘制。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/2"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dc850",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/8",
+          "status": "静态契约已审阅",
+          "conclusion": "就绪后写两个stride28顶点xy/颜色，提交2顶点2索引的类型2单图元。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/3"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dc8f0",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/9",
+          "status": "静态契约已审阅",
+          "conclusion": "逐轮绘四边并向内收缩1像素，厚度非正无绘制；内部使用全局管理器。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/4"
           ]
         }
       ]
@@ -35329,6 +36683,51 @@
       ]
     },
     {
+      "va": "0x6dcba0",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/10",
+          "status": "静态契约已审阅",
+          "conclusion": "已加载对象的current==count-1返回真；不加载、不验证范围、不证明停止。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/5"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dcc00",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/11",
+          "status": "静态契约已审阅",
+          "conclusion": "已有槽对象时只清当前帧号；不重置计时，不校验槽。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/6"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dcc40",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/12",
+          "status": "静态契约已审阅",
+          "conclusion": "已有槽对象时读取原图透明位，非0归一为true；空槽false，坐标不裁剪。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/frame_dependencies.json#/functions/1"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x6dcca0",
       "reviews": [
         {
@@ -35349,6 +36748,36 @@
           },
           "original_topic": "图像资源",
           "note": "原级保留，不同专题字母等级不能直接等价"
+        }
+      ]
+    },
+    {
+      "va": "0x6dcd60",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/13",
+          "status": "静态契约已审阅",
+          "conclusion": "范围检查及按需加载后恢复原图四顶点并启用裁剪；无就绪门槛。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/frame_dependencies.json#/functions/2"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dcdd0",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/14",
+          "status": "静态契约已审阅",
+          "conclusion": "范围检查及按需加载后将整数支点、角度传旋转消费者；无使用计数递增。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/7"
+          ]
         }
       ]
     },
@@ -35434,6 +36863,16 @@
       "va": "0x6dfa80",
       "reviews": [
         {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/15",
+          "status": "既有专题审阅复核",
+          "conclusion": "有符号jl/jg分别拒绝<0及>30000；容量30000的边界不一致复核。",
+          "unknown": "主审阅见图像资源专题；本专题绑定当前PE复核，不新增旧函数完成量。",
+          "evidence": [
+            "证据/render_dependencies.json#/functions/0"
+          ]
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/70",
           "status": "静态已证",
@@ -35451,6 +36890,36 @@
           },
           "original_topic": "图像资源",
           "note": "原级保留，不同专题字母等级不能直接等价"
+        }
+      ]
+    },
+    {
+      "va": "0x6dfad0",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/16",
+          "status": "静态契约已审阅",
+          "conclusion": "读取manager+630756中指针所指BYTE；不检查指针、不等于包模式开关。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/render_dependencies.json#/functions/1"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dfb40",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/17",
+          "status": "静态契约已审阅",
+          "conclusion": "pixel=x+DWORDwidth*y；sar3求byte索引，低3位求透明掩码bit；返回位原值。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/0"
+          ]
         }
       ]
     },
@@ -36904,6 +38373,36 @@
           },
           "original_topic": "界面系统",
           "note": "原级保留，不同专题字母等级不能直接等价"
+        }
+      ]
+    },
+    {
+      "va": "0x6e5100",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/18",
+          "status": "静态契约已审阅",
+          "conclusion": "x/y减1并下界归0，直接槽命中取反透明位；空槽因此命中true。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/consumer_functions.json#/functions/1"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6e5160",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/19",
+          "status": "静态契约已审阅",
+          "conclusion": "x/y减1并下界归0，名称解析成槽后取反透明位；第三参数是字符串。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/consumer_functions.json#/functions/2"
+          ]
         }
       ]
     },
@@ -46427,6 +47926,66 @@
       ]
     },
     {
+      "va": "0x732920",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/29",
+          "status": "局部路径已审阅",
+          "conclusion": "从玩家装备slot15取编号送733330",
+          "unknown": "其余列表UI逻辑与控件树未审",
+          "evidence": [
+            "证据/equipment_flow.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x733330",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/30",
+          "status": "主体已审阅",
+          "conclusion": "编号540选择图像(10,51,61/62)，否则关闭显示",
+          "unknown": "图像装载器与物品自然名称未确认",
+          "evidence": [
+            "证据/equipment_flow.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x734c70",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/31",
+          "status": "局部路径已审阅",
+          "conclusion": "从玩家装备slot14取编号送735910",
+          "unknown": "其余列表UI逻辑与控件树未审",
+          "evidence": [
+            "证据/equipment_flow.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x735910",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/32",
+          "status": "主体已审阅",
+          "conclusion": "编号535选择图像(10,51,63/66)，否则关闭显示",
+          "unknown": "图像装载器与物品自然名称未确认",
+          "evidence": [
+            "证据/equipment_flow.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x736820",
       "reviews": [
         {
@@ -48016,6 +49575,16 @@
           "conclusion": "窗口消息先写全局输入对象，再进UI控件分派；UI消费后写另一对象首字节并提前返回。",
           "unknown": "WndProc退出和显示变化分支不在本输入专题完整覆盖内。",
           "evidence": "ida_input_raw.json/functions/0x7a29e0"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/8",
+          "status": "局部分支确认",
+          "conclusion": "UI分派在特殊消息前，0x10D调用625C10后仍到默认窗口过程",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_seeds.json"
+          ]
         }
       ]
     },
@@ -48165,6 +49734,16 @@
             "仅启动/退出/状态写入/句柄相关分支审阅；其他业务分支保留原证未宣称恢复。"
           ],
           "evidence": "startup_exit_functions.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/20",
+          "status": "局部消费契约已审阅",
+          "conclusion": "间隔>1000ms且条件AL为0的分支调用缓存回收；末尾更新时间。",
+          "unknown": "分支的UI/文字处理及条件函数未审。",
+          "evidence": [
+            "证据/consumer_functions.json#/functions/3"
+          ]
         }
       ]
     },
@@ -48245,6 +49824,21 @@
           "conclusion": "把参数字节写到this首字节，WndProc以0/1记录UI是否已消费消息。",
           "unknown": "该标志所有后续游戏鼠标消费者尚未完整恢复。",
           "evidence": "ida_input_raw.json/functions/0x7a47b0"
+        }
+      ]
+    },
+    {
+      "va": "0x7a4830",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/9",
+          "status": "字段访问器确认",
+          "conclusion": "返回byte_A76690；用户配置名未确认",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_import_wrappers.json"
+          ]
         }
       ]
     },
@@ -49440,6 +51034,14 @@
           ]
         },
         {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/26",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "打开、解包、逐行解析，记录清零后按地图名查V并追加；成功/失败析构路径已保存。",
+          "unknown": "读取器、转码及动画解析另核；无sscanf成功数校验。",
+          "evidence": "证据/functions.json#0x7afe70"
+        },
+        {
           "source": "全量分析/异常尾块与清理契约/function_review.json",
           "json_pointer": "/functions/151",
           "status": "异常尾块局部契约已核",
@@ -49743,6 +51345,136 @@
           "evidence": [
             "证据/dispatch_branches.json/functions/0x7b3090"
           ]
+        }
+      ]
+    },
+    {
+      "va": "0x7b4b50",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/27",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "memset(this,0,136)，返回this。",
+          "unknown": "不包含业务字段验证。",
+          "evidence": "证据/functions.json#0x7b4b50"
+        }
+      ]
+    },
+    {
+      "va": "0x7b4b90",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/28",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "size<capacity时追加1条并改end，否则经7B4D60插入扩容。",
+          "unknown": "最终元素构造7B6A00另核。",
+          "evidence": "证据/functions.json#0x7b4b90"
+        }
+      ]
+    },
+    {
+      "va": "0x7b4cc0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/29",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "begin非空时返回(capacity_end-begin)/136，否则0。",
+          "unknown": "无指针有效性校验。",
+          "evidence": "证据/functions.json#0x7b4cc0"
+        }
+      ]
+    },
+    {
+      "va": "0x7b4d20",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/30",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "取end建立输出迭代器。",
+          "unknown": "696D10具体迭代器包装未采。",
+          "evidence": "证据/functions.json#0x7b4d20"
+        }
+      ]
+    },
+    {
+      "va": "0x7b4d60",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/31",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "保存插入位置下标，调用7B5000插入1条，再据新begin恢复结果迭代器。",
+          "unknown": "695470/695DB0/7B57A0辅助另核；IDA安全数组签名误识别。",
+          "evidence": "证据/functions.json#0x7b4d60"
+        }
+      ]
+    },
+    {
+      "va": "0x7b4e20",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/32",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "调用复制构造n条，返回start+136*n。",
+          "unknown": "7B6A00实际构造另核。",
+          "evidence": "证据/functions.json#0x7b4e20"
+        }
+      ]
+    },
+    {
+      "va": "0x7b5000",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/33",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "136字节栈临时保源、原地或扩容插入、1.5倍容量候选及异常清理；更新三个指针。",
+          "unknown": "区间复制/赋值/销毁底层未全采。",
+          "evidence": "证据/functions.json#0x7b5000"
+        }
+      ]
+    },
+    {
+      "va": "0x7b6750",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/34",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "先调用类型辅助，再转7B6A00构造记录区间。",
+          "unknown": "6988A0/7B6A00内部未采。",
+          "evidence": "证据/functions.json#0x7b6750"
+        }
+      ]
+    },
+    {
+      "va": "0x7b6980",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/35",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "先经7B69D0销毁payload，删除标志低位为1时operator delete(this)。",
+          "unknown": "树erase/根析构是否调用此包装未核。",
+          "evidence": "证据/functions.json#0x7b6980"
+        }
+      ]
+    },
+    {
+      "va": "0x7b69d0",
+      "reviews": [
+        {
+          "source": "专题/地图新闻索引与所有权/函数审阅清单.json",
+          "json_pointer": "/functions/36",
+          "status": "局部语义已审阅，完整字节已核验",
+          "conclusion": "转695360销毁payload。",
+          "unknown": "调用者完整生命周期未核。",
+          "evidence": "证据/functions.json#0x7b69d0"
         }
       ]
     },
@@ -53308,6 +55040,21 @@
       ]
     },
     {
+      "va": "0x7d83d0",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "局部语义已审阅",
+          "conclusion": "先rand，再以机器32位b-a+1作有符号IDIV除数，返回a+余数；不检查倒序、宽度溢出或零除。",
+          "unknown": "外部仅一个未声明函数调用点7B2CBB；本批没有证明实机传入非法边界。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x7d8440",
       "reviews": [
         {
@@ -53737,6 +55484,21 @@
       ]
     },
     {
+      "va": "0x7e1420",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/5",
+          "status": "局部语义已审阅",
+          "conclusion": "保存ECX对象；rand经IDIV[对象+156]取余，读取[对象+160]+4*余数的DWORD。",
+          "unknown": "未确认数组元素业务类型；不证明调用者保证count>0和数组有效。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x7e14a0",
       "reviews": [
         {
@@ -54006,6 +55768,21 @@
           "conclusion": "优先当前方向否则首合法非反向邻格",
           "unknown": null,
           "evidence": null
+        }
+      ]
+    },
+    {
+      "va": "0x7e20a0",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/6",
+          "status": "局部语义已审阅",
+          "conclusion": "入口ECX保存为this；最多执行有符号arg0次取样；前4过滤调用用this，第5用[this]作ECX；均看AL。全通过返回样本，否则到上限返回-1。",
+          "unknown": "本包装与取样器未显式移除元素；过滤器不改集合时可重复取样，外部副作用未闭合。过滤业务、完整this类及集合初始化未闭合。",
+          "evidence": [
+            "functions_raw.json"
+          ]
         }
       ]
     },
@@ -55582,6 +57359,21 @@
           "conclusion": "动态30谓词",
           "unknown": null,
           "evidence": null
+        }
+      ]
+    },
+    {
+      "va": "0x7eca40",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/7",
+          "status": "局部语义已审阅",
+          "conclusion": "rand后以this+0x45C的count getter取除数；同一成员按余数索引读word，movsx为有符号short。",
+          "unknown": "本函数没有count=0保护、没有检查数据指针、没有过滤负short值。",
+          "evidence": [
+            "functions_raw.json"
+          ]
         }
       ]
     },
@@ -68654,6 +70446,36 @@
       ]
     },
     {
+      "va": "0x80e6b0",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/8",
+          "status": "复用已有审阅",
+          "conclusion": "复用股票与交易流程：float(rand%601-300)/100；本批补32768输出集合的取模基数。",
+          "unknown": "不宣称线上权威定价；二进制浮点不能保证每个百分之一精确表示。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x80e710",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/9",
+          "status": "复用已有审阅",
+          "conclusion": "复用股票与交易流程：float(rand%1401-700)/100；本批补映射偏差。",
+          "unknown": "有效业务调用者仍依原专题边界，不套用到服务端行情。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x80f130",
       "reviews": [
         {
@@ -69031,6 +70853,21 @@
       ]
     },
     {
+      "va": "0x813410",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/21",
+          "status": "静态契约已审阅",
+          "conclusion": "构造原图四顶点(0,h),(0,0),(w,h),(w,0)，调用位置更新并置+172=1。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/1"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x8134f0",
       "reviews": [
         {
@@ -69040,6 +70877,16 @@
           "conclusion": "按+173决定更新GPU或仅CPU位置缓存",
           "unknown": "顶点记录+8/+12未恢复",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/22",
+          "status": "静态契约已审阅",
+          "conclusion": "比较四顶点；+173=0只更新CPU，非0时成功锁VB才更新CPU及stride28 xy。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/2"
+          ]
         }
       ]
     },
@@ -69053,6 +70900,16 @@
           "conclusion": "四顶点颜色缓存比较，写入28字节顶点记录+16",
           "unknown": "颜色通道与渲染状态绑定未恢复",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/23",
+          "status": "静态契约已审阅",
+          "conclusion": "比较四DWORD颜色；成功锁VB后更新CPU+128及各stride28颜色+16。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/3"
+          ]
         }
       ]
     },
@@ -69066,6 +70923,16 @@
           "conclusion": "比较UV缓存并更新顶点记录+20/+24",
           "unknown": "基准UV独立维护的全部写者未审阅",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/24",
+          "status": "静态契约已审阅",
+          "conclusion": "比较四UV对；成功锁VB后更新CPU+64及各stride28 UV+20/+24。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/buffer_dependencies.json#/functions/0"
+          ]
         }
       ]
     },
@@ -69079,6 +70946,21 @@
           "conclusion": "四顶点当前位置加dx/dy相对位移",
           "unknown": "旋转缩放叠加语义未审阅",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        }
+      ]
+    },
+    {
+      "va": "0x813b20",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/25",
+          "status": "局部消费契约已审阅",
+          "conclusion": "角度转弧度，顶点减支点，经间接矩阵分派后加回，写位置并禁用矩形裁剪。",
+          "unknown": "真实运行态矩阵实现、旋转方向和归一化未展开；不据默认槽假定算法。",
+          "evidence": [
+            "证据/render_dependencies.json#/functions/2"
+          ]
         }
       ]
     },
@@ -69110,6 +70992,16 @@
       "va": "0x813e70",
       "reviews": [
         {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/26",
+          "status": "既有专题审阅复核",
+          "conclusion": "每调用最多推进一帧；就绪且+173非0才绘制；末尾+173=1；复核旧图像专题并补绘制门槛。",
+          "unknown": "主审阅见图像资源专题；本专题绑定当前PE复核，不新增旧函数完成量。",
+          "evidence": [
+            "证据/draw_mapping_dependencies.json#/functions/1"
+          ]
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/84",
           "status": "部分审阅",
@@ -69131,6 +71023,21 @@
       ]
     },
     {
+      "va": "0x814120",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/27",
+          "status": "静态契约已审阅",
+          "conclusion": "先启用+173；按+172以现有顶点矩形裁剪，再调用绘制核心。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/render_dependencies.json#/functions/3"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x8141a0",
       "reviews": [
         {
@@ -69144,6 +71051,21 @@
       ]
     },
     {
+      "va": "0x814320",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/28",
+          "status": "静态契约已审阅",
+          "conclusion": "复制外部矩形，启用+173，按+172裁剪或直接设置四顶点，再绘制。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/render_dependencies.json#/functions/4"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x814400",
       "reviews": [
         {
@@ -69153,6 +71075,16 @@
           "conclusion": "矩形裁剪、UV调整、不可见标志、输入rect原地修改",
           "unknown": "全局裁剪栈、零宽高保护未审阅",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/29",
+          "status": "静态契约已审阅",
+          "conclusion": "按全局矩形裁剪并按原宽高修UV；无重叠禁用+173；无零除数保护。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/4"
+          ]
         }
       ]
     },
@@ -69183,6 +71115,51 @@
       ]
     },
     {
+      "va": "0x814930",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/30",
+          "status": "静态契约已审阅",
+          "conclusion": "对全局图像ABA790更新四颜色，再按给定矩形绘制。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/render_dependencies.json#/functions/5"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x814970",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/31",
+          "status": "静态契约已审阅",
+          "conclusion": "创建16字节缓冲包装，分配stride28顶点与WORD索引；部分失败仅删包装。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/buffer_dependencies.json#/functions/1"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x814c10",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/32",
+          "status": "静态契约已审阅",
+          "conclusion": "非空接口各Release并清槽；不删除16字节包装。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/buffer_dependencies.json#/functions/2"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x814c80",
       "reviews": [
         {
@@ -69192,6 +71169,36 @@
           "conclusion": "两个资源PreLoad",
           "unknown": "资源完整类型",
           "evidence": "证据/20261009_第三批D3D初始化与渲染函数群.json"
+        }
+      ]
+    },
+    {
+      "va": "0x814cd0",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/33",
+          "status": "静态契约已审阅",
+          "conclusion": "容量不足销毁重建，再上传xy/颜色及WORD索引；重建失败未判空。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/5"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x814ec0",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/34",
+          "status": "静态契约已审阅",
+          "conclusion": "先上传再判全局就绪，固定设备状态提交；忽略上传结果、不保存旧状态。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/render_dependencies.json#/functions/6"
+          ]
         }
       ]
     },
@@ -69384,6 +71391,16 @@
           "conclusion": "返回全局绘制允许byte",
           "unknown": "本身不代表设备可用",
           "evidence": "证据/20261009_第三批D3D初始化与渲染函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/35",
+          "status": "静态契约已审阅",
+          "conclusion": "返回全局ABA7C4 BYTE作为绘制就绪条件。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/6"
+          ]
         }
       ]
     },
@@ -69397,6 +71414,16 @@
           "conclusion": "写对象+172裁剪开关",
           "unknown": "调用者全表未审阅",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/36",
+          "status": "静态契约已审阅",
+          "conclusion": "将参数低BYTE写入图像+172。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/7"
+          ]
         }
       ]
     },
@@ -69410,6 +71437,16 @@
           "conclusion": "写对象+173绘制开关",
           "unknown": "调用者全表未审阅",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/37",
+          "status": "静态契约已审阅",
+          "conclusion": "将参数低BYTE写入图像+173。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/8"
+          ]
         }
       ]
     },
@@ -69423,6 +71460,31 @@
           "conclusion": "读取对象+173单字节绘制开关",
           "unknown": "业务切换全链未枚举",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/38",
+          "status": "静态契约已审阅",
+          "conclusion": "读取图像+173 BYTE。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/buffer_dependencies.json#/functions/3"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x818c20",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/39",
+          "status": "静态契约已审阅",
+          "conclusion": "ECX原值返回，不初始化矩阵元素。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/9"
+          ]
         }
       ]
     },
@@ -69436,6 +71498,16 @@
           "conclusion": "读取对象+172裁剪开关",
           "unknown": "无原始类名",
           "evidence": "证据/20261009_图像裁剪与顶点函数群.json"
+        },
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/40",
+          "status": "静态契约已审阅",
+          "conclusion": "读取图像+172 BYTE。",
+          "unknown": "未实机执行；外部类型、并发调用和设备故障行为不由本条证明。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/10"
+          ]
         }
       ]
     },
@@ -69466,6 +71538,38 @@
       ]
     },
     {
+      "va": "0x818d70",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/20",
+          "status": "局部语义已审阅",
+          "conclusion": "打开解包资源，固定复制0x7FC8/0x1099C，再存系统语言标签。",
+          "unknown": "解包器异常路径只部分审阅；没有证明所有资源失败恢复。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x818ea0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/21",
+          "status": "局部语义已审阅",
+          "conclusion": "合成16位值，判断A1A1..A9FE或B0A1..F7FE，不独立验尾字节。",
+          "unknown": "全局ABAA40使函数非重入；实机并发未证明。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x818f10",
       "reviews": [
         {
@@ -69475,6 +71579,33 @@
           "conclusion": "双字节范围谓词：A140..A3FE、A440..C67E或C940..F9FE。",
           "unknown": "外部依赖及动态运行未完整闭合。",
           "evidence": null
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/22",
+          "status": "局部语义已审阅",
+          "conclusion": "合成16位值，判断三个反向整数区间，不独立验尾字节。",
+          "unknown": "格网含编码孔洞；实机输入来源未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x818fa0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/23",
+          "status": "局部语义已审阅",
+          "conclusion": "前向原地双字节查表，376行步长，目标为记录+2/+3。",
+          "unknown": "无容量与孤立高位字节保护；输入可达性未验证。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -69496,6 +71627,17 @@
           "conclusion": "GB2312分支双字节映射转换",
           "unknown": "映射表来源/默认编码",
           "evidence": "证据/20261009_字体文本函数群.json"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/24",
+          "status": "局部语义已审阅",
+          "conclusion": "反向原地双字节查表，后表起点7FC8、764行步长。",
+          "unknown": "无容量与孤立高位字节保护；输入可达性未验证。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         }
       ]
     },
@@ -69767,6 +71909,17 @@
           "conclusion": "作为装载依赖或消费者函数保存完整主块/尾块原证。",
           "unknown": "本函数与GValue的间接关系及业务用途未在本批闭环。",
           "evidence": "证据/functions.json/functions/0x8198e0"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/25",
+          "status": "局部语义已审阅",
+          "conclusion": "从解析游标读至LF，转换反引号n、高位复制两字节，先写后断言容量。",
+          "unknown": "解析器完整对象与资源异常路径见资源专题，不在此全审。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         },
         {
           "source": "全量分析/首批人工审阅迁移.json",
@@ -70103,6 +72256,17 @@
           "evidence": "证据/functions.json/functions/0x81ad80"
         },
         {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/26",
+          "status": "部分分析",
+          "conclusion": "核对818D70结尾ECX指向栈资源对象后调用析构。",
+          "unknown": "完整资源析构及调用环境未全审；非映射对象析构。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/166",
           "status": "S",
@@ -70303,6 +72467,17 @@
           ]
         },
         {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/27",
+          "status": "部分分析",
+          "conclusion": "核对资源读取、首字节差分还原和解包调用邻域。",
+          "unknown": "完整资源对象生命周期及所有错误分支未全审。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        },
+        {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/75",
           "status": "边界辅助",
@@ -70413,6 +72588,17 @@
           "conclusion": "作为装载依赖或消费者函数保存完整主块/尾块原证。",
           "unknown": "本函数与GValue的间接关系及业务用途未在本批闭环。",
           "evidence": "证据/functions.json/functions/0x81b7f0"
+        },
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/28",
+          "status": "部分分析",
+          "conclusion": "核对LZO解包参数与声明尺寸使用。",
+          "unknown": "解压核心、异常输出长度与所有依赖未全审。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
         },
         {
           "source": "全量分析/首批人工审阅迁移.json",
@@ -70870,6 +73056,22 @@
       ]
     },
     {
+      "va": "0x81c450",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/29",
+          "status": "局部语义已审阅",
+          "conclusion": "GetSystemDefaultLangID：804/1004为1，404/C04/1404为2，其余0。",
+          "unknown": "未推断实际ACP或输入编码。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x81d6a0",
       "reviews": [
         {
@@ -71247,6 +73449,16 @@
     {
       "va": "0x81f950",
       "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/10",
+          "status": "复用已有审阅",
+          "conclusion": "复用音频系统：音乐初始化成功路径81FA75 timeGetTime，81FA83重播种。",
+          "unknown": "同一CRT存储槽内会重置其它消费者序列；是否同线程/同fiber执行未由静态图确认。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        },
         {
           "source": "全量分析/首批人工审阅迁移.json",
           "json_pointer": "/functions/2",
@@ -72611,6 +74823,81 @@
       ]
     },
     {
+      "va": "0x82759e",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/10",
+          "status": "导入包装核对",
+          "conclusion": "六字节FF25跳转到已列明IME导入槽；不分析系统API内部",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_import_wrappers.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8275a4",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/11",
+          "status": "导入包装核对",
+          "conclusion": "六字节FF25跳转到已列明IME导入槽；不分析系统API内部",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_import_wrappers.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8275aa",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/12",
+          "status": "导入包装核对",
+          "conclusion": "六字节FF25跳转到已列明IME导入槽；不分析系统API内部",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_import_wrappers.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8275b0",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/13",
+          "status": "导入包装核对",
+          "conclusion": "六字节FF25跳转到已列明IME导入槽；不分析系统API内部",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_import_wrappers.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8275b6",
+      "reviews": [
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/14",
+          "status": "导入包装核对",
+          "conclusion": "六字节FF25跳转到已列明IME导入槽；不分析系统API内部",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_import_wrappers.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x827860",
       "reviews": [
         {
@@ -72865,6 +75152,16 @@
       "va": "0x828f60",
       "reviews": [
         {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/33",
+          "status": "局部路径已审阅",
+          "conclusion": "52传slot和newRaw；53仅传slot",
+          "unknown": "其他命令、任务系统与所有异常路径业务未展开",
+          "evidence": [
+            "证据/equipment_actions.json"
+          ]
+        },
+        {
           "source": "专题/文本解析高频接口/函数审阅清单.json",
           "json_pointer": "/functions/0",
           "status": "局部语义已审阅",
@@ -72972,6 +75269,36 @@
           "unknown": "静态分析；调用者完整参数约束、资源代码页、异常/内存不足、间接调用与运行行为未全闭合。",
           "evidence": [
             "证据/entries.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x82b090",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/34",
+          "status": "局部路径已审阅",
+          "conclusion": "case0返回U内部视图；case3取得自身ID；19取背包视图",
+          "unknown": "其他case及全部底层getter未审",
+          "evidence": [
+            "证据/record_sources.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x82bee0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/35",
+          "status": "主体已审阅",
+          "conclusion": "返回对象+8，selector3在自身玩家对象上使用",
+          "unknown": "该getter也可能被其他对象复用",
+          "evidence": [
+            "证据/record_sources.json"
           ]
         }
       ]
@@ -73708,6 +76035,21 @@
       ]
     },
     {
+      "va": "0x8403b0",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/36",
+          "status": "主体已审阅",
+          "conclusion": "返回装备对象+8原值，卸下构造调用此值",
+          "unknown": "完整装备对象结构未恢复",
+          "evidence": [
+            "证据/equipment_requests.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x8407c0",
       "reviews": [
         {
@@ -73851,8 +76193,33 @@
       ]
     },
     {
+      "va": "0x84b550",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/37",
+          "status": "局部路径已审阅",
+          "conclusion": "注册84B8A0回调后调用8AC920(slot,newRaw)",
+          "unknown": "通用异步任务框架未展开",
+          "evidence": [
+            "证据/equipment_flow.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x84b8a0",
       "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/38",
+          "status": "主体已审阅",
+          "conclusion": "A6779C/A677A0置-1，间接回调业务码51",
+          "unknown": "间接回调安装者与完整参数自然名称未恢复",
+          "evidence": [
+            "证据/equipment_requests.json"
+          ]
+        },
         {
           "source": "专题/登录与大厅状态/证据/函数审阅清单.json",
           "json_pointer": "/55",
@@ -73864,8 +76231,33 @@
       ]
     },
     {
+      "va": "0x84b950",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/39",
+          "status": "局部路径已审阅",
+          "conclusion": "注册84BC20回调后调用8ACC20(slot)",
+          "unknown": "通用异步任务框架未展开",
+          "evidence": [
+            "证据/equipment_flow.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x84bc20",
       "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/40",
+          "status": "主体已审阅",
+          "conclusion": "A6779C/A677A0置-1，间接回调业务码52",
+          "unknown": "间接回调安装者与完整参数自然名称未恢复",
+          "evidence": [
+            "证据/equipment_requests.json"
+          ]
+        },
         {
           "source": "专题/登录与大厅状态/证据/函数审阅清单.json",
           "json_pointer": "/56",
@@ -74365,6 +76757,21 @@
           "conclusion": "已留存完整主函数伪码、汇编和交叉引用，辅助定位链路；不作为已完成行为恢复。",
           "unknown": "需继续逐分支、字段和调用约定复核。",
           "evidence": "证据/第四批/container_entry.json"
+        }
+      ]
+    },
+    {
+      "va": "0x856c30",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/41",
+          "status": "局部路径已审阅",
+          "conclusion": "返回U+128；名字U+240；32槽区U+272先清零再填值",
+          "unknown": "其他属性getter和完整U结构未恢复",
+          "evidence": [
+            "证据/record_sources.json"
+          ]
         }
       ]
     },
@@ -75364,6 +77771,16 @@
           "evidence": [
             "证据/cursor_family.json#/functions/44",
             "证据/cursor_seeds.json#/functions/1"
+          ]
+        },
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/42",
+          "status": "主体已审阅",
+          "conclusion": "从栈参数地址写入4字节，返回this，ret4",
+          "unknown": "底层动态缓冲区增长策略未展开",
+          "evidence": [
+            "证据/packet_fields.json"
           ]
         }
       ]
@@ -79425,6 +81842,111 @@
       ]
     },
     {
+      "va": "0x8ab120",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/43",
+          "status": "局部路径已审阅",
+          "conclusion": "查询成功返回关联节点+4指针，未找到0",
+          "unknown": "容器结构与比较器内部未展开",
+          "evidence": [
+            "证据/equipment_requests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8ac920",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/44",
+          "status": "主体路径已审阅",
+          "conclusion": "操作51上下文，构造8ACA40，交付发送边界",
+          "unknown": "实际线上封装及发送结果处理未展开",
+          "evidence": [
+            "证据/equipment_requests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8aca40",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/45",
+          "status": "主体路径已审阅",
+          "conclusion": "穿戴派生构造按DWORD写入1、slot、newRaw",
+          "unknown": "异常尾块已保存，基础缓冲区语义仅作边界",
+          "evidence": [
+            "证据/equipment_requests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8acc20",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/46",
+          "status": "主体路径已审阅",
+          "conclusion": "按slot查现有对象，非空时用对象+8构造卸下请求",
+          "unknown": "查不到对象时的上层用户体验未动态验证",
+          "evidence": [
+            "证据/equipment_requests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8acd70",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/47",
+          "status": "主体路径已审阅",
+          "conclusion": "卸下派生构造按DWORD写入1、slot、当前装备原值",
+          "unknown": "实际线上包布局未恢复",
+          "evidence": [
+            "证据/equipment_requests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8acf50",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/48",
+          "status": "主体路径已审阅",
+          "conclusion": "容量参数+12，完整常量0x10A1D85F，操作51",
+          "unknown": "长度写入器与最终发送封装未展开",
+          "evidence": [
+            "证据/packet_fields.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8ad030",
+      "reviews": [
+        {
+          "source": "专题/大厅玩家记录与装备字段/函数审阅清单.json",
+          "json_pointer": "/functions/49",
+          "status": "主体路径已审阅",
+          "conclusion": "容量参数+12，完整常量0x10A1D85F，操作52",
+          "unknown": "长度写入器与最终发送封装未展开",
+          "evidence": [
+            "证据/packet_fields.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x8b9f50",
       "reviews": [
         {
@@ -80648,6 +83170,16 @@
       "va": "0x8e0af0",
       "reviews": [
         {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "复用已审阅",
+          "conclusion": "关联数组和数量初始化0。",
+          "unknown": "其它构造资源与分配失败路径未全部闭合",
+          "evidence": [
+            "证据/构造释放复制与移动复用.json"
+          ]
+        },
+        {
           "source": "专题/控件回调与事件表/function_review.json",
           "json_pointer": "/functions/8",
           "status": "部分分析",
@@ -80672,6 +83204,16 @@
     {
       "va": "0x8e0ed0",
       "reviews": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "复用已审阅",
+          "conclusion": "释放关联数组本体并置指针0，不遍历销毁所指对象，不扫描其它控件反向数组。",
+          "unknown": "完整派生所有权和外部解绑动作未闭合",
+          "evidence": [
+            "证据/构造释放复制与移动复用.json"
+          ]
+        },
         {
           "source": "专题/控件回调与事件表/function_review.json",
           "json_pointer": "/functions/9",
@@ -81040,6 +83582,16 @@
       "va": "0x8e2d80",
       "reviews": [
         {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "复用已审阅",
+          "conclusion": "本体未直接复制+424/+428，不调用两绑定接口；扩展槽+420与关联数组不同。",
+          "unknown": "其它文本/样式依赖及上层克隆是否补绑定未闭合",
+          "evidence": [
+            "证据/构造释放复制与移动复用.json"
+          ]
+        },
+        {
           "source": "专题/控件回调与事件表/function_review.json",
           "json_pointer": "/functions/12",
           "status": "部分分析",
@@ -81063,12 +83615,32 @@
           "evidence": [
             "证据/几何传播.json"
           ]
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/15",
+          "status": "复用局部核对",
+          "conclusion": "子对象+360/+364累计父绝对坐标并回写相对值",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_dependencies.json"
+          ]
         }
       ]
     },
     {
       "va": "0x8e31b0",
       "reviews": [
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "复用已审阅",
+          "conclusion": "同层遍历中按关联数组指针相等首命中移动；传当前对象为直接返向排除项。",
+          "unknown": "长环、地址复用和分配异常运行行为未验证",
+          "evidence": [
+            "证据/构造释放复制与移动复用.json"
+          ]
+        },
         {
           "source": "专题/控件树与对象生命周期/function_review.json",
           "json_pointer": "/functions/11",
@@ -81092,6 +83664,16 @@
           "unknown": "完整控件布局传播与绘制刷新依赖未闭合",
           "evidence": [
             "证据/ui_callbacks.json"
+          ]
+        },
+        {
+          "source": "专题/关联控件绑定与未声明边界/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "复用已审阅",
+          "conclusion": "垂直消费与水平对称；不直接解引用数组所存目标指针，只与同层节点比较。",
+          "unknown": "长环、地址复用和全部调用方前置条件未闭合",
+          "evidence": [
+            "证据/构造释放复制与移动复用.json"
           ]
         },
         {
@@ -81750,6 +84332,16 @@
           "conclusion": "将Win32键盘消息送到U+20716焦点虚表；处理鼠标捕获、按下控件、点击和长按。",
           "unknown": "多键交错重复、负坐标及派生控件消费差异未实机验证。",
           "evidence": "ida_input_raw.json/functions/0x8e8a10"
+        },
+        {
+          "source": "专题/输入法位置与焦点对象/证据/function_review.json",
+          "json_pointer": "/functions/16",
+          "status": "局部分支确认",
+          "conclusion": "0x10D在两段接受范围之外，返回0；仅确认IME相关分派边界",
+          "unknown": "动态调用、句柄完整释放、不同IME实机表现及派生编辑控件不在本专题验证范围",
+          "evidence": [
+            "ime_dependencies.json"
+          ]
         }
       ]
     },
@@ -83597,6 +86189,36 @@
       ]
     },
     {
+      "va": "0x911ab0",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/11",
+          "status": "部分分析",
+          "conclusion": "只核WM_INITDIALOG分支随机定位：time播种，rand分别取模父窗口尺寸减计算出的目标对话框宽高，再叠加父左上坐标给MoveWindow。目标宽高ACC41C+4388/+4384来自非客户区差值加布局虚表+32返回尺寸。",
+          "unknown": "整个对话框类/提交结果未闭合；余量为0时函数内无IDIV保护，但未证明实机可触发。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x913e90",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/12",
+          "status": "部分分析",
+          "conclusion": "只核输入后显示随机串：914090 time播种，按this+400真实文本长度生成rand%62字母数字串；发0xCC设置*掩码，再0x0C写显示文本。",
+          "unknown": "原文字仍在this+400；不把随机显示串误记为加密密码、挑战码或认证协议。其余按键处理未完整审阅。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x914220",
       "reviews": [
         {
@@ -83606,6 +86228,16 @@
           "conclusion": "仅定位候选；搜索命中未直接匹配三表getter参数；即时GetAsyncKeyState VK=16。已保存完整原证，未人工逐分支语义审阅。",
           "unknown": "0x914220中这些输入条件的组合次序、控件通知目标、完整门控及发送副作用尚未审阅。",
           "evidence": "ida_input_raw.json/functions/0x914220"
+        },
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/13",
+          "status": "部分分析",
+          "conclusion": "只核另一输入处理尾部同样time播种、按真实文本长度生成62字符表随机串，更新显示控件。",
+          "unknown": "保存入口ECX的EBP在优化汇编中是对象基址；其余按键/焦点行为不宣称已完整闭合。",
+          "evidence": [
+            "functions_raw.json"
+          ]
         }
       ]
     },
@@ -83649,6 +86281,21 @@
       ]
     },
     {
+      "va": "0x9157f0",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/14",
+          "status": "部分分析",
+          "conclusion": "只核布局中的time播种及两处rand%16+10，结果作slot+36布局调用的宽度参数；Lower/Upper两组控件。",
+          "unknown": "大函数完整原证已导出，但构造/容器增长/异常清理和整套界面语义未逐函数群闭合。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x916c10",
       "reviews": [
         {
@@ -83658,6 +86305,21 @@
           "conclusion": "因写入length_error或out_of_range栈异常对象进入候选；完整STL容器业务控制流未在本专题逐条审阅。",
           "unknown": "异常写入所属函数并不等于已恢复全部容器操作、模板类型及异常处理语义。",
           "evidence": null
+        }
+      ]
+    },
+    {
+      "va": "0x917330",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/41",
+          "status": "局部消费契约已审阅",
+          "conclusion": "从idguardlibr.dll模块资源加载按钮位图并赋字体；不是松散BMP游戏格式支持。",
+          "unknown": "字体与位图销毁、外部控件完整业务未闭环。",
+          "evidence": [
+            "证据/candidate_seeds.json#/functions/8"
+          ]
         }
       ]
     },
@@ -84080,6 +86742,36 @@
       ]
     },
     {
+      "va": "0x9208a0",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/15",
+          "status": "局部语义已审阅",
+          "conclusion": "取得当前CRT存储块，直接把32位Seed写+20；种子0没有特殊处理。",
+          "unknown": "存储块由930960提供；不把该状态称作全进程全局随机种子。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9208c0",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/16",
+          "status": "局部语义已审阅",
+          "conclusion": "从CRT块+20读取state，低32位乘214013并加2531011，写回；逻辑右移16并与0x7FFF返回。",
+          "unknown": "没有系统熵源、没有网络输入、没有在本函数加锁。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x920c70",
       "reviews": [
         {
@@ -84353,6 +87045,22 @@
       ]
     },
     {
+      "va": "0x9228e0",
+      "reviews": [
+        {
+          "source": "专题/文本过滤与字码转换/证据/function_review.json",
+          "json_pointer": "/functions/30",
+          "status": "局部语义已审阅",
+          "conclusion": "最多N字节扫描Str1至NUL，再比较对应字节，N=0直接相等。",
+          "unknown": "仅该比较实现已读汇编；未全审所有CRT与运行时依赖。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x9234a0",
       "reviews": [
         {
@@ -84486,6 +87194,81 @@
       ]
     },
     {
+      "va": "0x930750",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/17",
+          "status": "局部语义已审阅",
+          "conclusion": "__crtTlsAlloc包装只调用TlsAlloc；不使用传入FLS callback，retn4清理参数。",
+          "unknown": "TLS回退本身不提供FLS自动回调语义；线程退出清理链需另核。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x930760",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/18",
+          "status": "局部语义已审阅",
+          "conclusion": "先mtinitlocks，动态查询kernel32四个Fls API；FlsGetValue缺失时选择TLS四入口。分配槽及0x8C块、设置成功后initptd与线程字段；失败走mtterm返回0。",
+          "unknown": "只在GetModuleHandleA成功分支进行FLS缺失回退；不能声称所有异常API环境都有完整兜底。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x930940",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/19",
+          "status": "局部语义已审阅",
+          "conclusion": "初始化CRT块+84为A69ED8、+20种子为1。",
+          "unknown": "A69ED8具体运行库表语义未展开；这不是完整0x8C结构恢复。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x930960",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/20",
+          "status": "局部语义已审阅",
+          "conclusion": "保存GetLastError；间接FLS/TLS get，空时calloc_dbg(1,0x8C)，设置槽后initptd，+0线程ID、+4=-1；分配/设置失败amsg_exit(16)。正常返回恢复LastError。",
+          "unknown": "间接函数指针由930760选择，不能只凭名字固定为FLS；终止处理和分配器内部未审。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x930d40",
+      "reviews": [
+        {
+          "source": "专题/随机数状态与取样边界/证据/function_review.json",
+          "json_pointer": "/functions/21",
+          "status": "局部语义已审阅",
+          "conclusion": "索引不是-1时，以实参或当前槽值调用_freefls，再把当前槽置空；索引-1时不操作。",
+          "unknown": "_freefls外部多字段资源清理未在本专题完整审阅；不能把它描述成只清随机种子。",
+          "evidence": [
+            "functions_raw.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x947ed0",
       "reviews": [
         {
@@ -84531,6 +87314,66 @@
       ]
     },
     {
+      "va": "0x95c7d6",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/42",
+          "status": "局部消费契约已审阅",
+          "conclusion": "先977A09(1)初始化，再经A6AB74重试；磁盘默认槽回到本包装。",
+          "unknown": "表填充实现未展开。",
+          "evidence": [
+            "证据/matrix_implementations.json#/functions/2"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x95c7eb",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/43",
+          "status": "局部消费契约已审阅",
+          "conclusion": "经A6AB74间接转交向量消费调用。",
+          "unknown": "实际参数类型及分派后算法未审。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/11"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x95e75e",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/44",
+          "status": "局部消费契约已审阅",
+          "conclusion": "先977A09(1)初始化，再经A6AB00重试；磁盘默认槽回到本包装。",
+          "unknown": "表填充实现未展开。",
+          "evidence": [
+            "证据/matrix_implementations.json#/functions/3"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x95e781",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/45",
+          "status": "局部消费契约已审阅",
+          "conclusion": "经A6AB00间接转交矩阵调用参数。",
+          "unknown": "槽经懒初始化改写；实际算法未审。",
+          "evidence": [
+            "证据/geometry_dependencies.json#/functions/12"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x962940",
       "reviews": [
         {
@@ -84570,6 +87413,117 @@
       ]
     },
     {
+      "va": "0x977a09",
+      "reviews": [
+        {
+          "source": "专题/图像运行时接口/函数审阅清单.json",
+          "json_pointer": "/functions/46",
+          "status": "局部消费契约已审阅",
+          "conclusion": "首次复制284字节表，填充后依据配置和CPU功能选择分派；Type=0重置。",
+          "unknown": "注册表读取、CPU检测和三个表填充子实现未审；仅分派外层控制流已审。",
+          "evidence": [
+            "证据/matrix_dispatch_init.json#/functions/0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x98e170",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/0",
+          "status": "局部语义已审阅",
+          "conclusion": "len+5节点头插，+0旧头/+4含NUL文本；计字节不计NUL。",
+          "unknown": "链表导出/销毁/最终显示顺序未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x98e8c1",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/1",
+          "status": "局部语义已审阅",
+          "conclusion": "4096字节行缓冲、文件/行号/错误号前缀、LF/NUL、先加条数再追加节点。",
+          "unknown": "原CRT/输入来源未全闭合；异常Format实机行为未测试。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9916f1",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/2",
+          "status": "部分分析",
+          "conclusion": "核对D3DX9 Shader Assembler字符串指针和调用98E8C1的同函数出处。",
+          "unknown": "其余汇编目标及输出组织未全审。",
+          "evidence": [
+            "identity_callers.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x993ec8",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/3",
+          "status": "局部语义已审阅",
+          "conclusion": "非零uint32计数时rep stosd写FFFFFFFF；返回0/retn8。",
+          "unknown": "调用者缓冲容量与误传负计数路径未全审。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x994de3",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/4",
+          "status": "局部语义已审阅",
+          "conclusion": "256字节格式化并强制末NUL，tag5/12选来源，写上下文+34错误标记。",
+          "unknown": "与9D0A78布局不同；源节点枚举/上层恢复未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x995011",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/5",
+          "status": "部分分析",
+          "conclusion": "已读控制流并恢复操作码分解、输入引用计数、结果条目与诊断邻域。",
+          "unknown": "操作记录与类型描述表依赖未闭合，未恢复源码签名和所有操作码名。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
       "va": "0x9bee30",
       "reviews": [
         {
@@ -84580,6 +87534,134 @@
           "unknown": "仅作导航，未恢复业务语义；所有动态路径均未验证。",
           "evidence": [
             "证据/controls_and_flow_navigation.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9ca930",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/6",
+          "status": "局部语义已审阅",
+          "conclusion": "空析构跳板后按删除标志bit0调用operator delete；返回this。",
+          "unknown": "原C++类型名与外部生命周期未恢复。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9caa68",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/7",
+          "status": "局部语义已审阅",
+          "conclusion": "count==capacity扩容，有限数值属性分类，登记条目并返回索引。",
+          "unknown": "x87非有限数值/__ftol边界及完整类型表未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9cad79",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/8",
+          "status": "局部语义已审阅",
+          "conclusion": "入口ECX池；分配96字节、初始化、登记，失败删除条目并返回-1。",
+          "unknown": "池完整类型和外部输入来源未恢复。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9caf88",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/9",
+          "status": "局部语义已审阅",
+          "conclusion": "无符号索引>=count返回0，否则加载指针数组槽。",
+          "unknown": "合法空槽与越界都返回0；池全生命周期未闭合。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9cb6fc",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/10",
+          "status": "局部语义已审阅",
+          "conclusion": "仅mov EAX,ECX后返回；无初始化操作。",
+          "unknown": "不能因此声称完整记录已初始化。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9cb700",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/11",
+          "status": "局部语义已审阅",
+          "conclusion": "填写类型/两个参数/double，固定哨兵及零字段，恒返回0。",
+          "unknown": "条目+5C未写，多个字段精确业务语义未恢复。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x9d0a78",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/12",
+          "status": "局部语义已审阅",
+          "conclusion": "256字节格式化并强制末NUL，tag2/12选来源，写对象+38错误标记。",
+          "unknown": "忽略消息存储失败；源节点完整枚举未恢复。",
+          "evidence": [
+            "functions_raw.json",
+            "navigation_data.json"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0xa0b1aa",
+      "reviews": [
+        {
+          "source": "专题/编译诊断与寄存器池/证据/function_review.json",
+          "json_pointer": "/functions/13",
+          "status": "部分分析",
+          "conclusion": "核对D3DX9 Shader Compiler字符串指针和调用9D0A78的同函数出处。",
+          "unknown": "其余着色器目标及编译输出组织未全审。",
+          "evidence": [
+            "identity_callers.json",
+            "navigation_data.json"
           ]
         }
       ]
