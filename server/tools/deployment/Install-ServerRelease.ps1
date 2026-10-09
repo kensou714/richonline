@@ -40,14 +40,19 @@ foreach ($file in $manifest.files) {
 }
 $control = Join-Path $release 'Invoke-NativeControl.ps1'
 $configPath = Join-Path $data 'lobby-bootstrap.json'
-$invokeControl = {
+function Invoke-ControlResult {
     param([string]$operation, [string]$expectedInstance = '')
-    $arguments = @('-PipeName', $pipeName, '-Command', $operation)
-    if ($expectedInstance) { $arguments += @('-ExpectedInstance', $expectedInstance) }
     # Windows PowerShell can emit a VoidTaskResult from async writes in older releases.
-    $results = @(& $control @arguments | ConvertFrom-Json)
-    if (!$results) { throw "Control command returned no JSON: $operation" }
-    $results | Select-Object -Last 1
+    if ($expectedInstance) {
+        $parsed = @(& $control -PipeName $pipeName -Command $operation -ExpectedInstance $expectedInstance | ConvertFrom-Json)
+    } else {
+        $parsed = @(& $control -PipeName $pipeName -Command $operation | ConvertFrom-Json)
+    }
+    if (!$parsed) { throw "Control command returned no JSON: $operation" }
+    $candidate = $parsed | Select-Object -Last 1
+    if ($candidate.PSObject.Properties['value'] -and $candidate.PSObject.Properties['Count']) {
+        $candidate.value | Select-Object -Last 1
+    } else { $candidate }
 }
 $previous = if (Test-Path -LiteralPath $currentPath) { Get-Content -LiteralPath $currentPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 $oldTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
@@ -59,10 +64,10 @@ New-Item -ItemType Directory -Path $backup | Out-Null
 $oldTaskXml = if ($oldTask) { Export-ScheduledTask -TaskName $taskName } else { $null }
 if ($oldTaskXml) { [IO.File]::WriteAllText((Join-Path $backup 'scheduled-task.xml'), $oldTaskXml) }
 if ($previous) {
-    $state = & $invokeControl status
+    $state = Invoke-ControlResult status
     if ($state.authenticatedSessions -ne 0) { throw 'Active players are connected; deployment refuses to stop their sessions.' }
-    & $invokeControl database.backup | Out-Null
-    & $invokeControl stop $state.instanceId | Out-Null
+    Invoke-ControlResult database.backup | Out-Null
+    Invoke-ControlResult stop $state.instanceId | Out-Null
     $deadline = (Get-Date).AddSeconds(20)
     while (Get-Process -Id $state.pid -ErrorAction SilentlyContinue) {
         if ((Get-Date) -gt $deadline) { throw 'Previous process did not stop.' }
@@ -96,7 +101,7 @@ try {
     Start-ScheduledTask -TaskName $taskName
     $deadline = (Get-Date).AddSeconds(45)
     do {
-        try { $state = & $invokeControl status } catch { $state = $null }
+        try { $state = Invoke-ControlResult status } catch { $state = $null }
         if ($state -and $state.lobbyReady -and $state.httpReady -and $state.gameListenerReady -and $state.blackReady -and $state.introReady -and $state.inquiryReady) { break }
         Start-Sleep -Milliseconds 500
     } while ((Get-Date) -lt $deadline)
@@ -129,8 +134,8 @@ try {
     foreach ($port in $createdProxies) { & netsh interface portproxy delete v4tov4 "listenaddress=$PublicAddress" "listenport=$port" | Out-Null }
     if ($createdFirewall) { Remove-NetFirewallRule -Name $firewallName }
     try {
-        $failedState = & $invokeControl status
-        & $invokeControl stop $failedState.instanceId | Out-Null
+        $failedState = Invoke-ControlResult status
+        Invoke-ControlResult stop $failedState.instanceId | Out-Null
     } catch { Write-Warning ('Graceful cleanup did not complete: ' + $_.Exception.Message) }
     if ($oldTaskXml) {
         Register-ScheduledTask -TaskName $taskName -Xml $oldTaskXml -Force | Out-Null
