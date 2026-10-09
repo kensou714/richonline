@@ -1,0 +1,65 @@
+:root {
+  color-scheme: light;
+  --background: #fff;
+  --header: #f5f6f7;
+  --border: #e3e5e8;
+  --text: #24292f;
+  --muted: #626a73;
+  --hover: #fafbfc;
+  --accent: #275b46;
+  --cell-padding: 16px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--background); color: var(--text); font: 16px/1.7 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+main { padding: 24px; }
+#catalog-nav { display: flex; gap: 8px; padding: 8px 24px; overflow-x: auto; background: var(--background); border-bottom: 1px solid var(--border); }
+#catalog-nav a { flex-shrink: 0; display: flex; align-items: center; min-height: 44px; padding: 8px 16px; text-decoration: none; color: var(--text); border-radius: 4px; }
+#catalog-nav a:hover { background: var(--header); }
+#catalog-nav a[aria-current="page"] { color: var(--accent); background: #edf4ef; font-weight: 600; text-decoration: underline; text-underline-offset: 6px; }
+a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.table-container { overflow-x: auto; border: 1px solid var(--border); }
+.table-container:focus-visible { outline: 2px solid #526b83; outline-offset: 3px; }
+table { border-collapse: collapse; width: 100%; min-width: 800px; table-layout: fixed; }
+.id-column { width: 90px; }
+.name-column { width: 170px; }
+.image-column { width: 132px; }
+.price-column { width: 150px; }
+.short-column { width: 110px; }
+.kind-column { width: 150px; }
+.map-id-column { width: 180px; }
+.map-image-column { width: 190px; }
+.audio-column { width: 320px; }
+.file-column { width: 180px; }
+table[data-page="sounds"], table[data-page="music"] { min-width: 1000px; }
+th, td { padding: var(--cell-padding); text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border); }
+th { background: var(--header); font-weight: 600; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--hover); }
+td:first-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+.name-cell { font-weight: 500; }
+td { white-space: pre-line; overflow-wrap: anywhere; text-wrap: pretty; }
+.image-cell { text-align: center; }
+.price-cell { font-variant-numeric: tabular-nums; }
+td img { display: block; width: 72px; height: 84px; margin: 0 auto; object-fit: contain; image-rendering: pixelated; }
+.map-image-cell img { width: 150px; height: 110px; }
+.audio-cell audio { display: block; width: 100%; min-width: 260px; height: 44px; }
+.audio-error { display: block; font-size: 14px; color: var(--muted); }
+.audio-error a { color: var(--accent); }
+.missing-image { font-size: 14px; color: var(--muted); }
+#pagination { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; padding-top: 16px; font-size: 14px; }
+#pagination[hidden] { display: none; }
+#page-summary { margin-right: auto; color: var(--muted); }
+button, select { font: inherit; color: var(--text); background: var(--background); border: 1px solid var(--border); border-radius: 4px; min-height: 44px; padding: 8px 12px; }
+button { cursor: pointer; }
+button:hover:not(:disabled) { background: var(--header); }
+button:active:not(:disabled) { background: #edf4ef; }
+button:disabled { color: var(--muted); background: var(--header); cursor: default; }
+@media (max-width: 767px) {
+  main { padding: 12px; }
+  #catalog-nav { padding: 8px 12px; gap: 4px; }
+  #catalog-nav a { padding-inline: 12px; }
+  :root { --cell-padding: 12px; }
+  .id-column { width: 76px; }
+  .name-column { width: 134px; }
+  .image-column { width: 104px; }
+}

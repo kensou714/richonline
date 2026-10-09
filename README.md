@@ -6,6 +6,8 @@ RichOnline 是大富翁 Online 的开发资料与原生服务端源码归档。�
 
 - `docs/`：开发约定、服务端资料、客户端研究资料、协议分析和验证证据。
 - `server/`：C++20 服务端源码、头文件、CMake 构建配置、测试、工具、Lua 规则及已记录许可的第三方源码。
+- `resource-manager/`：Windows 资源编辑器源码。
+- `item-catalog/`：离线资料图鉴和导出工具源码；图片、音频需从本机资源重新导出。
 
 客户端原有资源、商业客户端程序、运行时账号数据库、日志和本地构建产物不随仓库发布。服务端源码中的部分测试需要本地客户端资源或历史分析输入；缺少这些输入时，不能把测试标记为通过。
 
@@ -26,6 +28,8 @@ RichOnline 是大富翁 Online 的开发资料与原生服务端源码归档。�
 | 协议与逆向证据 | [逆向资料索引](docs/逆向资料/00_阅读索引.txt) |
 
 源码从原工作区的 `../native-server` 导入本仓库 `server/`。历史文档保留的 `../native-server` 路径应按此映射阅读；`../admin`、`../local-server` 和外部 `protocol-analysis` 未随本次归档导入。原开发目录后续变更不会自动同步到本仓库。
+
+后续服务端开发已统一在 `server/`，最新功能和验证记录见 [开发交接](server/DEVELOPMENT.md)。部署通道与版本安装工具位于 [`server/tools/deployment/`](server/tools/deployment/)。客户端资源仅用于本机运行和私有部署，不加入 Git 仓库。
 
 ## 构建
 
