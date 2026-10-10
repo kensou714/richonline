@@ -99,7 +99,8 @@ RichonlineMallPurchaseResult Storage::purchase_mall_item(const std::string& user
         transaction.commit();return {RichonlineMallPurchaseStatus::replayed,current_grant,std::move(current)};
     }
     const auto& product=catalog.purchasable(purchase.request.encoded_item);
-    if(product.fold!=1)throw StorageError("mall_purchase_bundle_grant_unproven");
+    // NEW wire77 和登录 wire2 都逐条插入，完整键相同的购买仍是独立实例。
+    // Prop.fold controls the product stack, not the number of lobby records.
     if(grant.expires_at!=0&&grant.expires_at<=now)throw StorageError("mall_purchase_grant_expired");
     const auto mode=(purchase.request.encoded_item>>12U)&15U;
     const auto& term=product.term.at(mode-1);
@@ -114,8 +115,6 @@ RichonlineMallPurchaseResult Storage::purchase_mall_item(const std::string& user
     if(!std::isfinite(after)||after<0||before-after!=charge)throw StorageError("mall_purchase_balance_precision_loss");
     if(product.score>static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max()-score))throw StorageError("mall_purchase_score_overflow");
     const auto next_score=score+product.score;
-    Statement existing(db_,"SELECT 1 FROM lobby_inventory WHERE username=? AND encoded_item=?");existing.bind(1,username);existing.bind(2,grant.owned_key);
-    if(existing.row()){transaction.commit();return {RichonlineMallPurchaseStatus::inventory_conflict,std::nullopt,std::move(current)};}
     if(!has_inventory_space(db_,username,catalog,product,now)) {
         transaction.commit();return {RichonlineMallPurchaseStatus::inventory_full,std::nullopt,std::move(current)};
     }
@@ -138,7 +137,8 @@ void Storage::require_inventory_date_version(RichonlineInventoryDateVersion vers
 }
 RichonlineMallActivationResult Storage::activate_mall_item(const std::string& username,std::int64_t role_id,
     const RichonlineMallCatalog& catalog,const RichonlineMallActivate63& request,std::int64_t now,
-    RichonlineInventoryDateVersion version,const std::string& operation,const std::string& evidence) {
+    RichonlineInventoryDateVersion version,const std::string& operation,const std::string& evidence,
+    const RichonlineMallActivationPrepare& prepare) {
     if(profile_!=ClientProfile::richonline)throw StorageError("mall_profile_invalid");
     if(now<0||operation.empty()||operation.size()>256||operation.find('\0')!=std::string::npos||evidence.empty()||evidence.size()>1024||evidence.find('\0')!=std::string::npos)
         throw StorageError("mall_activation_context_invalid");
@@ -154,9 +154,10 @@ RichonlineMallActivationResult Storage::activate_mall_item(const std::string& us
         transaction.commit();return {RichonlineMallActivationStatus::replayed,RichonlineMallActivated213{request.owned_key,new_key,request.currency,old.at("charge").get<double>()},std::move(current)};
     }
     const auto charge=catalog.activation_charge(request.owned_key,request.currency);
-    Statement owned(db_,"SELECT expires_at FROM lobby_inventory WHERE username=? AND encoded_item=?");owned.bind(1,username);owned.bind(2,request.owned_key);
+    Statement owned(db_,"SELECT expires_at,inventory_id FROM lobby_inventory WHERE username=? AND encoded_item=? AND (expires_at=0 OR expires_at>?) ORDER BY inventory_id LIMIT 1");owned.bind(1,username);owned.bind(2,request.owned_key);owned.bind(3,now);
     if(!owned.row()){transaction.commit();return {RichonlineMallActivationStatus::missing,{},std::move(current)};}
     const auto before_expiry=owned.integer(0);
+    const auto inventory_id=owned.integer(1);
     if(before_expiry!=0&&before_expiry<=now){transaction.commit();return {RichonlineMallActivationStatus::expired,{},std::move(current)};}
     validate_key_date(request.owned_key,before_expiry,version);
     const auto duration=catalog.activation_days(request.owned_key);
@@ -166,16 +167,34 @@ RichonlineMallActivationResult Storage::activate_mall_item(const std::string& us
     const auto new_key=richonline_inventory_key_from_expiry(request.owned_key&~0x40000000U,expiry,version);
     const RichonlineMallActivated213 response{request.owned_key,new_key,request.currency,charge};
     static_cast<void>(encode_richonline_mall_activated213(response));
-    Statement conflict(db_,"SELECT 1 FROM lobby_inventory WHERE username=? AND encoded_item=?");conflict.bind(1,username);conflict.bind(2,new_key);
-    if(conflict.row()){transaction.commit();return {RichonlineMallActivationStatus::inventory_conflict,{},std::move(current)};}
     const auto mode=static_cast<std::uint32_t>(request.currency);const char* wallet=mode==1?"coins":"gold";
     const auto before=current.at(wallet).get<double>();
     if(!std::isfinite(before)||before<0)throw StorageError("mall_account_state_invalid");
     if(before<charge){transaction.commit();return {RichonlineMallActivationStatus::insufficient_funds,{},std::move(current)};}
     const auto after=before-charge;if(!std::isfinite(after)||after<0||before-after!=charge)throw StorageError("mall_purchase_balance_precision_loss");
+    if(prepare) {
+        RichonlineMallActivationPreview preview{response,{}, {}};
+        Statement inventory(db_,"SELECT encoded_item,inventory_id FROM lobby_inventory WHERE username=? AND (expires_at=0 OR expires_at>?) ORDER BY inventory_id");
+        inventory.bind(1,username);inventory.bind(2,now);
+        while(inventory.row()) {
+            const auto key=static_cast<std::uint32_t>(inventory.integer(0));
+            if(inventory.integer(1)!=inventory_id) preview.inventory.push_back(key);
+        }
+        // NEW840230/8A2D30 删除首个旧对象，再把激活后的新对象追加到拥有列表尾部。
+        preview.inventory.push_back(new_key);
+        Statement equipment(db_,"SELECT e.role_id,e.slot FROM lobby_equipment e JOIN roles r ON r.role_id=e.role_id WHERE r.username=? AND e.encoded_item=? ORDER BY e.role_id,e.slot");
+        equipment.bind(1,username);equipment.bind(2,request.owned_key);
+        while(equipment.row()) preview.equipment.push_back({equipment.integer(0),static_cast<std::uint32_t>(equipment.integer(1))});
+        // 此时未扣款、未改键。在线角色不具备同步条件或消息准备失败，整次激活无副作用。
+        prepare(preview);
+    }
     Statement update(db_,mode==1?"UPDATE roles SET coins=? WHERE username=? AND role_id=?":"UPDATE roles SET gold=? WHERE username=? AND role_id=?");
     update.bind(1,after);update.bind(2,username);update.bind(3,role_id);update.row();
-    Statement replace(db_,"UPDATE lobby_inventory SET encoded_item=?,expires_at=? WHERE username=? AND encoded_item=?");replace.bind(1,new_key);replace.bind(2,expiry);replace.bind(3,username);replace.bind(4,request.owned_key);replace.row();
+    Statement remove(db_,"DELETE FROM lobby_inventory WHERE username=? AND inventory_id=?");
+    remove.bind(1,username);remove.bind(2,inventory_id);remove.row();
+    if(sqlite3_changes(db_)!=1) throw StorageError("mall_activation_inventory_changed");
+    Statement replacement(db_,"INSERT INTO lobby_inventory(username,encoded_item,expires_at) VALUES(?,?,?)");
+    replacement.bind(1,username);replacement.bind(2,new_key);replacement.bind(3,expiry);replacement.row();
     Statement equipment(db_,"UPDATE lobby_equipment SET encoded_item=? WHERE encoded_item=? AND role_id IN(SELECT role_id FROM roles WHERE username=?)");equipment.bind(1,new_key);equipment.bind(2,request.owned_key);equipment.bind(3,username);equipment.row();
     Statement receipt(db_,"INSERT INTO native_mall_activations VALUES(?,?,?,?,?,?,?,?,?,?,?)");
     receipt.bind(1,operation);receipt.bind(2,username);receipt.bind(3,role_id);receipt.bind(4,request.owned_key);receipt.bind(5,new_key);receipt.bind(6,mode);receipt.bind(7,charge);receipt.bind(8,expiry);receipt.bind(9,static_cast<std::uint32_t>(version));receipt.bind(10,evidence);receipt.bind(11,now);receipt.row();

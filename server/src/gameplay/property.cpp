@@ -198,13 +198,12 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
     if (!validate_landing(ctx)) return {};
     const bool human=ctx.actor_slot==0;
     auto& property=properties_.at(ctx.property_ref);
-    // NEW7C6640 skips unowned purchase and self construction/upgrade under
-    // control. Opponent effects stay in their own branches; never skip all land.
-    if((!property.owner || *property.owner==ctx.actor_slot) && richonline_landing_controlled(ctx.actor_status)) {
+    // NEW7C6640 skips an unowned purchase under control. Owned land remains
+    // observable: players wait for 0x37/0x38, while the synthetic BOSS builds automatically.
+    // 受控状态只跳过未归属地产的购买；已归属地产必须继续区分玩家等待与 BOSS 自动建设。
+    if(!property.owner && richonline_landing_controlled(ctx.actor_status)) {
         Bytes stop; append_le(stop,0x4013,2); append_le(stop,game_id_,2);
         append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
-        if(property.owner && property.building.kind==16 && property.building.level>0)
-            return temple_result(ctx,property.building,true,{std::move(stop)});
         return RichonlineLandingResult{{std::move(stop)},RichonlineLandingProgress::complete};
     }
     if (property.owner) {
@@ -319,10 +318,15 @@ RichonlineBossProperty::CombatSnapshot RichonlineBossProperty::combat_snapshot()
             throw CodecError("richonline_property_combat_footprint_invalid");
         const auto anchor=static_cast<std::int32_t>(ref);
         const auto row=static_cast<std::int32_t>(width);
+        // NEW635610/636720 在清除空地归属前调用 60F14E -> 63F3C0，
+        // 与买地半价共用 actor 的 LAND 槽（DWORD38 > 0）。每次按当前地主重算，
+        // 否则装备 LAND 的客户端保留归属，服务端却等待买地，后续建造请求会断线。
+        const bool ownership_protected=property.owner &&
+            purchase_half_price_.at(*property.owner).value_or(false);
         result.buildings.push_back({static_cast<std::uint32_t>(ref),
             {static_cast<std::int16_t>(anchor-row-1),static_cast<std::int16_t>(anchor-row),
              static_cast<std::int16_t>(anchor-1),ref},
-            property.building.kind,property.building.level,property.owner,false});
+            property.building.kind,property.building.level,property.owner,ownership_protected});
     }
     return result;
 }

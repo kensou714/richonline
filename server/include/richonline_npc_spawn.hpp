@@ -69,9 +69,10 @@ public:
     RichonlineNpcSpawner(std::uint16_t game,RichonlineNpcSpawnPolicy,std::uint32_t seed);
     RichonlineNpcSpawnResult initialize(RichonlineGroundObjects&,std::span<const std::int16_t> reserved = {});
     // Invoke after a pickup/removal to maintain the minimum immediately.
-    RichonlineNpcSpawnResult replenish_minimum(RichonlineGroundObjects&);
+    RichonlineNpcSpawnResult replenish_minimum(RichonlineGroundObjects&, std::span<const std::int16_t> reserved = {});
     // Identity counts COMPLETE rounds, starts at1, and must have no gaps.
-    RichonlineNpcSpawnResult finish_round(RichonlineGroundObjects&,std::uint64_t identity);
+    RichonlineNpcSpawnResult finish_round(RichonlineGroundObjects&,std::uint64_t identity,
+        std::span<const std::int16_t> reserved = {});
 private:
     std::uint16_t game_;
     RichonlineNpcSpawnPolicy policy_;

@@ -3,6 +3,7 @@
 #include "richonline_map_package.hpp"
 #include "original_map.hpp"
 #include "original_options.hpp"
+#include "richonline_combat_resources.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -69,10 +70,10 @@ std::int32_t effect(std::string_view text, std::int32_t cash) {
     const auto threshold = integer(tail.substr(2,tail.size()-3));
     return ((tail[1] == '<' && cash < threshold) || (tail[1] == '>' && cash > threshold)) ? amount : 0;
 }
-std::uint32_t boss_cash(const RichonlineStageBoss& boss, const std::vector<Record>& props) {
-    const auto base = static_cast<std::int32_t>(boss.base_cash);
+std::uint32_t equipment_cash(std::uint32_t initial, std::span<const std::uint32_t> equipment, const std::vector<Record>& props) {
+    const auto base = static_cast<std::int32_t>(initial);
     std::int64_t flat = 0, percent = 0;
-    for (const auto item : boss.equipment) {
+    for (const auto item : equipment) {
         const auto id = item & 0xfffU;
         if (id == 0) continue;
         for (const auto& prop : props) {
@@ -97,11 +98,7 @@ RichonlineBossStartup build_richonline_boss_startup(const std::filesystem::path&
     if (input.human_identity < 0 || room.participants.size() != 1 || room.owner != static_cast<std::uint32_t>(input.human_identity) ||
         room.participants.front().actor != room.owner || !room.participants.front().ready)
         throw CodecError("richonline_boss_membership_invalid");
-    // NEW Prop13 has no att_desc/effect entry (7F3C70/798310); this exact test certificate
-    // in POCKET13 contributes no startup modifiers. Other equipment is still unsupported.
-    for (std::size_t i=0;i<input.profile_slots.size();++i)
-        if (input.profile_slots[i]!=0 && !(i==13 && input.profile_slots[i]==13))
-            throw CodecError("richonline_boss_profile_slots_nonempty");
+    RichonlineCombatModifierResources::load(client_root).validate_supported_equipment(input.profile_slots);
     if (std::any_of(input.building_skill_caps.begin(),input.building_skill_caps.end(),[](auto v) { return v < 0 || v > 7; }))
         throw CodecError("richonline_boss_skill_caps_invalid");
     const auto name_end = std::find(e.begin(),e.begin()+32,std::uint8_t{0});
@@ -129,10 +126,13 @@ RichonlineBossStartup build_richonline_boss_startup(const std::filesystem::path&
     RichonlineBoardInit init{w.game_server_id,w.opaque_f64,w.year,w.month,w.day,w.weekday,0,w.opaque_header_byte,
         {{input.human_identity,positions[0].position,positions[0].direction,input.building_skill_caps,w.opaque_trailing[0]},
          {-1,positions[1].position,positions[1].direction,w.synthetic_unconsumed_skill_bytes,w.opaque_trailing[1]}}};
-    const auto initial_boss_cash = boss_cash(stage.boss,records(client_root / "Data" / "Prop.kpd","[PROP]"));
+    const auto props=records(client_root / "Data" / "Prop.kpd","[PROP]");
+    const auto initial_boss_cash = equipment_cash(stage.boss.base_cash,stage.boss.equipment,props);
+    // NEW7F3C70 对人类和 BOSS 都应用同一套初始现金加成；快照覆盖客户端本地值。
+    const auto initial_human_cash = equipment_cash(stage.human.cash,input.profile_slots,props);
     // New 7DF010 tail fields26..29; 7F3840 explicitly initializes BOSS deposit/tickets to0.
     RichonlineBoardSnapshot snapshot{w.game_server_id,w.calendar_counter,stage.monetary_scale,
-        {{stage.human.cash,stage.human.deposit,stage.human.tickets},
+        {{initial_human_cash,stage.human.deposit,stage.human.tickets},
          {initial_boss_cash,0,0}}};
     static_cast<void>(encode_richonline_board_init(init));
     static_cast<void>(encode_richonline_board_snapshot(snapshot));

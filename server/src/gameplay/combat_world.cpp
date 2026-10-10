@@ -51,6 +51,12 @@ bool within_range(std::int16_t origin,std::int16_t target,const RichonlineRoadTo
     const auto y=(target/columns)*48;
     return x<left+width && x+64>left && y<top+height && y+48>top;
 }
+bool placement_occupied(std::int16_t position,const RichonlineCombatSessionView& state) {
+    return std::ranges::any_of(state.actors,[&](const auto& actor) {
+        return actor && actor->active && actor->placement_present &&
+            (actor->position==position || actor->pet_position==position);
+    });
+}
 }
 RichonlineCombatWorld::ResolvedTerms richonline_possession_combat_terms(
     const RichonlineCombatActorView& actor,const RichonlineCombatSessionView&) {
@@ -111,13 +117,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         for(const auto id:policy.neutral_human_equipment)
             if(id==0 || id>4095 || !neutral.insert(id).second)
                 throw CodecError("richonline_combat_world_neutral_equipment_invalid");
-        for(const auto word:human_equipment) {
-            const auto id=static_cast<std::uint16_t>(word&0xfffU);
-            if(id && !neutral.contains(id)) throw CodecError("richonline_combat_world_human_equipment_extension_required");
-        }
-        for(const auto cash:{0U,static_cast<std::uint32_t>(maximum)})
-            if(modifiers->equipment(human_equipment,cash)!=RichonlineEquipmentCombatTerms{})
-                throw CodecError("richonline_combat_world_neutral_equipment_has_attributes");
+        modifiers->validate_supported_equipment(human_equipment);
         // Pet/vehicle/land/deity/dice/move items can carry additional capability
         // rules. The current closed initial actor model does not own those rules.
         for(std::size_t slot=0;slot<6;++slot)
@@ -149,7 +149,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         for(const auto& cell:topology.cells()) {
             if(!within_range(origin,cell.position,topology,range)) continue;
             if(effect==RichonlineCombatEffect::mine) {
-                if(!cell.walkable || !mine_supported(cell.position,state)) continue;
+                if(!cell.walkable || placement_occupied(cell.position,state) || !mine_supported(cell.position,state)) continue;
             } else if(effect!=RichonlineCombatEffect::missile && effect!=RichonlineCombatEffect::nuclear &&
                 effect!=RichonlineCombatEffect::safe_nuclear) throw CodecError("richonline_combat_world_effect_invalid");
             else if(range.projectile_candidates==RichonlineProjectileCandidates::road_tiles && !cell.walkable) continue;
@@ -165,7 +165,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         std::vector<std::int16_t> targets;
         for(const auto& cell:topology.cells()) {
             if(effect==RichonlineCombatEffect::mine) {
-                if(!cell.walkable || !mine_supported(cell.position,state)) continue;
+                if(!cell.walkable || placement_occupied(cell.position,state) || !mine_supported(cell.position,state)) continue;
             } else if(effect!=RichonlineCombatEffect::missile && effect!=RichonlineCombatEffect::nuclear &&
                 effect!=RichonlineCombatEffect::safe_nuclear)
                 throw CodecError("richonline_combat_world_human_card_effect_invalid");

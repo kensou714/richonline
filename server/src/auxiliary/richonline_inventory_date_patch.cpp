@@ -21,6 +21,11 @@ constexpr std::array<Site,3> sites{{
     {0x14d2f5,{0x81,0xc2,0xd5,0x07,0,0},{0x81,0xc2,0xe5,0x07,0,0},6}
 }};
 constexpr std::size_t maximum=64U*1024U*1024U;
+bool supported_source(std::string_view hash) {
+    // 当前部署保留图形等已有修复；三处年份指令与原版相同，只允许核验过的完整映像。
+    constexpr std::string_view deployed_sha256="A23410E79637E312C932F861176D8D81CD1FD5D222A286F279FECCDECE6263C2";
+    return hash==richonline_date_original_sha256 || hash==deployed_sha256;
+}
 bool matches(View image,bool patched) {
     for(const auto& site:sites) {
         if(image.size()<site.offset+site.size)return false;
@@ -45,7 +50,7 @@ std::string richonline_date_image_sha256(View image) {
     for(const auto value:digest){result.push_back(digits[value>>4U]);result.push_back(digits[value&15U]);}return result;
 }
 Bytes richonline_date_compatibility_image(View original) {
-    if(richonline_date_image_sha256(original)!=richonline_date_original_sha256)throw CodecError("date_patch_original_hash_mismatch");
+    if(!supported_source(richonline_date_image_sha256(original)))throw CodecError("date_patch_original_hash_mismatch");
     if(!matches(original,false))throw CodecError("date_patch_original_instruction_mismatch");
     Bytes result(original.begin(),original.end());
     for(const auto& site:sites)std::copy_n(site.after.begin(),site.size,result.begin()+static_cast<std::ptrdiff_t>(site.offset));
@@ -55,6 +60,6 @@ bool richonline_date_compatibility_image_valid(View patched) {
     if(patched.empty()||patched.size()>maximum||!matches(patched,true))return false;
     Bytes original(patched.begin(),patched.end());
     for(const auto& site:sites)std::copy_n(site.before.begin(),site.size,original.begin()+static_cast<std::ptrdiff_t>(site.offset));
-    return richonline_date_image_sha256(original)==richonline_date_original_sha256;
+    return supported_source(richonline_date_image_sha256(original));
 }
 }

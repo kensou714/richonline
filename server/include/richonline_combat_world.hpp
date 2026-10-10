@@ -14,8 +14,7 @@ struct RichonlineCombatRangePolicy {
 };
 struct RichonlineCombatWorldPolicy {
     RichonlineCombatRangePolicy range;
-    // Only independently confirmed non-combat profile Props (e.g. PK permit)
-    // may be admitted without an equipment/status capability extension.
+    // 保留旧配置字段；普通装备由资源槽位及已接入效果校验，不再以此白名单拒绝时装。
     std::vector<std::uint16_t> neutral_human_equipment;
     // This names the current partial landing integration boundary. It must be
     // pure and excludes targets whose movement/landing effects are not closed.

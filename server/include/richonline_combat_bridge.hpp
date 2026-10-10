@@ -15,6 +15,11 @@ struct RichonlineCombatActorRef {
     RichonlineActorStatus* status;
     RichonlineCombatCapabilities capabilities;
     bool* active=nullptr;
+    // Separate placement occupancy (for new ground mines) from actor combat
+    // collision/targetability. The room supplies the independently-following
+    // pet cell when one is present.
+    bool placement_present=true;
+    std::optional<std::int16_t> pet_position{};
 };
 struct RichonlineCombatBridgeResult {
     std::vector<Bytes> packets;
@@ -29,10 +34,25 @@ public:
         std::shared_ptr<RichonlineBossCards> human_cards,std::shared_ptr<RichonlineGroundObjects>,
         std::shared_ptr<RichonlineBossProperty>,RichonlineCombatWorld,RichonlineBossCombatPolicy);
     RichonlineCombatBridgeResult boss_turn(std::span<const RichonlineCombatActorRef>,std::uint8_t boss,
-        const RichonlineBossAttackRandomness&);
+        const RichonlineBossAttackRandomness&,const std::function<void(const std::string&)>& log={});
     RichonlineCombatBridgeResult human_card(std::span<const RichonlineCombatActorRef>,
         const RichonlineTargetCardRequest&,std::uint16_t expected_calendar,bool recover_refusal=false,
         const std::function<void(const std::string&)>& log={});
+    class PreparedHumanAttack final {
+    public:
+        const std::vector<Bytes>& packets() const;
+    private:
+        struct Data;
+        std::shared_ptr<Data> data_;
+        explicit PreparedHumanAttack(std::shared_ptr<Data>);
+        friend class RichonlineCombatBridge;
+    };
+    // Lua只能保留不透明计划。返回完整确认且验证成功之后，才提交整次战斗与扣卡。
+    PreparedHumanAttack prepare_human_attack(std::span<const RichonlineCombatActorRef>,
+        const RichonlineTargetCardRequest&,std::uint16_t expected_calendar,
+        const RichonlineBossCards::PreparedConsumption&) const;
+    RichonlineCombatBridgeResult commit_human_attack(std::span<const RichonlineCombatActorRef>,
+        PreparedHumanAttack&,const std::function<void(const std::string&)>& log={});
     RichonlineCombatBridgeResult finish_round(std::span<const RichonlineCombatActorRef>,std::uint64_t day);
     RichonlineCombatBridgeResult missile_base_round(std::span<const RichonlineCombatActorRef>,std::uint64_t round,
         const std::function<std::size_t(std::size_t)>& random,const std::function<void(const std::string&)>& log);
@@ -94,6 +114,7 @@ private:
     };
     Snapshot snapshot(std::span<const RichonlineCombatActorRef>) const;
     RichonlineCombatBridgeResult apply(std::span<const RichonlineCombatActorRef>,
-        const Snapshot&,RichonlineCombatTurnPlan,const RichonlineBossProperty::PreparedMissileRound* missile_round=nullptr);
+        const Snapshot&,RichonlineCombatTurnPlan,const RichonlineBossProperty::PreparedMissileRound* missile_round=nullptr,
+        const std::function<void(const std::string&)>& log={});
 };
 }

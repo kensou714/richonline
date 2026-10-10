@@ -134,7 +134,16 @@ RichonlineLandingResult RichonlineBossShop::handle(View request) {
     auto next=cards_.inventory();
     const auto slot=static_cast<std::size_t>(index);
     if (next[slot].card_id==-1 || next[slot].count<1) return close("inventory_slot_empty");
-    const auto refund=catalog_.price(next[slot].card_id)/2;
+    std::uint32_t refund;
+    try {
+        refund=catalog_.price(next[slot].card_id)/2;
+    } catch (const CodecError& error) {
+        // 随机卡池或旧存档中的商城未定价卡不可出售；返回商店关闭包，
+        // 保留对局连接和库存，不把未恢复的售价当成协议异常。
+        if (std::string_view(error.what())=="richonline_shop_price_unknown")
+            return close("sale_card_unpriced");
+        throw;
+    }
     if (refund>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max())-current_points) return close("tickets_overflow");
     next[slot]={};
     RichonlineLandingResult result{{response(0x4032,index)},RichonlineLandingProgress::await_event,0x30};

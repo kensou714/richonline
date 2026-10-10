@@ -85,6 +85,14 @@ Frame RichonlineRoomDirectory::current_profile(std::uint64_t connection, std::ui
 }
 void RichonlineRoomDirectory::refresh_profile(std::uint64_t connection, std::uint32_t actor,
                                              const Frame& expected_current, const Frame& update) {
+    refresh_profile_fields(connection,actor,expected_current,update,false);
+}
+void RichonlineRoomDirectory::refresh_mall_profile(std::uint64_t connection, std::uint32_t actor,
+                                                  const Frame& expected_current, const Frame& update) {
+    refresh_profile_fields(connection,actor,expected_current,update,true);
+}
+void RichonlineRoomDirectory::refresh_profile_fields(std::uint64_t connection, std::uint32_t actor,
+    const Frame& expected_current, const Frame& update, bool mall_economy) {
     const auto found = observers_.find(connection);
     if (found == observers_.end() || found->second.actor != actor)
         throw CodecError("richonline_room_actor_not_registered");
@@ -100,13 +108,17 @@ void RichonlineRoomDirectory::refresh_profile(std::uint64_t connection, std::uin
     if (std::find(update.payload.begin() + 112, update.payload.end(), std::uint8_t{0}) == update.payload.end() ||
         !finite_double(update.payload, 80) || !finite_double(update.payload, 88))
         throw CodecError("richonline_room_profile_refresh_values_invalid");
+    // 商城只允许购买积分和两种钱包变化，不放宽结算刷新原有的字段白名单。
+    const auto allowed=[mall_economy](std::size_t offset) {
+        return mall_economy ? offset>=76 && offset<96 : settlement_field(offset);
+    };
     for (std::size_t offset = 0; offset < update.payload.size(); ++offset) {
-        if (!settlement_field(offset) && update.payload[offset] != current.payload[offset])
+        if (!allowed(offset) && update.payload[offset] != current.payload[offset])
             throw CodecError("richonline_room_profile_refresh_field_unproven");
     }
     Frame refreshed = current;
     for (std::size_t offset = 0; offset < update.payload.size(); ++offset) {
-        if (settlement_field(offset)) refreshed.payload[offset] = update.payload[offset];
+        if (allowed(offset)) refreshed.payload[offset] = update.payload[offset];
     }
     found->second.profile = std::move(refreshed);
 }
@@ -150,17 +162,74 @@ std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::select_character(
     const auto observer = observers_.find(connection);
     if (observer == observers_.end()) throw CodecError("richonline_room_actor_not_registered");
     if (character > 8 || !persist) throw CodecError("richonline_character_selection_invalid");
-    auto& room = room_for_peer(connection);
-    if (room.game_pending || room.peers.at(connection).ready)
+    // NEW10 也由频道内的商城角色选择发送；有房间时才检查准备/开局状态。
+    const auto key=room_key(connection);
+    auto* room=key ? &rooms_.at(*key) : nullptr;
+    if (room && (room->game_pending || room->peers.at(connection).ready))
         throw CodecError("richonline_character_selection_while_ready");
     auto response = broadcast(scalars(18, {observer->second.actor, character}));
     persist();
-    auto result=cancel_vote(room);
+    auto result=room ? cancel_vote(*room) : std::vector<RichonlineRoomDispatch>{};
     auto& profile = observer->second.profile.payload;
     for (std::size_t i = 0; i < 4; ++i) profile[40+i] = static_cast<std::uint8_t>(character >> (i*8));
-    log("room_character_selected key=" + std::to_string(room.key));
+    log(room ? "room_character_selected key="+std::to_string(room->key) :
+        "channel_character_selected actor="+std::to_string(observer->second.actor)+
+            " character="+std::to_string(character));
     append(result,std::move(response));
     return result;
+}
+std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::change_equipment(
+    std::uint64_t connection, std::uint32_t slot, std::uint32_t item, const std::function<void()>& persist) {
+    const auto observer=observers_.find(connection);
+    if(observer==observers_.end()) throw CodecError("richonline_room_actor_not_registered");
+    if(slot>=32 || !persist) throw CodecError("richonline_equipment_slot_invalid");
+    if(const auto key=room_key(connection)) {
+        const auto& room=rooms_.at(*key);
+        if(room.game_pending || room.peers.at(connection).ready)
+            throw CodecError("richonline_equipment_change_while_ready");
+    }
+    // NEW83/84 先更新客户端装备模型，再发本地63/64成功通知，后者负责先卸后穿续接。
+    // 广播和分配均在持久化前准备；成功后仅原位改写缓存，后来进入频道的人也能看到新装备。
+    auto result=broadcast(item ? scalars(83,{observer->second.actor,slot,item}) : scalars(84,{observer->second.actor,slot}));
+    persist();
+    auto& profile=observer->second.profile.payload;
+    for(std::size_t i=0;i<4;++i) profile[144+4*slot+i]=static_cast<std::uint8_t>(item>>(8*i));
+    return result;
+}
+RichonlineEquipmentRefresh RichonlineRoomDirectory::prepare_equipment_refresh(std::uint64_t connection,
+    std::uint32_t old_key, std::uint32_t new_key, const std::vector<std::uint32_t>& slots) const {
+    const auto observer=observers_.find(connection);
+    if(observer==observers_.end()) throw CodecError("richonline_room_actor_not_registered");
+    if(old_key==0 || new_key==0 || old_key==new_key) throw CodecError("richonline_equipment_refresh_key_invalid");
+    if(const auto key=room_key(connection)) {
+        const auto& room=rooms_.at(*key);
+        if(room.game_pending || (!slots.empty() && room.peers.at(connection).ready))
+            throw CodecError("richonline_equipment_refresh_while_ready");
+    }
+    const auto& current=observer->second.profile;
+    RichonlineEquipmentRefresh result{connection,current,current,{}};
+    std::array<bool,32> selected{};
+    for(const auto slot:slots) {
+        if(slot>=selected.size() || selected[slot]) throw CodecError("richonline_equipment_refresh_slot_invalid");
+        selected[slot]=true;
+    }
+    for(std::size_t slot=0;slot<selected.size();++slot) {
+        const auto key=read_le(View(current.payload).subspan(144+4*slot,4));
+        if((key==old_key)!=selected[slot]) throw CodecError("richonline_equipment_refresh_stale");
+        if(!selected[slot]) continue;
+        // 管理器按槽insert，不能用83覆盖旧对象。先84移除、再83建立新键，顺序必须保留。
+        append(result.messages,broadcast(scalars(84,{observer->second.actor,static_cast<std::uint32_t>(slot)})));
+        append(result.messages,broadcast(scalars(83,{observer->second.actor,static_cast<std::uint32_t>(slot),new_key})));
+        for(std::size_t byte=0;byte<4;++byte) result.after.payload[144+4*slot+byte]=static_cast<std::uint8_t>(new_key>>(8*byte));
+    }
+    return result;
+}
+void RichonlineRoomDirectory::commit_equipment_refresh(RichonlineEquipmentRefresh& prepared) {
+    const auto observer=observers_.find(prepared.connection);
+    if(observer==observers_.end() || observer->second.profile.wire_type!=prepared.before.wire_type ||
+       observer->second.profile.payload!=prepared.before.payload) throw CodecError("richonline_equipment_refresh_stale");
+    // 调用者在prepare至commit期间持有同一大厅连接锁；此处只交换已分配的缓存。
+    observer->second.profile.payload.swap(prepared.after.payload);
 }
 std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::enter(std::uint64_t connection, std::uint32_t actor, Frame profile) {
     if (observers_.contains(connection)) throw CodecError("richonline_channel_already_entered");

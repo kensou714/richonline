@@ -102,10 +102,11 @@ RichonlineMailSendResult Storage::send_mail(const std::string& username,std::int
     if(!recipient.row())throw StorageError("mail_recipient_missing");
     const auto recipient_role=recipient.integer(0);const auto recipient_username=recipient.text(1);const auto trusted_recipient_name=recipient.text(2);
     if(recipient.row())throw StorageError("mail_recipient_ambiguous");
-    std::int64_t expires=0;
+    std::int64_t expires=0,inventory_id=0;
     if(request.attachment_token!=0){
-        Statement owned(db_,"SELECT expires_at FROM lobby_inventory WHERE username=? AND encoded_item=?");owned.bind(1,username);owned.bind(2,request.attachment_token);
+        Statement owned(db_,"SELECT expires_at,inventory_id FROM lobby_inventory WHERE username=? AND encoded_item=? AND (expires_at=0 OR expires_at>?) ORDER BY inventory_id LIMIT 1");owned.bind(1,username);owned.bind(2,request.attachment_token);owned.bind(3,now);
         if(!owned.row())throw StorageError("mail_attachment_not_owned");expires=owned.integer(0);
+        inventory_id=owned.integer(1);
         if(expires!=0 && expires<=now)throw StorageError("mail_attachment_expired");
         Statement equipped(db_,"SELECT 1 FROM lobby_equipment e JOIN roles r ON r.role_id=e.role_id WHERE r.username=? AND e.encoded_item=? LIMIT 1");equipped.bind(1,username);equipped.bind(2,request.attachment_token);
         if(equipped.row())throw StorageError("mail_attachment_equipped");
@@ -136,7 +137,7 @@ RichonlineMailSendResult Storage::send_mail(const std::string& username,std::int
     bind_key(insert,recipient_role,key);insert.bind(4,data);insert.bind(5,data);insert.bind(6,request.attachment_token);
     insert.bind(7,request.attachment_token==0?nlohmann::json(nullptr):nlohmann::json(request.attachment_token));insert.bind(8,expires);insert.bind(9,operation);insert.row();
     if(request.attachment_token!=0){
-        Statement remove(db_,"DELETE FROM lobby_inventory WHERE username=? AND encoded_item=?");remove.bind(1,username);remove.bind(2,request.attachment_token);remove.row();
+        Statement remove(db_,"DELETE FROM lobby_inventory WHERE username=? AND inventory_id=?");remove.bind(1,username);remove.bind(2,inventory_id);remove.row();
         if(sqlite3_changes(db_)!=1)throw StorageError("mail_attachment_transfer_conflict");
     }
     audit(db_,username,role,key,"send mail",std::to_string(request.attachment_token),"mail escrow",operation);

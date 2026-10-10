@@ -132,25 +132,27 @@ RichonlineNpcSpawnResult RichonlineNpcSpawner::initialize(RichonlineGroundObject
     if(!ground.commit(before,batch.after)) throw CodecError("richonline_ground_stale");
     random_=batch.random; initialized_=true; return std::move(batch.result);
 }
-RichonlineNpcSpawnResult RichonlineNpcSpawner::replenish_minimum(RichonlineGroundObjects& ground) {
+RichonlineNpcSpawnResult RichonlineNpcSpawner::replenish_minimum(RichonlineGroundObjects& ground,
+    std::span<const std::int16_t> reserved) {
     if(!initialized_) throw CodecError("richonline_npc_spawn_not_initialized");
     const auto before=ground.snapshot();
     if(count(before.objects)>policy_.maximum_objects) throw CodecError("richonline_npc_spawn_population_exceeds_policy");
-    SpawnBatch batch(ground,before,random_,game_,policy_);
+    SpawnBatch batch(ground,before,random_,game_,policy_,reserved);
     while(count(batch.after)<policy_.minimum_objects) {
         if(!batch.spawn_any()) { batch.result.unmet_target=policy_.minimum_objects-count(batch.after); break; }
     }
     if(!ground.commit(before,batch.after)) throw CodecError("richonline_ground_stale");
     random_=batch.random; return std::move(batch.result);
 }
-RichonlineNpcSpawnResult RichonlineNpcSpawner::finish_round(RichonlineGroundObjects& ground,std::uint64_t identity) {
+RichonlineNpcSpawnResult RichonlineNpcSpawner::finish_round(RichonlineGroundObjects& ground,std::uint64_t identity,
+    std::span<const std::int16_t> reserved) {
     if(!initialized_ || identity==0) throw CodecError("richonline_npc_spawn_round_invalid");
     if(identity==last_round_) return {{},0,true};
     if(last_round_==std::numeric_limits<std::uint64_t>::max() || identity!=last_round_+1)
         throw CodecError("richonline_npc_spawn_round_out_of_order");
     const auto before=ground.snapshot(); const auto existing=count(before.objects);
     if(existing>policy_.maximum_objects) throw CodecError("richonline_npc_spawn_population_exceeds_policy");
-    SpawnBatch batch(ground,before,random_,game_,policy_);
+    SpawnBatch batch(ground,before,random_,game_,policy_,reserved);
     const auto target=std::max(policy_.minimum_objects,std::min(policy_.maximum_objects,
         existing+static_cast<std::size_t>(identity%policy_.refresh_every_rounds==0)));
     while(count(batch.after)<target) {

@@ -33,14 +33,14 @@ void audit(sqlite3* db,const std::string& username,std::int64_t role_id,
 LobbyInventory read_inventory(sqlite3* db,const std::string& username,std::int64_t role_id,std::int64_t unix_now) {
     LobbyInventory result;
     // expires_at is server-owned UTC seconds; zero denotes an untimed item, never a wire field.
-    Statement items(db,"SELECT encoded_item FROM lobby_inventory WHERE username=? AND (expires_at=0 OR expires_at>?) ORDER BY encoded_item");
+    Statement items(db,"SELECT encoded_item FROM lobby_inventory WHERE username=? AND (expires_at=0 OR expires_at>?) ORDER BY inventory_id");
     items.bind(1,username); items.bind(2,unix_now);
     while (items.row()) result.items.push_back(static_cast<std::uint32_t>(items.integer(0)));
     Statement equipped(db,"SELECT slot,encoded_item FROM lobby_equipment WHERE role_id=? ORDER BY slot");
     equipped.bind(1,role_id);
     while (equipped.row()) {
         const auto item=static_cast<std::uint32_t>(equipped.integer(1));
-        if (std::binary_search(result.items.begin(),result.items.end(),item))
+        if (std::find(result.items.begin(),result.items.end(),item)!=result.items.end())
             result.equipment.at(static_cast<std::size_t>(equipped.integer(0)))=item;
     }
     return result;
@@ -83,14 +83,19 @@ RpCertificateGrant Storage::ensure_test_rp_certificate(const std::string& userna
     RpCertificateGrant result;
     std::optional<std::int64_t> previous_expiry;
     {
-        Statement item(db_,"SELECT expires_at FROM lobby_inventory WHERE username=? AND encoded_item=?");
+        Statement item(db_,"SELECT expires_at FROM lobby_inventory WHERE username=? AND encoded_item=? ORDER BY (expires_at=0) DESC,expires_at DESC LIMIT 1");
         item.bind(1,username); item.bind(2,certificate_item);
         if (item.row()) previous_expiry=item.integer(0);
     }
     if (!previous_expiry || (*previous_expiry!=0 && *previous_expiry<=unix_now)) {
         const auto expires=unix_now+certificate_duration;
-        Statement item(db_,"INSERT INTO lobby_inventory(username,encoded_item,expires_at) VALUES(?,?,?) ON CONFLICT(username,encoded_item) DO UPDATE SET expires_at=excluded.expires_at");
-        item.bind(1,username); item.bind(2,certificate_item); item.bind(3,expires); item.row();
+        // 测试证书是账号级单份政策；只续期一个现存实例，不依赖道具键唯一约束。
+        Statement item(db_,previous_expiry ?
+            "UPDATE lobby_inventory SET username=?,encoded_item=?,expires_at=? WHERE inventory_id=(SELECT inventory_id FROM lobby_inventory WHERE username=? AND encoded_item=13 ORDER BY expires_at DESC LIMIT 1)" :
+            "INSERT INTO lobby_inventory(username,encoded_item,expires_at) VALUES(?,?,?)");
+        item.bind(1,username); item.bind(2,certificate_item); item.bind(3,expires);
+        if(previous_expiry) item.bind(4,username);
+        item.row();
         result.granted=!previous_expiry.has_value();
         result.renewed=previous_expiry.has_value();
         audit(db_,username,roles.front(),"lobby_inventory.13.expires_at",
@@ -117,14 +122,26 @@ void Storage::update_lobby_equipment(const std::string& username,const LobbyEqui
     if (change.slot>=32) throw StorageError("lobby_equipment_slot_invalid");
     Transaction transaction(db_);
     require_role(db_,username,change.role_id);
-    if (equipment_at(db_,change.role_id,change.slot)!=change.expected_item)
-        throw StorageError("lobby_equipment_stale");
+    if(change.expected_role_state) {
+        Statement role(db_,"SELECT model,level FROM roles WHERE username=? AND role_id=?");
+        role.bind(1,username); role.bind(2,change.role_id);
+        if(!role.row() || role.integer(0)!=change.expected_role_state->at(0) || role.integer(1)!=change.expected_role_state->at(1))
+            throw StorageError("lobby_equipment_role_changed");
+    }
+    const auto previous=equipment_at(db_,change.role_id,change.slot);
+    if(previous!=change.expected_item) {
+        // 登录快照会隐藏过期装备；数据库仍保留旧行时，客户端看到的空槽应可重新装备。
+        // 只有旧键已不再有效且请求确实预期空槽时允许替换，不能覆盖另一个有效装备。
+        Statement visible(db_,"SELECT 1 FROM lobby_inventory WHERE username=? AND encoded_item=? AND (expires_at=0 OR expires_at>?)");
+        visible.bind(1,username); visible.bind(2,previous); visible.bind(3,unix_now);
+        if(change.expected_item!=0 || visible.row()) throw StorageError("lobby_equipment_stale");
+    }
     if (change.item!=0) {
         Statement item(db_,"SELECT 1 FROM lobby_inventory WHERE username=? AND encoded_item=? AND (expires_at=0 OR expires_at>?)");
         item.bind(1,username); item.bind(2,change.item); item.bind(3,unix_now);
         if (!item.row()) throw StorageError("lobby_equipment_item_not_owned_or_expired");
     }
-    if (change.item==change.expected_item) { transaction.commit(); return; }
+    if (change.item==previous) { transaction.commit(); return; }
     if (change.item==0) {
         Statement remove(db_,"DELETE FROM lobby_equipment WHERE role_id=? AND slot=?");
         remove.bind(1,change.role_id); remove.bind(2,change.slot); remove.row();
@@ -133,7 +150,7 @@ void Storage::update_lobby_equipment(const std::string& username,const LobbyEqui
         equip.bind(1,change.role_id); equip.bind(2,change.slot); equip.bind(3,change.item); equip.row();
     }
     audit(db_,username,change.role_id,"lobby_equipment."+std::to_string(change.slot),
-          std::to_string(change.expected_item),std::to_string(change.item),"native-lobby-equipment",
+          std::to_string(previous),std::to_string(change.item),"native-lobby-equipment",
           "Ownership-validated equipment compare-and-swap");
     transaction.commit();
 }

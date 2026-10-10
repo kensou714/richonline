@@ -23,6 +23,8 @@ struct RichonlineCombatActorView {
     std::optional<std::uint32_t> attack_building_source,defense_building_source;
     std::uint8_t attack_building_level=0,defense_building_level=0;
     std::int8_t attack_building_rounds=0,defense_building_rounds=0;
+    bool placement_present=true;
+    std::optional<std::int16_t> pet_position{};
 };
 struct RichonlineCombatBuildingView {
     std::uint32_t property=0;
@@ -119,6 +121,12 @@ struct RichonlineCombatCardConsumption {
     std::uint8_t actor;
     RichonlineBossCards::PreparedConsumption consumption;
 };
+struct RichonlineCombatBuildingImpact {
+    std::uint8_t actor;
+    RichonlineCombatEffect effect;
+    std::int16_t target;
+    RichonlineCombatBuildingView before,after;
+};
 struct RichonlineCombatTurnPlan {
     RichonlineCombatSessionView expected,after;
     std::array<RichonlineCombatAttackAttempt,4> boss_attempts{};
@@ -128,6 +136,8 @@ struct RichonlineCombatTurnPlan {
     std::vector<Bytes> packets;
     bool committed=false;
     std::vector<RichonlineMissileBaseVolley> base_volleys;
+    // 逐次保留命中结果，含被 LAND 保护的空地；只有事务提交后才输出日志。
+    std::vector<RichonlineCombatBuildingImpact> building_impacts;
 };
 RichonlineCombatTurnPlan prepare_richonline_missile_base_round(const RichonlineCombatSessionView&,
     const RichonlineCombatWorld&,std::span<const RichonlineMissileBaseSalvo>,

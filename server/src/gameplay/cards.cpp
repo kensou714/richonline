@@ -1,6 +1,7 @@
 #include "richonline_boss_cards.hpp"
 #include "richonline_fixed_step_card.hpp"
 #include "richonline_cosmetic_card.hpp"
+#include "richonline_shop_catalog.hpp"
 
 #include <utility>
 #include <string_view>
@@ -36,12 +37,20 @@ RichonlineBossCards::RichonlineBossCards(std::shared_ptr<const RichonlineChanceR
     : resources_(std::move(resources)), award_(checked_award(resources_,policy)),
       game_id_(game_id), opaque6_7_(policy.opaque6_7) {}
 
+void RichonlineBossCards::configure_tile_rewards(std::vector<std::int16_t> playable,RichonlineRouteChooser random,
+    const RichonlineShopCatalog& resale) {
+    // 共享池统一服务卡片格、福神、新闻、节日；脚本返回也必须通过商店实际出售能力校验。
+    std::erase_if(playable,[&](const auto card){return !resale.can_sell(card);});
+    configure_tile_rewards(std::move(playable),std::move(random));
+}
 void RichonlineBossCards::configure_tile_rewards(std::vector<std::int16_t> playable,RichonlineRouteChooser random) {
     if(!random) throw CodecError("richonline_card_tile_random_required");
     std::set<std::int16_t> unique;
     std::vector<std::int16_t> candidates;
     for(const auto card:playable) {
         if(card<=0||!unique.insert(card).second) throw CodecError("richonline_card_tile_policy_invalid");
+        // 随机奖励禁止商城金豆卡和星光环绕；Lua 缺席或候选配置误放时也不能重新混入。
+        if((card>=500 && card<=519) || card==1131) continue;
         if(resources_->contains_card(card)&&resources_->automatic_card_eligible(award_.map(),card))
             candidates.push_back(card);
     }
@@ -150,25 +159,47 @@ RichonlineBossCards::PreparedShuffle RichonlineBossCards::prepare_shuffle(
     if(actor!=0 || !random) throw CodecError("richonline_shuffle_card_context_invalid");
     const auto consumed=prepare_consumption(slot,1125);
     if(!consumed) throw CodecError("richonline_shuffle_card_not_owned");
-    std::vector<RichonlineChanceCardSlot> deck;
-    for(const auto& entry:consumed->remaining_inventory) {
+    std::vector<std::uint8_t> order;
+    for(std::uint8_t index=0;index<consumed->remaining_inventory.size();++index) {
+        const auto& entry=consumed->remaining_inventory[index];
         if(entry.card_id==-1 && entry.count==0) continue;
         if(!resources_->contains_card(entry.card_id) || entry.count<=0 || entry.count>127)
             throw CodecError("richonline_shuffle_card_inventory_invalid");
-        deck.push_back(entry);
+        order.push_back(index);
     }
     // Native policy shuffles the existing stacks without generating replacements.
-    for(auto size=deck.size();size>1;--size) {
+    for(auto size=order.size();size>1;--size) {
         const auto selected=random(size);
         if(selected>=size) throw CodecError("richonline_shuffle_card_random_invalid");
-        std::swap(deck[size-1],deck[selected]);
+        std::swap(order[size-1],order[selected]);
+    }
+    return prepare_shuffle_order(slot,actor,order);
+}
+RichonlineBossCards::PreparedShuffle RichonlineBossCards::prepare_shuffle_order(
+    std::int8_t slot,std::uint8_t actor,const std::vector<std::uint8_t>& order) const {
+    if(actor!=0) throw CodecError("richonline_shuffle_card_context_invalid");
+    const auto consumed=prepare_consumption(slot,1125);
+    if(!consumed) throw CodecError("richonline_shuffle_card_not_owned");
+    std::array<bool,8> seen{};
+    for(const auto index:order) {
+        if(index>=seen.size() || seen[index]) throw CodecError("richonline_shuffle_card_order_invalid");
+        const auto& entry=consumed->remaining_inventory[index];
+        if(!resources_->contains_card(entry.card_id) || entry.count<=0 || entry.count>127)
+            throw CodecError("richonline_shuffle_card_inventory_invalid");
+        seen[index]=true;
+    }
+    for(std::size_t index=0;index<seen.size();++index) {
+        const auto& entry=consumed->remaining_inventory[index];
+        if(!seen[index] && (entry.card_id!=-1 || entry.count!=0))
+            throw CodecError("richonline_shuffle_card_order_incomplete");
     }
     PreparedShuffle result{consumed->source_inventory,{}, {}};
     auto& packet=result.confirmation40e8;
     append_le(packet,0x40e8,2);append_le(packet,game_id_,2);
     packet.push_back(static_cast<std::uint8_t>(slot));packet.push_back(0);
-    packet.push_back(static_cast<std::uint8_t>(deck.size()));packet.push_back(0);
-    for(const auto& entry:deck) {
+    packet.push_back(static_cast<std::uint8_t>(order.size()));packet.push_back(0);
+    for(const auto index:order) {
+        const auto& entry=consumed->remaining_inventory[index];
         append_le(packet,static_cast<std::uint16_t>(entry.card_id),2);
         packet.push_back(static_cast<std::uint8_t>(entry.count));packet.push_back(actor);
         // NEW607B inserts each wire entry through7F8780/800FD0, including combinations.

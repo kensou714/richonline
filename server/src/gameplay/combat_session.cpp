@@ -222,7 +222,10 @@ void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& worl
         [&](const auto position) { return contains(footprint,position); })) {
         const auto action=richonline_boss_blast_building_effect(effect,building.kind,building.level,
             building.owner.has_value(),building.ownership_protected);
-        if (action==RichonlineBossBlastBuildingEffect::none) continue;
+        if (action==RichonlineBossBlastBuildingEffect::none) {
+            plan.building_impacts.push_back({boss,effect,target,building,building});
+            continue;
+        }
         if (!world.building) throw CodecError("richonline_combat_session_building_adapter_missing");
         auto after=world.building(building,action);
         if (after.property!=building.property || after.footprint!=building.footprint || after.level>7 ||
@@ -238,6 +241,7 @@ void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& worl
             set_richonline_combat_building_buffs(state,plan_richonline_building_buff_changes(
                 richonline_combat_building_buffs(state),changes,richonline_combat_buff_recipients(state)));
         }
+        plan.building_impacts.push_back({boss,effect,target,building,after});
         building=std::move(after);
     }
     std::erase_if(state.dynamic_npcs,[&](const auto& npc) { return contains(footprint,npc.position); });

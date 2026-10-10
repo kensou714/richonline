@@ -1,4 +1,5 @@
 #include "richonline_chance_landing.hpp"
+#include "richonline_boss_landing.hpp"
 #include <algorithm>
 #include <charconv>
 #include <limits>
@@ -68,8 +69,8 @@ RichonlineChanceLandingAttempt prepare_richonline_chance_landing(const Richonlin
     const RichonlineChanceLandingPolicy& policy,const RichonlineLandingContext& context,std::uint16_t game,
     const RichonlineGameFundsSnapshot& funds,const RichonlineChanceInventory& inventory,const RichonlineRouteChooser& random) {
     const auto column=news_column(context.static_type);
-    if(!column || context.game_mode!=3 || std::find(policy.static_types.begin(),policy.static_types.end(),context.static_type)==policy.static_types.end() ||
-        context.actor_status.possession==7 || context.actor_status.sleepwalking || context.actor_status.frozen)
+    if(!column || !richonline_news_landing_allowed(context) ||
+        std::find(policy.static_types.begin(),policy.static_types.end(),context.static_type)==policy.static_types.end())
         return {RichonlineChanceLandingDisposition::not_applicable,{}, {}};
     if(policy.name.empty() || policy.map_name.empty() || policy.entries.empty() || !random)
         throw CodecError("richonline_chance_landing_policy_invalid");

@@ -6,9 +6,9 @@ local function refuse(reason)
     return { allowed = false, reason = reason }
 end
 function M.plan(request)
-    -- 套装的逐件入库和等级门槛尚未完成协议闭环，不能按单件处理或无条件放开。
-    if request.fold ~= 1 then return refuse("mall_purchase_bundle_grant_unproven") end
-    if request.level ~= 0 then return refuse("mall_purchase_level_rule_unproven") end
+    -- fold 是商品显示/卡叠参数，不是需要逐件发放的商城背包记录数。
+    -- 客户端购买77和登录2都按一个完整商品键插入一条所有权记录，数量固定为1。
+    -- level 在客户端穿戴/使用入口比较角色等级，不应拒绝购买所有带等级要求的商品。
     assert(request.currency == 1 or request.currency == 2, "商城币种无效")
     assert(request.date_epoch == 2005 or request.date_epoch == 2021, "商城日期纪元无效")
     local expiry = core.call("mall.calendar_expiry", request.term)

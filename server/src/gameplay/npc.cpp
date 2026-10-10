@@ -60,6 +60,20 @@ std::uint8_t load_richonline_npc_affix(const std::filesystem::path& root,std::in
 }
 RichonlineNpcRules RichonlineNpcRules::parse(std::string_view text) { return {parse_richonline_npc_affix(text,3)}; }
 RichonlineNpcRules RichonlineNpcRules::load(const std::filesystem::path& root) { return {load_richonline_npc_affix(root,3)}; }
+RichonlineFortuneRewardPlan prepare_richonline_fortune_rewards(std::uint16_t game,
+    const RichonlineChanceResources& resources,const RichonlineChanceEventTable& names,std::string_view map,
+    std::array<std::int16_t,2> chosen,const RichonlineChanceInventory& inventory) {
+    auto after=inventory;
+    // 65F0C0逐张插入；每次都可能合成并为下一张释放空位，满手牌时add保留库存。
+    for(const auto card:chosen) {
+        if(!resources.contains_card(card)) throw CodecError("richonline_fortune_reward_invalid");
+        after=resources.add(map,card,1,after);
+    }
+    names.card_panel_bytes(chosen,false,true);
+    auto reward=packet(0x4023,game);
+    for(const auto card:chosen) append_le(reward,static_cast<std::uint16_t>(card),2);
+    return {chosen,after,std::move(reward)};
+}
 RichonlineFortunePlan plan_richonline_fortune(const RichonlineFortuneContext& ctx,
     const RichonlineNpcRules& rules,const RichonlineChanceResources& resources,const RichonlineChanceEventTable& names,
     std::string_view map,std::array<std::int16_t,2> chosen,const RichonlineChanceInventory& inventory,
@@ -94,17 +108,8 @@ RichonlineFortunePlan plan_richonline_fortune(const RichonlineFortuneContext& ct
     default: throw CodecError("richonline_fortune_context_invalid");
     }
     if(!ctx.synthetic) {
-        // 65F0C0 attempts both insertions in order; each insertion may trigger
-        // a resource combination and release room for the second card.
-        for(const auto card:chosen) {
-            if(!resources.contains_card(card)) throw CodecError("richonline_fortune_reward_invalid");
-            after=resources.add(map,card,1,after);
-        }
-        // Covers the longer full-bag wording regardless of either add result.
-        names.card_panel_bytes(chosen,false,true);
-        auto reward=packet(0x4023,ctx.game_id);
-        for(const auto card:chosen) append_le(reward,static_cast<std::uint16_t>(card),2);
-        messages.push_back(std::move(reward));
+        auto reward=prepare_richonline_fortune_rewards(ctx.game_id,resources,names,map,chosen,after);
+        after=reward.inventory;messages.push_back(std::move(reward.response4023));
     }
     auto after_status=status;
     // NEW673D50 replaces the old god through6050 before attaching fortune.

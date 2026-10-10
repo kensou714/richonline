@@ -17,7 +17,7 @@ using View = std::span<const std::uint8_t>;
 inline constexpr std::uint32_t max_frame_total = 1U << 20U;
 inline constexpr std::array<std::uint8_t, 4> magic{0x5f, 0xd8, 0xa1, 0x10};
 
-class CodecError final : public std::runtime_error {
+class CodecError : public std::runtime_error {
 public:
     explicit CodecError(const std::string& code) : std::runtime_error(code) {}
 };

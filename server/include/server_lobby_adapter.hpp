@@ -15,6 +15,7 @@
 #include <optional>
 
 namespace richnet {
+class RichonlineCombatModifierResources;
 
 struct RichonlineMailBootstrapPolicy {
     std::string provenance;
@@ -67,6 +68,7 @@ public:
     LobbyCallbacks callbacks();
     void set_game_registry(std::shared_ptr<RichonlineGameRegistry> registry);
     void set_mall_catalog(std::shared_ptr<const RichonlineMallCatalog> catalog);
+    void set_equipment_resources(std::shared_ptr<const RichonlineCombatModifierResources> resources);
     std::uint32_t channel_player_count(std::uint32_t channel) const;
 private:
     struct Connections;
@@ -74,7 +76,7 @@ private:
     std::vector<Frame> authenticated_request(const LobbyLogin& login, const Frame& frame);
     std::vector<Frame> account_request(const LobbyLogin& login,std::uint32_t role_id,const Frame& frame);
     std::vector<Frame> channel_responses(const LobbyLogin& login, std::uint32_t selected, std::uint32_t channel);
-    Frame profile_refresh(const std::string& username,std::uint32_t selected,const nlohmann::json& current_role);
+    Frame profile_refresh(std::uint32_t selected,const nlohmann::json& current_role,const Frame& current_profile);
     void queue_pending_profile_refreshes(std::uint64_t connection);
     Storage& storage_;
     BootstrapBlobs blobs_;
@@ -82,6 +84,7 @@ private:
     std::shared_ptr<Connections> connections_;
     std::shared_ptr<RichonlineGameRegistry> game_registry_;
     std::shared_ptr<const RichonlineMallCatalog> mall_catalog_;
+    std::shared_ptr<const RichonlineCombatModifierResources> equipment_resources_;
 };
 
 }

@@ -9,9 +9,14 @@ namespace richnet {
 inline bool richonline_landing_controlled(const RichonlineActorStatus& status) noexcept {
     return status.possession==7 || status.sleepwalking!=0 || status.frozen!=0;
 }
-// NEW7C54B0 skips only special road events under these control states. Call
-// after dynamic ground effects and collision resolution, before bank/chance/
-// shop admission. Property charging and ground NPC effects are not skipped.
+// 新闻属于服务端事件：BOSS 梦游仍触发三色新闻；其他角色及控制状态沿用原限制。
+inline bool richonline_news_landing_allowed(const RichonlineLandingContext& context) noexcept {
+    const auto& status=context.actor_status;
+    return context.game_mode==3 && context.static_type>=68 && context.static_type<=70 &&
+        status.possession!=7 && !status.frozen && (!status.sleepwalking || context.synthetic_actor);
+}
+// 动态地面效果和碰撞之后检查静态格跳过规则；梦游 BOSS 新闻交给新闻事务。
+// 地产收费和地面 NPC 效果不在此处跳过。
 std::optional<RichonlineLandingResult> resolve_richonline_controlled_static_landing(
     std::uint16_t game_server_id,const RichonlineLandingContext& context);
 // 仅供空状态引擎：无动态物件、状态、倒计时、途经效果或待处理回调；不能通用跳过格子事件。

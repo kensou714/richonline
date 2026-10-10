@@ -4,11 +4,17 @@
 -- 2/3 为特殊出入口，28/58/61 为传送入口；与当前客户端和原生放置规则保持一致。
 local M = {}
 local forbidden = { [2] = true, [3] = true, [28] = true, [58] = true, [61] = true }
+function M.occupied(cell)
+    if cell.placement_occupied ~= nil then return cell.placement_occupied end
+    -- 兼容尚未切换的新脚本/旧 EXE；旧 EXE 本身不允许宠物开局。
+    if cell.active_actor_occupied ~= nil then return cell.active_actor_occupied end
+    return cell.actor_occupied
+end
 function M.prepare(position, npc, byte7, byte8)
     local cell = core.call("map.cell", { position = position })
     assert(cell.walkable, "目标不是道路")
     assert(cell.ground_visible, "目标不在允许范围")
-    assert(not cell.actor_occupied, "目标有角色")
+    assert(not M.occupied(cell), "目标有角色或宠物")
     assert(not forbidden[cell.static_type], "该静态格禁止放置")
     -- 只生成带版本的计划。若脚本之后失败，地面和手牌都保持原样。
     core.call("ground.prepare", { position = position, npc = npc, byte7 = byte7, byte8 = byte8 })

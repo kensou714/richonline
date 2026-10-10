@@ -26,6 +26,11 @@ struct RichonlineRoomDispatch {
     std::uint64_t recipient;
     Frame frame;
 };
+struct RichonlineEquipmentRefresh {
+    std::uint64_t connection;
+    Frame before,after;
+    std::vector<RichonlineRoomDispatch> messages;
+};
 struct RichonlineRoomPolicy {
     std::uint32_t unknown_prefix;
     std::uint32_t room_capacity;
@@ -55,6 +60,13 @@ public:
     Frame current_profile(std::uint64_t connection, std::uint32_t actor) const;
     void refresh_profile(std::uint64_t connection, std::uint32_t actor,
                          const Frame& expected_current, const Frame& update);
+    void refresh_mall_profile(std::uint64_t connection, std::uint32_t actor,
+                             const Frame& expected_current, const Frame& update);
+    std::vector<RichonlineRoomDispatch> change_equipment(std::uint64_t connection,
+        std::uint32_t slot, std::uint32_t item, const std::function<void()>& persist);
+    RichonlineEquipmentRefresh prepare_equipment_refresh(std::uint64_t connection,
+        std::uint32_t old_key, std::uint32_t new_key, const std::vector<std::uint32_t>& slots) const;
+    void commit_equipment_refresh(RichonlineEquipmentRefresh& prepared);
     void set_game_pending(std::uint64_t connection, bool pending);
     bool game_pending(std::uint64_t connection) const;
     std::vector<RichonlineRoomDispatch> game_finished(std::uint32_t room_key);
@@ -88,6 +100,8 @@ private:
     std::vector<RichonlineRoomDispatch> remove(std::uint64_t connection);
     void log(const std::string& message) const;
     void profile_location(std::uint64_t connection, std::uint32_t key, std::uint32_t team);
+    void refresh_profile_fields(std::uint64_t connection, std::uint32_t actor,
+                               const Frame& expected_current, const Frame& update, bool mall_economy);
     RichonlineRoomLog log_;
     RichonlineRoomPolicy policy_;
     std::map<std::uint32_t, Room> rooms_;

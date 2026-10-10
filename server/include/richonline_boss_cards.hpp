@@ -11,6 +11,7 @@
 #include <string>
 
 namespace richnet {
+class RichonlineShopCatalog;
 struct RichonlineBossCardPolicy {
     std::string map_name;
     std::int32_t event_id, card_id;
@@ -49,6 +50,8 @@ public:
     RichonlineBossCards(std::shared_ptr<const RichonlineChanceResources> resources,
         std::uint16_t game_id, const RichonlineBossCardPolicy& policy);
     void configure_tile_rewards(std::vector<std::int16_t> playable_cards,RichonlineRouteChooser random);
+    void configure_tile_rewards(std::vector<std::int16_t> playable_cards,RichonlineRouteChooser random,
+        const RichonlineShopCatalog& resale);
     const std::vector<std::int16_t>& tile_reward_cards() const noexcept { return tile_reward_cards_; }
     const RichonlineChanceInventory& inventory() const noexcept { return inventory_; }
     std::string_view map_name() const noexcept { return award_.map(); }
@@ -61,6 +64,9 @@ public:
     std::optional<PreparedConsumption> prepare_consumption(std::int8_t slot,std::int16_t card_id) const;
     // Current session has one human hand and an empty synthetic BOSS hand.
     PreparedShuffle prepare_shuffle(std::int8_t slot,std::uint8_t actor,const RichonlineRouteChooser& random) const;
+    // 顺序使用扣卡后原槽号，必须覆盖全部非空卡叠；按协议顺序重放资源插入与合成。
+    PreparedShuffle prepare_shuffle_order(std::int8_t slot,std::uint8_t actor,
+        const std::vector<std::uint8_t>& order) const;
     void commit_consumption(const PreparedConsumption& prepared);
     // Resolve map/visibility/status/damage rules before committing and encoding its confirmation.
     void commit_target_effect(const PendingTargetEffect& pending);

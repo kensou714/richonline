@@ -105,16 +105,36 @@ Storage::Storage(std::filesystem::path database_path, ClientProfile profile, boo
     }
     if (profile_==ClientProfile::richonline) execute(owned.get(),R"sql(
 CREATE TABLE IF NOT EXISTS lobby_inventory(
+ inventory_id INTEGER PRIMARY KEY AUTOINCREMENT,
  username TEXT NOT NULL REFERENCES accounts(username),
  encoded_item INTEGER NOT NULL CHECK(encoded_item BETWEEN 1 AND 4294967295),
- expires_at INTEGER NOT NULL CHECK(expires_at>=0),
- PRIMARY KEY(username,encoded_item)) STRICT;
+ expires_at INTEGER NOT NULL CHECK(expires_at>=0)) STRICT;
 CREATE TABLE IF NOT EXISTS lobby_equipment(
  role_id INTEGER NOT NULL REFERENCES roles(role_id),
  slot INTEGER NOT NULL CHECK(slot BETWEEN 0 AND 31),
  encoded_item INTEGER NOT NULL CHECK(encoded_item BETWEEN 1 AND 4294967295),
  PRIMARY KEY(role_id,slot)) STRICT;
 )sql");
+    if (profile_==ClientProfile::richonline) {
+        // 每次购买都是一个拥有实例；完整道具键相同不代表同一个实例。
+        bool has_instance_id=false;
+        {
+            Statement columns(owned.get(),"PRAGMA table_info(lobby_inventory)");
+            while (columns.row()) if (columns.text(1)=="inventory_id") has_instance_id=true;
+        }
+        if (!has_instance_id) execute(owned.get(),R"sql(
+ALTER TABLE lobby_inventory RENAME TO lobby_inventory_legacy;
+CREATE TABLE lobby_inventory(
+ inventory_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ username TEXT NOT NULL REFERENCES accounts(username),
+ encoded_item INTEGER NOT NULL CHECK(encoded_item BETWEEN 1 AND 4294967295),
+ expires_at INTEGER NOT NULL CHECK(expires_at>=0)) STRICT;
+INSERT INTO lobby_inventory(username,encoded_item,expires_at)
+ SELECT username,encoded_item,expires_at FROM lobby_inventory_legacy ORDER BY rowid;
+DROP TABLE lobby_inventory_legacy;
+)sql");
+        execute(owned.get(),"CREATE INDEX IF NOT EXISTS lobby_inventory_owner_key ON lobby_inventory(username,encoded_item)");
+    }
     Statement settings(owned.get(),"INSERT OR IGNORE INTO native_settings VALUES(1,1,?)");
     settings.bind(1,default_settings().dump()); settings.row();
     transaction.commit();

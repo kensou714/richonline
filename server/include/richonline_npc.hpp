@@ -39,6 +39,15 @@ struct RichonlineFortunePlan {
     // 4023 adds both cards and continues locally. No C2S acknowledgement exists.
     bool expects_ack=false;
 };
+// 两张奖励始终按报文顺序插入；满手牌仍继续尝试下一张，合成沿用资源规则。
+struct RichonlineFortuneRewardPlan {
+    std::array<std::int16_t,2> cards;
+    RichonlineChanceInventory inventory;
+    Bytes response4023;
+};
+RichonlineFortuneRewardPlan prepare_richonline_fortune_rewards(std::uint16_t game,
+    const RichonlineChanceResources&,const RichonlineChanceEventTable&,std::string_view map,
+    std::array<std::int16_t,2> chosen,const RichonlineChanceInventory&);
 // Caller serializes state, checks before snapshots, commits once, then sends.
 // Ground includes 4013; temple is invoked after its existing 4013/building phase.
 RichonlineFortunePlan plan_richonline_fortune(const RichonlineFortuneContext&,

@@ -60,7 +60,8 @@ public:
     void require_inventory_date_version(RichonlineInventoryDateVersion version);
     RichonlineMallActivationResult activate_mall_item(const std::string& username,std::int64_t role_id,
         const RichonlineMallCatalog& catalog,const RichonlineMallActivate63& request,std::int64_t unix_now,
-        RichonlineInventoryDateVersion version,const std::string& operation_id,const std::string& evidence);
+        RichonlineInventoryDateVersion version,const std::string& operation_id,const std::string& evidence,
+        const RichonlineMallActivationPrepare& prepare={});
     GameGoldChargeResult consume_game_gold(const std::string& username, std::int64_t role_id,
                                           const GameGoldCharge& charge);
     GameEntryPledgeResult reserve_game_pledge(const std::string& username, std::int64_t role_id,

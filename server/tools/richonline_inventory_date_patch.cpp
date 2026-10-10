@@ -38,7 +38,7 @@ int wmain(int argc,wchar_t** argv){try{
     const auto original=read_image(source),patched=richonline_date_compatibility_image(original);
     if(!richonline_date_compatibility_image_valid(patched))throw CodecError("date_patch_copy_verification_failed");
     const nlohmann::json manifest{{"compatibility_id",richonline_inventory_compatibility_id},{"source",utf8(source)},{"copy",utf8(target)},
-        {"source_sha256",richonline_date_original_sha256},{"copy_sha256",richonline_date_image_sha256(patched)},
+        {"source_sha256",richonline_date_image_sha256(original)},{"copy_sha256",richonline_date_image_sha256(patched)},
         {"inventory_date_epoch",2021},{"display_year_range",{2021,2036}},{"changed_bytes",3},{"file_offsets",{0x145d55,0x146a7a,0x14d2f7}},
         {"database_migrated",false},{"original_modified",false}};
     const auto text=manifest.dump(2)+"\n";const Bytes manifest_bytes(text.begin(),text.end());

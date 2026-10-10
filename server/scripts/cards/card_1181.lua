@@ -4,6 +4,7 @@
 -- Lua 负责目标筛选和 40EB 回包；EXE 只准备并共同提交地面、库存状态。
 -- reward_enabled 只控制随机赠卡；还必须通过资源 enable、CARD 类型及地图允许列表。
 local protocol = require("core.protocol")
+local ground = require("core.ground")
 local forbidden = { [2] = true, [3] = true, [28] = true, [58] = true, [61] = true }
 local M = { id = 1181, name = "冰冻陷阱", opcode = 155, reward_enabled = true, implementation = "lua" }
 function M.use(request)
@@ -19,8 +20,8 @@ function M.use(request)
     assert(position >= 0 and position < map.width * map.height, "冰冻目标越界")
     local cell = core.call("map.cell", { position = position })
     assert(cell.ground_visible, "冰冻目标不在允许范围")
-    -- 只排除仍在场角色，已退出角色留下的位置不阻碍研究陷阱放置。
-    assert(cell.walkable and not cell.active_actor_occupied and not cell.ground_occupied
+    -- 核心统一角色、宠物以及离场状态的放置占格。
+    assert(cell.walkable and not ground.occupied(cell) and not cell.ground_occupied
         and not forbidden[cell.static_type], "冰冻目标不能放置陷阱")
     -- NPC 25 的两个元数据字节固定为 255；踩中后的免疫、冻结和移除沿用核心落点事务。
     core.call("ground.prepare", { position = position, npc = 25, byte7 = 255, byte8 = 255 })

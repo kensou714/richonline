@@ -264,10 +264,19 @@ ServerLobbyAdapter::ServerLobbyAdapter(Storage& storage, BootstrapBlobs blobs, C
         {"verified_client_compatibility_id",blobs_.richonline_mall_policy->verified_client_compatibility_id}});
 }
 
-Frame ServerLobbyAdapter::profile_refresh(const std::string& username,std::uint32_t selected,const Json& current_role) {
+Frame ServerLobbyAdapter::profile_refresh(std::uint32_t selected,const Json& current_role,const Frame& current_profile) {
     const auto role=parse_role(current_role);
     if(role.id!=selected) throw CodecError("richonline_mall_profile_identity_mismatch");
-    return {7,profile_record(role,blobs_,storage_.lobby_inventory(username,selected,unix_now()))};
+    if(current_profile.wire_type!=7 || current_profile.payload.size()!=272 ||
+       read_le(View(current_profile.payload).first(4))!=selected)
+        throw CodecError("richonline_mall_current_profile_invalid");
+    // NEW19只更新已有玩家的144字节资料；NEW7会重复建立装备对象并触发频道进入回调。
+    // 从频道当前快照保留房间、队伍、角色及未知字段，只写商城事务返回的真实余额/积分。
+    Bytes data(current_profile.payload.begin(),current_profile.payload.begin()+144);
+    put_u32(data,76,role.purchase_score);
+    put_double(data,80,role.coins);
+    put_double(data,88,role.gold);
+    return {19,std::move(data)};
 }
 
 std::vector<Frame> ServerLobbyAdapter::login_responses(const LobbyLogin& login) {

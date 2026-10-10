@@ -4,6 +4,7 @@
 -- Lua 计算方形覆盖区、筛选候选格并构造 40ED；EXE 一次提交全部物件与扣卡。
 -- reward_enabled 只控制随机赠卡；还必须通过资源 enable、CARD 类型及地图允许列表。
 local protocol = require("core.protocol")
+local ground = require("core.ground")
 -- 火焰只排除三类传送入口；静态格 2/3 可以燃烧，与冰冻陷阱的规则不同。
 local forbidden = { [28] = true, [58] = true, [61] = true }
 local M = { id = 1183, name = "火焰陷阱", opcode = 157, reward_enabled = true, implementation = "lua" }
@@ -28,7 +29,7 @@ function M.use(request)
         for col = math.max(0, x - radius), math.min(map.width - 1, x + radius) do
             local target = row * map.width + col
             local cell = core.call("map.cell", { position = target })
-            if cell.walkable and not cell.active_actor_occupied and not cell.ground_occupied
+            if cell.walkable and not ground.occupied(cell) and not cell.ground_occupied
                 and not forbidden[cell.static_type] then
                 -- NPC 26 记录施放者和剩余回合数，供原有火焰时钟及伤害结算读取。
                 objects[#objects + 1] = { position = target, npc = 26, byte7 = request.actor, byte8 = rules.fire_rounds }

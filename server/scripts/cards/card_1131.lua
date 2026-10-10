@@ -1,9 +1,9 @@
 -- 星光环绕（资源编号 1131）。本文件是该卡的独立业务入口。
 -- C2S 操作号 168；request.payload 是未加密的完整内部报文，包含操作号。
 -- 本卡规则和回包由 Lua 实现，核心负责校验回合、准备扣卡并原子提交。
--- reward_enabled 只控制随机赠卡；还必须通过资源 enable、CARD 类型及地图允许列表。
+-- 星光环绕不能在局内出售，不进入卡片格等共享随机奖励池；已有卡仍可正常使用。
 local protocol = require("core.protocol")
-local M = { id = 1131, name = "星光环绕", opcode = 168, reward_enabled = true, implementation = "lua" }
+local M = { id = 1131, name = "星光环绕", opcode = 168, reward_enabled = false, implementation = "lua" }
 function M.use(request)
     -- 请求已经过网络身份验证；具体槽位、回合、目标合法性仍由核心事务核验。
     -- 迁移本卡时可以改为调用细粒度核心接口；禁止重复调用 game.native 导致重复扣卡。

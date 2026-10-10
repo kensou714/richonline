@@ -8,6 +8,7 @@ std::optional<RichonlineLandingResult> resolve_richonline_controlled_static_land
     std::uint16_t game_id,const RichonlineLandingContext& context) {
     if(!richonline_landing_controlled(context.actor_status) || context.game_mode!=3 || context.property_ref!=-1)
         return {};
+    if(richonline_news_landing_allowed(context)) return {};
     const auto kind=context.static_type;
     // Exact NEW7E2730 classification, used by7C54B0 before its control guard.
     const bool special=(kind>=0 && kind<=10) || kind==28 || (kind>=41 && kind<=43) ||

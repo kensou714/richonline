@@ -21,6 +21,7 @@ struct RichonlineRawActorState {
     std::optional<std::int8_t> jail1495;
     std::optional<std::int8_t> kidnapped1497;
     std::optional<bool> movement_reporting552;
+    bool operator==(const RichonlineRawActorState&) const = default;
 };
 
 struct RichonlineRawGameState {
@@ -69,6 +70,20 @@ public:
     void enter_hospital(std::uint8_t actor, std::int8_t days);
     void exit_hospital(std::uint8_t actor);
     void enter_jail(std::uint8_t actor, std::int8_t days);
+    // 卡牌事务先保存原始状态，所有回包准备成功后再提交，避免先扣卡后入狱失败。
+    class PreparedJailEntry final {
+    private:
+        PreparedJailEntry()=default;
+        const RichonlineRawAuthority* owner_=nullptr;
+        std::uint8_t actor_=0;
+        std::int8_t days_=0;
+        RichonlineRawActorState before_{};
+        bool committed_=false;
+        friend class RichonlineRawAuthority;
+    };
+    PreparedJailEntry prepare_jail_entry(std::uint8_t actor,std::int8_t days) const;
+    bool matches_jail_entry(const PreparedJailEntry&) const noexcept;
+    bool commit_jail_entry(PreparedJailEntry&) noexcept;
     void exit_jail(std::uint8_t actor);
     void enter_kidnapped(std::uint8_t actor, std::int8_t days);
     void exit_kidnapped(std::uint8_t actor);

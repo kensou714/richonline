@@ -109,6 +109,8 @@ struct RichonlineBossTurnRules {
     std::shared_ptr<RichonlineGamePayment> payment{};
     std::string payment_operation_prefix{};
     RichonlinePaidDiceEquipment payment_equipment{false,false};
+    // 读取4010进入时的现金计算本回合回血；客户端已排6060，服务端只镜像账本。
+    std::function<std::uint32_t(std::uint8_t,std::uint32_t)> equipment_healing{};
     std::function<std::optional<RichonlineLandingResult>(const RichonlineLandingContext&)> chance_landing{};
     // The room supplies map pairs or random-road candidates and scripted state.
     // A portal tile without this capability cannot be silently treated as an

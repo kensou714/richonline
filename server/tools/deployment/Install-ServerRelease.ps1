@@ -81,8 +81,10 @@ if ($previous) {
 }
 $createdProxies = @()
 $createdFirewall = $false
+$updatedFirewall = $false
+$firewallSnapshot = $null
 $firewallName = 'RichOnline-Public-Gameplay'
-$ports = @(18600,18602,18605,18606,18680)
+$ports = @(18600,18602,18604,18605,18606,18680)
 try {
     if ($previous) {
         # Preserve operator policy on subsequent releases; only switch resources.
@@ -114,8 +116,8 @@ try {
     $http = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:18680/gameinfo/RichNetLogin.txt' -TimeoutSec 10
     if ($http.StatusCode -ne 200 -or $http.Content -notmatch [regex]::Escape($PublicAddress)) { throw 'Server list health check failed.' }
     Start-Service iphlpsvc
+    $registryKey = 'HKLM:\SYSTEM\CurrentControlSet\Services\PortProxy\v4tov4\tcp'
     foreach ($port in $ports) {
-        $registryKey = 'HKLM:\SYSTEM\CurrentControlSet\Services\PortProxy\v4tov4\tcp'
         $entry = Get-ItemProperty -LiteralPath $registryKey -Name "$PublicAddress/$port" -ErrorAction SilentlyContinue
         if ($entry) {
             if ($entry."$PublicAddress/$port" -ne "127.0.0.1/$port") { throw 'Conflicting port proxy configuration.' }
@@ -125,17 +127,36 @@ try {
             $createdProxies += $port
         }
     }
-    if (!(Get-NetFirewallRule -Name $firewallName -ErrorAction SilentlyContinue)) {
-        New-NetFirewallRule -Name $firewallName -DisplayName 'RichOnline lobby, game and read-only queries' -Direction Inbound -Action Allow -Protocol TCP -LocalAddress $PublicAddress -LocalPort $ports | Out-Null
+    $existingFirewall = Get-NetFirewallRule -Name $firewallName -ErrorAction SilentlyContinue
+    if (!$existingFirewall) {
+        New-NetFirewallRule -Name $firewallName -DisplayName 'RichOnline lobby, game, blacklist and queries' -Direction Inbound -Action Allow -Protocol TCP -LocalAddress $PublicAddress -LocalPort $ports | Out-Null
         $createdFirewall = $true
+    } else {
+        $firewallPortFilter = @(Get-NetFirewallRule -Name $firewallName | Get-NetFirewallPortFilter)
+        if ($firewallPortFilter.Count -ne 1) { throw 'Existing firewall rule must have exactly one port filter.' }
+        $firewallSnapshot = @{
+            protocol = $firewallPortFilter[0].Protocol
+            localPort = $firewallPortFilter[0].LocalPort
+            remotePort = $firewallPortFilter[0].RemotePort
+        }
+        [IO.File]::WriteAllText((Join-Path $backup 'firewall-port-filter.json'), ($firewallSnapshot | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding($false)))
+        $updatedFirewall = $true
+        Set-NetFirewallPortFilter -InputObject $firewallPortFilter[0] -Protocol TCP -LocalPort $ports | Out-Null
     }
-    $record = [ordered]@{releaseId=$ReleaseId; sourceCommit=$manifest.sourceCommit; exeSha256=(Get-FileHash $exe).Hash; releaseDirectory=$release; dataDirectory=$data; task=$taskName; pipe=$pipeName; activatedUtc=[DateTime]::UtcNow.ToString('o'); previous=$previous; status=$state; publicPorts=$ports; blackPortPolicy='loopback only, no authenticated binding'}
+    $record = [ordered]@{releaseId=$ReleaseId; sourceCommit=$manifest.sourceCommit; exeSha256=(Get-FileHash $exe).Hash; releaseDirectory=$release; dataDirectory=$data; task=$taskName; pipe=$pipeName; activatedUtc=[DateTime]::UtcNow.ToString('o'); previous=$previous; status=$state; publicPorts=$ports; blackPortPolicy='public IPv4 portproxy to loopback 18604; no authenticated binding'}
     [IO.File]::WriteAllText($currentPath,($record | ConvertTo-Json -Depth 30),(New-Object Text.UTF8Encoding($false)))
     $record | ConvertTo-Json -Depth 8
 } catch {
     $failure = $_
     foreach ($port in $createdProxies) { & netsh interface portproxy delete v4tov4 "listenaddress=$PublicAddress" "listenport=$port" | Out-Null }
-    if ($createdFirewall) { Remove-NetFirewallRule -Name $firewallName }
+    try {
+        if ($createdFirewall) {
+            Remove-NetFirewallRule -Name $firewallName
+        } elseif ($updatedFirewall -and $firewallSnapshot) {
+            Get-NetFirewallRule -Name $firewallName | Get-NetFirewallPortFilter |
+                Set-NetFirewallPortFilter -Protocol $firewallSnapshot.protocol -LocalPort $firewallSnapshot.localPort -RemotePort $firewallSnapshot.remotePort | Out-Null
+        }
+    } catch { Write-Warning ('Firewall rollback did not complete; previous filter is in the backup directory: ' + $_.Exception.Message) }
     try {
         $failedState = Invoke-ControlResult status
         Invoke-ControlResult stop $failedState.instanceId | Out-Null

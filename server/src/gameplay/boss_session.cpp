@@ -88,12 +88,20 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         startup.init.game_server_id,package.configure(*policy.cards)) : nullptr;
     if(cards) {
         if(!package.closed_chance) throw CodecError("richonline_card_tile_map_policy_required");
+        const auto resale=RichonlineShopCatalog::load(resources,stage.map_name);
+        auto candidates=chance->reward_candidates(stage.map_name);
+        std::vector<std::int16_t> unpriced;
+        std::erase_if(candidates,[&](const auto card) {
+            if(resale.can_sell(card)) return false;
+            unpriced.push_back(card);return true;
+        });
         auto rewards=package.closed_chance->playable_reward_cards;
         if(script) rewards=script->call("rewards.pool",{{"map",stage.map_name},
-            {"candidates",chance->reward_candidates(stage.map_name)}}).get<std::vector<std::int16_t>>();
-        cards->configure_tile_rewards(std::move(rewards),policy.random);
+            {"candidates",candidates}}).get<std::vector<std::int16_t>>();
+        cards->configure_tile_rewards(std::move(rewards),policy.random,resale);
         if(log) log("richonline_card_tile_policy",{{"room",startup.room.key},{"package",package.id},
-            {"selection_policy",script ? "lua-map-eligible-playable-cards-v2" : "native-uniform-playable-resource-cards-v1"},{"candidates",cards->tile_reward_cards()}});
+            {"selection_policy",script ? "lua-map-sellable-playable-cards-v3" : "native-map-sellable-playable-cards-v2"},
+            {"excluded_unpriced",unpriced},{"candidates",cards->tile_reward_cards()}});
     }
     std::optional<RichonlineOpeningHandPlan> opening_hand;
     if (cards && package.opening_hand) {
@@ -243,6 +251,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             cards->commit_inventory(prepared.updated_inventory);
             if (log) log("richonline_chance_completed",{{"room",key},{"package",package_id},{"actor",context.actor_slot},
                 {"event",prepared.event},{"category",prepared.category},{"selection_policy",prepared.policy},
+                {"synthetic_actor",context.synthetic_actor},{"sleepwalking",context.actor_status.sleepwalking},
                 {"excluded_events",attempt.excluded_events},{"level","info"}});
             return result;
         };
@@ -254,6 +263,24 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     if (policy.payment) {
         rules.payment_operation_prefix=policy.payment->operation_prefix;
         rules.payment_equipment=policy.payment->equipment;
+    }
+    if(startup.human_profile_slots) {
+        const auto modifiers=std::make_shared<const RichonlineCombatModifierResources>(RichonlineCombatModifierResources::load(resources));
+        rules.payment_equipment=modifiers->paid_dice_equipment(*startup.human_profile_slots);
+        const std::array equipment{*startup.human_profile_slots,RichonlineCombatModifierResources::boss_equipment(stage)};
+        rules.equipment_healing=[modifiers,equipment,script=rules.script](std::uint8_t actor,std::uint32_t cash) {
+            if(actor>=equipment.size()) throw CodecError("richonline_equipment_healing_actor_invalid");
+            const auto terms=modifiers->healing(equipment[actor],cash);
+            const auto product=std::bit_cast<std::int32_t>(cash*static_cast<std::uint32_t>(terms.per_mille));
+            const auto amount=static_cast<std::int64_t>(terms.flat)+product/1000;
+            if(amount<0 || amount>0x7fffffffLL) throw CodecError("richonline_equipment_healing_out_of_range");
+            if(script) {
+                const auto planned=script->call("mall.equipment_healing",{{"cash",cash},{"flat",terms.flat},{"per_mille",terms.per_mille}});
+                if(!planned.is_number_integer() || planned.get<std::int64_t>()!=amount)
+                    throw CodecError("lua_equipment_healing_invalid");
+            }
+            return static_cast<std::uint32_t>(amount);
+        };
     }
     rules.ledger=ledger;
     const auto feast=load_original_kpd(resources/"Data/Feast.kpd",806);
@@ -325,8 +352,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             if (shop && shop->validate_landing(context)) return;
             if (context.property_ref==-1 &&
                 ((!context.synthetic_actor && richonline_boss_card_reward_tile(cell.static_type)) ||
-                 ((cell.static_type==68 || cell.static_type==69 || cell.static_type==70) &&
-                  context.actor_status.possession!=7 && !context.actor_status.sleepwalking && !context.actor_status.frozen)))
+                 richonline_news_landing_allowed(context)))
                 return;
             balances->validate_landing(context);
         };

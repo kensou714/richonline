@@ -19,6 +19,8 @@
 #include "richonline_boss_landing.hpp"
 #include "richonline_boss_property.hpp"
 #include "lua_wire.hpp"
+#include "richonline_pet.hpp"
+#include "richonline_pet_chat.hpp"
 #include <limits>
 #include <chrono>
 
@@ -81,6 +83,60 @@ struct Turns {
     struct AcceptedRandomRoll { std::uint16_t counter; std::uint64_t turn; };
     std::optional<AcceptedRandomRoll> accepted_random_roll{};
     std::uint32_t poison_use_count=0;
+    std::array<RichonlinePetState,2> pets{};
+
+    bool placement_present(std::uint8_t slot) const {
+        if(!active[slot]) return false;
+        if(!rules.raw_authority) return true;
+        const auto& raw=rules.raw_authority->actor(slot);
+        if(!raw.kidnapped1497) throw CodecError("richonline_pet_placement_state_unknown");
+        return *raw.kidnapped1497==-1;
+    }
+    std::optional<std::int16_t> pet_placement(std::uint8_t slot) const {
+        if(!pets[slot].equipped || !placement_present(slot)) return {};
+        const auto& raw=rules.raw_authority->actor(slot);
+        if(!raw.hotel1493) throw CodecError("richonline_pet_placement_state_unknown");
+        return *raw.hotel1493==-1 ? pets[slot].known_display_position : std::nullopt;
+    }
+    std::vector<std::int16_t> placement_reservations() const {
+        std::vector<std::int16_t> reserved;
+        for(std::uint8_t slot=0;slot<active.size();++slot) if(placement_present(slot)) {
+            reserved.push_back(init.participants[slot].position);
+            if(const auto position=pet_placement(slot)) reserved.push_back(*position);
+        }
+        return reserved;
+    }
+    bool placement_occupied(std::int16_t position) const {
+        for(std::uint8_t slot=0;slot<active.size();++slot)
+            if(placement_present(slot) && (init.participants[slot].position==position || pet_placement(slot)==position))
+                return true;
+        return false;
+    }
+    void reset_pet(std::uint8_t slot) {
+        const auto& person=init.participants[slot];
+        reset_richonline_pet(pets[slot],topology,person.position,person.direction);
+    }
+    std::vector<Bytes> sync_stopped_pet() {
+        if(!pets[actor].equipped) return {};
+        // 合法0011/0012/0028提交后、下一4010之前调用；原客户端附带幽灵转向提示。
+        auto message=richonline_pet_stop_sync(init.game_server_id,init.participants[actor].direction);
+        reset_pet(actor);
+        return {std::move(message)};
+    }
+    void commit_route_positions(std::size_t end) {
+        // 路线已在调用前验证；每格镜像 actor536，途中过61传送口先按出口复位。
+        if(end>=route.landings.size() || route.directions.size()!=route.landings.size())
+            throw CodecError("richonline_pet_route_progress_invalid");
+        auto& person=init.participants[actor];
+        for(auto index=authenticated_steps;index<=end;++index) {
+            if(index>0 && !controlled_roll_actor()) if(const auto exit=topology.portal_destination(person.position)) {
+                person.position=*exit;reset_pet(actor);
+            }
+            follow_richonline_pet_step(pets[actor],person.position);
+            person.position=route.landings[index];person.direction=route.directions[index];
+        }
+        authenticated_steps=end+1;
+    }
 
     bool controlled_roll_actor() const noexcept {
         return status[actor].possession==7 || status[actor].sleepwalking!=0;
@@ -105,7 +161,7 @@ struct Turns {
                 capabilities.in_prison=raw.jail1495 && *raw.jail1495!=-1;
             }
             refs[slot]={slot,current_position && slot==actor ? *current_position : init.participants[slot].position,
-                &status[slot],capabilities,&active[slot]};
+                &status[slot],capabilities,&active[slot],placement_present(slot),pet_placement(slot)};
         }
         return refs;
     }
@@ -239,6 +295,8 @@ struct Turns {
         const auto requested=count;
         const auto free_capacity=rules.payment_equipment.dice_vehicle==RichonlineDiceVehicle::car?std::uint8_t{3}:
             rules.payment_equipment.dice_vehicle==RichonlineDiceVehicle::motorcycle?std::uint8_t{2}:std::uint8_t{1};
+        // 载具自带的骰子不需要金豆支付上下文，也不能被无支付入口误拒绝。
+        if(count<=free_capacity) return prepare_move({},0,count);
         const auto fallback=[&](const char* reason,std::optional<std::array<std::int8_t,3>> faces={}) {
             const auto effective=std::min(requested,free_capacity);
             if(rules.log)rules.log("richonline_automatic_dice_fallback before_count="+std::to_string(requested)+
@@ -306,7 +364,7 @@ struct Turns {
             script_attack=rules.script->call("boss.can_attack",{{"map",rules.script_map},
                 {"actionable",richonline_combat_action_allowed(status[actor])}}).get<bool>();
         if(actor==1 && rules.combat && script_attack) {
-            auto refs=combat_refs();auto attack=rules.combat->boss_turn(refs,actor,rules.combat_random());
+            auto refs=combat_refs();auto attack=rules.combat->boss_turn(refs,actor,rules.combat_random(),rules.log);
             messages.insert(messages.end(),std::make_move_iterator(attack.packets.begin()),
                 std::make_move_iterator(attack.packets.end()));
             if(!attack.bankrupt_actors.empty())
@@ -331,6 +389,7 @@ struct Turns {
         rules.raw_authority->exit_jail(actor);
         init.participants[actor].position=exit;
         init.participants[actor].direction=static_cast<std::uint8_t>(heading);
+        reset_pet(actor);
         jail_deadline.reset();
         if(actor==init.local_slot) {
             retired_jail_exit=Decision{active_counter,21};retired_jail_exit_turn=turn_sequence;
@@ -462,6 +521,9 @@ struct Turns {
             " slot=12 harmful_possession_and_timed_bombs_cleared=1");
     }
     std::vector<Bytes> begin_turn() {
+        // 7C0C50在回合入口先刷新属性；光环6060尚未消费，回血取进入本回合时的现金。
+        const auto equipment_heal=rules.equipment_healing && rules.ledger ?
+            rules.equipment_healing(actor,rules.ledger->snapshot(actor).funds.cash):0U;
         // NEW7C0C50 clears game+60 at entry, including resumed turn phases.
         // Supported card restore-action paths do not call that entry again.
         poison_use_count=0;
@@ -506,6 +568,8 @@ struct Turns {
             rules.property->advance_building_buffs(complete_rounds,active,enabled,rules.log);
         }
         append_feast_response(messages);
+        std::vector<RichonlineGameFundsUpdate> turn_funds;
+        std::vector<std::uint8_t> aura_bankrupt;
         if(status[actor].possession==4 || status[actor].possession==6) {
             if(!rules.npc_aura || !rules.npc_aura_raw_actor || !rules.ledger || !rules.terminal)
                 throw CodecError("richonline_boss_npc_aura_capability_required");
@@ -516,10 +580,36 @@ struct Turns {
             auto aura=plan_richonline_npc_aura(topology,*rules.npc_aura,
                 {game_mode,actor,1,status[actor].possession,
                     RichonlineNpcAuraEffect{status[actor].possession_strength1740,status[actor].possession_multiplier1744}},targets);
-            if(!aura.updates.empty() && !rules.ledger->commit_batch(aura.updates,[]{return true;}))
-                throw CodecError("richonline_boss_npc_aura_ledger_rejected");
-            if(!aura.bankrupt_actors.empty())
-                return terminal(std::move(messages),std::move(aura.bankrupt_actors),RichonlineTerminalReason::npc_aura);
+            turn_funds=std::move(aura.updates);
+            aura_bankrupt=std::move(aura.bankrupt_actors);
+        }
+        std::optional<std::array<std::uint32_t,2>> healed_cash;
+        if(equipment_heal && aura_bankrupt.empty()) {
+            auto before=rules.ledger->snapshot(actor);
+            for(const auto& update:turn_funds) if(update.actor==actor) {
+                if(before!=update.before) throw CodecError("richonline_game_ledger_conflict");
+                if(before.funds!=update.after) {
+                    if(before.revision==std::numeric_limits<std::uint64_t>::max())
+                        throw CodecError("richonline_game_ledger_revision_exhausted");
+                    before={update.after,before.revision+1};
+                }
+            }
+            auto after=before.funds;
+            if(after.cash>0x7fffffffU-equipment_heal) throw CodecError("richonline_equipment_healing_cash_overflow");
+            healed_cash=std::array{after.cash,after.cash+equipment_heal};
+            after.cash+=equipment_heal;
+            turn_funds.push_back({actor,before,after});
+        }
+        // 光环和回血各算一笔收入，按队列顺序校验后原子提交，不能用净额抵消回血收入。
+        if(!turn_funds.empty() && !rules.ledger->commit_sequence(turn_funds,[]{return true;}))
+            throw CodecError("richonline_boss_turn_funds_rejected");
+        if(!aura_bankrupt.empty())
+            return terminal(std::move(messages),std::move(aura_bankrupt),RichonlineTerminalReason::npc_aura);
+        if(healed_cash) {
+            // 不发现金变动包：4010已让客户端排队同一笔6060，重发会造成双倍回血。
+            if(rules.log) rules.log("richonline_equipment_healing actor="+std::to_string(actor)+
+                " turn="+std::to_string(turn_sequence)+" amount="+std::to_string(equipment_heal)+
+                " before="+std::to_string((*healed_cash)[0])+" after="+std::to_string((*healed_cash)[1]));
         }
         if(rules.fire_traps) {
             const auto tick=plan_richonline_fire_trap_tick(rules.ground->snapshot(),actor,actor==1,active);
@@ -568,7 +658,7 @@ struct Turns {
     }
     std::vector<Bytes> opening() {
         if (phase != Phase::loading) throw CodecError("richonline_boss_duplicate_opening");
-        const std::array<std::int16_t,2> starts{init.participants[0].position,init.participants[1].position};
+        const auto starts=placement_reservations();
         auto messages=rules.npcs ? rules.npcs->initial(starts).messages : std::vector<Bytes>{};
         auto next=begin_turn();
         messages.insert(messages.end(),std::make_move_iterator(next.begin()),std::make_move_iterator(next.end()));
@@ -741,7 +831,7 @@ struct Turns {
     }
     void commit_ground_progress(RichonlineGroundObjects::Prepared& prepared,std::size_t end) {
         if(!rules.ground->commit_prepared(prepared)) throw CodecError("richonline_boss_ground_route_stale");
-        authenticated_steps=end+1;
+        commit_route_positions(end);
     }
     RichonlineTimedBombStepContext timed_context(std::int16_t position) const {
         const auto context=rules.timed_bombs->step_context(actor,position);
@@ -778,9 +868,7 @@ struct Turns {
         const auto completed=authenticated_steps+prepared.plan().accepted_steps;
         auto refs=combat_refs();
         auto result=rules.combat->commit_timed_bomb_segment(refs,prepared,ack);
-        authenticated_steps=completed;
-        init.participants[actor].position=route.landings[completed-1];
-        init.participants[actor].direction=route.directions[completed-1];
+        commit_route_positions(completed-1);
         return result;
     }
     std::vector<Bytes> bank_result(RichonlineGameBankResult result) {
@@ -867,6 +955,7 @@ struct Turns {
         std::vector<Bytes> messages) {
         auto& person=init.participants[actor];
         person.position=destination;person.direction=landing.heading;
+        reset_pet(actor);
         landing_counter=landing.counter;route={};checkpoint_cursor=0;authenticated_steps=0;
         if(rules.combat && rules.combat->has_mine(destination)) {
             // Both portal animations only relocate;4017 starts the destination mine effect.
@@ -951,7 +1040,7 @@ struct Turns {
         }
         const auto context=landing_context(landing.position);
         const auto native_landing=[&]() {
-            auto card_result=!richonline_landing_controlled(status[actor]) && rules.chance_landing ? rules.chance_landing(context) : std::nullopt;
+            auto card_result=richonline_news_landing_allowed(context) && rules.chance_landing ? rules.chance_landing(context) : std::nullopt;
             if(!richonline_landing_controlled(status[actor]) && !card_result && rules.cards) card_result=rules.cards->land(context);
             return card_result ? std::move(*card_result) : rules.landed(context);
         };
@@ -1092,35 +1181,50 @@ struct Turns {
         }
         return snapshot;
     }
-    std::vector<Bytes> hibernate(View plain) {
-        auto plan=prepare_card(164,[&] {
-            const auto request=decode_richonline_hibernate164(plain);require_local_controls();
-            if(phase!=Phase::roll || actor!=init.local_slot) throw CodecError("richonline_boss_hibernate_out_of_phase");
-            const auto before=hibernate_snapshot();
-            return plan_richonline_hibernate(request,init.game_server_id,static_cast<std::int8_t>(actor),
-                rules.cards->map_name(),*rules.hibernate->resources,rules.hibernate->rules,before);
-        });
-        if(!plan) return {encode_richonline_dice_recovery400b(init.game_server_id)};
-        auto& prepared=*plan;const auto& before=prepared.before;
+    struct PreparedHibernate {
+        RichonlineHibernatePlan plan;
         std::array<std::optional<RichonlineNpcSession::PreparedStatusChange>,2> clocks;
+        AcceptedHibernate accepted;
+    };
+    PreparedHibernate prepare_hibernate(View plain,const RichonlineHibernateSnapshot& before) {
+        const auto request=decode_richonline_hibernate164(plain);require_local_controls();
+        if(phase!=Phase::roll || actor!=init.local_slot || !rules.hibernate || !rules.cards)
+            throw CodecError("richonline_boss_hibernate_out_of_phase");
+        PreparedHibernate prepared{plan_richonline_hibernate(request,init.game_server_id,
+            static_cast<std::int8_t>(actor),rules.cards->map_name(),*rules.hibernate->resources,
+            rules.hibernate->rules,before),{}, {}};
         for(std::uint8_t slot=0;slot<status.size();++slot)
-            if(rules.npcs && before.actors[slot].status!=prepared.after.actors[slot].status)
-                clocks[slot]=rules.npcs->prepare_status_change(slot,status[slot],prepared.after.actors[slot].status);
-        std::vector<Bytes> messages{std::move(prepared.response40f4)};
-        AcceptedHibernate accepted{};std::copy(plain.begin(),plain.end(),accepted.request.begin());accepted.turn=turn_sequence;
-        if(hibernate_snapshot()!=before) throw CodecError("richonline_boss_hibernate_snapshot_changed");
+            if(rules.npcs && before.actors[slot].status!=prepared.plan.after.actors[slot].status)
+                prepared.clocks[slot]=rules.npcs->prepare_status_change(slot,before.actors[slot].status,
+                    prepared.plan.after.actors[slot].status);
+        std::copy(plain.begin(),plain.end(),prepared.accepted.request.begin());
+        prepared.accepted.turn=turn_sequence;
+        return prepared;
+    }
+    bool hibernate_matches(const PreparedHibernate& prepared) const {
+        if(turn_sequence!=prepared.accepted.turn || hibernate_snapshot()!=prepared.plan.before) return false;
         for(std::uint8_t slot=0;slot<status.size();++slot)
-            if(clocks[slot] && !rules.npcs->matches_status_change(*clocks[slot],status[slot]))
-                throw CodecError("richonline_boss_hibernate_clock_changed");
-        // All allocations and authority callbacks finish before this serialized
-        // commit. The synthetic actor's empty inventory is part of the owner contract.
+            if(prepared.clocks[slot] && !rules.npcs->matches_status_change(*prepared.clocks[slot],status[slot]))
+                return false;
+        return true;
+    }
+    void commit_hibernate(PreparedHibernate& prepared) noexcept {
+        // 所有角色、保护卡、同盟和附身时钟先准备并复核；此串行提交段不再分配或读取外部状态。
         for(std::uint8_t slot=0;slot<status.size();++slot) {
-            if(clocks[slot]) static_cast<void>(rules.npcs->commit_status_change(*clocks[slot],status[slot]));
-            else status[slot]=prepared.after.actors[slot].status;
-            relations1472[slot]=prepared.after.actors[slot].relations1472;
+            if(prepared.clocks[slot]) {
+                if(!rules.npcs->commit_status_change(*prepared.clocks[slot],status[slot])) std::terminate();
+            } else status[slot]=prepared.plan.after.actors[slot].status;
+            relations1472[slot]=prepared.plan.after.actors[slot].relations1472;
         }
-        rules.cards->commit_inventory(prepared.after.actors[init.local_slot].inventory.main);
-        accepted_hibernate=accepted;
+        rules.cards->commit_inventory(prepared.plan.after.actors[init.local_slot].inventory.main);
+        accepted_hibernate=prepared.accepted;
+    }
+    std::vector<Bytes> hibernate(View plain) {
+        auto prepared=prepare_card(164,[&] {return prepare_hibernate(plain,hibernate_snapshot());});
+        if(!prepared) return {encode_richonline_dice_recovery400b(init.game_server_id)};
+        std::vector<Bytes> messages{prepared->plan.response40f4};
+        if(!hibernate_matches(*prepared)) throw CodecError("richonline_boss_hibernate_snapshot_changed");
+        commit_hibernate(*prepared);
         return messages;
     }
     bool raw_available(std::uint8_t slot) const {
@@ -1152,7 +1256,7 @@ struct Turns {
         auto after_participants=init.participants;
         RichonlineChanceInventory inventory{};
         std::uint8_t target=actor;
-        bool enter_jail=false;
+        std::optional<RichonlineRawAuthority::PreparedJailEntry> jail_entry;
         try {
             require_local_controls();
             const auto size=opcode==122 || opcode==142 || opcode==161 || opcode==162 ? 6U : 8U;
@@ -1182,9 +1286,10 @@ struct Turns {
                 if(target==actor || !raw_available(target) || status[target].frozen || !topology.jail_positions())
                     throw CodecError("richonline_frame_target_unavailable");
                 if(!status[target].protected_from_status) {
+                    if(rules.jail_days>127) throw CodecError("richonline_frame_jail_days_invalid");
+                    jail_entry=rules.raw_authority->prepare_jail_entry(target,static_cast<std::int8_t>(rules.jail_days));
                     after_participants[target].position=(*topology.jail_positions())[0];
                     after_status[target].stay=0; // NEW7F8160 clears1496.
-                    enter_jail=true;
                 }
                 if(static_cast<std::int8_t>(after_relations[actor][target])>0)
                     after_relations[actor][target]=after_relations[target][actor]=0;
@@ -1263,12 +1368,17 @@ struct Turns {
         const auto commit=[&]() {
             if(rules.cards->inventory()!=consumption->source_inventory ||
                 (ground && !rules.ground->matches(*ground)) ||
+                (jail_entry && !rules.raw_authority->matches_jail_entry(*jail_entry)) ||
                 (clock && !rules.npcs->matches_status_change(*clock,status[target]))) return false;
             if(ground && !rules.ground->commit_prepared(*ground)) std::terminate();
             if(clock && !rules.npcs->commit_status_change(*clock,status[target])) std::terminate();
-            if(enter_jail) rules.raw_authority->enter_jail(target,static_cast<std::int8_t>(rules.jail_days));
+            if(jail_entry && !rules.raw_authority->commit_jail_entry(*jail_entry)) std::terminate();
             status=after_status;relations1472=after_relations;
             init.participants=std::move(after_participants);rules.cards->commit_inventory(inventory);
+            if(opcode==143) reset_pet(actor);
+            if(opcode==117 && jail_entry) reset_pet(target);
+            if(opcode==161) for(std::uint8_t slot=0;slot<active.size();++slot)
+                if(active[slot] && raw_available(slot) && !status[slot].frozen) reset_pet(slot);
             return true;
         };
         if(funds.empty() ? !commit() : !rules.ledger->commit_batch(funds,commit))
@@ -1276,10 +1386,22 @@ struct Turns {
         return messages;
     }
     std::vector<Bytes> script_action(View plain) {
+        if(plain.size()>=2 && read_le(plain.first(2))==66) {
+            try {
+                if(phase==Phase::loading || phase==Phase::closed || phase==Phase::finished)
+                    throw CodecError("richonline_pet_chat_out_of_phase");
+                return {richonline_pet_chat_response(plain,init.game_server_id,init.local_slot,pets[init.local_slot].equipped)};
+            } catch(const CodecError& error) {
+                if(rules.log) rules.log(std::string("richonline_pet_chat_refused reason=")+error.what());
+                return {};
+            }
+        }
         if(!rules.script) return action(plain);
+        if(plain.size()>=2 && read_le(plain.first(2))==164 && retired(plain)) return {};
         bool called=false;
         bool database_called=false;
         std::optional<RichonlineBossCards::PreparedConsumption> script_consumption;
+        std::optional<RichonlineBossCards::PreparedShuffle> script_shuffle;
         std::optional<RichonlineBossProperty::PreparedCombat> script_property;
         std::optional<RichonlineBossProperty::PreparedStreetEffect> script_street;
         std::optional<RichonlineGroundObjects::Prepared> script_ground;
@@ -1294,6 +1416,16 @@ struct Turns {
             std::optional<PreparedMove> movement;
         };
         std::optional<ScriptMotion> script_motion;
+        struct ScriptMovement {
+            PreparedMove move;
+            std::uint8_t actor,heading;
+            std::uint16_t calendar;
+            std::uint64_t turn;
+            std::int16_t position;
+            RichonlineActorStatus status;
+            std::optional<RichonlineGroundObjects::Prepared> ground_version;
+        };
+        std::optional<ScriptMovement> script_movement;
         std::optional<std::uint8_t> script_clear_relations;
         struct ScriptStatus {
             std::uint8_t target;
@@ -1301,6 +1433,49 @@ struct Turns {
             std::optional<RichonlineNpcSession::PreparedStatusChange> clock;
         };
         std::optional<ScriptStatus> script_status;
+        struct ScriptJail {
+            std::uint8_t source,target;
+            std::uint16_t calendar;
+            std::uint64_t turn;
+            std::int16_t before_position,after_position;
+            RichonlineActorStatus before_status,after_status;
+            RichonlineRawAuthority::PreparedJailEntry raw;
+            std::optional<RichonlineNpcSession::PreparedStatusChange> clock;
+            bool applied;
+            Bytes response;
+        };
+        std::optional<ScriptJail> script_jail;
+        struct ScriptDismiss {
+            std::uint8_t source,target;
+            std::uint16_t calendar;
+            std::uint64_t turn;
+            RichonlineActorStatus source_status;
+            RichonlineRawActorState target_raw;
+            Bytes response;
+        };
+        std::optional<ScriptDismiss> script_dismiss;
+        struct ScriptGodCard {
+            std::uint8_t actor;
+            std::int8_t npc;
+            std::uint16_t calendar;
+            std::uint64_t turn;
+            std::int16_t position;
+            RichonlineChanceInventory consumed_inventory;
+            Bytes confirmation;
+            std::optional<RichonlineFortuneRewardPlan> reward;
+            std::optional<std::chrono::steady_clock::time_point> deadline;
+        };
+        std::optional<ScriptGodCard> script_god_card;
+        std::optional<RichonlineHibernateSnapshot> script_hibernate_snapshot;
+        std::optional<PreparedHibernate> script_hibernate;
+        struct ScriptAttack {
+            RichonlineCombatBridge::PreparedHumanAttack prepared;
+            std::uint8_t actor;
+            std::uint16_t calendar;
+            std::uint64_t turn;
+            RichonlineChanceInventory consumed_inventory;
+        };
+        std::optional<ScriptAttack> script_attack;
         bool script_inventory_cleared=false;
         bool script_route_previewed=false;
         struct ScriptPosition {std::uint8_t slot;std::int16_t before,after;};
@@ -1329,6 +1504,7 @@ struct Turns {
                 const auto position=static_cast<std::int16_t>(integer("position",0,32767));
                 if(static_cast<std::size_t>(position)>=topology.cells().size() || !topology.cell(position).walkable)
                     throw CodecError("lua_ground_position_invalid");
+                if(placement_occupied(position)) throw CodecError("richonline_ground_card_target_actor_occupied");
                 if(!after.emplace(position,RichonlineGroundObject{static_cast<std::int8_t>(integer("npc",0,127)),
                     static_cast<std::uint8_t>(integer("byte7",0,255)),static_cast<std::uint8_t>(integer("byte8",0,255))}).second)
                     throw CodecError("richonline_ground_card_target_dynamic_occupied");
@@ -1358,6 +1534,75 @@ struct Turns {
                 script_consumption=rules.cards->prepare_consumption(static_cast<std::int8_t>(plain[4]),static_cast<std::int16_t>(id));
                 if(!script_consumption) throw CodecError("lua_card_not_owned");
                 return LuaValue{{"slot",plain[4]},{"bank",plain[5]}};
+            }},
+            {"combat.prepare_attack",[&](const LuaValue& args) {
+                require_local_controls();
+                if(called || database_called || !script_consumption || script_attack || !rules.combat ||
+                    phase!=Phase::roll || actor!=init.local_slot || !active[actor])
+                    throw CodecError("lua_attack_prepare_out_of_scope");
+                const auto request=parse_richonline_target_card(plain);
+                const auto& card=args.at("card");const auto& target=args.at("target");
+                if(!card.is_number_integer() || card!=script_consumption->card_id ||
+                    !target.is_number_integer() || target!=request.target)
+                    throw CodecError("lua_attack_argument_mismatch");
+                auto refs=combat_refs();
+                auto prepared=rules.combat->prepare_human_attack(refs,request,active_counter,*script_consumption);
+                script_attack=ScriptAttack{std::move(prepared),actor,active_counter,turn_sequence,
+                    script_consumption->remaining_inventory};
+                return LuaValue{};
+            }},
+            {"hibernate.snapshot",[&](const LuaValue&) {
+                if(called || database_called || !script_consumption || script_consumption->card_id!=506 ||
+                    plain.size()!=6 || read_le(plain.first(2))!=164 || script_hibernate_snapshot)
+                    throw CodecError("lua_hibernate_snapshot_out_of_scope");
+                script_hibernate_snapshot=hibernate_snapshot();
+                auto actors=LuaValue::array();
+                for(std::size_t slot=0;slot<script_hibernate_snapshot->actors.size();++slot) {
+                    const auto& target=script_hibernate_snapshot->actors[slot];
+                    actors.push_back({{"slot",slot},{"present",target.present},{"hotel",target.raw1493},
+                        {"hospital",target.raw1494},{"jail",target.raw1495},{"kidnapped",target.raw1497},
+                        {"frozen",target.status.frozen}});
+                }
+                return LuaValue{{"actor",actor},{"actors",actors},{"frozen_turns",rules.hibernate->rules.frozen_turns}};
+            }},
+            {"hibernate.prepare",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || !script_hibernate_snapshot || script_hibernate)
+                    throw CodecError("lua_hibernate_prepare_out_of_scope");
+                const auto& targets=args.at("targets");const auto& turns=args.at("frozen_turns");
+                if(!targets.is_array() || targets.empty() || targets.size()>7 || !turns.is_number_integer() ||
+                    turns!=rules.hibernate->rules.frozen_turns)
+                    throw CodecError("lua_hibernate_policy_invalid");
+                auto prepared=prepare_hibernate(plain,*script_hibernate_snapshot);
+                auto expected=LuaValue::array();
+                for(std::size_t slot=0;slot<prepared.plan.effects.size();++slot)
+                    if(prepared.plan.effects[slot]!=RichonlineHibernateEffect::ineligible &&
+                        prepared.plan.effects[slot]!=RichonlineHibernateEffect::requester) expected.push_back(slot);
+                // Lua 选目标；核心按客户端规则复核完整列表，免疫/保护卡仍在同一快照内解析。
+                for(const auto& target:targets) if(!target.is_number_integer())
+                    throw CodecError("lua_hibernate_target_invalid");
+                if(targets!=expected || script_consumption->source_inventory!=prepared.plan.before.actors[actor].inventory.main ||
+                    script_consumption->remaining_inventory!=prepared.plan.after.actors[actor].inventory.main)
+                    throw CodecError("lua_hibernate_plan_mismatch");
+                script_hibernate=std::move(prepared);
+                return LuaValue{};
+            }},
+            {"route.prepare_move",[&](const LuaValue& args) {
+                require_local_controls();
+                if(called || database_called || !script_consumption || script_movement ||
+                    phase!=Phase::roll || actor!=init.local_slot || !active[actor])
+                    throw CodecError("lua_route_prepare_out_of_scope");
+                const auto& steps=args.at("steps");
+                if(!steps.is_number_integer() || steps<1 || steps>6)
+                    throw CodecError("lua_route_steps_invalid");
+                const auto& person=init.participants[actor];
+                // 只校验地面版本，不提交此无变化计划；路障等仍在实际经过时消费。
+                auto ground_version=rules.ground ? std::optional{rules.ground->prepare(
+                    ground_snapshot(),ground_snapshot().objects)} : std::nullopt;
+                auto movement=prepare_move(steps.get<std::uint8_t>());
+                auto packets=encode(movement.messages);
+                script_movement=ScriptMovement{std::move(movement),actor,person.direction,
+                    active_counter,turn_sequence,person.position,status[actor],std::move(ground_version)};
+                return packets;
             }},
             {"motion.prepare",[&](const LuaValue& args) {
                 if(called || database_called || !script_consumption || script_motion || !rules.motion_cards || !rules.cards)
@@ -1397,8 +1642,39 @@ struct Turns {
                 auto recovery=LuaValue::array(); if(script_motion->card.recovery) recovery.push_back(lua_bytes(View(*script_motion->card.recovery)));
                 return LuaValue{{"response",lua_bytes(View(script_motion->card.response))},{"movement",std::move(movement_packets)},{"recovery",std::move(recovery)},{"continuation",script_motion->card.continuation==RichonlineMotionCardContinuation::await_same_position17 ? "stationary" : "resume"}};
             }},
+            {"inventory.consumed_snapshot",[&](const LuaValue&) {
+                if(called || database_called || !script_consumption || script_shuffle || script_inventory_cleared || script_motion)
+                    throw CodecError("lua_inventory_snapshot_out_of_scope");
+                auto stacks=LuaValue::array();
+                for(std::uint8_t slot=0;slot<script_consumption->remaining_inventory.size();++slot) {
+                    const auto& entry=script_consumption->remaining_inventory[slot];
+                    if(entry.card_id==-1 && entry.count==0) continue;
+                    stacks.push_back({{"slot",slot},{"card",entry.card_id},{"count",entry.count}});
+                }
+                return stacks;
+            }},
+            {"inventory.prepare_reorder",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_shuffle || script_inventory_cleared || script_motion ||
+                    script_consumption->card_id!=1125 || plain.size()!=6 || read_le(plain.first(2))!=152)
+                    throw CodecError("lua_inventory_reorder_out_of_scope");
+                const auto& slots=args.at("slots");
+                if(!slots.is_array() || slots.size()>8) throw CodecError("lua_inventory_reorder_slots_invalid");
+                std::vector<std::uint8_t> order;
+                order.reserve(slots.size());
+                for(const auto& slot:slots) {
+                    if(!slot.is_number_integer() || slot<0 || slot>=8)
+                        throw CodecError("lua_inventory_reorder_slot_invalid");
+                    order.push_back(slot.get<std::uint8_t>());
+                }
+                auto prepared=rules.cards->prepare_shuffle_order(script_consumption->slot,actor,order);
+                if(prepared.source_inventory!=script_consumption->source_inventory)
+                    throw CodecError("lua_inventory_reorder_source_changed");
+                script_consumption->remaining_inventory=prepared.remaining_inventory;
+                script_shuffle=std::move(prepared);
+                return LuaValue{};
+            }},
             {"inventory.prepare_clear",[&](const LuaValue& args) {
-                if(called || database_called || !script_consumption || script_inventory_cleared)
+                if(called || database_called || !script_consumption || script_inventory_cleared || script_shuffle)
                     throw CodecError("lua_inventory_clear_out_of_scope");
                 const auto& cards=args.at("cards");
                 if(!cards.is_array() || cards.size()>8) throw CodecError("lua_inventory_clear_ids_invalid");
@@ -1527,6 +1803,55 @@ struct Turns {
                 script_clear_relations=target;
                 return LuaValue{};
             }},
+            {"npc.prepare_attach",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_status || script_god_card ||
+                    !rules.npcs || npc_landing || npc_pending_counter || plain.size()!=6)
+                    throw CodecError("lua_npc_attach_out_of_scope");
+                const auto& value=args.at("npc");
+                if(!value.is_number_integer() || (value!=0 && value!=3))
+                    throw CodecError("lua_npc_attach_kind_invalid");
+                const auto npc=value.get<std::int8_t>();
+                if(read_le(plain.first(2))!=(npc==0 ? 130U : 131U) || script_consumption->card_id!=(npc==0 ? 1069 : 1070))
+                    throw CodecError("lua_npc_attach_card_mismatch");
+                auto clock=rules.npcs->prepare_card_attachment(landing_context(init.participants[actor].position),
+                    npc,active_counter,status[actor]);
+                Bytes confirmation;append_le(confirmation,npc==0 ? 0x40d2 : 0x40d3,2);
+                append_le(confirmation,init.game_server_id,2);confirmation.push_back(plain[4]);confirmation.push_back(0);
+                script_status=ScriptStatus{actor,status[actor],clock.after(),std::move(clock)};
+                script_god_card=ScriptGodCard{actor,npc,active_counter,turn_sequence,init.participants[actor].position,
+                    script_consumption->remaining_inventory,std::move(confirmation),{}, {}};
+                return LuaValue{};
+            }},
+            {"inventory.prepare_fortune",[&](const LuaValue&) {
+                if(called || database_called || !script_god_card || script_god_card->npc!=3 || script_god_card->reward ||
+                    script_consumption->remaining_inventory!=script_god_card->consumed_inventory)
+                    throw CodecError("lua_fortune_reward_out_of_scope");
+                auto reward=rules.npcs->prepare_fortune_rewards(script_consumption->remaining_inventory);
+                auto chosen=LuaValue::array();for(const auto card:reward.cards) chosen.push_back(card);
+                script_consumption->remaining_inventory=reward.inventory;
+                script_god_card->reward=std::move(reward);
+                return chosen;
+            }},
+            {"npc.prepare_detach",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_status || script_dismiss ||
+                    !rules.npcs || !rules.raw_authority || npc_landing || script_consumption->card_id!=1048 ||
+                    plain.size()!=8 || read_le(plain.first(2))!=113)
+                    throw CodecError("lua_npc_detach_out_of_scope");
+                const auto& value=args.at("target");
+                if(!value.is_number_integer() || value<0 || value>=active.size())
+                    throw CodecError("lua_npc_detach_target_invalid");
+                const auto target=value.get<std::uint8_t>();
+                if(target!=plain[6] || !active[target] || !raw_available(target))
+                    throw CodecError("lua_npc_detach_target_unavailable");
+                auto clock=rules.npcs->prepare_card_detachment(landing_context(init.participants[actor].position),
+                    target,status[target]);
+                Bytes response;append_le(response,0x40c1,2);append_le(response,init.game_server_id,2);
+                response.push_back(plain[4]);response.push_back(0);response.push_back(target);
+                script_status=ScriptStatus{target,status[target],clock.after(),std::move(clock)};
+                script_dismiss=ScriptDismiss{actor,target,active_counter,turn_sequence,status[actor],
+                    rules.raw_authority->actor(target),std::move(response)};
+                return LuaValue{};
+            }},
             {"status.prepare_clear",[&](const LuaValue& args) {
                 if(called || database_called || !script_consumption || script_status)
                     throw CodecError("lua_status_prepare_out_of_scope");
@@ -1581,8 +1906,38 @@ struct Turns {
                 for(std::uint8_t slot=0;slot<active.size();++slot)
                     result.push_back({{"slot",slot},{"active",active[slot]},
                         {"position",init.participants[slot].position},{"frozen",status[slot].frozen!=0},
+                        {"protected_from_status",status[slot].protected_from_status},
                         {"raw_available",raw_available(slot)}});
                 return result;
+            }},
+            {"actor.jail_rules",[&](const LuaValue&) {
+                return LuaValue{{"available",topology.jail_positions().has_value()},{"days",rules.jail_days}};
+            }},
+            {"actor.prepare_jail",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_jail || !rules.raw_authority ||
+                    script_consumption->card_id!=1054 || plain.size()!=8 || read_le(plain.first(2))!=117)
+                    throw CodecError("lua_jail_prepare_out_of_scope");
+                const auto& value=args.at("target");
+                const auto& apply=args.at("apply");
+                if(!value.is_number_integer() || value<0 || value>=active.size() || !apply.is_boolean())
+                    throw CodecError("lua_jail_arguments_invalid");
+                const auto target=value.get<std::uint8_t>();
+                const auto applied=apply.get<bool>();
+                const auto jail=topology.jail_positions();
+                if(target!=plain[6] || target==actor || !active[target] || !raw_available(target) || status[target].frozen ||
+                    !jail || rules.jail_days>127 || applied==status[target].protected_from_status)
+                    throw CodecError("lua_jail_target_unavailable");
+                auto raw=rules.raw_authority->prepare_jail_entry(target,static_cast<std::int8_t>(rules.jail_days));
+                const auto before=status[target];auto after=before;
+                if(applied) after.stay=0; // 客户端入狱动画清除1496，保留附身及其倒计时。
+                auto clock=rules.npcs && after!=before ?
+                    std::optional{rules.npcs->prepare_status_change(target,before,after)} : std::nullopt;
+                Bytes response;append_le(response,0x40c5,2);append_le(response,init.game_server_id,2);
+                response.push_back(plain[4]);response.push_back(0);response.push_back(target);response.push_back(0);
+                script_jail=ScriptJail{actor,target,active_counter,turn_sequence,init.participants[target].position,
+                    applied ? (*jail)[0] : init.participants[target].position,before,after,std::move(raw),std::move(clock),
+                    applied,std::move(response)};
+                return LuaValue{};
             }},
             {"actor.prepare_positions",[&](const LuaValue& args) {
                 if(called || database_called || !script_consumption || script_positions_prepared)
@@ -1629,7 +1984,7 @@ struct Turns {
                 for(std::size_t slot=0;slot<active.size();++slot)
                     if(active[slot] && init.participants[slot].position==position) active_occupied=true;
                 return LuaValue{{"position",position},{"walkable",cell.walkable},{"static_type",cell.static_type},
-                    {"property",cell.property_ref},{"actor_occupied",occupied},
+                    {"property",cell.property_ref},{"actor_occupied",occupied},{"placement_occupied",placement_occupied(position)},
                     {"active_actor_occupied",active_occupied},{"ground_occupied",rules.ground && ground_snapshot().objects.contains(position)},
                     {"ground_visible",rules.ground_card_visible && rules.ground_card_visible(actor,init.participants[actor].position,position)}};
             }},
@@ -1697,6 +2052,82 @@ struct Turns {
                 {"actor",actor},{"calendar",active_counter},{"game_id",init.game_server_id}},api);
             if(!result.is_array()||result.size()>1024) throw CodecError("lua_game_response_invalid");
             for(const auto& packet:result) messages.push_back(lua_bytes(packet));
+            if(script_ground && (script_positions_prepared || script_motion || script_movement))
+                throw CodecError("lua_ground_cannot_mix_movement");
+            if(script_attack) {
+                if(script_hibernate_snapshot || script_motion || script_movement || script_shuffle || script_jail ||
+                    script_dismiss || script_god_card || script_property || script_street || script_ground || script_status ||
+                    script_break_alliance || script_set_alliance || script_clear_relations || script_positions_prepared ||
+                    script_inventory_cleared || !script_funds.empty() ||
+                    script_consumption->remaining_inventory!=script_attack->consumed_inventory)
+                    throw CodecError("lua_attack_cannot_mix_mutations");
+                if(messages!=script_attack->prepared.packets()) throw CodecError("lua_attack_response_invalid");
+            }
+            if(script_hibernate_snapshot) {
+                if(!script_hibernate || script_motion || script_movement || script_shuffle || script_jail ||
+                    script_dismiss || script_god_card || script_property || script_street || script_ground || script_status ||
+                    script_break_alliance || script_set_alliance || script_clear_relations || script_positions_prepared ||
+                    script_inventory_cleared || !script_funds.empty())
+                    throw CodecError("lua_hibernate_cannot_mix_mutations");
+                if(messages.size()!=1 || messages.front()!=script_hibernate->plan.response40f4 ||
+                    script_consumption->remaining_inventory!=script_hibernate->plan.after.actors[actor].inventory.main)
+                    throw CodecError("lua_hibernate_response_invalid");
+                if(!hibernate_matches(*script_hibernate)) throw CodecError("lua_hibernate_snapshot_changed");
+            }
+            if(script_god_card) {
+                // 附身确认和福神两张奖励组成一个完整事务；不能漏发、换序或混入其他修改。
+                if(script_motion || script_movement || script_shuffle || script_jail || script_dismiss || script_property ||
+                    script_street || script_ground || script_break_alliance || script_set_alliance || script_clear_relations ||
+                    script_positions_prepared || script_inventory_cleared || !script_funds.empty())
+                    throw CodecError("lua_god_card_cannot_mix_mutations");
+                const auto& god=*script_god_card;
+                if((god.npc==3)!=god.reward.has_value() || messages.size()!=(god.npc==3 ? 2U : 1U) ||
+                    messages.front()!=god.confirmation ||
+                    (god.reward && messages[1]!=god.reward->response4023) ||
+                    script_consumption->remaining_inventory!=(god.reward ? god.reward->inventory : god.consumed_inventory))
+                    throw CodecError("lua_god_card_response_invalid");
+                // 时钟读取也在提交前完成；提交后只切换已经准备好的转盘等待状态。
+                if(god.npc==0) script_god_card->deadline=rules.now()+rules.npc_roulette_timeout;
+            }
+            if(script_dismiss) {
+                // 送神仅提交附身状态/时钟及扣卡；七字节40C1不带请求中的未使用字节。
+                if(script_motion || script_movement || script_shuffle || script_jail || script_property || script_street ||
+                    script_ground || script_break_alliance || script_set_alliance || script_clear_relations ||
+                    script_positions_prepared || script_inventory_cleared || !script_funds.empty())
+                    throw CodecError("lua_npc_detach_cannot_mix_mutations");
+                if(messages.size()!=1 || messages.front()!=script_dismiss->response)
+                    throw CodecError("lua_npc_detach_response_invalid");
+            }
+            if(script_jail) {
+                // 陷害只允许入狱与解除施放者/目标同盟，不允许再混入其他状态或库存业务。
+                if(script_motion || script_movement || script_shuffle || script_property || script_street || script_ground ||
+                    script_status || script_set_alliance || script_clear_relations || script_positions_prepared ||
+                    script_inventory_cleared || !script_funds.empty() || script_break_alliance!=script_jail->target)
+                    throw CodecError("lua_jail_cannot_mix_mutations");
+                if(messages.size()!=1 || messages.front()!=script_jail->response)
+                    throw CodecError("lua_jail_response_invalid");
+            }
+            if(script_shuffle) {
+                // 洗牌回包必须精确描述准备的插入顺序；禁止随后混入其他业务或更改准备库存。
+                if(script_motion || script_movement || script_property || script_street || script_ground || script_status ||
+                    script_break_alliance || script_set_alliance || script_clear_relations || script_positions_prepared ||
+                    script_inventory_cleared || !script_funds.empty() ||
+                    script_consumption->remaining_inventory!=script_shuffle->remaining_inventory)
+                    throw CodecError("lua_inventory_reorder_cannot_mix_mutations");
+                if(messages.size()!=1 || messages.front()!=script_shuffle->confirmation40e8)
+                    throw CodecError("lua_inventory_reorder_response_invalid");
+            }
+            if(script_movement) {
+                // 路线来自动作开始时的状态；禁止在同一脚本中再改变它依赖的状态。
+                if(script_motion || script_property || script_street || script_ground || script_status ||
+                    script_break_alliance || script_set_alliance || script_clear_relations ||
+                    script_positions_prepared || script_inventory_cleared || !script_funds.empty())
+                    throw CodecError("lua_route_cannot_mix_mutations");
+                const auto& route_packets=script_movement->move.messages;
+                if(messages.size()!=route_packets.size()+1 ||
+                    !std::equal(route_packets.begin(),route_packets.end(),messages.begin()+1))
+                    throw CodecError("lua_route_response_sequence_invalid");
+            }
             if(script_consumption) {
                 if(messages.empty()) throw CodecError("lua_card_response_required");
                 for(const auto& packet:messages)
@@ -1714,10 +2145,53 @@ struct Turns {
             }
             throw;
         }
+        if(script_attack) {
+            if(phase!=Phase::roll || actor!=script_attack->actor || active_counter!=script_attack->calendar ||
+                turn_sequence!=script_attack->turn)
+                throw CodecError("lua_attack_turn_changed");
+            auto refs=combat_refs();
+            auto attack=rules.combat->commit_human_attack(refs,script_attack->prepared,rules.log);
+            if(rules.log) rules.log("lua_card_committed card="+std::to_string(script_consumption->card_id)+
+                " slot="+std::to_string(script_consumption->slot)+" combat=1");
+            // 核心已一起提交扣卡、保护卡、资金和地产；不能再走通用库存提交覆盖战斗结果。
+            if(!attack.bankrupt_actors.empty())
+                return terminal(std::move(attack.packets),std::move(attack.bankrupt_actors),RichonlineTerminalReason::human_attack);
+            return std::move(attack.packets);
+        }
+        if(script_hibernate) {
+            // Lua 及响应转换已经成功；只提交这一份冬眠计划，不能再走通用扣卡路径。
+            if(!hibernate_matches(*script_hibernate)) throw CodecError("lua_hibernate_snapshot_changed");
+            commit_hibernate(*script_hibernate);
+            if(rules.log) rules.log("lua_card_committed card=506 slot="+std::to_string(script_consumption->slot)+
+                " hibernate=1");
+            return messages;
+        }
         if(script_consumption) {
             // Lua 完整返回且所有回包都分配成功后，才在同一事务提交库存与余额。
             const auto commit=[&] {
                 if(rules.cards->inventory()!=script_consumption->source_inventory ||
+                    (script_god_card && (phase!=Phase::roll || actor!=script_god_card->actor ||
+                        active_counter!=script_god_card->calendar || turn_sequence!=script_god_card->turn ||
+                        !active[actor] || npc_landing || npc_pending_counter ||
+                        init.participants[actor].position!=script_god_card->position)) ||
+                    (script_dismiss && (phase!=Phase::roll || actor!=script_dismiss->source ||
+                        active_counter!=script_dismiss->calendar || turn_sequence!=script_dismiss->turn ||
+                        !active[actor] || !active[script_dismiss->target] || npc_landing ||
+                        status[actor]!=script_dismiss->source_status ||
+                        rules.raw_authority->actor(script_dismiss->target)!=script_dismiss->target_raw)) ||
+                    (script_jail && (phase!=Phase::roll || actor!=script_jail->source ||
+                        active_counter!=script_jail->calendar || turn_sequence!=script_jail->turn ||
+                        !active[actor] || !active[script_jail->target] ||
+                        init.participants[script_jail->target].position!=script_jail->before_position ||
+                        status[script_jail->target]!=script_jail->before_status ||
+                        !rules.raw_authority->matches_jail_entry(script_jail->raw) ||
+                        (script_jail->clock && !rules.npcs->matches_status_change(*script_jail->clock,status[script_jail->target])))) ||
+                    (script_movement && (phase!=Phase::roll || actor!=script_movement->actor ||
+                        active_counter!=script_movement->calendar || turn_sequence!=script_movement->turn ||
+                        !active[actor] || init.participants[actor].position!=script_movement->position ||
+                        init.participants[actor].direction!=script_movement->heading ||
+                        status[actor]!=script_movement->status ||
+                        (script_movement->ground_version && !rules.ground->matches(*script_movement->ground_version)))) ||
                     (script_property && !rules.property->combat_matches(*script_property)) ||
                     (script_street && !rules.property->street_effect_matches(*script_street)) ||
                     (script_ground && !rules.ground->matches(*script_ground)) ||
@@ -1730,6 +2204,15 @@ struct Turns {
                     std::ranges::any_of(script_positions,[&](const auto& position) {
                         return init.participants[position.slot].position!=position.before;})) return false;
                 if(script_property && !rules.property->commit_combat(*script_property)) std::terminate();
+                if(script_jail) {
+                    const auto target=script_jail->target;
+                    if(script_jail->applied && !rules.raw_authority->commit_jail_entry(script_jail->raw)) std::terminate();
+                    if(script_jail->clock) {
+                        if(!rules.npcs->commit_status_change(*script_jail->clock,status[target])) std::terminate();
+                    } else status[target]=script_jail->after_status;
+                    init.participants[target].position=script_jail->after_position;
+                    if(script_jail->applied) reset_pet(target);
+                }
                 if(script_street && !rules.property->commit_street_effect(*script_street)) std::terminate();
                 if(script_ground && !rules.ground->commit_prepared(*script_ground)) std::terminate();
                 if(script_break_alliance && static_cast<std::int8_t>(relations1472[actor][*script_break_alliance])>0) {
@@ -1744,6 +2227,7 @@ struct Turns {
                         if(!rules.npcs->commit_status_change(*script_motion->clock,status[script_motion->target])) std::terminate();
                     } else status[script_motion->target]=script_motion->card.after.status;
                     init.participants[script_motion->target].direction=script_motion->card.after.heading;
+                    if(read_le(plain.first(2))==105) reset_pet(script_motion->target);
                     if(read_le(plain.first(2))==107 &&
                         static_cast<std::int8_t>(relations1472[actor][script_motion->target])>0)
                         relations1472[actor][script_motion->target]=relations1472[script_motion->target][actor]=0;
@@ -1766,8 +2250,18 @@ struct Turns {
                         if(!rules.npcs->commit_status_change(*script_status->clock,current)) std::terminate();
                     } else current=script_status->after;
                 }
-                for(const auto& position:script_positions)
+                if(script_god_card) {
+                    if(script_god_card->npc==0) {
+                        npc_pending_counter=script_god_card->calendar;npc_retired_counter.reset();
+                        npc_deadline=script_god_card->deadline;phase=Phase::npc;
+                    } else {npc_deadline.reset();phase=Phase::roll;}
+                    controlled_roll_deadline.reset();
+                }
+                for(const auto& position:script_positions) {
                     init.participants[position.slot].position=position.after;
+                    reset_pet(position.slot);
+                }
+                if(script_movement) static_cast<void>(commit_move(std::move(script_movement->move)));
                 rules.cards->commit_inventory(script_consumption->remaining_inventory);return true;
             };
             if(script_funds.empty() ? !commit() : !rules.ledger->commit_batch(script_funds,commit))
@@ -1778,11 +2272,18 @@ struct Turns {
                 " ground="+std::to_string(script_ground.has_value())+
                 " street_properties="+std::to_string(script_street ? script_street->affected_properties() : 0)+
                 " inventory_clear="+std::to_string(script_inventory_cleared)+
+                " inventory_reorder="+std::to_string(script_shuffle.has_value())+
+                " jail="+std::to_string(script_jail && script_jail->applied)+
+                " npc_detach="+std::to_string(script_dismiss.has_value())+
+                " god_card="+std::to_string(script_god_card.has_value())+
                 " alliance="+std::to_string(script_set_alliance.has_value())+
                 " positions="+std::to_string(script_positions.size())+
                 " status="+std::to_string(script_status.has_value())+
+                " movement="+std::to_string(script_movement.has_value())+
                 " relations_clear="+std::to_string(script_clear_relations.has_value()));
         }
+        if(script_dismiss) return npc_result({std::move(messages),RichonlineNpcContinuation::restore_action,
+            RichonlineNpcWait::none,false,{}});
         return messages;
     }
     std::vector<Bytes> action(View plain) {
@@ -2042,6 +2543,7 @@ struct Turns {
                     throw CodecError("richonline_boss_motion_npc_status_changed");
             } else status[target]=prepared.after.status;
             init.participants[target].direction=prepared.after.heading;
+            if(opcode==105) reset_pet(target);
             if(opcode==107) {
                 if(static_cast<std::int8_t>(relations1472[actor][target])>0)
                     relations1472[actor][target]=relations1472[target][actor]=0;
@@ -2068,7 +2570,11 @@ struct Turns {
             auto ground_progress=!progress ? prepare_ground_progress(*checkpoint) : std::nullopt;
             if(progress) static_cast<void>(commit_timed_progress(*progress));
             else if(ground_progress) commit_ground_progress(*ground_progress,*checkpoint);
-            return open_bank(request.position,request.calendar_counter,RichonlineGameBankVisit::passing,checkpoint);
+            else commit_route_positions(*checkpoint);
+            auto messages=sync_stopped_pet();
+            auto bank=open_bank(request.position,request.calendar_counter,RichonlineGameBankVisit::passing,checkpoint);
+            messages.insert(messages.end(),std::make_move_iterator(bank.begin()),std::make_move_iterator(bank.end()));
+            return messages;
         }
         case 50: {
             const auto request=parse_richonline_card_discard50(plain);
@@ -2099,8 +2605,7 @@ struct Turns {
                     throw CodecError("richonline_boss_ground_card_authority_required");
                 const auto valid=request.position>=0 && static_cast<std::size_t>(request.position)<topology.cells().size();
                 const auto* cell=valid ? &topology.cell(request.position) : nullptr;
-                const auto occupied=std::any_of(init.participants.begin(),init.participants.end(),
-                    [&](const auto& participant){return participant.position==request.position;});
+                const auto occupied=placement_occupied(request.position);
                 const RichonlineGroundCardTurnContext context{init.game_server_id,active_counter,
                     static_cast<std::int8_t>(actor),static_cast<std::int8_t>(init.local_slot),phase==Phase::roll,
                     !controlled_roll_actor() && !status[actor].frozen && active[actor],valid,cell && cell->walkable,
@@ -2304,10 +2809,8 @@ struct Turns {
                     static_cast<std::uint16_t>(topology.height()),valid &&
                     rules.ground_card_visible(actor,init.participants[actor].position,position),
                     [this](std::int16_t target) {
-                        const auto& cell=topology.cell(target);bool occupied=false;
-                        for(std::size_t slot=0;slot<active.size();++slot)
-                            if(active[slot] && init.participants[slot].position==target) occupied=true;
-                        return RichonlineResearchTrapCell{cell.walkable,occupied,cell.static_type};
+                        const auto& cell=topology.cell(target);
+                        return RichonlineResearchTrapCell{cell.walkable,placement_occupied(target),cell.static_type};
                     },static_cast<std::int8_t>(actor)};
                 planned=plan_richonline_research_trap(request,context,map,*traps,
                     rules.cards->inventory(),rules.ground->snapshot());
@@ -2427,7 +2930,8 @@ struct Turns {
                 rules.npc_landing_preflight(context);
             if(progress) static_cast<void>(commit_timed_progress(*progress));
             else if(ground_progress) commit_ground_progress(*ground_progress,route.landings.size()-1);
-            return ground_landing(landing);
+            else if(!stationary) commit_route_positions(route.landings.size()-1);
+            return ground_landing(landing,sync_stopped_pet());
         }
         case 0x12: {
             const auto request=std::get<RichonlineMoveCountdown12>(parse_richonline_movement_request(plain));
@@ -2447,6 +2951,8 @@ struct Turns {
             // valid across the immediately following turns and is bounded.
             retired_bomb_stops.reserve(retired_bomb_stops.size()+1);
             auto result=commit_timed_progress(*progress,request);
+            auto sync=sync_stopped_pet();
+            result.packets.insert(result.packets.begin(),std::make_move_iterator(sync.begin()),std::make_move_iterator(sync.end()));
             retired_bomb_stops.push_back({request.calendar_counter,request.endpoint,turn_sequence});
             route={};checkpoint_cursor=0;authenticated_steps=0;
             if(!result.bankrupt_actors.empty())
@@ -2485,6 +2991,7 @@ struct Turns {
 RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& startup,
     RichonlineRoadTopology topology, RichonlineBossTurnRules rules) {
     if (!rules.random || !rules.landed || !rules.event || !rules.now) throw CodecError("richonline_boss_turn_rules_required");
+    if(rules.equipment_healing && !rules.ledger) throw CodecError("richonline_equipment_healing_ledger_required");
     if((rules.npcs || rules.combat || rules.ice_traps || rules.fire_traps) && !rules.npc_landing_preflight)
         throw CodecError("richonline_boss_npc_landing_preflight_required");
     if(rules.combat && (!rules.combat_random || !rules.combat_capabilities || !rules.terminal))
@@ -2539,6 +3046,23 @@ RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& st
         !rules.ice_traps->fire_rounds || rules.ice_traps->fire_rounds>127))
         throw CodecError("richonline_boss_ice_trap_rules_required");
     auto state = std::make_shared<Turns>(Turns{startup.init,std::move(topology),std::move(rules),Phase::loading,1,{},mode});
+    if(startup.human_profile_slots) {
+        const auto pet=(*startup.human_profile_slots)[0];
+        if(pet>0 && pet<=0x7fffffffU) {
+            if(!state->rules.raw_authority)
+                throw RichonlineEquipmentError("richonline_pet_actor_authority_required",0,pet);
+            state->pets[startup.init.local_slot].equipped=true;
+            state->reset_pet(startup.init.local_slot);
+        }
+        const auto vehicle=(*startup.human_profile_slots)[1];
+        if(vehicle>0 && vehicle<=0x7fffffffU)
+            state->human_dice_count=state->rules.payment_equipment.dice_vehicle==RichonlineDiceVehicle::motorcycle?2:3;
+    }
+    if(state->rules.npcs) state->rules.npcs->configure_placement_reservations([weak=std::weak_ptr<Turns>(state)] {
+        const auto owner=weak.lock();
+        if(!owner) throw CodecError("richonline_pet_turn_owner_expired");
+        return owner->placement_reservations();
+    });
     state->junction.emplace(startup.init.game_server_id);
     state->active_counter=static_cast<std::uint16_t>(startup.snapshot.calendar_counter);
     return {startup.init,startup.snapshot,startup.envelope,

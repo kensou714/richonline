@@ -97,6 +97,27 @@ void RichonlineRawAuthority::enter_jail(std::uint8_t actor, std::int8_t days) {
     state.hotel1493 = static_cast<std::int8_t>(-1);
 }
 
+RichonlineRawAuthority::PreparedJailEntry RichonlineRawAuthority::prepare_jail_entry(
+    std::uint8_t target,std::int8_t days) const {
+    require_duration(days);
+    const auto& before=actor(target);
+    if(!timed_bomb_target(target).allowed()) throw CodecError("richonline_raw_jail_target_unavailable");
+    PreparedJailEntry plan;plan.owner_=this;plan.actor_=target;plan.days_=days;plan.before_=before;
+    return plan;
+}
+
+bool RichonlineRawAuthority::matches_jail_entry(const PreparedJailEntry& plan) const noexcept {
+    return plan.owner_==this && !plan.committed_ && plan.actor_<actor_count_ &&
+        initialized_[plan.actor_] && actors_[plan.actor_]==plan.before_;
+}
+
+bool RichonlineRawAuthority::commit_jail_entry(PreparedJailEntry& plan) noexcept {
+    if(!matches_jail_entry(plan)) return false;
+    auto& state=actors_[plan.actor_];
+    state.jail1495=plan.days_;state.hotel1493=static_cast<std::int8_t>(-1);
+    plan.committed_=true;return true;
+}
+
 void RichonlineRawAuthority::exit_jail(std::uint8_t actor) {
     auto& state = mutable_actor(actor);
     state.jail1495 = static_cast<std::int8_t>(-1);

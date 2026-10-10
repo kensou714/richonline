@@ -7,6 +7,8 @@
 #include "richonline_social.hpp"
 #include "richonline_mail_service.hpp"
 #include "richonline_lobby_membership.hpp"
+#include "lua_server.hpp"
+#include "richonline_combat_resources.hpp"
 
 #include <windows.h>
 #include <bcrypt.h>
@@ -36,6 +38,7 @@ struct ServerLobbyAdapter::Connections {
         std::optional<std::uint32_t> actor;
         std::optional<std::uint32_t> channel;
         std::unique_ptr<RichonlineMallService> mall;
+        std::shared_ptr<LuaServer> equipment_script;
         std::uint64_t mall_generation=0;
         std::optional<GameSettlementProfileRefreshAttempt> profile_attempt;
         std::vector<Frame> outbound;
@@ -81,6 +84,20 @@ struct ServerLobbyAdapter::Connections {
             }
             destination.outbound_bytes += bytes;
             destination.outbound.push_back(std::move(message.frame));
+        }
+    }
+    void prepare_delivery(const std::vector<RichonlineRoomDispatch>& messages) {
+        // 付费激活在数据库提交前确认队列容量并预留内存；不能扣款后才发现同步队列不可用。
+        std::map<std::uint64_t,std::pair<std::size_t,std::size_t>> totals;
+        for(const auto& message:messages) {
+            auto& total=totals[message.recipient];++total.first;total.second+=message.frame.payload.size()+8;
+        }
+        for(const auto& [id,total]:totals) {
+            auto& destination=peers.at(id);
+            if(destination.overflowed || destination.outbound.size()+total.first>4096 ||
+               destination.outbound_bytes+total.second>4U*max_frame_total)
+                throw CodecError("mall_activation_outbound_capacity_exceeded");
+            destination.outbound.reserve(destination.outbound.size()+total.first);
         }
     }
 };
@@ -153,6 +170,12 @@ void ServerLobbyAdapter::set_mall_catalog(std::shared_ptr<const RichonlineMallCa
     if(connections_) throw CodecError("richonline_mall_catalog_set_after_listening");
     if(!catalog||catalog->products().empty()||catalog->offers().empty()) throw CodecError("richonline_mall_catalog_empty");
     mall_catalog_=std::move(catalog);
+}
+
+void ServerLobbyAdapter::set_equipment_resources(std::shared_ptr<const RichonlineCombatModifierResources> resources) {
+    if(connections_) throw CodecError("richonline_equipment_resources_set_after_listening");
+    if(!resources) throw CodecError("richonline_equipment_resources_missing");
+    equipment_resources_=std::move(resources);
 }
 
 std::uint32_t ServerLobbyAdapter::channel_player_count(std::uint32_t channel) const {
@@ -257,6 +280,71 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                 if (!peer.selected_role) throw CodecError("richonline_role_selection_required");
                 return account_request(login, *peer.selected_role, frame);
             }
+            if(frame.wire_type==51 || frame.wire_type==52) {
+                try {
+                    if(!peer.actor || !peer.selected_role) throw CodecError("equipment_channel_selection_required");
+                    if(frame.payload.size()!=12 || read_le(View(frame.payload).first(4))!=1)
+                        throw CodecError("equipment_request_invalid");
+                    const auto slot=read_le(View(frame.payload).subspan(4,4));
+                    const auto item=read_le(View(frame.payload).subspan(8,4));
+                    if(slot>=32 || item==0) throw CodecError("equipment_item_or_slot_invalid");
+                    auto* directory=connections->directory(connection);
+                    if(!directory) throw CodecError("equipment_directory_unavailable");
+                    const auto profile=directory->current_profile(connection,*peer.actor);
+                    const auto current=read_le(View(profile.payload).subspan(144+4*slot,4));
+                    LuaValue product=nullptr;
+                    const auto roles=storage_.roles_for_username(login.username_utf8);
+                    const auto found=std::find_if(roles.begin(),roles.end(),[&](const auto& row) {
+                        return parse_lobby_role(row).id==*peer.selected_role;
+                    });
+                    if(found==roles.end()) throw CodecError("equipment_role_not_owned");
+                    const auto role=parse_lobby_role(*found);
+                    if(frame.wire_type==51 && mall_catalog_) {
+                        const auto entry=mall_catalog_->products().find(static_cast<std::uint16_t>(item&4095U));
+                        if(entry!=mall_catalog_->products().end()) {
+                            const auto& fields=entry->second.source_fields;
+                            const auto part=fields.find("part"),allowed=fields.find("ROLE"+std::to_string(role.model));
+                            product={{"part",part==fields.end()?"":part->second},{"level",entry->second.level},
+                                {"role_allowed",allowed==fields.end() || allowed->second=="true"}};
+                        }
+                    }
+                    if(!peer.equipment_script) peer.equipment_script=LuaServer::create();
+                    if(!peer.equipment_script) throw CodecError("equipment_script_unavailable");
+                    const auto plan=peer.equipment_script->call("mall.equipment_policy",{
+                        {"opcode",frame.wire_type},{"slot",slot},{"item",item},{"current",current},
+                        {"level",role.level},{"product",std::move(product)}});
+                    if(!plan.at("allowed").get<bool>()) throw CodecError(plan.at("reason").get<std::string>());
+                    if(frame.wire_type==51) {
+                        // 只检查新穿戴的一件；已有不支持的旧装备不能阻止玩家卸下或调整其他槽。
+                        // 与开局共用资源门禁，避免商城穿戴成功后到房间才发现不能开局。
+                        if(!equipment_resources_) throw CodecError("richonline_equipment_resources_missing");
+                        equipment_resources_->validate_supported_equipment_slot(slot,item);
+                    }
+                    const auto replacement=frame.wire_type==51?item:0U;
+                    const auto now=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    LobbyEquipmentChange change{*peer.selected_role,slot,current,replacement};
+                    if(frame.wire_type==51) change.expected_role_state=std::array{role.model,role.level};
+                    auto deliveries=directory->change_equipment(connection,slot,replacement,[&] {
+                        storage_.update_lobby_equipment(login.username_utf8,change,now);
+                    });
+                    connections->deliver(std::move(deliveries));
+                    if(log_) log_("richonline_equipment_operation",{{"connection",connection},{"wire_type",frame.wire_type},
+                        {"slot",slot},{"item",item},{"success",true}});
+                    return peer.drain();
+                } catch(const std::exception& error) {
+                    if(log_) {
+                        nlohmann::json detail{{"connection",connection},{"wire_type",frame.wire_type},
+                            {"success",false},{"diagnostic",error.what()}};
+                        if(frame.payload.size()==12) {
+                            const auto item=read_le(View(frame.payload).subspan(8,4));
+                            detail["slot"]=read_le(View(frame.payload).subspan(4,4));
+                            detail["item"]=item;detail["product"]=item&4095U;
+                        }
+                        log_("richonline_equipment_operation",detail);
+                    }
+                    return std::vector<Frame>{richonline_lobby_failure(frame.wire_type,-13)};
+                }
+            }
             if(frame.wire_type==16||frame.wire_type==18||frame.wire_type==63) {
                 const auto log_mall=[&](const std::string& reason,std::size_t frames) {
                     if(!log_) return;
@@ -284,6 +372,11 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                 if(!blobs_.richonline_mall_policy) return reject("mall_compatibility_policy_not_configured");
                 if(!mall_catalog_) return reject("mall_catalog_not_configured");
                 try {
+                    auto* directory=connections->directory(connection);
+                    if(!directory) return reject("mall_directory_unavailable");
+                    // 游戏中的客户端不消费NEW19；拒绝在该阶段扣款后丢失资料刷新。
+                    if(directory->game_pending(connection)) return reject("mall_request_during_game");
+                    auto current_profile=directory->current_profile(connection,*peer.actor);
                     if(!peer.mall) {
                         if(peer.mall_generation==std::numeric_limits<std::uint64_t>::max()) throw CodecError("mall_session_generation_exhausted");
                         peer.mall=std::make_unique<RichonlineMallService>(*mall_catalog_,
@@ -291,10 +384,42 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                             *blobs_.richonline_mall_policy);
                     }
                     const auto now=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                    auto reply=peer.mall->request(storage_,login.username_utf8,*peer.selected_role,frame,now);
+                    std::vector<std::pair<RichonlineRoomDirectory*,RichonlineEquipmentRefresh>> equipment_refreshes;
+                    std::vector<RichonlineRoomDispatch> activation_deliveries;
+                    const auto prepare_activation=[&](const RichonlineMallActivationPreview& preview) {
+                        if(preview.inventory.size()>4096) throw CodecError("mall_activation_inventory_capacity_exceeded");
+                        Frame inventory{21,{}};
+                        append_le(inventory.payload,static_cast<std::uint32_t>(preview.inventory.size()),4);
+                        for(const auto key:preview.inventory) {append_le(inventory.payload,key,4);append_le(inventory.payload,0,4);}
+                        for(const auto& [id,online]:connections->peers) {
+                            if(!online.actor || online.username!=login.username_utf8) continue;
+                            auto* target=connections->directory(id);
+                            if(!target) throw CodecError("mall_activation_online_directory_missing");
+                            std::vector<std::uint32_t> slots;
+                            for(const auto& equipped:preview.equipment)
+                                if(equipped.role==static_cast<std::int64_t>(*online.actor)) slots.push_back(equipped.slot);
+                            auto prepared=target->prepare_equipment_refresh(id,preview.activated.old_key,preview.activated.new_key,slots);
+                            // 发起者由213替换背包并本地扣费；其他同账号连接只收21，不能重复扣别的角色的钱。
+                            if(id!=connection) activation_deliveries.push_back({id,inventory});
+                            equipment_refreshes.emplace_back(target,std::move(prepared));
+                        }
+                        // 先给所有同账号连接刷新背包，再按84/83逐槽替换所有频道里的装备视图。
+                        for(auto& [target,prepared]:equipment_refreshes) {
+                            activation_deliveries.insert(activation_deliveries.end(),
+                                std::make_move_iterator(prepared.messages.begin()),std::make_move_iterator(prepared.messages.end()));
+                        }
+                        connections->prepare_delivery(activation_deliveries);
+                    };
+                    auto reply=peer.mall->request(storage_,login.username_utf8,*peer.selected_role,frame,now,prepare_activation);
                     if(!reply) throw CodecError("mall_service_wire_not_routed");
+                    if(reply->activation_committed) {
+                        for(auto& [target,prepared]:equipment_refreshes) target->commit_equipment_refresh(prepared);
+                        connections->deliver(std::move(activation_deliveries));
+                        current_profile=directory->current_profile(connection,*peer.actor);
+                    }
                     if(reply->role_refresh) {
-                        auto refresh=profile_refresh(login.username_utf8,*peer.selected_role,*reply->role_refresh);
+                        auto refresh=profile_refresh(*peer.selected_role,*reply->role_refresh,current_profile);
+                        directory->refresh_mall_profile(connection,*peer.actor,current_profile,refresh);
                         if(reply->role_refresh_after_frames) reply->frames.push_back(std::move(refresh));
                         else reply->frames.insert(reply->frames.begin(),std::move(refresh));
                     }
@@ -414,8 +539,16 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                             auto cancelled=rooms->receive(connection,*peer.actor,{60,{}});
                             messages.insert(messages.end(),std::make_move_iterator(cancelled.begin()),
                                 std::make_move_iterator(cancelled.end()));
-                            if (log_) log_("richonline_game_start_rejected",{{"channel",*peer.channel},
-                                {"room",snapshot->key},{"reason",error.what()},{"lobby_preserved",true}});
+                            if (log_) {
+                                nlohmann::json detail{{"channel",*peer.channel},{"room",snapshot->key},
+                                    {"reason",error.what()},{"lobby_preserved",true}};
+                                if(const auto* equipment=dynamic_cast<const RichonlineEquipmentError*>(&error)) {
+                                    detail["equipment_slot"]=equipment->slot;
+                                    detail["equipment_item"]=equipment->item;
+                                    detail["equipment_product"]=equipment->item&4095U;
+                                }
+                                log_("richonline_game_start_rejected",detail);
+                            }
                         }
                     }
                 }

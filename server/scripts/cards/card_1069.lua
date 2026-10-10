@@ -1,11 +1,19 @@
 -- 财神卡（资源编号 1069）。本文件是该卡的独立业务入口。
 -- C2S 操作号 130；request.payload 是未加密的完整内部报文，包含操作号。
--- 当前复杂效果使用原生兼容事务，库存、状态与响应须由同一次操作共同提交。
+-- Lua编排财神附身确认；核心统一提交扣卡、附身时钟及后续34转盘等待。
 -- reward_enabled 只控制随机赠卡；还必须通过资源 enable、CARD 类型及地图允许列表。
-local M = { id = 1069, name = "财神卡", opcode = 130, reward_enabled = true, implementation = "native_compatibility" }
+local protocol = require("core.protocol")
+local M = { id = 1069, name = "财神卡", opcode = 130, reward_enabled = true, implementation = "lua" }
 function M.use(request)
-    -- 请求已经过网络身份验证；具体槽位、回合、目标合法性仍由核心事务核验。
-    -- 迁移本卡时可以改为调用细粒度核心接口；禁止重复调用 game.native 导致重复扣卡。
-    return core.call("game.native")
+    local can_attach = false
+    for _, name in ipairs(core.capabilities()) do
+        if name == "npc.prepare_attach" then can_attach = true end
+    end
+    if not can_attach then return core.call("game.native") end
+    assert(#request.payload == 6, "财神卡请求长度错误")
+    core.call("card.prepare", { card = M.id })
+    core.call("npc.prepare_attach", { npc = 0 })
+    -- 不在此发余额或伪造转盘请求；40D2后等客户端34，超时沿用核心转盘策略。
+    return { protocol.inner(0x40D2, request.game_id, request.payload:sub(5, 6)) }
 end
 return M

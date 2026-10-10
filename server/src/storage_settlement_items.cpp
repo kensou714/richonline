@@ -53,7 +53,7 @@ void validate(const GameSettlementItemResolution& request) {
     text(request.policy_identifier,128);text(request.evidence,1024);(void)version_name(request.key_date_version);
     if(request.operation_id==request.settlement_operation||request.selections.empty()||request.selections.size()>8)
         throw StorageError("game_settlement_items_selection_invalid");
-    std::set<std::uint32_t> indices,keys;std::size_t units=0;
+    std::set<std::uint32_t> indices;std::size_t units=0;
     for(const auto& selected:request.selections) {
         if(!indices.insert(selected.resource_index).second||selected.quantity==0||selected.quantity>56||
             selected.instances.size()!=selected.quantity)
@@ -64,7 +64,6 @@ void validate(const GameSettlementItemResolution& request) {
             if((key&4095U)==0||(key&0x80000000U)!=0||((key>>12U)&15U)>2||
                 (key&0x10000U)!=0||((key&0x40000000U)!=0)!=(item.activation==GameSettlementItemActivation::requires_activation))
                 throw StorageError("game_settlement_items_key_state_invalid");
-            if(!keys.insert(key).second)throw StorageError("game_settlement_items_duplicate_key");
             if(item.expires_at&&*item.expires_at<=0)throw StorageError("game_settlement_items_expiry_invalid");
             try {
                 if(richonline_inventory_key_from_expiry(key,item.expires_at.value_or(0),request.key_date_version)!=key)
@@ -118,6 +117,7 @@ std::uint32_t current_key(sqlite3* db,const std::string& username,std::uint32_t 
 std::vector<GameSettlementResolvedItem> current_items(sqlite3* db,const std::string& username,
     const GameSettlementItemResolution& request,RichonlineInventoryDateVersion current_version,std::int64_t now) {
     std::vector<GameSettlementResolvedItem> result;
+    std::set<std::int64_t> matched_instances;
     for(const auto& selected:request.selections)for(const auto& item:selected.instances) {
         std::optional<std::uint32_t> current;
         if(!item.expires_at||*item.expires_at>now) {
@@ -130,11 +130,10 @@ std::vector<GameSettlementResolvedItem> current_items(sqlite3* db,const std::str
                     (key&0xc001ffffU)!=(item.owned_key&0xc001ffffU))
                     throw StorageError("game_settlement_items_alias_invalid");
             }catch(const CodecError&){throw StorageError("game_settlement_items_alias_invalid");}
-            Statement owned(db,"SELECT expires_at FROM lobby_inventory WHERE username=? AND encoded_item=?");
-            owned.bind(1,username);owned.bind(2,key);
-            if(owned.row()) {
-                if(owned.integer(0)!=item.expires_at.value_or(0))throw StorageError("game_settlement_items_inventory_changed");
-                current=key;
+            Statement owned(db,"SELECT inventory_id FROM lobby_inventory WHERE username=? AND encoded_item=? AND expires_at=? ORDER BY inventory_id");
+            owned.bind(1,username);owned.bind(2,key);owned.bind(3,item.expires_at.value_or(0));
+            while(owned.row()) {
+                if(matched_instances.insert(owned.integer(0)).second) { current=key;break; }
             }
         }
         result.push_back({selected.resource_index,item.owned_key,current,item.expires_at,item.activation});
@@ -243,8 +242,6 @@ GameSettlementItemResolutionResult Storage::resolve_game_settlement_items(const 
     if(request.key_date_version!=client.date_version)throw StorageError("game_settlement_items_new_grant_epoch_mismatch");
     for(const auto& selected:request.selections)for(const auto& item:selected.instances) {
         if(item.expires_at&&*item.expires_at<=now)throw StorageError("game_settlement_items_grant_expired");
-        Statement owned(db_,"SELECT 1 FROM lobby_inventory WHERE username=? AND encoded_item=?");owned.bind(1,username);owned.bind(2,item.owned_key);
-        if(owned.row()){transaction.commit();return {GameSettlementItemResolutionStatus::inventory_conflict,{}};}
     }
     std::array<std::size_t,4> counts{};
     Statement inventory(db_,"SELECT encoded_item FROM lobby_inventory WHERE username=? AND (expires_at=0 OR expires_at>?)");

@@ -17,7 +17,7 @@ RichonlineMallService::RichonlineMallService(const RichonlineMallCatalog& catalo
     script_=LuaServer::create();
 }
 std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage& storage,const std::string& username,
-    std::int64_t role,const Frame& frame,std::int64_t now) {
+    std::int64_t role,const Frame& frame,std::int64_t now,const RichonlineMallActivationPrepare& prepare_activation) {
     if(frame.wire_type!=16&&frame.wire_type!=18&&frame.wire_type!=63)return {};
     storage.require_inventory_date_version(policy_.date_version);
     if(frame.wire_type==16) {
@@ -38,7 +38,7 @@ std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage
         try {
             if(sequence_==std::numeric_limits<std::uint64_t>::max())throw CodecError("mall_operation_sequence_exhausted");
             auto result=storage.activate_mall_item(username,role,catalog_,request,now,policy_.date_version,
-                operation_prefix_+":"+std::to_string(++sequence_),policy_.evidence);
+                operation_prefix_+":"+std::to_string(++sequence_),policy_.evidence,prepare_activation);
             switch(result.status) {
             case RichonlineMallActivationStatus::activated: {
                 if(!result.activated)throw CodecError("mall_activation_result_missing");
@@ -47,7 +47,7 @@ std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage
                 const std::array<std::uint32_t,5> words{actual.old_key,actual.new_key,static_cast<std::uint32_t>(actual.currency),static_cast<std::uint32_t>(bits),static_cast<std::uint32_t>(bits>>32U)};
                 for(std::size_t index=0;index<words.size();++index)for(std::size_t byte=0;byte<4;++byte)
                     notification.payload[index*4+byte]=static_cast<std::uint8_t>(words[index]>>(8*byte));
-                reply.frames.push_back(std::move(notification));reply.role_refresh=std::move(result.role);reply.role_refresh_after_frames=true;reply.diagnostic="activated";return reply;
+                reply.frames.push_back(std::move(notification));reply.role_refresh=std::move(result.role);reply.role_refresh_after_frames=true;reply.activation_committed=true;reply.diagnostic="activated";return reply;
             }
             case RichonlineMallActivationStatus::replayed:return reject("mall_session_operation_reused");
             case RichonlineMallActivationStatus::insufficient_funds:return reject("mall_insufficient_funds");
@@ -108,8 +108,6 @@ std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage
             }
         } else {
             expiry=timed?richonline_inventory_calendar_expiry(now,term.years,term.months,term.days):0;
-            if(product.fold!=1)return reject("mall_purchase_bundle_grant_unproven");
-            if(product.level!=0)return reject("mall_purchase_level_rule_unproven");
         }
         if(sequence_==std::numeric_limits<std::uint64_t>::max())throw CodecError("mall_operation_sequence_exhausted");
         RichonlineMallPurchase purchase{operation_prefix_+":"+std::to_string(++sequence_),request,

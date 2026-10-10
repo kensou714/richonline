@@ -1,5 +1,13 @@
 # 商城 Lua 购买策略与当前日期限制（2026-10-11）
 
+后续校正：已用客户端证据移除本记录中早先的fold/level一律拒购规则。fold不是商城发货记录数，level在穿戴/使用时检查；详见 `mall-purchase-eligibility.md`。日期兼容限制仍然存在，已生成当前客户端的配套补丁候选，但未部署或迁移运行数据库。
+
+## 最新用户复现
+
+`data/logs/native-54996.jsonl:85` 收到购买选择，`:87` 记录商品1893、item_key5989、currency1、date_epoch2005，拒绝原因为 `inventory_date_year_unrepresentable`。启动记录加载148个Lua模块，仍为original_2005日期配置。拒绝发生在 `purchase_mall_item` 数据库事务之前，本次不会扣款或发货。
+
+已编译 `build-goal-resume/RichOnline.InventoryDatePatch.exe` 与 `RichOnline.InventoryDateMigrate.exe`。现有工具只接受已知客户端映像，生成新补丁副本；迁移工具要求停服并验证客户端后才操作新数据库副本，保留原库和备份。用户测试期间未执行这些工具，也未修改当前客户端、日期配置或数据库。
+
 ## 现有日志与代码证据
 
 最新日志 `data/logs/native-45308.jsonl` 第5602行接受C2S16购买选择，5604行的C2S18被`inventory_date_year_unrepresentable`拒绝。启动日志声明纪元2005。`richonline_inventory_date.cpp`使用4位年份差，允许纪元至纪元+15；2005版本无法表示2026年的限时商品。

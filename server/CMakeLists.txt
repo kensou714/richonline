@@ -90,9 +90,16 @@ if(WIN32)
     target_sources(richnet_storage PRIVATE src/storage_script.cpp)
     target_link_libraries(richnet_control PUBLIC richnet_scripting)
     file(GLOB_RECURSE RICHONLINE_LUA_MODULES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua")
+    # Compile each module separately to stay below cmd.exe's command length limit.
+    set(RICHONLINE_LUA_COMPILE_COMMANDS)
+    foreach(RICHONLINE_LUA_MODULE IN LISTS RICHONLINE_LUA_MODULES)
+        list(APPEND RICHONLINE_LUA_COMPILE_COMMANDS
+            COMMAND $<TARGET_FILE:RichOnline.LuaCompile> -p "${RICHONLINE_LUA_MODULE}")
+    endforeach()
     add_custom_target(richonline_scripts ALL
-        COMMAND $<TARGET_FILE:RichOnline.LuaCompile> -p ${RICHONLINE_LUA_MODULES}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/scripts" "$<TARGET_FILE_DIR:RichOnline.Server>/scripts")
+        ${RICHONLINE_LUA_COMPILE_COMMANDS}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/scripts" "$<TARGET_FILE_DIR:RichOnline.Server>/scripts"
+        VERBATIM)
     add_dependencies(richonline_scripts RichOnline.LuaCompile)
     add_dependencies(RichOnline.Server richonline_scripts)
     target_sources(richnet_lobby_adapter PRIVATE src/richonline_lobby_membership.cpp)
@@ -160,6 +167,8 @@ if(WIN32)
     target_sources(richnet_richonline_boss_startup PRIVATE src/gameplay/npc.cpp)
     target_sources(richnet_richonline_boss_startup PRIVATE src/gameplay/npc_spawn.cpp)
     target_sources(richnet_richonline_boss_startup PRIVATE src/gameplay/npc_session.cpp)
+    target_sources(richnet_richonline_boss_startup PRIVATE src/gameplay/pet.cpp)
+    target_sources(richnet_richonline_boss_startup PRIVATE src/gameplay/pet_chat.cpp)
     target_sources(richnet_richonline_boss_startup PRIVATE src/gameplay/npc_aura.cpp)
     target_sources(richnet_richonline_boss_startup PRIVATE src/gameplay/deity_card.cpp)
     target_sources(richnet_richonline_boss_startup PRIVATE src/gameplay/ground_card.cpp

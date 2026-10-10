@@ -1,6 +1,7 @@
 #include "lobby_runtime.hpp"
 #include "auxiliary.hpp"
 #include "server_lobby_adapter.hpp"
+#include "richonline_combat_resources.hpp"
 #include "original_lobby_adapter.hpp"
 #include "original_blacklist.hpp"
 #include "richonline_blacklist.hpp"
@@ -220,6 +221,8 @@ LobbyRuntime::LobbyRuntime(Storage& storage, const std::filesystem::path& bootst
         std::filesystem::path resources(std::u8string(name.begin(),name.end()));
         if (resources.is_relative()) resources=std::filesystem::absolute(bootstrap).parent_path()/resources;
         owner->adapter->set_mall_catalog(std::make_shared<const RichonlineMallCatalog>(RichonlineMallCatalog::load(resources.lexically_normal())));
+        owner->adapter->set_equipment_resources(std::make_shared<const RichonlineCombatModifierResources>(
+            RichonlineCombatModifierResources::load(resources.lexically_normal())));
         owner->log("richonline_mall_configured",{{"catalog","NEW Prop/SellProp resources"},
             {"date_mode",blobs.richonline_mall_policy->date_version==RichonlineInventoryDateVersion::original_2005 ? "original_2005" : "compat_2021_v1"},
             {"client_mode_evidence","trusted deployment configuration; no remote image attestation"},

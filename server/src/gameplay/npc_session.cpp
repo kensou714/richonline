@@ -97,6 +97,41 @@ RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_status_
     }
     return result;
 }
+RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_card_detachment(
+    const RichonlineLandingContext& source,std::uint8_t target,const RichonlineActorStatus& before) const {
+    check_actor(source.actor_slot,source.actor_status);
+    if(pending_ || source.game_mode!=3 || source.synthetic_actor)
+        throw CodecError("richonline_npc_session_card_out_of_phase");
+    if(target==source.actor_slot && before!=source.actor_status)
+        throw CodecError("richonline_npc_session_context_stale");
+    if(!before.possession) throw CodecError("richonline_deity_card_no_possession");
+    auto after=before;richonline_detach_possession(after);
+    auto plan=prepare_status_change(target,before,after);
+    plan.requires_idle_=true;return plan;
+}
+RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_card_attachment(
+    const RichonlineLandingContext& source,std::int8_t npc,std::uint16_t calendar,
+    const RichonlineActorStatus& before) const {
+    const auto actor=source.actor_slot;
+    check_actor(actor,before);admit_clock_change(actor);
+    if(pending_ || source.game_mode!=3 || source.synthetic_actor || source.actor_status!=before || (npc!=0 && npc!=3))
+        throw CodecError("richonline_npc_session_card_out_of_phase");
+    auto after=before;
+    if(after.possession) richonline_detach_possession(after);
+    after.possession=npc;
+    PreparedStatusChange plan;plan.owner_=this;plan.actor_=actor;plan.generation_=clock_generations_[actor];
+    plan.before_status_=before;plan.after_status_=after;
+    plan.before_clock_=clocks_[actor];plan.after_clock_=plan.before_clock_;
+    plan.after_clock_.npc=npc;plan.after_clock_.turns=affix_turns(npc);plan.requires_idle_=true;
+    if(npc==0) plan.card_roulette_calendar_=calendar;
+    return plan;
+}
+RichonlineFortuneRewardPlan RichonlineNpcSession::prepare_fortune_rewards(
+    const RichonlineChanceInventory& inventory) const {
+    if(!initialized_ || pending_) throw CodecError("richonline_npc_session_card_out_of_phase");
+    const auto chosen=policy_.fortune_selection ? policy_.fortune_selection(inventory) : policy_.fortune_cards;
+    return prepare_richonline_fortune_rewards(game_,*resources_,*events_,map_,chosen,inventory);
+}
 RichonlineNpcSession::PreparedStatusChange RichonlineNpcSession::prepare_temple_change(std::uint8_t actor,
     const RichonlineTemplePossessionChange& change) const {
     check_actor(actor,change.expected);
@@ -178,6 +213,8 @@ RichonlineNpcSessionResult RichonlineNpcSession::temple_summon(const RichonlineL
 bool RichonlineNpcSession::commit_status_change(PreparedStatusChange& plan,RichonlineActorStatus& authoritative) noexcept {
     if(!matches_status_change(plan,authoritative)) return false;
     authoritative=plan.after_status_;clocks_[plan.actor_]=plan.after_clock_;
+    if(plan.card_roulette_calendar_)
+        pending_=PendingMoney{plan.actor_,*plan.card_roulette_calendar_,0,RichonlineDeityMoneyOrigin::summoned_card,false};
     ++clock_generations_[plan.actor_];plan.committed_=true;return true;
 }
 void RichonlineNpcSession::detach(std::uint8_t actor,RichonlineActorStatus& status) {
@@ -188,9 +225,16 @@ RichonlineNpcSpawnResult RichonlineNpcSession::initial(std::span<const std::int1
     if(initialized_) throw CodecError("richonline_npc_session_duplicate_initial");
     auto result=spawner_.initialize(*ground_,reserved); initialized_=true; return result;
 }
+void RichonlineNpcSession::configure_placement_reservations(std::function<std::vector<std::int16_t>()> source) {
+    placement_reservations_=std::move(source);
+}
+std::vector<std::int16_t> RichonlineNpcSession::placement_reservations() const {
+    return placement_reservations_ ? placement_reservations_() : std::vector<std::int16_t>{};
+}
 RichonlineNpcSpawnResult RichonlineNpcSession::finish_round(std::uint64_t round) {
     if(!initialized_ || pending_) throw CodecError("richonline_npc_session_round_out_of_phase");
-    return spawner_.finish_round(*ground_,round);
+    const auto reserved=placement_reservations();
+    return spawner_.finish_round(*ground_,round,reserved);
 }
 RichonlinePossessionTick RichonlineNpcSession::actor_begin(std::uint8_t actor,std::uint64_t turn,
     RichonlineActorStatus& status) {
@@ -269,7 +313,8 @@ std::optional<RichonlineNpcSessionResult> RichonlineNpcSession::landing(const Ri
         auto continuation=context;continuation.actor_status=next_status;
         preflight(continuation);
     }
-    append(result.messages,staged_spawner.replenish_minimum(staged_ground).messages);
+    const auto reserved=placement_reservations();
+    append(result.messages,staged_spawner.replenish_minimum(staged_ground,reserved).messages);
     // All fallible planning/allocation precedes shared commits. No owner callback
     // runs in this span; the room executor serializes ground/cards/status access.
     auto prepared_ground=ground_->prepare(before_ground,staged_ground.snapshot().objects);
@@ -296,7 +341,8 @@ std::optional<RichonlineNpcSessionResult> RichonlineNpcSession::chest_landing(co
     auto staged_ground=*ground_;auto staged_spawner=spawner_;
     if(!staged_ground.consume(context.position,object)) throw CodecError("richonline_npc_session_ground_stale");
     RichonlineNpcSessionResult result{{stop(game_,context.position)},plan.continuation,RichonlineNpcWait::none,true,{}};
-    append(result.messages,staged_spawner.replenish_minimum(staged_ground).messages);
+    const auto reserved=placement_reservations();
+    append(result.messages,staged_spawner.replenish_minimum(staged_ground,reserved).messages);
     auto prepared_ground=ground_->prepare(before_ground,staged_ground.snapshot().objects);
     const auto commit_ground=[&] {
         if(!ground_->commit_prepared(prepared_ground)) throw CodecError("richonline_npc_session_ground_stale");
@@ -432,7 +478,8 @@ RichonlineNpcSessionResult RichonlineNpcSession::deity_card(View request,const R
     if(selected) {
         if(!staged_ground.consume(selected->position,before_ground.objects.at(selected->position)))
             throw CodecError("richonline_npc_session_ground_stale");
-        append(result.messages,staged_spawner.replenish_minimum(staged_ground).messages);
+        const auto reserved=placement_reservations();
+        append(result.messages,staged_spawner.replenish_minimum(staged_ground,reserved).messages);
     }
     auto prepared_ground=ground_->prepare(before_ground,staged_ground.snapshot().objects);
     if(cards_->inventory()!=plan.consumption.source_inventory)

@@ -60,6 +60,8 @@ public:
         std::shared_ptr<RichonlineBossCards>,std::shared_ptr<RichonlineGroundObjects>,
         RichonlineNpcSessionPolicy);
     RichonlineNpcSpawnResult initial(std::span<const std::int16_t> reserved = {});
+    // Resolve live actor/pet occupancy during planning, before any shared commit.
+    void configure_placement_reservations(std::function<std::vector<std::int16_t>()>);
     RichonlineNpcSpawnResult finish_round(std::uint64_t complete_round);
     RichonlinePossessionTick actor_begin(std::uint8_t actor,std::uint64_t own_turn,
         RichonlineActorStatus& authoritative_status);
@@ -75,6 +77,7 @@ public:
         RichonlinePossessionClock before_clock_{},after_clock_{};
         bool committed_=false;
         bool requires_idle_=false;
+        std::optional<std::uint16_t> card_roulette_calendar_{};
         friend class RichonlineNpcSession;
     };
     // External status/card/combat planners must prepare against the current
@@ -82,6 +85,13 @@ public:
     // possession duration or detaches it; new attachment belongs to NPC hooks.
     PreparedStatusChange prepare_status_change(std::uint8_t actor,
         const RichonlineActorStatus& before,const RichonlineActorStatus& after) const;
+    // 送神卡保留普通状态清理的时钟事务，并额外要求整个NPC会话空闲。
+    PreparedStatusChange prepare_card_detachment(const RichonlineLandingContext& source,
+        std::uint8_t target,const RichonlineActorStatus& before) const;
+    // 卡牌只允许附身财神0或福神3；附身时钟与财神后续34等待一起准备，不提前写状态。
+    PreparedStatusChange prepare_card_attachment(const RichonlineLandingContext& source,
+        std::int8_t npc,std::uint16_t calendar,const RichonlineActorStatus& before) const;
+    RichonlineFortuneRewardPlan prepare_fortune_rewards(const RichonlineChanceInventory&) const;
     PreparedStatusChange prepare_temple_change(std::uint8_t actor,
         const RichonlineTemplePossessionChange&) const;
     // Temple phase7 has already sent its stop/building replies. Summons0..3
@@ -137,6 +147,8 @@ private:
     std::array<std::uint64_t,2> clock_generations_{};
     std::optional<PendingMoney> pending_;
     bool initialized_=false;
+    std::function<std::vector<std::int16_t>()> placement_reservations_;
+    std::vector<std::int16_t> placement_reservations() const;
     void check_actor(std::uint8_t,const RichonlineActorStatus&) const;
     void admit_clock_change(std::uint8_t) const;
     bool supported_npc(std::int8_t) const noexcept;

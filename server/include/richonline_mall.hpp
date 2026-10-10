@@ -2,6 +2,7 @@
 #include "richonline_mall_catalog.hpp"
 #include "richonline_inventory_date.hpp"
 #include <nlohmann/json.hpp>
+#include <functional>
 
 namespace richnet {
 struct RichonlineMallPurchase18 { std::uint32_t encoded_item; };
@@ -13,6 +14,14 @@ struct RichonlineMallActivated213 {
     RichonlineMallCurrency currency;
     double charge;
 };
+struct RichonlineMallEquipmentSlot { std::int64_t role; std::uint32_t slot; };
+// 在激活事务持锁期间构造的投影，用于扣款前准备全部在线同步消息；回调不得再访问Storage。
+struct RichonlineMallActivationPreview {
+    RichonlineMallActivated213 activated;
+    std::vector<std::uint32_t> inventory;
+    std::vector<RichonlineMallEquipmentSlot> equipment;
+};
+using RichonlineMallActivationPrepare=std::function<void(const RichonlineMallActivationPreview&)>;
 Frame encode_richonline_mall_activated213(const RichonlineMallActivated213& result);
 // This adapter is trusted server configuration, never data supplied by a client.
 // Opaque words are deliberately mandatory: NEW77 ignores them, but their producer

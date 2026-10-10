@@ -91,16 +91,28 @@ std::optional<RichonlineGameFundsSnapshot> RichonlineGameLedger::consume_reserve
 }
 bool RichonlineGameLedger::commit_batch(std::span<const RichonlineGameFundsUpdate> updates,
     const std::function<bool()>& authorize) {
+    return commit_updates(updates,authorize,false);
+}
+bool RichonlineGameLedger::commit_sequence(std::span<const RichonlineGameFundsUpdate> updates,
+    const std::function<bool()>& authorize) {
+    return commit_updates(updates,authorize,true);
+}
+bool RichonlineGameLedger::commit_updates(std::span<const RichonlineGameFundsUpdate> updates,
+    const std::function<bool()>& authorize,bool sequential) {
     const std::lock_guard lock(mutex_);
-    if(updates.empty() || updates.size()>balances_.size() || !authorize)
+    if(updates.empty() || (!sequential && updates.size()>balances_.size()) || !authorize)
         throw CodecError("richonline_game_ledger_batch_invalid");
     std::array<bool,8> seen{};
+    std::array<RichonlineGameFundsSnapshot,8> projected{};
     std::array<std::uint64_t,8> earnings{};
+    for(std::size_t actor=0;actor<balances_.size();++actor) {
+        projected[actor]=balances_[actor];earnings[actor]=earned_cash_[actor];
+    }
     for(const auto& update:updates) {
-        if(update.actor>=balances_.size() || seen[update.actor])
+        if(update.actor>=balances_.size() || (!sequential && seen[update.actor]))
             throw CodecError("richonline_game_ledger_batch_actor_invalid");
         seen[update.actor]=true;
-        const auto& current=balances_[update.actor];
+        auto& current=projected[update.actor];
         if(current!=update.before) throw CodecError("richonline_game_ledger_conflict");
         valid(update.after);
         if(current.funds.deposit.has_value()!=update.after.deposit.has_value() ||
@@ -108,13 +120,12 @@ bool RichonlineGameLedger::commit_batch(std::span<const RichonlineGameFundsUpdat
             throw CodecError("richonline_game_ledger_knowledge_change");
         if(current.funds!=update.after && current.revision==std::numeric_limits<std::uint64_t>::max())
             throw CodecError("richonline_game_ledger_revision_exhausted");
-        earnings[update.actor]=earned_after(earned_cash_[update.actor],current.funds,update.after);
+        earnings[update.actor]=earned_after(earnings[update.actor],current.funds,update.after);
+        if(current.funds!=update.after) current={update.after,current.revision+1};
     }
     if(!authorize()) return false;
-    for(const auto& update:updates) {
-        auto& current=balances_[update.actor];
-        if(current.funds!=update.after) current={update.after,current.revision+1};
-        earned_cash_[update.actor]=earnings[update.actor];
+    for(std::size_t actor=0;actor<balances_.size();++actor) if(seen[actor]) {
+        balances_[actor]=projected[actor];earned_cash_[actor]=earnings[actor];
     }
     return true;
 }

@@ -11,6 +11,8 @@ local tiles = require("tiles.registry")
 local bosses = require("bosses.registry")
 local lottery = require("cards.card_504")
 local mall_purchase = require("mall.purchase")
+local equipment = require("mall.equipment")
+local equipment_effects = require("mall.equipment_effects")
 local handlers = {
     ["lobby.login"] = lobby.login, ["lobby.request"] = lobby.request,
     ["lobby.poll"] = lobby.poll, ["lobby.sent"] = lobby.sent, ["lobby.disconnected"] = lobby.disconnected,
@@ -21,6 +23,8 @@ local handlers = {
     ["card.lottery_award"] = lottery.award,
     ["boss.attack"] = bosses.attack,
     ["mall.purchase_policy"] = mall_purchase.plan,
+    ["mall.equipment_policy"] = equipment.plan,
+    ["mall.equipment_healing"] = equipment_effects.healing,
 }
 local M = {}
 function M.dispatch(event, request)

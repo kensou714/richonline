@@ -10,6 +10,7 @@ bool unchanged(const RichonlineCombatActorRef& ref,const RichonlineCombatActorVi
         ref.capabilities.active==expected.active && ref.capabilities.in_hospital==expected.in_hospital &&
         ref.capabilities.in_prison==expected.in_prison && ref.capabilities.mine_immune_vehicle==expected.mine_immune_vehicle &&
         ref.capabilities.attack_modifiers_enabled==expected.attack_modifiers_enabled &&
+        ref.placement_present==expected.placement_present && ref.pet_position==expected.pet_position &&
         (!ref.active || *ref.active==expected.active);
 }
 }
@@ -35,6 +36,7 @@ RichonlineCombatBridge::Snapshot RichonlineCombatBridge::snapshot(std::span<cons
         actor.active=ref.capabilities.active;actor.in_hospital=ref.capabilities.in_hospital;
         actor.in_prison=ref.capabilities.in_prison;actor.mine_immune_vehicle=ref.capabilities.mine_immune_vehicle;
         actor.attack_modifiers_enabled=ref.capabilities.attack_modifiers_enabled;
+        actor.placement_present=ref.placement_present;actor.pet_position=ref.pet_position;
         actor.funds=ledger_->snapshot(ref.slot);
         if(ref.slot==0) actor.inventory=cards_->inventory();
         state.actors[ref.slot]=actor;
@@ -54,7 +56,19 @@ RichonlineCombatBridge::Snapshot RichonlineCombatBridge::snapshot(std::span<cons
     return result;
 }
 RichonlineCombatBridgeResult RichonlineCombatBridge::apply(std::span<const RichonlineCombatActorRef> refs,
-    const Snapshot& before,RichonlineCombatTurnPlan plan,const RichonlineBossProperty::PreparedMissileRound* missile_round) {
+    const Snapshot& before,RichonlineCombatTurnPlan plan,const RichonlineBossProperty::PreparedMissileRound* missile_round,
+    const std::function<void(const std::string&)>& log) {
+    std::vector<std::string> impact_logs;
+    if(log) for(const auto& impact:plan.building_impacts) {
+        impact_logs.push_back("richonline_combat_property_impact revision="+std::to_string(before.combat.revision)+
+            " actor="+std::to_string(impact.actor)+" effect="+std::to_string(static_cast<unsigned>(impact.effect))+
+            " target="+std::to_string(impact.target)+" property="+std::to_string(impact.before.property)+
+            " land_protected="+std::to_string(impact.before.ownership_protected)+
+            " owner_before="+std::to_string(impact.before.owner.value_or(255))+
+            " owner_after="+std::to_string(impact.after.owner.value_or(255))+
+            " kind_before="+std::to_string(impact.before.kind)+" kind_after="+std::to_string(impact.after.kind)+
+            " level_before="+std::to_string(impact.before.level)+" level_after="+std::to_string(impact.after.level));
+    }
     RichonlineGroundMap after_ground;
     for(const auto& npc:plan.after.dynamic_npcs) {
         const auto found=before.ground.objects.find(npc.position);
@@ -100,12 +114,13 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::apply(std::span<const Richo
         revision_=plan.after.revision;last_day_=plan.after.mines.last_day;return true;
     });
     if(!committed) throw CodecError("richonline_combat_bridge_stale");
+    for(const auto& detail:impact_logs) log(detail);
     return {std::move(plan.packets),std::move(plan.bankrupt_actors)};
 }
 RichonlineCombatBridgeResult RichonlineCombatBridge::boss_turn(std::span<const RichonlineCombatActorRef> refs,
-    std::uint8_t boss,const RichonlineBossAttackRandomness& random) {
+    std::uint8_t boss,const RichonlineBossAttackRandomness& random,const std::function<void(const std::string&)>& log) {
     const auto before=snapshot(refs);
-    return apply(refs,before,prepare_richonline_boss_combat_turn(before.combat,world_,boss,random,policy_));
+    return apply(refs,before,prepare_richonline_boss_combat_turn(before.combat,world_,boss,random,policy_),nullptr,log);
 }
 RichonlineCombatBridgeResult RichonlineCombatBridge::finish_round(std::span<const RichonlineCombatActorRef> refs,std::uint64_t day) {
     const auto before=snapshot(refs);
@@ -119,7 +134,7 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::missile_base_round(std::spa
     const auto before=snapshot(refs);
     auto plan=prepare_richonline_missile_base_round(before.combat,world_,clock->salvos(),random);
     const auto volleys=std::move(plan.base_volleys);
-    auto result=apply(refs,before,std::move(plan),&*clock);
+    auto result=apply(refs,before,std::move(plan),&*clock,log);
     if(log) for(const auto& [property,remaining]:clock->clocks()) if(remaining)
         log("richonline_missile_base_clock round="+std::to_string(round)+" property="+
             std::to_string(property)+" remaining="+std::to_string(remaining));
@@ -135,18 +150,46 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::missile_base_round(std::spa
     }
     return result;
 }
+struct RichonlineCombatBridge::PreparedHumanAttack::Data {
+    const RichonlineCombatBridge* owner;
+    Snapshot before;
+    RichonlineCombatTurnPlan plan;
+    bool consumed=false;
+};
+RichonlineCombatBridge::PreparedHumanAttack::PreparedHumanAttack(std::shared_ptr<Data> data)
+    :data_(std::move(data)) {}
+const std::vector<Bytes>& RichonlineCombatBridge::PreparedHumanAttack::packets() const {
+    if(!data_ || data_->consumed) throw CodecError("richonline_attack_plan_consumed");
+    return data_->plan.packets;
+}
+RichonlineCombatBridge::PreparedHumanAttack RichonlineCombatBridge::prepare_human_attack(
+    std::span<const RichonlineCombatActorRef> refs,const RichonlineTargetCardRequest& request,
+    std::uint16_t calendar,const RichonlineBossCards::PreparedConsumption& consumption) const {
+    auto before=snapshot(refs);
+    auto plan=prepare_richonline_combat_human_card(before.combat,world_,0,request,calendar,consumption);
+    return PreparedHumanAttack{std::make_shared<PreparedHumanAttack::Data>(
+        PreparedHumanAttack::Data{this,std::move(before),std::move(plan),false})};
+}
+RichonlineCombatBridgeResult RichonlineCombatBridge::commit_human_attack(
+    std::span<const RichonlineCombatActorRef> refs,PreparedHumanAttack& prepared,
+    const std::function<void(const std::string&)>& log) {
+    if(!prepared.data_ || prepared.data_->owner!=this || prepared.data_->consumed)
+        throw CodecError("richonline_attack_plan_owner_or_consumed");
+    // 即使提交被快照校验拒绝，也不能复用已经移动过内容的计划再次扣卡。
+    auto& data=*prepared.data_;data.consumed=true;
+    return apply(refs,data.before,std::move(data.plan),nullptr,log);
+}
 RichonlineCombatBridgeResult RichonlineCombatBridge::human_card(std::span<const RichonlineCombatActorRef> refs,
     const RichonlineTargetCardRequest& request,std::uint16_t calendar,bool recover_refusal,
     const std::function<void(const std::string&)>& log) {
-    const auto before=snapshot(refs);
-    std::optional<RichonlineCombatTurnPlan> plan;
+    std::optional<PreparedHumanAttack> plan;
     try {
         const auto prepared=cards_->prepare_target_effect(request);
         if(!prepared) throw CodecError("richonline_combat_human_card_not_owned");
         const auto card=prepared->source_inventory[static_cast<std::size_t>(request.inventory_slot)].card_id;
         const RichonlineBossCards::PreparedConsumption consumption{prepared->source_inventory,prepared->remaining_inventory,
             request.inventory_slot,card};
-        plan=prepare_richonline_combat_human_card(before.combat,world_,0,request,calendar,consumption);
+        plan=prepare_human_attack(refs,request,calendar,consumption);
     } catch(const CodecError& error) {
         if(!recover_refusal) throw;
         if(log) {
@@ -160,7 +203,7 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::human_card(std::span<const 
         }
         return {{encode_richonline_dice_recovery400b(game_)},{}};
     }
-    return apply(refs,before,std::move(*plan));
+    return commit_human_attack(refs,*plan,log);
 }
 bool RichonlineCombatBridge::has_mine(std::int16_t position) const {
     const auto snapshot=ground_->snapshot();const auto found=snapshot.objects.find(position);

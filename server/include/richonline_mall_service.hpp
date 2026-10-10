@@ -17,18 +17,20 @@ struct RichonlineMallCompatibilityPolicy {
 struct RichonlineMallServiceReply {
     std::vector<Frame> frames;
     std::string diagnostic;
-    // Shared adapter must emit an authoritative profile7 from this CURRENT row
+    // Shared adapter must emit an authoritative profile19 from this CURRENT row
     // before77: the ordinary purchase callback does not debit local wallets.
     std::optional<nlohmann::json> role_refresh;
     //213 applies a client-side debit: its authoritative refresh must be AFTER.
     bool role_refresh_after_frames=false;
+    bool activation_committed=false;
 };
 class RichonlineMallService final {
 public:
     RichonlineMallService(const RichonlineMallCatalog& catalog,std::string session_operation_prefix,
         RichonlineMallCompatibilityPolicy policy);
     std::optional<RichonlineMallServiceReply> request(Storage& storage,const std::string& username,
-        std::int64_t role_id,const Frame& request,std::int64_t unix_now);
+        std::int64_t role_id,const Frame& request,std::int64_t unix_now,
+        const RichonlineMallActivationPrepare& prepare_activation={});
 private:
     const RichonlineMallCatalog& catalog_;
     std::string operation_prefix_;

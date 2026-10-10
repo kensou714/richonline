@@ -54,7 +54,13 @@ public:
     // unchanged. A successful callback is followed by allocation-free commits.
     bool commit_batch(std::span<const RichonlineGameFundsUpdate> updates,
         const std::function<bool()>& authorize);
+    // 同一角色可出现多次：后一步 before 必须衔接前一步的余额和版本。
+    // 每步独立累计正收入，全部校验通过后一次提交；失败不保留任何中间资金状态。
+    bool commit_sequence(std::span<const RichonlineGameFundsUpdate> updates,
+        const std::function<bool()>& authorize);
 private:
+    bool commit_updates(std::span<const RichonlineGameFundsUpdate> updates,
+        const std::function<bool()>& authorize,bool sequential);
     mutable std::mutex mutex_;
     std::vector<RichonlineGameFundsSnapshot> balances_;
     std::vector<std::uint64_t> earned_cash_;
