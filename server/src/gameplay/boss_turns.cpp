@@ -1551,6 +1551,23 @@ struct Turns {
                     script_consumption->remaining_inventory};
                 return LuaValue{};
             }},
+            {"combat.prepare_detonation",[&](const LuaValue&) {
+                require_local_controls();
+                if(called || database_called || !script_consumption || script_attack || !rules.combat ||
+                    script_consumption->card_id!=501 || phase!=Phase::roll || actor!=init.local_slot || !active[actor] ||
+                    plain.size()!=8 || read_le(plain.first(2))!=159)
+                    throw CodecError("lua_detonation_prepare_out_of_scope");
+                // 651050没有初始化请求+6/+7，爆炸根必须从真实地雷及角色可视范围计算。
+                auto refs=combat_refs();
+                auto prepared=rules.combat->prepare_detonation_card(refs,*script_consumption);
+                auto effects=LuaValue::array();
+                const auto& packets=prepared.packets();
+                // Lua构造第一包40EF；后续连锁与存活恢复包由战斗计划提供，不能自行漏发或重排。
+                for(std::size_t i=1;i<packets.size();++i) effects.push_back(lua_bytes(View(packets[i])));
+                script_attack=ScriptAttack{std::move(prepared),actor,active_counter,turn_sequence,
+                    script_consumption->remaining_inventory};
+                return effects;
+            }},
             {"combat.prepare_timed_bomb",[&](const LuaValue& args) {
                 require_local_controls();
                 if(called || database_called || !script_consumption || script_attack || !rules.combat ||

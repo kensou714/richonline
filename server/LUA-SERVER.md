@@ -27,6 +27,7 @@
 | `tile.native` | 无 | 执行现有落点、保持复杂状态续接，必须恰好一次 |
 | `game.snapshot` | 无 | 当前回合、角色位置/资金/资金版本、玩家 8 格库存；can_act 表示在场且未冻结/梦游/睡神控制 |
 | `card.prepare` | `{card=504}` | 校验原请求日历/槽位/归属，准备扣一张；返回零基 slot、bank |
+| `combat.prepare_detonation` | 无 | 仅引爆501/159；准备可视地雷根及连锁战斗，返回40EF之后的完整效果包数组。存活时含400B，破产时由核心终局接管；与扣卡共同提交 |
 | `hibernate.snapshot` / `hibernate.prepare` | 无 / `{targets={1},frozen_turns=2}` | 当前仅冬眠506/164；读取参与原始字段和资源计时，准备完整目标的保护卡/冻结/同盟/时钟事务，核心复核目标与唯一40F4 |
 | `route.prepare_move` | `{steps=3}` | 已准备扣卡后，按 1–6 点生成当前角色真实道路路线，返回 4011 明文数组；与扣卡一起提交，不新增持续状态 |
 | `motion.prepare` | `{card=1039,target=0}` | 仅支持 104/105/106/107/136/141：复用 C++ 移动计划器，返回卡牌确认、4011 路径和受保护自目标的400B；准备状态时钟与路线但不提前提交 |
@@ -115,3 +116,5 @@ Lua 准备事务成功返回前不改权威状态；原生兼容调用可能已�
 `map.cell.placement_occupied`统一角色和宠物当前确知格；`core.ground.occupied`供单格及范围陷阱调用。旧EXE无字段时回退原角色占格。C++ `ground.prepare`/`prepare_batch`再次验证，禁止地面计划与位置/移动计划混合提交。宠物同步与文字协议属于C++通信边界，未将不可观测动画时钟下放为Lua猜测。
 
 定时炸弹1045已使用 `combat.prepare_timed_bomb`：Lua校验目标并构造40BE，C++准备原始状态资格、倒计时、归属与库存事务。与攻击卡共用响应完整性校验及延迟提交，旧原生入口复用同一准备路径。证据见 `evidence/normal-cards/lua-timed-bomb-card.md`。
+
+引爆501已使用 `combat.prepare_detonation`：Lua校验八字节请求、准备扣卡并构造40EF，随后按原序返回核心生成的4017及连锁效果。请求尾部未初始化，不作为目标或响应字段。核心复用真实可视范围选根与连锁战斗计划，完整响应验证后一次性提交地雷移除、伤害、保护卡和库存；实际破产时不发送恢复掷骰400B。证据见 `evidence/normal-cards/lua-detonation-card.md`。

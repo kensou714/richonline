@@ -209,6 +209,15 @@ bool RichonlineCombatBridge::has_mine(std::int16_t position) const {
     const auto snapshot=ground_->snapshot();const auto found=snapshot.objects.find(position);
     return found!=snapshot.objects.end() && (found->second.npc==12 || found->second.npc==27);
 }
+RichonlineCombatBridge::PreparedHumanAttack RichonlineCombatBridge::prepare_detonation_card(
+    std::span<const RichonlineCombatActorRef> refs,const RichonlineBossCards::PreparedConsumption& consumption) const {
+    auto before=snapshot(refs);
+    auto plan=prepare_richonline_combat_detonate(before.combat,world_,0,consumption);
+    // 引爆计划尾包用于非终局恢复掷骰；破产时由房间终局处理器接管，不能先恢复操作。
+    if(!plan.bankrupt_actors.empty()) plan.packets.pop_back();
+    return PreparedHumanAttack{std::make_shared<PreparedHumanAttack::Data>(
+        PreparedHumanAttack::Data{this,std::move(before),std::move(plan),false})};
+}
 RichonlineCombatBridgeResult RichonlineCombatBridge::detonate_card(std::span<const RichonlineCombatActorRef> refs,
     std::uint8_t slot,const std::function<void(const std::string&)>& log) {
     const auto before=snapshot(refs);
