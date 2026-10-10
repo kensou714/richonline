@@ -1,0 +1,127 @@
+{
+  "schema": "richonline-independent-network-reuse-1",
+  "status": "PASS",
+  "scope": "仅四个复用单区间及十三个语义锚点；不是专题终审",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "reused_source_sha256": "c609c740a3b6f9e01a6a849feb075a63499235d15bdcc3e040c3110938204b91",
+  "ranges": [
+    {
+      "seed_va": "0x6bef20",
+      "bytes": 119,
+      "instructions": 39,
+      "sha256": "e4b073696323176c86d563ecd3c6285b278e2dcedcae1f22a889edf93c1e271c",
+      "source": {
+        "path": "专题/网络协议/证据/第二批/auxiliary_callbacks.json",
+        "sha256": "ba28bf4915f451bf372fe04f933c75273ec78cd34829bd2d82c7333246212265"
+      },
+      "range_boundary": "仅旧单区间原证；不补造IDA声明块"
+    },
+    {
+      "seed_va": "0x858fb0",
+      "bytes": 1620,
+      "instructions": 441,
+      "sha256": "993901e35b265bb1b90425641780af0678516dda3dc15edd6a50e96c4f011399",
+      "source": {
+        "path": "专题/网络协议/证据/第二批/first_candidates_recheck.json",
+        "sha256": "6a5534fd07ea93a8717568331d9f27576b8064c88573a68821f18dbf1fc03278"
+      },
+      "range_boundary": "仅旧单区间原证；不补造IDA声明块"
+    },
+    {
+      "seed_va": "0x859980",
+      "bytes": 170,
+      "instructions": 54,
+      "sha256": "532d11babc398b17c48d04db2dc4628b78cb21e39bdc9844a9a338b72af041d5",
+      "source": {
+        "path": "专题/网络协议/证据/第二批/extra_callers.json",
+        "sha256": "0eebbc0d75b5066263a715cd2cbd103c9db247ee2b1ae6f1085ed0774da3be34"
+      },
+      "range_boundary": "仅旧单区间原证；不补造IDA声明块"
+    },
+    {
+      "seed_va": "0x859cc0",
+      "bytes": 744,
+      "instructions": 230,
+      "sha256": "09348ac72afd37f6549b8fbf79cdfaa09e8465b34ddd10384b07cbe9c9bd7969",
+      "source": {
+        "path": "专题/网络协议/证据/第二批/first_candidates_recheck.json",
+        "sha256": "6a5534fd07ea93a8717568331d9f27576b8064c88573a68821f18dbf1fc03278"
+      },
+      "range_boundary": "仅旧单区间原证；不补造IDA声明块"
+    }
+  ],
+  "byte_count": 2653,
+  "instruction_count": 764,
+  "callback_abi": "6BEF20读取两个DWORD栈参并ret 8；调用者错误参数待861190 ABI闭合",
+  "anchors": {
+    "0x6bef20": {
+      "0x6bef2b": [
+        "mov",
+        "eax, dword ptr [ebp + 8]"
+      ],
+      "0x6bef41": [
+        "mov",
+        "edx, dword ptr [ebp + 0xc]"
+      ],
+      "0x6bef94": [
+        "ret",
+        "8"
+      ]
+    },
+    "0x859cc0": {
+      "0x859f21": [
+        "push",
+        "3"
+      ],
+      "0x859f29": [
+        "call",
+        "0x60d4fc"
+      ],
+      "0x859f2e": [
+        "push",
+        "eax"
+      ],
+      "0x859f2f": [
+        "call",
+        "dword ptr [0xacb8c0]"
+      ],
+      "0x859f35": [
+        "cmp",
+        "esi, esp"
+      ]
+    },
+    "0x858fb0": {
+      "0x8590e5": [
+        "cmp",
+        "dword ptr [ebp - 0x20], 3"
+      ],
+      "0x8590e9": [
+        "ja",
+        "0x8590fa"
+      ],
+      "0x8590f1": [
+        "cmp",
+        "ecx, dword ptr [eax*4 + 0xa2f7d0]"
+      ],
+      "0x8590f8": [
+        "je",
+        "0x859101"
+      ],
+      "0x8590fa": [
+        "xor",
+        "al, al"
+      ]
+    }
+  },
+  "bridge": {
+    "va": "0x60d4fc",
+    "bytes": "e98f3c2500",
+    "target_va": "0x861190",
+    "boundary": "当前磁盘五字节；独立函数声明须结合全量thunks来源审阅"
+  },
+  "pending": [
+    "861190读取器真实参数与返回契约",
+    "本批完整声明块原证",
+    "请求生产到连接销毁、节点删除及下一次泵调用的闭环"
+  ]
+}

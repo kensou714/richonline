@@ -373,10 +373,31 @@ def main():
         assert {row['va'] for row in ledger} == set(functions) | limited_entries
         assert len(ledger) == len(functions) + len(limited_entries)
         status_counts = dict(Counter(row['status'] for row in ledger))
+        assert status_counts == {'完整函数静态审阅': 10, '字段或调用路径局部审阅': 5}
         for row in ledger:
-            assert all(row.get(key) for key in ('status', 'conclusion', 'unknown', 'evidence'))
+            assert all(row.get(key) for key in ('status', 'conclusion', 'unknown', 'evidence', 'document'))
             assert row['status'] != '待采证'
-            assert all((TOPIC / evidence).is_file() for evidence in row['evidence'])
+            document = (TOPIC / row['document']).resolve()
+            assert document.is_relative_to(TOPIC) and document.is_file()
+            assert isinstance(row['evidence'], str)
+            for reference in row['evidence'].split('；'):
+                filename, separator, pointer = reference.partition('#')
+                path = (TOPIC / filename).resolve()
+                assert path.is_relative_to(TOPIC) and path.is_file(), reference
+                target = load(path)
+                if separator:
+                    assert pointer.startswith('/') and not re.search(r'~(?![01])', pointer), reference
+                    for component in pointer[1:].split('/'):
+                        key = component.replace('~1', '/').replace('~0', '~')
+                        if isinstance(target, list):
+                            assert re.fullmatch(r'0|[1-9][0-9]*', key), reference
+                            target = target[int(key)]
+                        else:
+                            assert isinstance(target, dict) and key in target, reference
+                            target = target[key]
+                    assert isinstance(target, dict), reference
+                    if 'va' in target:
+                        assert target['va'] == row['va'], reference
         documents = sorted(TOPIC.glob('*.txt'))
         assert len(documents) >= 5
         for path in documents:

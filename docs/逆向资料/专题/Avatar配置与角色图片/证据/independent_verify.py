@@ -159,6 +159,10 @@ def main():
         ('TeachMode对象与消费者/证据/teachmode_raw.json', 0x627E70, 'chunks'),
         ('MapView配置记录与预览消费/证据/functions_raw.json', 0x622D50, 'chunk_byte_ranges'),
         ('游戏时间与计时调度/证据/functions.json', 0x641EE0, 'chunk_byte_ranges'),
+        ('图像运行时接口/证据/draw_mapping_dependencies.json', 0x6DAA10, 'chunk_byte_ranges'),
+        ('文本段键解析与预处理/证据/functions_raw.json', 0x819250, 'chunk_byte_ranges'),
+        ('文本段键解析与预处理/证据/functions_raw.json', 0x819470, 'chunk_byte_ranges'),
+        ('文本段键解析与预处理/证据/functions_raw.json', 0x819660, 'chunk_byte_ranges'),
         ('角色与精灵动画/证据/角色精灵_IDA原始导出.json', 0x642740, 'legacy')):
         source = load(ROOT / 'docs/逆向资料/专题' / relative)
         function = next(f for f in source['functions'] if int(f.get('va', f.get('address')), 16) == address)
@@ -190,6 +194,7 @@ def main():
     frame_counts, avatar_prop_counts = Counter(), Counter()
     avatar_names, direction_names, sparse_props = [], [], []
     section_gaps, nonstrict_coordinates, positive_props = [], [], []
+    avatar_image_values, coord_values = [], []
     for row in resources['files']:
         packed_blob = (ROOT / row['path']).read_bytes()
         assert digest(packed_blob) == row['source_sha256'] and len(packed_blob) == row['source_size']
@@ -267,6 +272,9 @@ def main():
                 name = section_row['ascii']
                 if re.fullmatch(r'AVATAR_[0-9]+', name):
                     avatar_names.append(name)
+                    coord_values.extend(bytes.fromhex(entry['value_hex']).strip(b' \t').decode('ascii')
+                                        for entry in entries if entry['section_index'] == section_row['index']
+                                        and entry['key_ascii'] == 'coord')
                     props = [entry['key_ascii'] for entry in entries
                              if entry['section_index'] == section_row['index']
                              and re.fullmatch(r'prop[0-9]+', entry['key_ascii'])]
@@ -281,8 +289,19 @@ def main():
                                 positive_props.append(value)
                 elif re.fullmatch(r'AVAT_[0-9]+_DIR_[0-9]+', name):
                     direction_names.append(name)
+                    images = [bytes.fromhex(entry['value_hex']).strip(b' \t').decode('ascii')
+                              for entry in entries if entry['section_index'] == section_row['index']
+                              and entry['key_ascii'] in ('normal', 'black', 'dogbite', 'frost')]
+                    assert len(images) == 4
+                    avatar_image_values.extend(images)
         resource_summary.append(dict(path=row['path'], decoded_size=size, sections=len(sections_out),
                                      entries=len(entries), duplicate_keys=duplicates))
+
+    assert avatar_names == ['AVATAR_%d' % i for i in range(157)]
+    assert set(direction_names) == {'AVAT_%d_DIR_%d' % (i, j) for i in range(157) for j in range(4)}
+    assert len(avatar_image_values) == 2512 and len(set(avatar_image_values)) == 2344
+    assert all(value.startswith('other_') for value in avatar_image_values)
+    assert set(coord_values) == {'zb%03d' % i for i in range(5)}
 
     anchor_specs = {
         0x6415C5: 'c7048affffffff', 0x64163B: 'c7800001000000000000',
@@ -298,19 +317,25 @@ def main():
         0x642ADA: '898208020000', 0x642B19: '89810c020000',
         0x6294E1: 'e8e562fdff', 0x6294F2: 'e806b8fdff',
         0x6245F2: 'e8beaefdff', 0x624609: 'c705f466a70000000000',
+        0x64208D: '6a00', 0x64208F: '6a00', 0x642097: 'e888b4fcff',
+        0x6420C5: 'e86b62fcff', 0x64214C: 'e8d773fcff',
     }
     semantic_anchors = []
     for ea, expected in anchor_specs.items():
         ins = decode(ea)
         assert ins.bytes.hex() == expected
-        semantic_anchors.append(dict(va=hex(ea), hex=expected,
-                                     assembly=ins.mnemonic + ' ' + ins.op_str))
+        semantic_anchors.append(dict(site_va=hex(ea), hex=expected,
+                                     text=ins.mnemonic + ' ' + ins.op_str))
     for path in HERE.parent.glob('*.txt'):
         assert all(not line.strip() or line.startswith('//') for line in path.read_text('utf-8').splitlines())
     author_document_hashes, manifest_records = {}, []
     if args.final:
         manifest = load(HERE.parent / '函数审阅清单.json')
         assert manifest['pe_sha256'] == SHA
+        assert {int(row['va'], 16) for row in manifest['functions']} == {
+            0x641650, 0x6416B0, 0x6416E0, 0x641750, 0x642320, 0x6464F0,
+            0x6294D0, 0x641590, 0x646590, 0x641550,
+            0x627E70, 0x642740, 0x641EE0, 0x6DAA10, 0x622D50}
         assert manifest['status_counts'] == dict(Counter(row['status'] for row in manifest['functions']))
         for row in manifest['functions']:
             assert (HERE.parent / row['document']).is_file()
@@ -347,6 +372,8 @@ def main():
                   frame_counts=dict(frame_counts), avatar_prop_counts=dict(avatar_prop_counts),
                   avatar_names=avatar_names, direction_names=direction_names,
                   sparse_props=sparse_props,
+                  avatar_image_entries=len(avatar_image_values), unique_avatar_images=len(set(avatar_image_values)),
+                  coord_values=sorted(set(coord_values)),
                   section_gaps=section_gaps, nonstrict_coordinates=nonstrict_coordinates,
                   positive_prop_entries=len(positive_props),
                   duplicated_positive_props={str(value): count for value, count in Counter(positive_props).items()

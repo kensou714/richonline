@@ -1,0 +1,277 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "raw_source_sha256": "657757f1af01608ca84be60202b62b279761bf72e550a58df9fc8f74ff41c0bd",
+  "functions": [
+    {
+      "va": "0x6e52d0",
+      "status": "局部路径已核",
+      "conclusion": "六处分配建链、两种节点、WCHAR控制对条件及测宽累加已核；字体算法依赖未闭合。",
+      "evidence": "证据/formal_functions.json",
+      "scope": "本入口完整声明块的限定静态契约或局部路径",
+      "unknown": "没有实机；动态回调、字体算法、异常失败及线程重入图未闭合"
+    },
+    {
+      "va": "0x6fabe0",
+      "status": "静态契约已审阅",
+      "conclusion": "包括附属EH块：非空池弹头清字段，空池分配16B并条件构造；不扩展为CRT异常保证。",
+      "evidence": "证据/formal_functions.json",
+      "scope": "本入口完整声明块的限定静态契约或局部路径",
+      "unknown": "没有实机；动态回调、字体算法、异常失败及线程重入图未闭合"
+    },
+    {
+      "va": "0x6facf0",
+      "status": "静态契约已审阅",
+      "conclusion": "ECX节点的+0/+4/+12以DWORD清零，+8以BYTE清零，返回节点；+9..11不写。",
+      "evidence": "证据/formal_functions.json",
+      "scope": "本入口完整声明块的限定静态契约或局部路径",
+      "unknown": "没有实机；动态回调、字体算法、异常失败及线程重入图未闭合"
+    },
+    {
+      "va": "0x6fad40",
+      "status": "静态契约已审阅",
+      "conclusion": "仅返回全局ACC3C4为空的布尔值，传入ECX不参与谓词。",
+      "evidence": "证据/formal_functions.json",
+      "scope": "本入口完整声明块的限定静态契约或局部路径",
+      "unknown": "没有实机；动态回调、字体算法、异常失败及线程重入图未闭合"
+    },
+    {
+      "va": "0x8e02f0",
+      "status": "静态契约已审阅",
+      "conclusion": "释放并清上下文+5118/+5120；全局池非空时取得节点后delete，最终清池头。",
+      "evidence": "证据/formal_functions.json",
+      "scope": "本入口完整声明块的限定静态契约或局部路径",
+      "unknown": "没有实机；动态回调、字体算法、异常失败及线程重入图未闭合"
+    },
+    {
+      "va": "0x8eaa30",
+      "status": "局部路径已核",
+      "conclusion": "对链DWORD+4求和；已有链保留，+40回调临时链反向接入空闲池；动态回调写者未闭合。",
+      "evidence": "证据/formal_functions.json",
+      "scope": "本入口完整声明块的限定静态契约或局部路径",
+      "unknown": "没有实机；动态回调、字体算法、异常失败及线程重入图未闭合"
+    },
+    {
+      "va": "0x8eaaf0",
+      "status": "局部路径已核",
+      "conclusion": "已核4参ABI、+40回调和临时链回收；固定522B暂存与按wcslen字节清源，不宣称安全过滤。",
+      "evidence": "证据/formal_functions.json",
+      "scope": "本入口完整声明块的限定静态契约或局部路径",
+      "unknown": "没有实机；动态回调、字体算法、异常失败及线程重入图未闭合"
+    },
+    {
+      "va": "0x8e1620",
+      "status": "复用局部路径",
+      "conclusion": "节点消费循环及活动链保留，不扩展为完整布局算法。",
+      "evidence": "证据/reused_owner_audit.json",
+      "scope": "旧原证全部声明块当前字节一致；只复核指定语义路径"
+    },
+    {
+      "va": "0x8ea2b0",
+      "status": "复用局部路径",
+      "conclusion": "空闲池释放与上下文退出顺序，不扩展为所有控件析构。",
+      "evidence": "证据/reused_owner_audit.json",
+      "scope": "旧原证全部声明块当前字节一致；只复核指定语义路径"
+    }
+  ],
+  "windows": [
+    {
+      "owner_va": "0x8e1620",
+      "start": "0x8e16c4",
+      "end": "0x8e16e2",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8e16cf"
+    },
+    {
+      "owner_va": "0x8e43a0",
+      "start": "0x8e4474",
+      "end": "0x8e4492",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8e447d"
+    },
+    {
+      "owner_va": "0x8ff330",
+      "start": "0x8ff4a0",
+      "end": "0x8ff4c2",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8ff4ac"
+    },
+    {
+      "owner_va": "0x8ff330",
+      "start": "0x8ff5ba",
+      "end": "0x8ff5db",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8ff5c3"
+    },
+    {
+      "owner_va": "0x8ff330",
+      "start": "0x8ff835",
+      "end": "0x8ff856",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8ff83e"
+    },
+    {
+      "owner_va": "0x8ea2b0",
+      "start": "0x8ea338",
+      "end": "0x8ea367",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8ea34e"
+    },
+    {
+      "owner_va": "0x6e52d0",
+      "start": "0x6e5399",
+      "end": "0x6e53c7",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6e53af"
+    },
+    {
+      "owner_va": "0x6e52d0",
+      "start": "0x6e53d5",
+      "end": "0x6e53fb",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6e53e7"
+    },
+    {
+      "owner_va": "0x6e52d0",
+      "start": "0x6e542a",
+      "end": "0x6e545c",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6e5444"
+    },
+    {
+      "owner_va": "0x6e52d0",
+      "start": "0x6e546a",
+      "end": "0x6e5490",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6e547c"
+    },
+    {
+      "owner_va": "0x6e52d0",
+      "start": "0x6e5510",
+      "end": "0x6e553a",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6e5522"
+    },
+    {
+      "owner_va": "0x6e52d0",
+      "start": "0x6e5548",
+      "end": "0x6e556e",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6e555a"
+    },
+    {
+      "owner_va": "0x8e02f0",
+      "start": "0x8e032d",
+      "end": "0x8e0358",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8e033e"
+    },
+    {
+      "owner_va": "0x6fabe0",
+      "start": "0x6fac68",
+      "end": "0x6fac92",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6fac7b"
+    },
+    {
+      "owner_va": "0x6fabe0",
+      "start": "0x6fac06",
+      "end": "0x6fac2c",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6fac15"
+    },
+    {
+      "owner_va": "0x6fa6b0",
+      "start": "0x6fa6b1",
+      "end": "0x6fa6d2",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x6fa6c1"
+    },
+    {
+      "owner_va": "0x8ea2b0",
+      "start": "0x8ea338",
+      "end": "0x8ea367",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8ea34e"
+    },
+    {
+      "owner_va": "0x8e1620",
+      "start": "0x8e16c4",
+      "end": "0x8e16e2",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8e16cf"
+    },
+    {
+      "owner_va": "0x8e43a0",
+      "start": "0x8e4474",
+      "end": "0x8e4492",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8e447d"
+    },
+    {
+      "owner_va": "0x8ff330",
+      "start": "0x8ff4a0",
+      "end": "0x8ff4c2",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8ff4ac"
+    },
+    {
+      "owner_va": "0x8ff330",
+      "start": "0x8ff5ba",
+      "end": "0x8ff5db",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8ff5c3"
+    },
+    {
+      "owner_va": "0x8ff330",
+      "start": "0x8ff835",
+      "end": "0x8ff856",
+      "window_status": "仅有限窗口核验",
+      "window_conclusion": "调用点参数与后续局部操作已核；不能覆盖owner整函数",
+      "evidence": "证据/bounded_raw.json",
+      "site": "0x8ff83e"
+    }
+  ],
+  "boundary": "只按functions中的级别汇总；windows不得增加函数覆盖"
+}

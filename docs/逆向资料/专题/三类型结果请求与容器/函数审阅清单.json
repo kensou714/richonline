@@ -1,0 +1,966 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "scope": "32新入口本体+5历史业务复用；深层外依赖按局部限定",
+  "source_sha256": {
+    "formal_functions.json": "c2536421113a4941b6ddbe3d71b9ab492dda98d4f99a74bbcde2095ecf457123",
+    "dependency_raw.json": "ced23af44de65aa269b81b0b411471c9d4f0daa8e4d5a690c3e735c7cbed6be4",
+    "dependency_helpers_raw.json": "0e3453ab5b60788ac88d4fd6b8b5d6dfeed6b50c92c1b49b2cd9cb6acd67e6fd",
+    "dependency_leaf_raw.json": "dff8a5cb40982188816cef8263d4397b58780bdf4fedf5af30808b892188d2b0",
+    "reused_preparation.json": "8b17c8fe9dd5e9597a58af14004c105353afe3f7f6da51093003e14f8c375a4d"
+  },
+  "functions": [
+    {
+      "va": "0x8ba7b0",
+      "status": "完整声明块语义已审",
+      "conclusion": "从全局发送reader重置、跳过2字节读取请求type；无空门。",
+      "unknown": "reader取值契约复用；运行时有效性未验证。",
+      "evidence": "证据/formal_functions.json#/functions/0",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8ba7db",
+          "tokens": [
+            "push",
+            "2"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8ba8d0",
+      "status": "完整声明块语义已审",
+      "conclusion": "从全局发送reader重置、跳过6字节读取请求key。",
+      "unknown": "无容量门；调用会改变共享游标。",
+      "evidence": "证据/formal_functions.json#/functions/1",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8ba8fb",
+          "tokens": [
+            "push",
+            "6"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bba00",
+      "status": "完整声明块语义已审",
+      "conclusion": "缓存命中返回1；否则构造type1/key10字节请求，替换44字节连接并append。",
+      "unknown": "容器深层与分配异常运行效果未验证。",
+      "evidence": "证据/formal_functions.json#/functions/2",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bbac3",
+          "tokens": [
+            "push",
+            "0x2c"
+          ]
+        },
+        {
+          "va": "0x8bbb19",
+          "tokens": [
+            "0xacbd64"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bbcd0",
+      "status": "完整声明块语义已审",
+      "conclusion": "type2/key/Source42字节请求，替换单连接；append后清结果ACBD68。",
+      "unknown": "Source业务身份、满32字符终止及运行效果未验证。",
+      "evidence": "证据/formal_functions.json#/functions/3",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bbd6b",
+          "tokens": [
+            "push",
+            "0x2c"
+          ]
+        },
+        {
+          "va": "0x8bbe3c",
+          "tokens": [
+            "0xacbd68",
+            "0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bc220",
+      "status": "完整声明块语义已审",
+      "conclusion": "用完整DWORD key查询ACBD70，未命中返回0，否则返回访问层指针。",
+      "unknown": "深层节点绝对地址与并发失效未闭合。",
+      "evidence": "证据/formal_functions.json#/functions/4",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/4"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bc271",
+          "tokens": [
+            "je"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bc2c0",
+      "status": "完整声明块语义已审",
+      "conclusion": "用相同树/key门，未命中返回0，否则取访问层指针+4400的count。",
+      "unknown": "零count与未命中均可返回0；深层节点地址未闭合。",
+      "evidence": "证据/formal_functions.json#/functions/5",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/5"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bc325",
+          "tokens": [
+            "0x1130"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8ba510",
+      "status": "完整声明块语义已审",
+      "conclusion": "44字节连接初始化+8/+C/+10/+14/+28并构造+18容量8的reader。",
+      "unknown": "未初始化socket/event；reader末层初始化外依赖。",
+      "evidence": "证据/dependency_raw.json#/functions/0",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8ba547",
+          "tokens": [
+            "0x10",
+            "1"
+          ]
+        },
+        {
+          "va": "0x8ba568",
+          "tokens": [
+            "0x28",
+            "0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8ba880",
+      "status": "完整声明块语义已审",
+      "conclusion": "将reader+0 base复制到+4读游标，返回this。",
+      "unknown": "base有效性及全部调用场景未验证。",
+      "evidence": "证据/dependency_raw.json#/functions/1",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8ba8ab",
+          "tokens": [
+            "[eax + 4]",
+            "edx"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bb270",
+      "status": "完整声明块语义已审",
+      "conclusion": "先调用成员析构8BA5B0，再按flags低位决定operator delete(this)。",
+      "unknown": "成员reader析构深层实现外依赖。",
+      "evidence": "证据/dependency_raw.json#/functions/2",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bb29e",
+          "tokens": [
+            "and",
+            "1"
+          ]
+        },
+        {
+          "va": "0x8bb2c5",
+          "tokens": [
+            "ret",
+            "4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bb970",
+      "status": "完整声明块语义已审",
+      "conclusion": "构造0D0A/type0/keyFFFFFFFF及32字节预零区。",
+      "unknown": "请求业务名与Source编码未恢复。",
+      "evidence": "证据/dependency_raw.json#/functions/3",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bb9a3",
+          "tokens": [
+            "[eax + 2]",
+            "0"
+          ]
+        },
+        {
+          "va": "0x8bb9b4",
+          "tokens": [
+            "0x20"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bbc60",
+      "status": "完整声明块语义已审",
+      "conclusion": "构造0D0A/type1/keyFFFFFFFF的10字节请求头。",
+      "unknown": "调用场景只取已保留窗口。",
+      "evidence": "证据/dependency_raw.json#/functions/4",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/4"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bbc93",
+          "tokens": [
+            "[eax + 2]",
+            "1"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bbf10",
+      "status": "完整声明块语义已审",
+      "conclusion": "构造0D0A/type2/keyFFFFFFFF及32字节预零区。",
+      "unknown": "Source身份与编码未知。",
+      "evidence": "证据/dependency_raw.json#/functions/5",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/5"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bbf43",
+          "tokens": [
+            "[eax + 2]",
+            "2"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bcf20",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "候选比较后缺键构造默认mapped/pair并hint插入；返回指针层结果+4。",
+      "unknown": "lower_bound、hint插入及绝对节点地址仍外依赖。",
+      "evidence": "证据/dependency_raw.json#/functions/6",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/6"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bcfa1",
+          "tokens": [
+            "call",
+            "0x5ffd43"
+          ]
+        },
+        {
+          "va": "0x8bcfd7",
+          "tokens": [
+            "add",
+            "4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bd130",
+      "status": "完整声明块语义已审",
+      "conclusion": "用树this+4构造end迭代器输出并返回输出地址。",
+      "unknown": "头节点全部字段及树生命周期未审。",
+      "evidence": "证据/dependency_raw.json#/functions/7",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/7"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bd156",
+          "tokens": [
+            "[eax + 4]"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bd240",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "候选为end或比较返回1时输出end，否则复制候选首DWORD。",
+      "unknown": "候选搜索与key取址深层正文外依赖。",
+      "evidence": "证据/dependency_raw.json#/functions/8",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/8"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bd290",
+          "tokens": [
+            "jne"
+          ]
+        },
+        {
+          "va": "0x8bd2ee",
+          "tokens": [
+            "[eax]",
+            "edx"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bd430",
+      "status": "完整声明块语义已审",
+      "conclusion": "比较两个迭代器首DWORD，相等1否则0，ret4。",
+      "unknown": "指针有效性与容器失效边界未验证。",
+      "evidence": "证据/dependency_raw.json#/functions/9",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/9"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bd45b",
+          "tokens": [
+            "sub",
+            "[ecx]"
+          ]
+        },
+        {
+          "va": "0x8bd468",
+          "tokens": [
+            "ret",
+            "4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bd480",
+      "status": "完整声明块语义已审",
+      "conclusion": "调用equality后对AL取反，得到不等布尔值。",
+      "unknown": "调用者迭代器有效性未验证。",
+      "evidence": "证据/dependency_raw.json#/functions/10",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/10"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bd4aa",
+          "tokens": [
+            "call",
+            "0x60181e"
+          ]
+        },
+        {
+          "va": "0x8bd4b6",
+          "tokens": [
+            "inc"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8cc5d0",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "容量+0C，new(size)保存base+0，再调用初始化层8CC8A0。",
+      "unknown": "8CC920深层初始化与分配失败策略外依赖。",
+      "evidence": "证据/dependency_raw.json#/functions/11",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/11"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8cc5f9",
+          "tokens": [
+            "[eax + 0xc]"
+          ]
+        },
+        {
+          "va": "0x8cc61a",
+          "tokens": [
+            "[edx]"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8cc820",
+      "status": "完整声明块语义已审",
+      "conclusion": "memcpy到reader+8，再推进+8游标Size；本体及已审助手无容量门。",
+      "unknown": "任意调用者的长度合法性未验证。",
+      "evidence": "证据/dependency_raw.json#/functions/12",
+      "evidence_refs": [
+        {
+          "file": "dependency_raw.json",
+          "pointer": "/functions/12"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8cc854",
+          "tokens": [
+            "call",
+            "0x60e3e8"
+          ]
+        },
+        {
+          "va": "0x8cc863",
+          "tokens": [
+            "call",
+            "0x60bfbc"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8ba5b0",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "对两动态reader调用flags1助手，+8非零时关闭event/socket，最后析构内嵌reader。",
+      "unknown": "8BA740/8CC660释放实现外依赖；实机句柄有效性未知。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/0",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8ba68a",
+          "tokens": [
+            "je"
+          ]
+        },
+        {
+          "va": "0x8ba695",
+          "tokens": [
+            "0xad40cc"
+          ]
+        },
+        {
+          "va": "0x8ba6aa",
+          "tokens": [
+            "0xad40d0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bafb0",
+      "status": "完整声明块语义已审",
+      "conclusion": "返回reader+8写游标。",
+      "unknown": "游标与分配容量关系由调用者维护。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/1",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bafd6",
+          "tokens": [
+            "[eax + 8]"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bb040",
+      "status": "完整声明块语义已审",
+      "conclusion": "reader+8按参数相加，不校验容量，返回this。",
+      "unknown": "参数符号/有效范围依调用者。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/2",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bb069",
+          "tokens": [
+            "add"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bd060",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "调用vector构造迭代器stride44/count100，随后mapped+4400 count置0。",
+      "unknown": "44字节元素构造和vector正文外依赖；不称全字段零。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/3",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bd088",
+          "tokens": [
+            "0x64"
+          ]
+        },
+        {
+          "va": "0x8bd08a",
+          "tokens": [
+            "0x2c"
+          ]
+        },
+        {
+          "va": "0x8bd098",
+          "tokens": [
+            "0x1130",
+            "0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bf550",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "参数经8C2AD0再8C3510返回；用于候选key比较调用。",
+      "unknown": "两深层函数未在本批审阅，不能声称节点+12。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/4",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/4"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bf572",
+          "tokens": [
+            "call",
+            "0x6094f6"
+          ]
+        },
+        {
+          "va": "0x8bf57b",
+          "tokens": [
+            "call",
+            "0x612bd7"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bfd70",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "调用8C3430取得候选并构造到输出迭代器。",
+      "unknown": "8C3430搜索规则、树布局未由此本体证明。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/5",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/5"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8bfd9a",
+          "tokens": [
+            "call",
+            "0x60e0be"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8c00c0",
+      "status": "完整声明块语义已审",
+      "conclusion": "经8C3900将参数写迭代器首DWORD并返回this。",
+      "unknown": "传入节点指针有效性未验证。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/6",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/6"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8c00ea",
+          "tokens": [
+            "call",
+            "0x60551d"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8c0120",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "将this传8C3950并返回其结果。",
+      "unknown": "经8C2AD0所得绝对节点字段仍外依赖。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/7",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/7"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8c0146",
+          "tokens": [
+            "call",
+            "0x612beb"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8c0170",
+      "status": "完整声明块语义已审",
+      "conclusion": "返回迭代器首DWORD。",
+      "unknown": "不推导其为已有效节点或pair。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/8",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/8"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8c0196",
+          "tokens": [
+            "[eax]"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8c04b0",
+      "status": "完整声明块语义已审",
+      "conclusion": "复制DWORD key到pair+0，复制4404字节mapped到pair+4。",
+      "unknown": "pair源容量由调用者保证，节点分配总长未审。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/9",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/9"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8c04e6",
+          "tokens": [
+            "0x44d"
+          ]
+        },
+        {
+          "va": "0x8c04eb",
+          "tokens": [
+            "rep movsd"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8cc8a0",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "memset(base,0,capacity)，重置读游标，调用8CC920。",
+      "unknown": "8CC920末层写游标初始化外依赖。",
+      "evidence": "证据/dependency_helpers_raw.json#/functions/10",
+      "evidence_refs": [
+        {
+          "file": "dependency_helpers_raw.json",
+          "pointer": "/functions/10"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8cc8d2",
+          "tokens": [
+            "call",
+            "0x60ffdb"
+          ]
+        },
+        {
+          "va": "0x8cc8e5",
+          "tokens": [
+            "call",
+            "0x611895"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8c3900",
+      "status": "完整声明块语义已审",
+      "conclusion": "将参数写this首DWORD，返回this，ret4。",
+      "unknown": "全部调用者指针身份未恢复。",
+      "evidence": "证据/dependency_leaf_raw.json#/functions/0",
+      "evidence_refs": [
+        {
+          "file": "dependency_leaf_raw.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8c3929",
+          "tokens": [
+            "[eax]",
+            "ecx"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8c3950",
+      "status": "完整块已读；依赖语义局部",
+      "conclusion": "取*this并传8C2AD0，返回其结果。",
+      "unknown": "8C2AD0本体未闭合，不推出N+12。",
+      "evidence": "证据/dependency_leaf_raw.json#/functions/1",
+      "evidence_refs": [
+        {
+          "file": "dependency_leaf_raw.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x8c3976",
+          "tokens": [
+            "[eax]"
+          ]
+        },
+        {
+          "va": "0x8c3979",
+          "tokens": [
+            "call",
+            "0x6094f6"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8bb2e0",
+      "status": "历史复用主区间局部已审",
+      "conclusion": "单连接非阻塞事件泵，失败回调后清全局；CLOSE错误字段读取READ下标。",
+      "unknown": "只复核主区间，完整异常尾块及实机回调重入未证。",
+      "evidence": "证据/reused_preparation.json#/functions/0",
+      "evidence_refs": [
+        {
+          "file": "reused_preparation.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "semantic_anchors": []
+    },
+    {
+      "va": "0x8bb090",
+      "status": "历史复用主区间局部已审",
+      "conclusion": "WSAStartup2.2、地址端口和回调写入独立全局。",
+      "unknown": "只复核主区间，返回有效性与完整异常块未证。",
+      "evidence": "证据/reused_preparation.json#/functions/1",
+      "evidence_refs": [
+        {
+          "file": "reused_preparation.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "semantic_anchors": []
+    },
+    {
+      "va": "0x755de0",
+      "status": "历史复用主区间局部已审",
+      "conclusion": "type0/1成功刷新UI105，type2按ACBD68范围显示文本，失败显示1055。",
+      "unknown": "真实业务中文文本及全部owner流程未恢复。",
+      "evidence": "证据/reused_preparation.json#/functions/2",
+      "evidence_refs": [
+        {
+          "file": "reused_preparation.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "semantic_anchors": []
+    },
+    {
+      "va": "0x8ba950",
+      "status": "历史完整声明块复用已审",
+      "conclusion": "响应type/L门，三类型正文消费，count数组循环及callback后阶段写入。",
+      "unknown": "数组count缺联合校验；静态风险未实机。",
+      "evidence": "证据/reused_preparation.json#/functions/3",
+      "evidence_refs": [
+        {
+          "file": "reused_preparation.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "semantic_anchors": []
+    },
+    {
+      "va": "0x8bb700",
+      "status": "历史完整声明块复用已审",
+      "conclusion": "type0缓存门、42字节请求、单连接替换及32字节Source复制。",
+      "unknown": "缓存深层比较、Source业务名与异常运行效果未证。",
+      "evidence": "证据/reused_preparation.json#/functions/4",
+      "evidence_refs": [
+        {
+          "file": "reused_preparation.json",
+          "pointer": "/functions/4"
+        }
+      ],
+      "semantic_anchors": []
+    }
+  ],
+  "owner_windows": [
+    {
+      "owner_va": "0x754110",
+      "start_va": "0x754153",
+      "end_va": "0x754176",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/bounded_raw.json#/explicit_owner_windows/0"
+    },
+    {
+      "owner_va": "0x754110",
+      "start_va": "0x754162",
+      "end_va": "0x754183",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/bounded_raw.json#/explicit_owner_windows/1"
+    },
+    {
+      "owner_va": "0x754110",
+      "start_va": "0x754176",
+      "end_va": "0x754195",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/bounded_raw.json#/explicit_owner_windows/2"
+    },
+    {
+      "owner_va": "0x755290",
+      "start_va": "0x755813",
+      "end_va": "0x755837",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/bounded_raw.json#/explicit_owner_windows/3"
+    },
+    {
+      "owner_va": "0x8bb2e0",
+      "start_va": "0x8bb52d",
+      "end_va": "0x8bb551",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/bounded_raw.json#/explicit_owner_windows/4"
+    },
+    {
+      "owner_va": "0x8ba950",
+      "start_va": "0x8babe3",
+      "end_va": "0x8bac19",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/bounded_raw.json#/explicit_owner_windows/5"
+    },
+    {
+      "owner_va": "0x8ba950",
+      "start_va": "0x8bacef",
+      "end_va": "0x8bad1a",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/bounded_raw.json#/explicit_owner_windows/6"
+    },
+    {
+      "owner_va": "0x755290",
+      "start_va": "0x7557f7",
+      "end_va": "0x75582b",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/owner_context_raw.json#/windows/0"
+    },
+    {
+      "owner_va": "0x755290",
+      "start_va": "0x755763",
+      "end_va": "0x75579a",
+      "status": "局部owner窗口；不计新函数",
+      "evidence": "证据/owner_context_raw.json#/windows/1"
+    }
+  ],
+  "historical_contracts": "reused_preparation.json#/historical_contracts六项只作交叉引用，不新增计数"
+}

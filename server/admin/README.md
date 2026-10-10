@@ -11,6 +11,11 @@ C++ 服务端是数据库唯一写入者。管理器只调用 [CONTROL-PROTOCOL.
 `server/RichOnline.Server.exe` 和 `server/data`，保留启动、停止、账号、设置、日志、备份及客户端启动功能。
 管理器关闭会停止它启动的服务。数据目录互斥锁防止两个入口同时运行同一数据库。
 
+服务端资源使用 `server/config/resources` 内的独立副本，运行配置中的
+`richonline_boss_game.client_root` 为 `../config/resources`。整体搬移 server 时保留 data 和 config；
+GUI 启动服务无需客户端 EXE，“启动客户端”功能才需要配置客户端路径。
+资源导出、清单及迁移说明见 [config/README.md](../config/README.md)。
+
 路径优先级为命令行、EXE 旁的 `RichOnline.Admin.launch.json`、目录默认值；
 配置相对路径以 EXE 所在目录为基准。在 `server` 下能自动识别同目录服务端。
 `gameReady:false` 表示完整协议尚未实现，不等于大厅或已开放 BOSS 地图无法连接。
@@ -44,7 +49,7 @@ dotnet publish server/admin/RichOnline.Admin.csproj -c Release -r win-x64 --self
 ```
 
 只接受尚不存在的目标目录，默认 `server/data`。通过服务端只读 SQLite backup 导入账号及已提交 WAL，
-不改写源数据库，不重置账号或密码；使用当前已验证的三频道 gameplay bootstrap，校验客户端哈希并重定位资源路径。
+不改写源数据库，不重置账号或密码；使用 `config/lobby-bootstrap.template.json` 的三频道配置，校验资源副本 SHA256 并重定位资源路径，无需读取客户端 EXE。
 迁移记录在 `server/data/gui-migration.json`。该命令不是每次启动的必需步骤，不要重复迁移覆盖已有账号。
 
 开发启动可明确选路径；客户端启动要求已验证的 KPD 配置和区域编号：

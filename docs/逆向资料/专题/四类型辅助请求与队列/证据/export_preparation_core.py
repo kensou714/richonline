@@ -109,7 +109,9 @@ def export(config, output_dir):
         rows = []
         for ea in selected:
             next_ea = min(ida_bytes.get_item_end(ea), end)
-            rows.append(dict(site_va=hex(ea), text=line(ea), bytes=identity(ea, next_ea - ea)))
+            rows.append(dict(site_va=hex(ea), text=line(ea),
+                             is_code=bool(ida_bytes.is_code(ida_bytes.get_full_flags(ea))),
+                             bytes=identity(ea, next_ea - ea)))
         return dict(owner_va=hex(owner.start_ea), site_va=hex(site), assembly=rows,
                     pending_status='有限调用窗口；不计作owner完整审阅')
 
@@ -146,10 +148,10 @@ def export(config, output_dir):
             rejected[hex(ea)] = dict(target_va=hex(ea), reason='非已声明C/UTF16字符串')
             return
         size = ida_bytes.get_item_size(ea)
-        if size <= 0 or size > 4098:
+        width = allowed[kind]
+        if size <= 0 or size - width > 4096:
             rejected[hex(ea)] = dict(target_va=hex(ea), reason='无声明范围或超过有限长度')
             return
-        width = allowed[kind]
         terminator = bytes(width)
         audit = identity(ea, size)
         raw = bytes.fromhex(audit['idb_hex'])

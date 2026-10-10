@@ -63,18 +63,30 @@ def review():
 
     reused = load('reused_raw.json')
     selected = {f['va']: f for f in reused['functions']}
+    original_thunks = {}
     for source in reused['provenance']:
         content = (ROOT / source['source']).read_bytes()
         assert digest(content) == source['source_sha256']
         sources[source['source']] = digest(content)
-        originals = {f['va']: f for f in json.loads(content)['functions']}
+        original_data = json.loads(content)
+        originals = {f['va']: f for f in original_data['functions']}
+        for thunk in original_data.get('thunks', []):
+            assert original_thunks.setdefault(thunk['va'], thunk) == thunk
         for va in source['functions']:
             assert originals[va] == selected[va]
+    assert {thunk['va']: thunk for thunk in reused['thunks']} == original_thunks
 
     supplement = load('supplement_raw.json')
     assert supplement['disk_sha256'] == SHA
     source_constructor = load('source_constructor_raw.json')
     assert source_constructor['disk_sha256'] == SHA
+    for dataset in (reused, supplement, source_constructor):
+        for thunk in dataset.get('thunks', []):
+            rows = block(thunk)
+            assert len(rows) == 1 and rows[0].mnemonic == 'jmp' and rows[0].size == 5
+            target = int(rows[0].op_str, 16)
+            assert target == int(thunk['target'], 16)
+            assert bridges.setdefault(int(thunk['va'], 16), target) == target
     for label, group in (('本批主体', raw['functions']), ('复用全块字节', reused['functions']),
                          ('补证主体及桥函数', supplement['functions']),
                          ('源槽构造补证及桥函数', source_constructor['functions'])):
@@ -263,10 +275,51 @@ def review():
         ins = instructions[va]
         assert ins.mnemonic == mnemonic and ins.op_str == operand, hex(va)
         anchors.append(dict(va=hex(va), hex=ins.bytes.hex(), mnemonic=mnemonic, operand=operand))
+    release_fields = [0x98, 0x9c, 0xa0, 0xac, 0xb0, 0xbc, 0xc0, 0xcc,
+                      0xd0, 0xdc, 0xe0, 0xec, 0xf0, 0xfc, 0x100, 0x10c,
+                      0x110, 0x11c, 0x120, 0x12c, 0x130, 0x13c, 0x140, 8]
+    release_groups = []
+    # 逐组锁定判空、栈暂存、实参和同字段清零，限定于本体调用契约。
+    for index, field in enumerate(release_fields):
+        start = 0x7fec0e + 0x31 * index if index < 23 else 0x7ff075
+        cmp_reg, load_reg, value_reg = [('eax', 'ecx', 'edx'),
+                                        ('edx', 'eax', 'ecx'),
+                                        ('ecx', 'edx', 'eax')][index % 3]
+        push_reg = ['eax', 'edx', 'ecx'][index % 3]
+        local = 8 + 4 * index
+        field_text = hex(field) if field != 8 else '8'
+        local_text = hex(local) if local != 8 else '8'
+        skip = 0x7ff09a if index == 23 else start + 46
+        rows = [(0, 'cmp', f'dword ptr [{cmp_reg} + {field_text}], 0'),
+                (7, 'je', hex(skip)),
+                (9, 'mov', f'{load_reg}, dword ptr [ebp - 4]'),
+                (12, 'mov', f'{value_reg}, dword ptr [{load_reg} + {field_text}]'),
+                (18, 'mov', f'dword ptr [ebp - {local_text}], {value_reg}'),
+                (21, 'mov', f'{push_reg}, dword ptr [ebp - {local_text}]'),
+                (24, 'push', push_reg),
+                (25, 'call', '0x601cd3'),
+                (30, 'add', 'esp, 4'),
+                (33, 'mov', f'{load_reg}, dword ptr [ebp - 4]'),
+                (36, 'mov', f'dword ptr [{load_reg} + {field_text}], 0')]
+        if index == 23:
+            rows = [(delta - (3 if delta >= 7 else 0) - (3 if delta >= 18 else 0), op, arg)
+                    for delta, op, arg in rows]
+        for delta, mnemonic, operand in rows:
+            ins = instructions[start + delta]
+            assert (ins.mnemonic, ins.op_str) == (mnemonic, operand), hex(start + delta)
+        assert bridges[0x601cd3] == 0x91f7e0
+        release_groups.append(dict(field_offset=hex(field), condition=hex(start),
+                                   release_call=hex(start + (19 if index == 23 else 25)),
+                                   clear=hex(start + (30 if index == 23 else 36))))
+    release_calls = {ins.address for ins in instructions.values()
+                     if 0x7febf0 <= ins.address < 0x7ff0e4 and
+                     ins.mnemonic == 'call' and ins.op_str == '0x601cd3'}
+    assert release_calls == {int(row['release_call'], 16) for row in release_groups}
     result = dict(status='字节预核通过，语义与终稿待审', pe_sha256=SHA, sources=sources,
                   functions=functions, unique_ranges=list(ranges.values()), bridge_count=len(bridges),
                   bridges={hex(va): hex(target) for va, target in sorted(bridges.items())}, strings=strings,
                   semantic_anchors=anchors,
+                  direct_release_groups=release_groups,
                   boundary='复用全块重核不代表新增完整语义；未运行游戏')
     (HERE / 'independent_validation.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', 'utf-8')
     (HERE / 'independent_assembly.txt').write_text('\n'.join(assembly) + '\n', 'utf-8')

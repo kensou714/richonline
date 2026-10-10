@@ -38,6 +38,8 @@ public:
     std::array<std::uint32_t,2> cash() const;
     std::optional<std::uint8_t> owner(std::int16_t property_ref) const noexcept;
     std::optional<std::uint32_t> price(std::int16_t property_ref) const noexcept;
+    void configure_human_purchase_discount(std::optional<bool> half_price);
+    std::optional<std::uint32_t> purchase_price(std::int16_t property_ref,std::uint8_t actor) const noexcept;
     struct Building {
         std::int8_t kind=-1; std::uint8_t level=0;
         bool operator==(const Building&) const = default;
@@ -78,6 +80,9 @@ private:
     RichonlineRoadTopology topology_;
     std::uint16_t game_id_;
     std::shared_ptr<RichonlineGameLedger> ledger_;
+    std::array<std::optional<bool>,2> purchase_half_price_{false,false};
+    std::array<std::uint32_t,2> garden_cash_caps_{};
+    std::array<std::uint32_t,7> garden_income_{};
     struct Property {
         std::uint32_t price;
         std::optional<std::uint8_t> owner;
@@ -107,6 +112,8 @@ private:
     bool temple_supported(const RichonlineLandingContext&,const Building&,bool friendly) const;
     RichonlineLandingResult temple_result(const RichonlineLandingContext&,const Building&,
         bool friendly,std::vector<Bytes> messages) const;
+    RichonlineLandingResult garden_result(std::uint8_t actor,const Building&,
+        std::vector<Bytes> messages) const;
     std::array<std::optional<ResearchJob>,64> research_jobs_{};
     RichonlineLandingResult await_research(std::vector<Bytes> messages,std::int16_t property);
     RichonlineLandingResult complete_research(std::int8_t selection);

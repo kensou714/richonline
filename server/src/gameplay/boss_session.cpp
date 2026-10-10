@@ -11,6 +11,7 @@
 #include "richonline_portal_landing.hpp"
 #include "richonline_special_session.hpp"
 #include "original_game_values.hpp"
+#include "original_options.hpp"
 #include "richonline_research_cards.hpp"
 #include <algorithm>
 #include <bit>
@@ -192,6 +193,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         const auto equipment=(*startup.human_profile_slots)[2];
         rules.human_purchase_half_price=equipment>0 && equipment<=0x7fffffffU;
     }
+    property->configure_human_purchase_discount(rules.human_purchase_half_price);
     rules.raw_authority=policy.raw_authority;
     const auto card_values=load_original_game_values(resources/"Data"/"GValue.kpd");
     const auto jail_days=card_values.require(10),alliance_days=card_values.require(11);
@@ -246,6 +248,26 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         rules.payment_equipment=policy.payment->equipment;
     }
     rules.ledger=ledger;
+    const auto feast=load_original_kpd(resources/"Data/Feast.kpd",806);
+    if(feast.size()!=806) throw CodecError("richonline_feast_calendar_invalid");
+    for(std::size_t year=0;year<rules.chongyang_dates.size();++year) {
+        const auto offset=year*26+22;
+        const auto month=feast[offset],day=feast[offset+1];
+        if(!std::chrono::year_month_day{std::chrono::year{static_cast<int>(year)+2004},
+            std::chrono::month{month},std::chrono::day{day}}.ok())
+            throw CodecError("richonline_feast_chongyang_date_invalid");
+        // NEW7D8DE0 returns the first matching slot, even if its mode gate
+        // later rejects it. A coincident earlier festival hides Chongyang.
+        bool shadowed=false;
+        for(std::size_t slot=0;slot<11;++slot) {
+            const auto earlier=year*26+slot*2;
+            if(feast[earlier]==month && feast[earlier+1]==day) {
+                shadowed=true;
+                break;
+            }
+        }
+        if(!shadowed) rules.chongyang_dates[year]={month,day};
+    }
     if (policy.terminal) {
         rules.month_limit_days=static_cast<std::uint8_t>(stage.game_months*30U);
         rules.terminal=[terminal=policy.terminal](const RichonlineTurnTerminalContext& context) {

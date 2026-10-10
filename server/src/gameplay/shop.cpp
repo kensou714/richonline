@@ -6,6 +6,10 @@
 #include <string_view>
 
 namespace richnet {
+namespace {
+// The client starts its ten-second clock after receiving the stock packet.
+constexpr auto shop_transport_grace=std::chrono::milliseconds{500};
+}
 RichonlineBossShop::RichonlineBossShop(const std::filesystem::path& root,RichonlineBossCards& cards,
     std::uint16_t game_id,Now now,std::array<std::uint8_t,2> stock_opaque,RichonlineShopCatalog::Choose choose)
     : cards_(cards),game_id_(game_id),now_(std::move(now)),stock_opaque_(stock_opaque),
@@ -81,7 +85,7 @@ RichonlineLandingResult RichonlineBossShop::close(const char* reason) {
     deadline_.reset(); last_decision_=reason; return result;
 }
 std::optional<RichonlineLandingResult> RichonlineBossShop::poll() {
-    if (!active() || now_()<*deadline_) return {};
+    if (!active() || now_()<*deadline_+shop_transport_grace) return {};
     return close("deadline_expired");
 }
 RichonlineLandingResult RichonlineBossShop::handle(View request) {
@@ -91,7 +95,7 @@ RichonlineLandingResult RichonlineBossShop::handle(View request) {
     if (request.size()!=(opcode==0x35 ? 4U : 6U)) throw CodecError("richonline_shop_request_length_invalid");
     if (opcode==0x30 && std::bit_cast<std::int8_t>(request[4])==-1) return close("client_exit");
     if (!active()) throw CodecError("richonline_shop_not_open");
-    if (now_()>=*deadline_) return close("deadline_expired");
+    if (now_()>=*deadline_+shop_transport_grace) return close("deadline_expired");
     if (opcode==0x35) {
         if (!charge_reserve_ || !refresh_cost_) return close("refresh_unavailable");
         if (refreshes_>=5) return close("refresh_limit");

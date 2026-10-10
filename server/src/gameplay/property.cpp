@@ -8,6 +8,7 @@
 #include "original_god_resources.hpp"
 
 #include <algorithm>
+#include <charconv>
 #include <limits>
 #include <utility>
 
@@ -47,9 +48,25 @@ RichonlineBossProperty::RichonlineBossProperty(const std::filesystem::path& root
     if (!ledger_ || ledger_->actor_count()!=2) throw CodecError("richonline_boss_property_ledger_invalid");
     if (stage.mode!=3 || stage.width!=topology_.width() || stage.height!=topology_.height())
         throw CodecError("richonline_boss_property_stage_mismatch");
+    const auto boss_land=stage.boss.equipment[2];
+    purchase_half_price_[1]=boss_land>0 && boss_land<=0x7fffffffU;
     for (const auto& property:initial_properties(root,stage.map_name,topology_).properties)
         properties_.emplace(property.id,Property{property.price,property.owner,{property.kind,property.level},property.district,property.sprite_type});
     const auto research=load_original_research_resources(root/"Data"/"BwbValue.kpd");
+    garden_cash_caps_={stage.human.cash,stage.boss.base_cash};
+    const auto garden=research.sections.find("KONG");
+    if(garden==research.sections.end()) throw CodecError("richonline_garden_resource_missing");
+    for(std::size_t level=0;level<garden_income_.size();++level) {
+        const auto entry=garden->second.find("level_"+std::to_string(level+1));
+        if(entry==garden->second.end()) throw CodecError("richonline_garden_level_missing");
+        const auto& text=entry->second;
+        std::uint32_t value=0;
+        const auto parsed=std::from_chars(text.data(),text.data()+text.size(),value);
+        if(parsed.ec!=std::errc{} || parsed.ptr!=text.data()+text.size() ||
+            value>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max()))
+            throw CodecError("richonline_garden_income_invalid");
+        garden_income_[level]=value;
+    }
     temple_rules_=original_pyramid_rules(research);
     for(std::size_t i=0;i<research_choices_.size();++i)
         research_choices_[i]={research.choices[i].card,research.choices[i].days};
@@ -64,6 +81,16 @@ std::optional<std::uint8_t> RichonlineBossProperty::owner(std::int16_t ref) cons
 std::optional<std::uint32_t> RichonlineBossProperty::price(std::int16_t ref) const noexcept {
     const auto found=properties_.find(ref);
     return found == properties_.end() ? std::nullopt : std::optional{found->second.price};
+}
+void RichonlineBossProperty::configure_human_purchase_discount(std::optional<bool> half_price) {
+    if(deadline_) throw CodecError("richonline_purchase_discount_decision_pending");
+    purchase_half_price_[0]=half_price;
+}
+std::optional<std::uint32_t> RichonlineBossProperty::purchase_price(
+    std::int16_t ref,std::uint8_t actor) const noexcept {
+    const auto base=price(ref);
+    if(!base || actor>=purchase_half_price_.size() || !purchase_half_price_[actor]) return {};
+    return *purchase_half_price_[actor] ? *base/2 : *base;
 }
 bool RichonlineBossProperty::temple_supported(const RichonlineLandingContext& ctx,const Building& building,
     bool friendly) const {
@@ -97,6 +124,20 @@ RichonlineLandingResult RichonlineBossProperty::temple_result(const RichonlineLa
         const auto summon=friendly ? rule.friendly_summon : rule.enemy_summon;
         if(summon!=-1) result.temple_change=RichonlineTemplePossessionChange{
             ctx.actor_status,false,0,*temple_maximum_,summon};
+    }
+    return result;
+}
+RichonlineLandingResult RichonlineBossProperty::garden_result(std::uint8_t actor,
+    const Building& building,std::vector<Bytes> messages) const {
+    if(actor>=garden_cash_caps_.size() || building.kind!=15 || building.level<1 || building.level>7)
+        throw CodecError("richonline_garden_context_invalid");
+    RichonlineLandingResult result{std::move(messages),RichonlineLandingProgress::complete};
+    const auto funds=ledger_->snapshot(actor);
+    const auto cap=garden_cash_caps_[actor];
+    // NEW7FA140 skips at/above the base-cash cap;7FA1C0 clips the gain.
+    if(funds.funds.cash<cap) {
+        const auto gain=std::min(garden_income_[building.level-1],cap-funds.funds.cash);
+        if(gain) ledger_->adjust(actor,funds,{static_cast<std::int64_t>(gain),0,0,0});
     }
     return result;
 }
@@ -160,7 +201,9 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
     append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
     RichonlineLandingResult result{{std::move(stop)},RichonlineLandingProgress::complete};
     const auto funds=ledger_->snapshot(ctx.actor_slot);
-    if (funds.funds.cash > property.price) {
+    const auto cost=purchase_price(ctx.property_ref,ctx.actor_slot);
+    if(!cost) throw CodecError("richonline_purchase_discount_unknown");
+    if (funds.funds.cash > *cost) {
         if (human) {
             deadline_ = now_()+timeout_;
             pending_property_ = ctx.property_ref;
@@ -169,7 +212,7 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
             result.pending_opcode = 0x20;
         } else {
             result.messages.push_back(richonline_property_response(game_id_,true));
-            ledger_->adjust(1,funds,{-static_cast<std::int64_t>(property.price),0,0,0});
+            ledger_->adjust(1,funds,{-static_cast<std::int64_t>(*cost),0,0,0});
             property.owner = 1;
             ++property_revision_;
         }
@@ -192,10 +235,12 @@ RichonlineLandingResult RichonlineBossProperty::complete_decision(bool accept) {
     if (!deadline_ || !pending_property_) throw CodecError("richonline_property_no_pending_decision");
     auto& property=properties_.at(*pending_property_);
     const auto funds=ledger_->snapshot(0);
-    const bool purchase = accept && funds.funds.cash > property.price && !property.owner;
+    const auto cost=purchase_price(*pending_property_,0);
+    if(!cost) throw CodecError("richonline_purchase_discount_unknown");
+    const bool purchase = accept && funds.funds.cash > *cost && !property.owner;
     RichonlineLandingResult result{{richonline_property_response(game_id_,purchase)},RichonlineLandingProgress::complete};
     if (purchase) {
-        ledger_->adjust(0,funds,{-static_cast<std::int64_t>(property.price),0,0,0});
+        ledger_->adjust(0,funds,{-static_cast<std::int64_t>(*cost),0,0,0});
         property.owner = 0;
         ++property_revision_;
     }
@@ -370,7 +415,7 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_swap_card
     std::int16_t source,std::int16_t target,bool buildings) const {
     PreparedCombat result;
     result.expected_=combat_snapshot();result.after_=result.expected_.buildings;
-    if(source==target || result.expected_.decision_pending ||
+    if(source<0 || target<0 || source==target || result.expected_.decision_pending ||
         result.expected_.revision==std::numeric_limits<std::uint64_t>::max())
         throw CodecError("richonline_swap_card_state_invalid");
     auto find=[&](std::int16_t ref) {
@@ -378,7 +423,12 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_swap_card
     };
     const auto a=find(source),b=find(target);
     if(a==result.after_.end() || b==result.after_.end()) throw CodecError("richonline_swap_card_property_invalid");
+    // NEW652A80/652CD0 require matching land types and exclude kinds8/9/10.
+    if(properties_.at(source).sprite_type!=properties_.at(target).sprite_type ||
+        a->kind==8 || a->kind==9 || a->kind==10 || b->kind==8 || b->kind==9 || b->kind==10)
+        throw CodecError("richonline_swap_card_target_invalid");
     if(buildings) {
+        if(a->level==0 || b->level==0) throw CodecError("richonline_swap_card_building_empty");
         std::swap(a->kind,b->kind);std::swap(a->level,b->level);
     } else {
         if(a->owner==b->owner) throw CodecError("richonline_swap_card_owner_equal");

@@ -1,0 +1,62 @@
+// ============================================================================
+// 辅助连接 / 字段与所有权
+// ============================================================================
+// 字段来源：858B20、858BC0、859C50、860FB0及buffer游标helper。
+//
+// 暂定连接结构 / 分配44字节
+// ----------------------------------------------------------------------------
+// +00 DWORD socket；+04 DWORD event。858B20没有直接初始化这两个字段。
+// +08 BYTE initiated=0，决定socket/event及动态响应buffer是否进入析构分支。
+// +0C DWORD sendBuffer*=0；生产入口随后写入16字节buffer对象地址。
+// +10 DWORD receivePhase=1；+14 DWORD responseType=FFFFFFFF。
+// +18..+27 内嵌16字节headerBuffer，构造容量10；+28 DWORD bodyBuffer*=0。
+// +09..+0B填充状态未由本体写明，不应把整44字节视为已清零。
+// 859C50先调用858BC0，删除标志低bit为1时再operator delete连接对象。
+// 858BC0无条件尝试释放非零sendBuffer；initiated非零才检查bodyBuffer，
+// 并调用WSACloseEvent(event)、closesocket(socket)；最后析构内嵌headerBuffer。
+// socket/event“创建尝试”与“有效句柄”不是同义；创建返回值的检查见04。
+//
+// 五生产入口 / 异常清理仅有局部证据
+// ----------------------------------------------------------------------------
+// 连接分配后state=0，构造结束改为-1；buffer分配后state=1，构造结束又改-1。
+// 每入口另有38字节EH尾块，含两段对暂存原始分配地址operator delete的清理。
+// 尾块未证明入队前后全部对象能在任意后续异常中正确释放；FuncInfo完整映射
+// 和CRT分配行为未全核，不能把“存在EH尾块”写成整链异常安全。
+//
+// 暂定buffer结构 / 分配16字节
+// ----------------------------------------------------------------------------
+// +00 DWORD storage*；+04 DWORD readPtr；+08 DWORD writePtr；+0C DWORD capacity。
+// 860FB0保存capacity，operator new(capacity)结果存storage，再调用8612F0。
+// 8612F0对storage的capacity字节memset0，再经85A190复位readPtr，
+// 再经861370复位writePtr；游标复位与buffer对象分配分别记录。
+// 859850返回writePtr；8598E0将writePtr加调用者指定增量，retn4。
+// 85A0B0返回readPtr；85A140将readPtr加增量，retn4。
+// 85A190将readPtr设storage；85A0F0返回capacity-(readPtr-storage)。
+// 注意：该remaining计算是容量剩余，不是writePtr-readPtr形式的有效数据量。
+// 861270(this,Src,Size)取writePtr、memcpy(Size)、推进writePtr，retn8。
+// 它及已采游标推进helper均无本地容量/负值检查，调用者承担边界前提。
+// 861190取readPtr直接读取DWORD，再推进4；无栈参数，普通retn。
+// 861040只operator delete(storage)，不清零游标；858D50随后按标志释放buffer对象。
+//
+// ACB8F8队列 / 只恢复本批实际触达字段
+// ----------------------------------------------------------------------------
+// +04 blockMap*；+08 mapSize；+0C first；+10 count。
+// 每block含4个DWORD槽；85B380以first+count计算末尾槽。
+// blockIndex=(first+count)/4；越mapSize时减一次mapSize；slot取余4。
+// 在块边界且map空间不足时调用85BE10扩容；不存在块时85C0F0分配4元素。
+// 随后85C150把生产入口的局部连接指针写入槽，count加1。
+// 85C150经桥到85DBB0：placement new(4,slot)，将*a2的DWORD指针值写slot。
+// 它是指针值拷贝，不复制44字节连接对象，也不另分配一个连接。
+// 扩容/分配实现仍是外部依赖，不能凭本体断言所有溢出/异常行为。
+// 85B280先经85B1D0检查empty；非空时85C1B0处理当前first槽，
+// first加1，达到4*mapSize时归零；count减1，为零时first亦归零。
+// 85C1B0经桥到85DC50：实际slot析构为空，无pointee delete。
+// 队首连接实际销毁由859CC0先调用859C50(1)，随后调用出队接口。
+// 因此不能把队列出队与连接析构重复实现成两次delete。
+//
+// 研究边界
+// ----------------------------------------------------------------------------
+// 859A80的双容器清理、iterator与erase模板另见05，本批不证明整个模板库。
+// ACB8F8/ACB8E8处于PE虚拟零填充区；IDA静态0不表示运行队列为空。
+// ACB8F8静态快照只取16字节；+10字段由代码访问证明，快照不覆盖整个对象。
+// 队列加锁、生命周期所属线程及不同入口并发入队均未实机验证。

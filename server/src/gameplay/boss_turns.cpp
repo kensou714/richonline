@@ -19,6 +19,7 @@
 #include "richonline_boss_landing.hpp"
 #include "richonline_boss_property.hpp"
 #include <limits>
+#include <chrono>
 
 #include <iterator>
 #include <algorithm>
@@ -53,6 +54,7 @@ struct Turns {
     std::optional<PendingLanding> npc_landing{};
     std::array<std::uint64_t,2> actor_turns{};
     std::uint64_t complete_rounds=0;
+    std::optional<std::chrono::sys_days> chongyang_awarded_day{};
     std::optional<std::chrono::steady_clock::time_point> npc_deadline{};
     std::optional<std::uint16_t> npc_pending_counter{},npc_retired_counter{};
     std::array<bool,2> active{true,true};
@@ -344,6 +346,41 @@ struct Turns {
                 " limit_days="+std::to_string(rules.month_limit_days)+" policy=native-unfinished-boss-month-limit-loss-v1");
             return terminal({encode_richonline_turn4010({init.game_server_id,1,1,0},rules.opaque_turn7)},
                 {},RichonlineTerminalReason::month_limit);
+        }
+        if(actor==1 && rules.ledger) {
+            const std::chrono::year_month_day start{std::chrono::year{init.year},
+                std::chrono::month{init.month},std::chrono::day{init.day}};
+            const auto game_day=std::chrono::sys_days{start}+std::chrono::days{complete_rounds};
+            const std::chrono::year_month_day date{game_day};
+            const auto year=static_cast<int>(date.year());
+            if(year>=2004 && year<2035 && chongyang_awarded_day!=game_day) {
+                const auto& feast=rules.chongyang_dates[static_cast<std::size_t>(year-2004)];
+                if(static_cast<unsigned>(date.month())==feast[0] &&
+                    static_cast<unsigned>(date.day())==feast[1]) {
+                    std::vector<RichonlineGameFundsUpdate> updates;
+                    for(std::uint8_t slot=0;slot<active.size();++slot) if(active[slot]) {
+                        const auto before=rules.ledger->snapshot(slot);
+                        auto after=before.funds;
+                        if(after.tickets>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max()-99))
+                            throw CodecError("richonline_feast_ticket_overflow");
+                        after.tickets+=99;
+                        updates.push_back({slot,before,after});
+                    }
+                    if(!updates.empty() && !rules.ledger->commit_batch(updates,[]{return true;}))
+                        throw CodecError("richonline_feast_ledger_rejected");
+                    chongyang_awarded_day=game_day;
+                    if(rules.log) {
+                        std::string detail="richonline_feast_chongyang date="+std::to_string(year)+"-"+
+                            std::to_string(static_cast<unsigned>(date.month()))+"-"+
+                            std::to_string(static_cast<unsigned>(date.day()))+" grant=99";
+                        for(const auto& update:updates)
+                            detail+=" actor="+std::to_string(update.actor)+" before="+
+                                std::to_string(update.before.funds.tickets)+" after="+
+                                std::to_string(update.after.tickets);
+                        rules.log(detail);
+                    }
+                }
+            }
         }
         if(retired_jail_exit_turn && turn_sequence-*retired_jail_exit_turn>2) {
             retired_jail_exit.reset();retired_jail_exit_turn.reset();
@@ -1403,10 +1440,10 @@ struct Turns {
                         throw CodecError("richonline_purchase_card_authority_required");
                     const auto ref=topology.cell(init.participants[actor].position).property_ref;
                     building=rules.property->prepare_purchase_card(ref,actor);
-                    const auto price=rules.property->price(ref);
+                    const auto price=rules.property->purchase_price(ref,actor);
                     if(!price || *price>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max()))
                         throw CodecError("richonline_purchase_card_price_invalid");
-                    const auto cost=*rules.human_purchase_half_price ? *price/2 : *price;
+                    const auto cost=*price;
                     const auto source=rules.ledger->snapshot(actor);
                     if(source.funds.cash<=cost)
                         throw CodecError("richonline_purchase_card_cash_insufficient");

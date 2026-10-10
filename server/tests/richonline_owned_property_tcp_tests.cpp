@@ -243,7 +243,7 @@ struct Scenario {
                         rules.terminal=[](const auto&)->RichonlineTurnTerminalResult {throw CodecError("normal_card_unexpected_terminal");};
                         rules.npc_landing_preflight=[](const auto&){};
                         rules.cards=normal_hand;rules.ground=normal_ground;rules.ledger=temple_ledger;rules.property=property;
-                        rules.ground_card_visible=[](std::uint8_t,std::int16_t,std::int16_t){return false;};
+                        rules.ground_card_visible=[](std::uint8_t,std::int16_t,std::int16_t){return true;};
                         auto raw=std::make_shared<RichonlineRawAuthority>(2,game_id);
                         raw->initialize_game();raw->initialize_actor(0);raw->initialize_actor(1);
                         rules.timed_bombs=std::make_shared<const RichonlineTimedBombTurnPolicy>(RichonlineTimedBombTurnPolicy{

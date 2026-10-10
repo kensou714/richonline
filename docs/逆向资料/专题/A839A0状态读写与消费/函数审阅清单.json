@@ -1,0 +1,706 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "topic": "A839A0状态读写与消费",
+  "functions": [
+    {
+      "va": "0x6b8320",
+      "status": "完整审阅",
+      "conclusion": "cdecl整DWORD覆盖A839A0并在EAX返回参数；不校验、规范化或保留旧值的未知位。",
+      "unknown": "生产参数范围、业务初值与线程约束未闭合。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x6b8323",
+          "tokens": [
+            "mov",
+            "eax, dword ptr [ebp + 8]"
+          ]
+        },
+        {
+          "va": "0x6b8326",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0], eax"
+          ]
+        },
+        {
+          "va": "0x6b832c",
+          "tokens": [
+            "ret"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6b77b0",
+      "status": "完整审阅",
+      "conclusion": "读取A839A0 DWORD，返回对应掩码2未设置时的32位1，否则0；NEG/SBB/INC归一化。",
+      "unknown": "位业务命名与完整上层可达条件未闭合。",
+      "coverage": "历史仅导出记录在本批审阅；不是新增导出",
+      "evidence_refs": [
+        {
+          "file": "reused_functions.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x6b77b3",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0]"
+          ]
+        },
+        {
+          "va": "0x6b77b8",
+          "tokens": [
+            "and",
+            "eax, 2"
+          ]
+        },
+        {
+          "va": "0x6b77bb",
+          "tokens": [
+            "neg",
+            "eax"
+          ]
+        },
+        {
+          "va": "0x6b77bd",
+          "tokens": [
+            "sbb",
+            "eax, eax"
+          ]
+        },
+        {
+          "va": "0x6b77bf",
+          "tokens": [
+            "inc",
+            "eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x796db0",
+      "status": "完整审阅",
+      "conclusion": "读取A839A0 DWORD，返回对应掩码4未设置时的32位1，否则0；NEG/SBB/INC归一化。",
+      "unknown": "位业务命名与完整上层可达条件未闭合。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x796db3",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0]"
+          ]
+        },
+        {
+          "va": "0x796db8",
+          "tokens": [
+            "and",
+            "eax, 4"
+          ]
+        },
+        {
+          "va": "0x796dbb",
+          "tokens": [
+            "neg",
+            "eax"
+          ]
+        },
+        {
+          "va": "0x796dbd",
+          "tokens": [
+            "sbb",
+            "eax, eax"
+          ]
+        },
+        {
+          "va": "0x796dbf",
+          "tokens": [
+            "inc",
+            "eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x7978b0",
+      "status": "完整审阅",
+      "conclusion": "读取A839A0 DWORD，返回对应掩码8未设置时的32位1，否则0；NEG/SBB/INC归一化。",
+      "unknown": "位业务命名与完整上层可达条件未闭合。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x7978b3",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0]"
+          ]
+        },
+        {
+          "va": "0x7978b8",
+          "tokens": [
+            "and",
+            "eax, 8"
+          ]
+        },
+        {
+          "va": "0x7978bb",
+          "tokens": [
+            "neg",
+            "eax"
+          ]
+        },
+        {
+          "va": "0x7978bd",
+          "tokens": [
+            "sbb",
+            "eax, eax"
+          ]
+        },
+        {
+          "va": "0x7978bf",
+          "tokens": [
+            "inc",
+            "eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x798d10",
+      "status": "完整审阅",
+      "conclusion": "读取A839A0完整DWORD并通过EAX原样返回。",
+      "unknown": "共享状态的有效域与运行初值未知。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x798d13",
+          "tokens": [
+            "mov",
+            "eax, dword ptr [0xa839a0]"
+          ]
+        },
+        {
+          "va": "0x798d19",
+          "tokens": [
+            "ret"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x798d20",
+      "status": "完整审阅",
+      "conclusion": "A839A0 DWORD读-或2-写，保留其他位，EAX返回整个新DWORD；非原子读改写。",
+      "unknown": "未知位业务含义、并发约束及状态持久化不在本体内。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/4"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x798d23",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0]"
+          ]
+        },
+        {
+          "va": "0x798d28",
+          "tokens": [
+            "or",
+            "eax, 2"
+          ]
+        },
+        {
+          "va": "0x798d2b",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0], eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x798d40",
+      "status": "完整审阅",
+      "conclusion": "A839A0 DWORD读-或4-写，保留其他位，EAX返回整个新DWORD；非原子读改写。",
+      "unknown": "未知位业务含义、并发约束及状态持久化不在本体内。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/5"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x798d43",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0]"
+          ]
+        },
+        {
+          "va": "0x798d48",
+          "tokens": [
+            "or",
+            "eax, 4"
+          ]
+        },
+        {
+          "va": "0x798d4b",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0], eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x798d60",
+      "status": "完整审阅",
+      "conclusion": "A839A0 DWORD读-或8-写，保留其他位，EAX返回整个新DWORD；非原子读改写。",
+      "unknown": "未知位业务含义、并发约束及状态持久化不在本体内。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/6"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x798d63",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0]"
+          ]
+        },
+        {
+          "va": "0x798d68",
+          "tokens": [
+            "or",
+            "eax, 8"
+          ]
+        },
+        {
+          "va": "0x798d6b",
+          "tokens": [
+            "mov",
+            "dword ptr [0xa839a0], eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x768080",
+      "status": "完整审阅",
+      "conclusion": "完整本体恢复四路事件分派、DWORD记录和页索引、BYTE选择、DWORD计时；分页更新控件，选择提交按记录1/2/3置位并将整状态有符号十进制串传828F60(60,buffer)，正常返回AL=1。外依赖及真实用户可达性按正文限定。",
+      "unknown": "真实对象构造、入口触发、虚槽实现、资源范围校验、分派下层网络效果、并发与时间戳消费者未闭合。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/7"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x7680ba",
+          "tokens": [
+            "mov",
+            "ecx, dword ptr [ebp + 8]"
+          ]
+        },
+        {
+          "va": "0x7680c8",
+          "tokens": [
+            "sub",
+            "ecx, 0xb"
+          ]
+        },
+        {
+          "va": "0x7680db",
+          "tokens": [
+            "jmp",
+            "0x768455"
+          ]
+        },
+        {
+          "va": "0x7680f4",
+          "tokens": [
+            "mov",
+            "dword ptr [ecx + 0x54], eax"
+          ]
+        },
+        {
+          "va": "0x768103",
+          "tokens": [
+            "mov",
+            "dword ptr [ecx + 0x4c], eax"
+          ]
+        },
+        {
+          "va": "0x768210",
+          "tokens": [
+            "mov",
+            "dword ptr [edx + 0x4c], ecx"
+          ]
+        },
+        {
+          "va": "0x7682f6",
+          "tokens": [
+            "movzx",
+            "byte ptr [edx + 0x50]"
+          ]
+        },
+        {
+          "va": "0x768307",
+          "tokens": [
+            "cmp",
+            "1"
+          ]
+        },
+        {
+          "va": "0x76830d",
+          "tokens": [
+            "cmp",
+            "2"
+          ]
+        },
+        {
+          "va": "0x768313",
+          "tokens": [
+            "cmp",
+            "3"
+          ]
+        },
+        {
+          "va": "0x76831b",
+          "tokens": [
+            "call",
+            "0x6114ad"
+          ]
+        },
+        {
+          "va": "0x768322",
+          "tokens": [
+            "call",
+            "0x61224a"
+          ]
+        },
+        {
+          "va": "0x768329",
+          "tokens": [
+            "call",
+            "0x604de3"
+          ]
+        },
+        {
+          "va": "0x768350",
+          "tokens": [
+            "call",
+            "0x60d92a"
+          ]
+        },
+        {
+          "va": "0x76835b",
+          "tokens": [
+            "lea",
+            "[ebp - 0x44]"
+          ]
+        },
+        {
+          "va": "0x76836b",
+          "tokens": [
+            "push",
+            "0x3c"
+          ]
+        },
+        {
+          "va": "0x76836d",
+          "tokens": [
+            "call",
+            "0x6042da"
+          ]
+        },
+        {
+          "va": "0x76839c",
+          "tokens": [
+            "cmp",
+            "dword ptr [eax + 0x48], 0"
+          ]
+        },
+        {
+          "va": "0x7683a0",
+          "tokens": [
+            "jle",
+            "0x7683f9"
+          ]
+        },
+        {
+          "va": "0x7683b1",
+          "tokens": [
+            "mov",
+            "byte ptr [eax + 0x50], dl"
+          ]
+        },
+        {
+          "va": "0x7683f9",
+          "tokens": [
+            "mov",
+            "al, 1"
+          ]
+        },
+        {
+          "va": "0x768423",
+          "tokens": [
+            "ret",
+            "8"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6005e0",
+      "status": "完整审阅",
+      "conclusion": "完整5字节E9直接跳转到0x82ab80，不自行改动参数。",
+      "unknown": "仅桥身份；不将目标函数全部行为并入桥的语义。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "case60_dependency_raw.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x6005e0",
+          "tokens": [
+            "jmp",
+            "0x82ab80"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x600cc5",
+      "status": "完整审阅",
+      "conclusion": "完整5字节E9直接跳转到0x82e230，不自行改动参数。",
+      "unknown": "仅桥身份；不将目标函数全部行为并入桥的语义。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "case60_dependency_raw.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x600cc5",
+          "tokens": [
+            "jmp",
+            "0x82e230"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x60df01",
+      "status": "完整审阅",
+      "conclusion": "完整5字节E9直接跳转到0x82a900，不自行改动参数。",
+      "unknown": "仅桥身份；不将目标函数全部行为并入桥的语义。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "case60_dependency_raw.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x60df01",
+          "tokens": [
+            "jmp",
+            "0x82a900"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x60ed48",
+      "status": "完整审阅",
+      "conclusion": "完整5字节E9直接跳转到0x8976e0，不自行改动参数。",
+      "unknown": "仅桥身份；不将目标函数全部行为并入桥的语义。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "case60_dependency_raw.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x60ed48",
+          "tokens": [
+            "jmp",
+            "0x8976e0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x82e230",
+      "status": "完整审阅",
+      "conclusion": "完整69字节本体，原栈字符串作为参数交6059A0->8A06C0；ECX保存后恢复并透传下层；ret4，返回下层结果。",
+      "unknown": "8A06C0未满足本批字节原证条件；借用指针的复制、排队、网络与持久化未知。",
+      "coverage": "本批新导出并审阅",
+      "evidence_refs": [
+        {
+          "file": "case60_dependency_raw.json",
+          "pointer": "/functions/4"
+        }
+      ],
+      "semantic_anchors": [
+        {
+          "va": "0x82e25a",
+          "tokens": [
+            "call",
+            "0x6059a0"
+          ]
+        },
+        {
+          "va": "0x82e272",
+          "tokens": [
+            "ret",
+            "4"
+          ]
+        }
+      ]
+    }
+  ],
+  "owner_windows": [
+    {
+      "owner_va": "0x6a1270",
+      "site_va": "0x6a12c8",
+      "start_va": "0x6a12b7",
+      "end_va": "0x6a12dd",
+      "evidence_file": "bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/0",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x6ac390",
+      "site_va": "0x6ac4ac",
+      "start_va": "0x6ac49f",
+      "end_va": "0x6ac4be",
+      "evidence_file": "bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/1",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x72c670",
+      "site_va": "0x72cde0",
+      "start_va": "0x72cdcf",
+      "end_va": "0x72cdf8",
+      "evidence_file": "bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/2",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x73b8f0",
+      "site_va": "0x73bce2",
+      "start_va": "0x73bcd1",
+      "end_va": "0x73bcf7",
+      "evidence_file": "bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/3",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x768080",
+      "site_va": "0x76831b",
+      "start_va": "0x76830d",
+      "end_va": "0x768332",
+      "evidence_file": "bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/4",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x768080",
+      "site_va": "0x768322",
+      "start_va": "0x768313",
+      "end_va": "0x768337",
+      "evidence_file": "bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/5",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x768080",
+      "site_va": "0x768329",
+      "start_va": "0x768319",
+      "end_va": "0x76833d",
+      "evidence_file": "bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/6",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x768080",
+      "site_va": "0x768350",
+      "start_va": "0x768340",
+      "end_va": "0x768364",
+      "evidence_file": "bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/7",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x828f60",
+      "site_va": "0x82a1f2",
+      "start_va": "0x82a1e1",
+      "end_va": "0x82a204",
+      "evidence_file": "navigation_supplement/bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/0",
+      "status": "局部审阅；不是新增完整入口"
+    },
+    {
+      "owner_va": "0x828f60",
+      "site_va": "0x82a209",
+      "start_va": "0x82a1f6",
+      "end_va": "0x82a221",
+      "evidence_file": "navigation_supplement/bounded_raw.json",
+      "evidence_pointer": "/explicit_owner_windows/1",
+      "status": "局部审阅；不是新增完整入口"
+    }
+  ],
+  "scope": "九个固定入口加一完整依赖和四E9桥，共14清单项；旧契约复用不重复计数。"
+}

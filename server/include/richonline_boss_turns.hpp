@@ -153,6 +153,8 @@ struct RichonlineBossTurnRules {
     std::uint8_t jail_days=3,alliance_days=6;
     // NEW64F2A0 stores room months*30 in a BYTE; zero disables expiry.
     std::uint8_t month_limit_days=0;
+    // Feast.kpd slot11 (2004-2034); zero if an earlier slot shadows its date.
+    std::array<std::array<std::uint8_t,2>,31> chongyang_dates{};
     // NEW actor+152 comes from profile equipment slot2; absence is unknown.
     std::optional<bool> human_purchase_half_price{};
 };

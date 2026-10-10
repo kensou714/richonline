@@ -32,6 +32,7 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
             if(!ctx.synthetic_actor && property.building.kind==11)
                 return await_research(std::move(result.messages),ctx.property_ref);
             if(property.building.kind==16) return temple_result(ctx,property.building,true,std::move(result.messages));
+            if(property.building.kind==15) return garden_result(ctx.actor_slot,property.building,std::move(result.messages));
             return result;
         }
     }
@@ -41,6 +42,10 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
         if(!empty && property.building.kind==16) {
             auto upgraded=property.building;++upgraded.level;
             result=temple_result(ctx,upgraded,true,std::move(result.messages));
+        }
+        if(!empty && property.building.kind==15) {
+            auto upgraded=property.building;++upgraded.level;
+            result=garden_result(ctx.actor_slot,upgraded,std::move(result.messages));
         }
         if (empty) property.building.kind=construction_.default_kind;
         ++property.building.level;
@@ -96,6 +101,10 @@ RichonlineLandingResult RichonlineBossProperty::complete_upgrade(bool accept) {
         if(!pending_temple_context_) throw CodecError("richonline_temple_upgrade_context_missing");
         auto building=property.building;if(upgrade) ++building.level;
         result=temple_result(*pending_temple_context_,building,true,std::move(result.messages));
+    }
+    if(property.building.kind==15) {
+        auto building=property.building;if(upgrade) ++building.level;
+        result=garden_result(0,building,std::move(result.messages));
     }
     if (upgrade) { ++property.building.level; ++property_revision_; }
     if(property.building.kind==11)

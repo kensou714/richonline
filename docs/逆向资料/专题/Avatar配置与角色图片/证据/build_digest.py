@@ -71,13 +71,6 @@ def build():
     compact['image_value_count'] = len(result['image_values'])
     compact['coordinate_name_count'] = len(result['coordinate_names'])
     print(json.dumps(compact, ensure_ascii=True))
-    reused = json.loads((HERE / 'reused_verified.json').read_bytes())
-    for function in reused['functions']:
-        if function['va'] == '0x642740':
-            for window in function['windows']:
-                print(window['site'])
-                for instruction in window['context']:
-                    print(instruction['va'], instruction['capstone'])
 
 
 if __name__ == '__main__':
