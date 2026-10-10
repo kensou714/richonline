@@ -89,7 +89,6 @@ RichonlineTerminalStep RichonlineTerminalCoordinator::bankrupt(std::span<const s
     if(!decision.outcome) {
         std::vector<Bytes> messages;
         for(const auto actor:decision.newly_eliminated) {
-            messages.push_back(richonline_bankruptcy_notice(context_.game_id,actor));
             messages.push_back(richonline_eliminate_actor(context_.game_id,actor));
         }
         context_.roster=decision.after;

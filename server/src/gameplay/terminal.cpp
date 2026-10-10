@@ -95,6 +95,8 @@ std::vector<RichonlineSettlementTransmission> recover_richonline_terminal_messag
     if(outbox.match_id!=live_match || outbox.delivery.game_id!=live_game)
         throw CodecError("richonline_terminal_recovery_session_mismatch");
     const auto& delivery=outbox.delivery;
+    // 历史游标对应另一条消息序列，禁止用新版序列续发导致重复淘汰或跳过结算。
+    if(delivery.message_version!=2)throw CodecError("richonline_terminal_legacy_outbox_requires_reconciliation");
     const std::array actor{RichonlineSettledActor{delivery.human_slot,delivery.rank_image_index,outbox.outcome,false,
         delivery.opaque_18,outbox.result}};
     const auto game=plan_richonline_settlement(delivery.game_id,delivery.bankrupt_slots,actor,delivery.show_text_270);

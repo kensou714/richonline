@@ -9,6 +9,7 @@ namespace richnet {
 void validate_richonline_leave_request(View plain);
 Bytes richonline_leave_ack(std::uint16_t game_id);
 Bytes richonline_stop_game_controls(std::uint16_t game_id);
+Bytes richonline_victory_notice(std::uint16_t game_id, std::int8_t actor);
 Bytes richonline_bankruptcy_notice(std::uint16_t game_id, std::int8_t actor);
 Bytes richonline_eliminate_actor(std::uint16_t game_id, std::int8_t actor);
 Bytes richonline_show_game_results(std::uint16_t game_id, bool show_text_270);

@@ -39,8 +39,12 @@ Bytes richonline_stop_game_controls(std::uint16_t game_id) {
     return game_packet(0x400c, game_id);
 }
 
-Bytes richonline_bankruptcy_notice(std::uint16_t game_id, std::int8_t actor) {
+Bytes richonline_victory_notice(std::uint16_t game_id, std::int8_t actor) {
     return actor_packet(0x400d, game_id, actor);
+}
+
+Bytes richonline_bankruptcy_notice(std::uint16_t game_id, std::int8_t actor) {
+    return richonline_eliminate_actor(game_id, actor);
 }
 
 Bytes richonline_eliminate_actor(std::uint16_t game_id, std::int8_t actor) {

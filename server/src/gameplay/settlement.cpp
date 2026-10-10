@@ -53,7 +53,6 @@ std::vector<Bytes> plan_richonline_settlement(std::uint16_t game_id,
         if(slot<0 || slot>=8 || bankrupt[static_cast<std::size_t>(slot)])
             throw CodecError("richonline_settlement_bankrupt_slots_invalid");
         bankrupt[static_cast<std::size_t>(slot)]=true;
-        result.push_back(richonline_bankruptcy_notice(game_id,slot));
         result.push_back(richonline_eliminate_actor(game_id,slot));
     }
     for(const auto& actor:actors) {
@@ -66,6 +65,8 @@ std::vector<Bytes> plan_richonline_settlement(std::uint16_t game_id,
         }
         if(actor.outcome==GameOutcome::win && (actor.escaped || bankrupt[static_cast<std::size_t>(actor.slot)]))
             throw CodecError("richonline_settlement_winner_invalid");
+        if(actor.outcome==GameOutcome::win)
+            result.push_back(richonline_victory_notice(game_id,actor.slot));
         const auto& persisted=actor.persisted;
         if(persisted.reward.experience>32767 || persisted.reward.gold_return>2147483647U ||
             persisted.reward.bonus_gold>2147483647U || persisted.level_before>20 || persisted.level_after>20 ||

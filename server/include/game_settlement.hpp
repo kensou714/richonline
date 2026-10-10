@@ -33,6 +33,8 @@ struct GameSettlementDelivery {
     std::uint8_t opaque_18;
     bool show_text_270;
     std::vector<std::int8_t> bankrupt_slots;
+    // 版本1误把400D发给败者；版本2为每个败者发400E，仅向胜者发400D。
+    std::uint8_t message_version=2;
 };
 struct GameSettlementItemReward {
     // Raw stage resource specification. These are not an inventory grant count
