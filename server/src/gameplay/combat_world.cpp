@@ -17,15 +17,15 @@ std::int32_t add(std::int32_t first,std::int32_t second) {
     if(first<0 || second<0 || sum>maximum) throw CodecError("richonline_combat_world_attribute_overflow");
     return static_cast<std::int32_t>(sum);
 }
-std::optional<std::uint8_t> building_level(std::optional<std::uint32_t> source,std::uint8_t actor,
-    std::int8_t kind,const RichonlineCombatSessionView& state) {
+std::optional<std::uint8_t> building_level(std::optional<std::uint32_t> source,std::uint8_t activation_level,
+    const RichonlineCombatSessionView& state) {
     if(!source) return {};
     const auto found=std::find_if(state.buildings.begin(),state.buildings.end(),[&](const auto& building) {
         return building.property==*source;
     });
-    if(found==state.buildings.end() || found->owner!=actor || found->kind!=kind || found->level==0)
+    if(found==state.buildings.end() || activation_level==0 || activation_level>7)
         throw CodecError("richonline_combat_world_active_building_stale");
-    return found->level;
+    return activation_level;
 }
 std::uint32_t distance(std::int16_t first,std::int16_t second,std::uint32_t width) {
     const auto ax=static_cast<std::int32_t>(first)%static_cast<std::int32_t>(width);
@@ -197,8 +197,8 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         terms.flat_defense=add(terms.flat_defense,attributes.flat_defense);
         terms.attack.equipment_percentage=add(terms.attack.equipment_percentage,attributes.attack_percentage);
         terms.defense.equipment_percentage=add(terms.defense.equipment_percentage,attributes.defense_percentage);
-        terms.attack.building_multiplier=modifiers->attack_building(building_level(actor.attack_building_source,actor.slot,14,state));
-        terms.defense.building_multiplier=modifiers->defense_building(building_level(actor.defense_building_source,actor.slot,13,state));
+        terms.attack.building_multiplier=modifiers->attack_building(building_level(actor.attack_building_source,actor.attack_building_level,state));
+        terms.defense.building_multiplier=modifiers->defense_building(building_level(actor.defense_building_source,actor.defense_building_level,state));
         return terms;
     };
     if(policy.helmet) result.world.helmet=std::move(policy.helmet);
@@ -229,6 +229,27 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         case RichonlineMapProjectile::safe_nuclear:result.boss.projectiles.push_back(RichonlineCombatEffect::safe_nuclear);break;
         default:throw CodecError("richonline_combat_world_projectile_invalid");
         }
+    }
+    if(auto script=LuaServer::create()) {
+        result.boss.select_attack=[script,map_name=stage.map_name,allowed=result.boss.projectiles]
+            (std::uint8_t roll,const std::function<std::size_t(std::size_t)>& random)->std::optional<RichonlineCombatEffect> {
+            auto projectiles=LuaValue::array();
+            for(const auto effect:allowed) projectiles.push_back(static_cast<int>(effect));
+            const LuaBindings api{{"random",[&](const LuaValue& args) {
+                const auto upper=args.at("upper").get<std::int64_t>();
+                if(upper<1 || upper>32768 || !random) throw CodecError("lua_boss_random_invalid");
+                const auto selected=random(static_cast<std::size_t>(upper));
+                if(selected>=static_cast<std::size_t>(upper)) throw CodecError("lua_boss_random_out_of_range");
+                return LuaValue(selected+1);
+            }}};
+            const auto selected=script->call("boss.attack",{{"map",map_name},{"roll",roll},
+                {"projectiles",projectiles},{"mine",static_cast<int>(RichonlineCombatEffect::mine)}},api);
+            if(selected.is_null()) return {};
+            const auto code=selected.get<int>();
+            if(code==static_cast<int>(RichonlineCombatEffect::mine)) return RichonlineCombatEffect::mine;
+            for(const auto effect:allowed) if(code==static_cast<int>(effect)) return effect;
+            throw CodecError("lua_boss_attack_invalid");
+        };
     }
     return result;
 }

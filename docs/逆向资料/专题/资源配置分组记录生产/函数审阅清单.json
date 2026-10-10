@@ -1,0 +1,542 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "scope": "4新完整局部本体；2旧种子复用；旧loader仅OTHER局部；4旧辅助契约。桥和窗口不新增函数审阅。",
+  "functions": [
+    {
+      "va": "0x6dfa10",
+      "status": "完整局部分析",
+      "conclusion": "按12字节步长构造100项，构造回调为6D76C0；返回原this。",
+      "unknown": "异常构造与调用者内存容量未动态验证。",
+      "source_path": "专题/资源配置分组记录生产/证据/bounded_raw.json",
+      "source_pointer": "/functions/0",
+      "source_sha256": "b54d51310320c1d05b44407c76fd02177ad3f196b87f8175ef00dc24df8e75fa",
+      "declared_chunks": [
+        {
+          "start_va": "0x6dfa10",
+          "end_va": "0x6dfa41",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/0"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6dfa1e",
+          "original_text": "push    offset sub_6053F6; void *(__thiscall *)(void *)"
+        },
+        {
+          "va": "0x6dfa23",
+          "original_text": "push    64h ; 'd'; int"
+        },
+        {
+          "va": "0x6dfa25",
+          "original_text": "push    0Ch; unsigned int"
+        },
+        {
+          "va": "0x6dfa2b",
+          "original_text": "call    `vector constructor iterator'(void *,uint,int,void * (*)(void *))"
+        },
+        {
+          "va": "0x6dfa30",
+          "original_text": "mov     eax, [ebp+var_4]"
+        }
+      ],
+      "mechanical_items": 18
+    },
+    {
+      "va": "0x6d76c0",
+      "status": "完整局部分析",
+      "conclusion": "依次把this+8、+4、+0三个DWORD写FFFFFFFF，返回this。",
+      "unknown": "12字节以外字段及后续使用不属于本体契约。",
+      "source_path": "专题/资源配置分组记录生产/证据/bounded_raw.json",
+      "source_pointer": "/functions/1",
+      "source_sha256": "b54d51310320c1d05b44407c76fd02177ad3f196b87f8175ef00dc24df8e75fa",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d76c0",
+          "end_va": "0x6d76f2",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/1"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6d76d1",
+          "original_text": "mov     dword ptr [eax+8], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x6d76db",
+          "original_text": "mov     dword ptr [ecx+4], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x6d76e5",
+          "original_text": "mov     dword ptr [edx], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x6d76eb",
+          "original_text": "mov     eax, [ebp+var_4]"
+        }
+      ],
+      "mechanical_items": 15
+    },
+    {
+      "va": "0x6d7c00",
+      "status": "完整局部分析",
+      "conclusion": "清this+0组数与this+4数组指针，返回this；owner传C+3ABFC。",
+      "unknown": "不证明整个配置根初始化及失败清理闭合。",
+      "source_path": "专题/资源配置分组记录生产/证据/bounded_raw.json",
+      "source_pointer": "/functions/2",
+      "source_sha256": "b54d51310320c1d05b44407c76fd02177ad3f196b87f8175ef00dc24df8e75fa",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d7c00",
+          "end_va": "0x6d7c28",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/2"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6d7c11",
+          "original_text": "mov     dword ptr [eax], 0"
+        },
+        {
+          "va": "0x6d7c1a",
+          "original_text": "mov     dword ptr [ecx+4], 0"
+        },
+        {
+          "va": "0x6d7c21",
+          "original_text": "mov     eax, [ebp+var_4]"
+        }
+      ],
+      "mechanical_items": 13
+    },
+    {
+      "va": "0x6d7c30",
+      "status": "完整局部分析",
+      "conclusion": "this+4非零时调用delete[]包装并清+4；从未清this+0。",
+      "unknown": "未审堆释放底层，析构后组数仍旧值不等于运行时可安全复用。",
+      "source_path": "专题/资源配置分组记录生产/证据/bounded_raw.json",
+      "source_pointer": "/functions/3",
+      "source_sha256": "b54d51310320c1d05b44407c76fd02177ad3f196b87f8175ef00dc24df8e75fa",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d7c30",
+          "end_va": "0x6d7c7d",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/3"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6d7c4a",
+          "original_text": "cmp     dword ptr [eax+4], 0"
+        },
+        {
+          "va": "0x6d7c4e",
+          "original_text": "jz      short loc_6D7C6F"
+        },
+        {
+          "va": "0x6d7c5d",
+          "original_text": "call    operator delete[](void *)"
+        },
+        {
+          "va": "0x6d7c68",
+          "original_text": "mov     dword ptr [ecx+4], 0"
+        }
+      ],
+      "mechanical_items": 24
+    }
+  ],
+  "historical_contracts": [
+    {
+      "va": "0x6d7660",
+      "status": "既有窄契约复用",
+      "conclusion": "传原ECX给6DFD10，正常RTC路径保留返回槽值。",
+      "unknown": "未替代取槽函数的空池与容量前置条件。",
+      "source_path": "专题/图像资源/证据/20261009_图像加载函数群.json",
+      "source_pointer": "/functions/18",
+      "source_sha256": "c7249d72dc7468b4cac66977ccdd34cbcf7051519df538f8b597ee0d2cd3efd5",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d7660",
+          "end_va": "0x6d7684",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/0"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6d766e",
+          "original_text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x6d7671",
+          "original_text": "call    sub_6044EC"
+        },
+        {
+          "va": "0x6d767b",
+          "original_text": "call    j___RTC_CheckEsp"
+        }
+      ],
+      "mechanical_items": 13
+    },
+    {
+      "va": "0x6dfd10",
+      "status": "既有窄契约复用",
+      "conclusion": "先将pool+8递减1，再从[pool+0]+index*4返回DWORD；无空池门。",
+      "unknown": "pool+0/+4/+8的完整生产、容量、归还、去重及并发生命周期未闭。",
+      "source_path": "专题/图像资源/证据/20261009_图像加载函数群.json",
+      "source_pointer": "/functions/19",
+      "source_sha256": "c7249d72dc7468b4cac66977ccdd34cbcf7051519df538f8b597ee0d2cd3efd5",
+      "declared_chunks": [
+        {
+          "start_va": "0x6dfd10",
+          "end_va": "0x6dfd3f",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/1"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6dfd21",
+          "original_text": "mov     ecx, [eax+8]"
+        },
+        {
+          "va": "0x6dfd24",
+          "original_text": "sub     ecx, 1"
+        },
+        {
+          "va": "0x6dfd2a",
+          "original_text": "mov     [edx+8], ecx"
+        },
+        {
+          "va": "0x6dfd36",
+          "original_text": "mov     eax, [edx]"
+        },
+        {
+          "va": "0x6dfd38",
+          "original_text": "mov     eax, [eax+ecx*4]"
+        }
+      ],
+      "mechanical_items": 18
+    },
+    {
+      "va": "0x6d8130",
+      "status": "部分分析",
+      "conclusion": "OTHER段累加组数；正数组数分配每组1200字节；逐组首缺O节即止；npid与槽写+0/+4，反向表登记记录指针。",
+      "unknown": "仅6DA1A1..6DA473业务；整个9768B主块及200B异常块只机械核；缺键、分配失败、池容量及重载未闭。",
+      "source_path": "专题/4019系列事件/证据/resource_loader_scope.json",
+      "source_pointer": "/functions/0",
+      "source_sha256": "27806e010c6173904c9741240f89360e9f251b36a25664f3ea4b8c0f331cc0d3",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d8130",
+          "end_va": "0x6da758",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa12c98",
+          "end_va": "0xa12d60",
+          "is_main": false
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/2"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6da1a1",
+          "original_text": "push    offset aOtherDat; \"other.dat\""
+        },
+        {
+          "va": "0x6da1d2",
+          "original_text": "jz      loc_6DA473"
+        },
+        {
+          "va": "0x6da23e",
+          "original_text": "push    offset aOtherD; \"OTHER_%d\""
+        },
+        {
+          "va": "0x6da25f",
+          "original_text": "call    sub_608335"
+        },
+        {
+          "va": "0x6da264",
+          "original_text": "test    eax, eax"
+        },
+        {
+          "va": "0x6da268",
+          "original_text": "jmp     short loc_6DA281"
+        },
+        {
+          "va": "0x6da279",
+          "original_text": "mov     [eax+3ABFCh], edx"
+        },
+        {
+          "va": "0x6da284",
+          "original_text": "cmp     dword ptr [ecx+3ABFCh], 0"
+        },
+        {
+          "va": "0x6da28b",
+          "original_text": "jle     loc_6DA31C"
+        },
+        {
+          "va": "0x6da2a6",
+          "original_text": "imul    ecx, 4B0h"
+        },
+        {
+          "va": "0x6da2bf",
+          "original_text": "cmp     [ebp+var_308], 0"
+        },
+        {
+          "va": "0x6da2c8",
+          "original_text": "push    offset sub_601B20; void *(__thiscall *)(void *)"
+        },
+        {
+          "va": "0x6da2d4",
+          "original_text": "push    4B0h; unsigned int"
+        },
+        {
+          "va": "0x6da2e0",
+          "original_text": "call    `vector constructor iterator'(void *,uint,int,void * (*)(void *))"
+        },
+        {
+          "va": "0x6da2f3",
+          "original_text": "mov     [ebp+var_370], 0"
+        },
+        {
+          "va": "0x6da316",
+          "original_text": "mov     [eax+3AC00h], ecx"
+        },
+        {
+          "va": "0x6da334",
+          "original_text": "cmp     ecx, [eax+3ABFCh]"
+        },
+        {
+          "va": "0x6da33a",
+          "original_text": "jge     loc_6DA468"
+        },
+        {
+          "va": "0x6da361",
+          "original_text": "cmp     [ebp+var_20], 64h ; 'd'"
+        },
+        {
+          "va": "0x6da365",
+          "original_text": "jge     loc_6DA463"
+        },
+        {
+          "va": "0x6da373",
+          "original_text": "push    offset aODSD; \"O_%d_S_%d\""
+        },
+        {
+          "va": "0x6da399",
+          "original_text": "test    eax, eax"
+        },
+        {
+          "va": "0x6da39d",
+          "original_text": "jmp     loc_6DA463"
+        },
+        {
+          "va": "0x6da3ad",
+          "original_text": "call    sub_609528"
+        },
+        {
+          "va": "0x6da3c4",
+          "original_text": "call    sub_60FDE2"
+        },
+        {
+          "va": "0x6da3d0",
+          "original_text": "call    j__atoi"
+        },
+        {
+          "va": "0x6da3f0",
+          "original_text": "mov     [ecx+edx], eax"
+        },
+        {
+          "va": "0x6da3f9",
+          "original_text": "call    sub_601896"
+        },
+        {
+          "va": "0x6da416",
+          "original_text": "mov     [ecx+edx+4], eax"
+        },
+        {
+          "va": "0x6da457",
+          "original_text": "mov     [ecx+eax*4+580CCh], edx"
+        },
+        {
+          "va": "0x6da463",
+          "original_text": "jmp     loc_6DA325"
+        }
+      ],
+      "mechanical_items": 2486
+    },
+    {
+      "va": "0x622d50",
+      "status": "既有窄契约复用",
+      "conclusion": "等步长调用构造回调，正常路径ret10h；支持100项及组数两层构造。",
+      "unknown": "CRT异常安全与回调失败外部语义不扩审。",
+      "source_path": "专题/124字节共享数组生命周期/证据/reused_raw.json",
+      "source_pointer": "/records/4/original_record",
+      "source_sha256": "cf92691990e1312290777733fb0abd8b4c4c0d5dda5e43b3d9fe60fb83206949",
+      "declared_chunks": [
+        {
+          "start_va": "0x622d50",
+          "end_va": "0x622d85",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/3"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x622d5d",
+          "original_text": "js      short loc_622D79"
+        },
+        {
+          "va": "0x622d64",
+          "original_text": "call    [ebp+arg_C]"
+        },
+        {
+          "va": "0x622d71",
+          "original_text": "add     ecx, [ebp+arg_4]"
+        },
+        {
+          "va": "0x622d82",
+          "original_text": "retn    10h"
+        }
+      ],
+      "mechanical_items": 21
+    },
+    {
+      "va": "0x91f7e0",
+      "status": "既有窄契约复用",
+      "conclusion": "既有数组释放包装提供释放调用目标身份。",
+      "unknown": "只审转发路径；不声称实际对象或系统资源已释放。",
+      "source_path": "专题/124字节共享数组生命周期/证据/reused_raw.json",
+      "source_pointer": "/records/9/original_record",
+      "source_sha256": "cf92691990e1312290777733fb0abd8b4c4c0d5dda5e43b3d9fe60fb83206949",
+      "declared_chunks": [
+        {
+          "start_va": "0x91f7e0",
+          "end_va": "0x91f7f1",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/4"
+      },
+      "semantic_anchors": [],
+      "mechanical_items": 8
+    },
+    {
+      "va": "0x91f6d0",
+      "status": "既有窄契约复用",
+      "conclusion": "RTC正常相等路径直接ret并保留EAX。",
+      "unknown": "不研究诊断失败路径行为。",
+      "source_path": "专题/4060系列事件/证据/callees.json",
+      "source_pointer": "/functions/10",
+      "source_sha256": "6784b6ffbf2efeca47d7a4051fc14ea0cde016006a72f07bbdf991f4824fabd6",
+      "declared_chunks": [
+        {
+          "start_va": "0x91f6d0",
+          "end_va": "0x91f6f5",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/5"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x91f6d0",
+          "original_text": "jnz     short $esperror$26206"
+        },
+        {
+          "va": "0x91f6d2",
+          "original_text": "retn"
+        }
+      ],
+      "mechanical_items": 23
+    },
+    {
+      "va": "0x6db9d0",
+      "status": "既有窄契约复用",
+      "conclusion": "Q+12C4+12*i等于group4第i项+4；统计不为FFFFFFFF的100槽数量。",
+      "unknown": "缺组与NULL指针无门；记录生产不能证明当前运行返回39。",
+      "source_path": "专题/SysRes鼠标资源加载/证据/bounded_raw.json",
+      "source_pointer": "/functions/1",
+      "source_sha256": "daf27638a4dab260e7e3c119247001fa9d5a767428b7241d2d4b6e8f09d123ff",
+      "declared_chunks": [
+        {
+          "start_va": "0x6db9d0",
+          "end_va": "0x6dba38",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/6"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6dba07",
+          "original_text": "cmp     [ebp+var_C], 64h ; 'd'"
+        },
+        {
+          "va": "0x6dba10",
+          "original_text": "mov     edx, [ecx+3AC00h]"
+        },
+        {
+          "va": "0x6dba19",
+          "original_text": "imul    eax, 0Ch"
+        },
+        {
+          "va": "0x6dba1c",
+          "original_text": "cmp     dword ptr [edx+eax+12C4h], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x6dba24",
+          "original_text": "jz      short loc_6DBA2F"
+        },
+        {
+          "va": "0x6dba29",
+          "original_text": "add     ecx, 1"
+        }
+      ],
+      "mechanical_items": 29
+    }
+  ],
+  "summary": {
+    "new_bodies": 4,
+    "new_bytes": 216,
+    "new_instructions": 70,
+    "historical_records": 7,
+    "historical_mechanical_items": 2598,
+    "explicit_owner_windows": 8,
+    "formal_direct_bridges": 9
+  }
+}

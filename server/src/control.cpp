@@ -4,6 +4,7 @@
 #include "lobby_runtime.hpp"
 #include "richonline_boss_runtime.hpp"
 #include "diagnostic_log.hpp"
+#include "lua_server.hpp"
 #include <chrono>
 
 namespace richnet {
@@ -40,6 +41,16 @@ void run_control(const std::filesystem::path& directory, const std::wstring& pip
                                     OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
     if (!lock.valid()) throw windows_error("data_directory_locked");
     Storage storage(absolute / L"richonline.sqlite3", profile, adopt_untagged_profile);
+    std::filesystem::path scripts;
+    if (profile == ClientProfile::richonline) {
+        // 脚本随 EXE 分发，不能依赖 GUI 当前工作目录或客户端安装目录。
+        std::wstring executable(32768, L'\0');
+        const auto length = GetModuleFileNameW(nullptr, executable.data(), static_cast<DWORD>(executable.size()));
+        if (!length || length >= executable.size()) throw std::runtime_error("lua_executable_path_failed");
+        executable.resize(length); scripts = std::filesystem::path(executable).parent_path() / "scripts";
+        LuaServer::configure(scripts);
+        log("lua_configured", LuaServer::status());
+    }
     const auto bootstrap = absolute / L"lobby-bootstrap.json";
     LobbyRuntime listeners(storage, bootstrap, log, load_richonline_boss_runtime(storage, bootstrap, log));
     ControlPipe pipe(pipe_name);
@@ -48,7 +59,7 @@ void run_control(const std::filesystem::path& directory, const std::wstring& pip
     const Json state{{"pid", GetCurrentProcessId()}, {"instanceId", instance}, {"protocolVersion", 1},
         {"dataDirectory", utf8_path(absolute)}, {"clientProfile", client_profile_name(profile)},
         {"gameReady", false}, {"state", "running"},
-        {"capabilities", {"accounts.list", "accounts.create", "accounts.update", "config.get", "config.update", "database.backup", "stop"}}};
+        {"capabilities", {"accounts.list", "accounts.create", "accounts.update", "config.get", "config.update", "database.backup", "scripts.reload", "stop"}}};
     Json ready = state;
     ready.update(listeners.status());
     ready["pipe"] = std::string(pipe_name.begin(), pipe_name.end());
@@ -63,7 +74,11 @@ void run_control(const std::filesystem::path& directory, const std::wstring& pip
             id = request.at("requestId").get<std::string>();
             command = request.at("command").get<std::string>();
             Json result;
-            if (command == "status") { result = state; result.update(listeners.status()); }
+            if (command == "status") { result = state; result.update(listeners.status()); result["lua"] = LuaServer::status(); }
+            else if (command == "scripts.reload") {
+                if (scripts.empty()) throw std::runtime_error("lua_profile_not_supported");
+                LuaServer::configure(scripts); result = LuaServer::status();
+            }
             else if (command == "stop") result = {{"stopping", true}};
             else result = storage.dispatch(command, request.at("payload"));
             pipe.write(Json{{"version", 1}, {"requestId", id}, {"ok", true}, {"result", result}}.dump());

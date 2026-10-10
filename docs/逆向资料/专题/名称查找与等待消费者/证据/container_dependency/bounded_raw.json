@@ -1,0 +1,2367 @@
+{
+  "schema": "richonline-bounded-preparation-1",
+  "topic": "名称查找与等待消费者：两个容器访问契约",
+  "pending_status": "仅只读原证准备；无业务结论",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "exporter_sha256": "565b9efb2ebc21730bc492fe5ca429885ba675f62b112a2a4dd5703a70654609",
+  "coverage_source_sha256": "47ee9da5fb687fa020a4850657932368330b37a29d72aed207cb29fa081a39f9",
+  "seeds": [
+    {
+      "seed_va": "0x85b800",
+      "pending_status": "待完整语义审阅"
+    },
+    {
+      "seed_va": "0x85b870",
+      "pending_status": "待完整语义审阅"
+    }
+  ],
+  "functions": [
+    {
+      "seed_va": "0x85b800",
+      "end_va": "0x85b85a",
+      "name": "sub_85B800",
+      "assembly": [
+        {
+          "site_va": "0x85b800",
+          "text": "push    ebp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b801",
+          "text": "mov     ebp, esp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b803",
+          "text": "sub     esp, 0D0h",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b809",
+          "text": "push    ebx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b80a",
+          "text": "push    esi",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b80b",
+          "text": "push    edi",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b80c",
+          "text": "push    ecx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b80d",
+          "text": "lea     edi, [ebp+var_D0]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b813",
+          "text": "mov     ecx, 34h",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b818",
+          "text": "mov     eax, 0CCCCCCCCh",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b81d",
+          "text": "rep stosd",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b81f",
+          "text": "pop     ecx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b820",
+          "text": "mov     [ebp+var_8], ecx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b823",
+          "text": "mov     eax, [ebp+var_8]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b826",
+          "text": "cmp     dword ptr [eax+4], 0",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b82a",
+          "text": "jnz     short loc_85B838",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b82c",
+          "text": "mov     [ebp+var_D0], 0",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b836",
+          "text": "jmp     short loc_85B84D",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b838",
+          "text": "mov     ecx, [ebp+var_8]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b83b",
+          "text": "mov     edx, [ebp+var_8]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b83e",
+          "text": "mov     eax, [ecx+8]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b841",
+          "text": "sub     eax, [edx+4]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b844",
+          "text": "sar     eax, 2",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b847",
+          "text": "mov     [ebp+var_D0], eax",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b84d",
+          "text": "mov     eax, [ebp+var_D0]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b853",
+          "text": "pop     edi",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b854",
+          "text": "pop     esi",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b855",
+          "text": "pop     ebx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b856",
+          "text": "mov     esp, ebp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b858",
+          "text": "pop     ebp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b859",
+          "text": "retn",
+          "is_code": true
+        }
+      ],
+      "pseudocode": "int __thiscall sub_85B800(_DWORD *this)\n{\n  if ( *(this + 1) != 0 )\n    return (*(this + 2) - *(this + 1)) >> 2;\n  else\n    return 0;\n}\n",
+      "decompile_error": null,
+      "chunk_byte_ranges": [
+        {
+          "start_va": "0x85b800",
+          "size": 90,
+          "idb_hex": "558bec81ecd0000000535657518dbd30ffffffb934000000b8ccccccccf3ab59894df88b45f883780400750cc78530ffffff00000000eb158b4df88b55f88b41082b4204c1f802898530ffffff8b8530ffffff5f5e5b8be55dc3",
+          "disk_hex": "558bec81ecd0000000535657518dbd30ffffffb934000000b8ccccccccf3ab59894df88b45f883780400750cc78530ffffff00000000eb158b4df88b55f88b41082b4204c1f802898530ffffff8b8530ffffff5f5e5b8be55dc3",
+          "matching": true,
+          "sha256": "a0ce734238bbc1bbc9383e9bdf2659fe1add3b63e7d3696c7a127459d46c76d1"
+        }
+      ],
+      "pending_status": "仅导出待完整语义审阅"
+    },
+    {
+      "seed_va": "0x85b870",
+      "end_va": "0x85b8d1",
+      "name": "sub_85B870",
+      "assembly": [
+        {
+          "site_va": "0x85b870",
+          "text": "push    ebp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b871",
+          "text": "mov     ebp, esp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b873",
+          "text": "sub     esp, 0E4h",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b879",
+          "text": "push    ebx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b87a",
+          "text": "push    esi",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b87b",
+          "text": "push    edi",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b87c",
+          "text": "push    ecx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b87d",
+          "text": "lea     edi, [ebp+var_E4]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b883",
+          "text": "mov     ecx, 39h",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b888",
+          "text": "mov     eax, 0CCCCCCCCh",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b88d",
+          "text": "rep stosd",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b88f",
+          "text": "pop     ecx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b890",
+          "text": "mov     [ebp+var_8], ecx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b893",
+          "text": "mov     eax, [ebp+arg_0]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b896",
+          "text": "push    eax",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b897",
+          "text": "lea     ecx, [ebp+var_D4]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b89d",
+          "text": "push    ecx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b89e",
+          "text": "lea     edx, [ebp+var_E0]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8a4",
+          "text": "push    edx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8a5",
+          "text": "mov     ecx, [ebp+var_8]",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8a8",
+          "text": "call    sub_606D6E",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8ad",
+          "text": "mov     ecx, eax",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8af",
+          "text": "call    sub_6042B2",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8b4",
+          "text": "mov     ecx, eax",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8b6",
+          "text": "call    sub_60C87C",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8bb",
+          "text": "pop     edi",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8bc",
+          "text": "pop     esi",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8bd",
+          "text": "pop     ebx",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8be",
+          "text": "add     esp, 0E4h",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8c4",
+          "text": "cmp     ebp, esp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8c6",
+          "text": "call    j___RTC_CheckEsp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8cb",
+          "text": "mov     esp, ebp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8cd",
+          "text": "pop     ebp",
+          "is_code": true
+        },
+        {
+          "site_va": "0x85b8ce",
+          "text": "retn    4",
+          "is_code": true
+        }
+      ],
+      "pseudocode": "int __thiscall sub_85B870(void *this, int a2)\n{\n  _BYTE v3[12]; // [esp+10h] [ebp-E0h] BYREF\n  _BYTE v4[204]; // [esp+1Ch] [ebp-D4h] BYREF\n  void *v5; // [esp+E8h] [ebp-8h]\n\n  v5 = this;\n  sub_606D6E((int)v3);\n  sub_6042B2((int)v4, a2);\n  return sub_60C87C();\n}\n",
+      "decompile_error": null,
+      "chunk_byte_ranges": [
+        {
+          "start_va": "0x85b870",
+          "size": 97,
+          "idb_hex": "558bec81ece4000000535657518dbd1cffffffb939000000b8ccccccccf3ab59894df88b4508508d8d2cffffff518d9520ffffff528b4df8e8c1b4daff8bc8e8fe89daff8bc8e8c10fdbff5f5e5b81c4e40000003bece8abfcdaff8be55dc20400",
+          "disk_hex": "558bec81ece4000000535657518dbd1cffffffb939000000b8ccccccccf3ab59894df88b4508508d8d2cffffff518d9520ffffff528b4df8e8c1b4daff8bc8e8fe89daff8bc8e8c10fdbff5f5e5b81c4e40000003bece8abfcdaff8be55dc20400",
+          "matching": true,
+          "sha256": "b633265445e4e3d344ecfa826b13e8f4af764d5a11e89b6ed150632d0119cbd2"
+        }
+      ],
+      "pending_status": "仅导出待完整语义审阅"
+    }
+  ],
+  "reused_seeds": [],
+  "current_chunk_audits": [
+    {
+      "seed_va": "0x85b800",
+      "chunk_byte_ranges": [
+        {
+          "start_va": "0x85b800",
+          "size": 90,
+          "idb_hex": "558bec81ecd0000000535657518dbd30ffffffb934000000b8ccccccccf3ab59894df88b45f883780400750cc78530ffffff00000000eb158b4df88b55f88b41082b4204c1f802898530ffffff8b8530ffffff5f5e5b8be55dc3",
+          "disk_hex": "558bec81ecd0000000535657518dbd30ffffffb934000000b8ccccccccf3ab59894df88b45f883780400750cc78530ffffff00000000eb158b4df88b55f88b41082b4204c1f802898530ffffff8b8530ffffff5f5e5b8be55dc3",
+          "matching": true,
+          "sha256": "a0ce734238bbc1bbc9383e9bdf2659fe1add3b63e7d3696c7a127459d46c76d1"
+        }
+      ],
+      "pending_status": "当前逐块字节已核；完整语义待审阅"
+    },
+    {
+      "seed_va": "0x85b870",
+      "chunk_byte_ranges": [
+        {
+          "start_va": "0x85b870",
+          "size": 97,
+          "idb_hex": "558bec81ece4000000535657518dbd1cffffffb939000000b8ccccccccf3ab59894df88b4508508d8d2cffffff518d9520ffffff528b4df8e8c1b4daff8bc8e8fe89daff8bc8e8c10fdbff5f5e5b81c4e40000003bece8abfcdaff8be55dc20400",
+          "disk_hex": "558bec81ece4000000535657518dbd1cffffffb939000000b8ccccccccf3ab59894df88b4508508d8d2cffffff518d9520ffffff528b4df8e8c1b4daff8bc8e8fe89daff8bc8e8c10fdbff5f5e5b81c4e40000003bece8abfcdaff8be55dc20400",
+          "matching": true,
+          "sha256": "b633265445e4e3d344ecfa826b13e8f4af764d5a11e89b6ed150632d0119cbd2"
+        }
+      ],
+      "pending_status": "当前逐块字节已核；完整语义待审阅"
+    }
+  ],
+  "calls": [
+    {
+      "seed_va": "0x85b870",
+      "site_va": "0x85b8a8",
+      "target_va": "0x606d6e",
+      "implementation_va": "0x85b740",
+      "bridges": [
+        "0x606d6e"
+      ],
+      "existing_sources": []
+    },
+    {
+      "seed_va": "0x85b870",
+      "site_va": "0x85b8af",
+      "target_va": "0x6042b2",
+      "implementation_va": "0x85c660",
+      "bridges": [
+        "0x6042b2"
+      ],
+      "existing_sources": []
+    },
+    {
+      "seed_va": "0x85b870",
+      "site_va": "0x85b8b6",
+      "target_va": "0x60c87c",
+      "implementation_va": "0x85bb10",
+      "bridges": [
+        "0x60c87c"
+      ],
+      "existing_sources": [
+        {
+          "path": "专题/高扇入函数群筛选/证据/highfanout_raw.json",
+          "source_sha256": "30f3513c2400dc786cc7f5366cef5aed55639e9cd6cd4cb765f5824c8e80b8b2",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        }
+      ]
+    },
+    {
+      "seed_va": "0x85b870",
+      "site_va": "0x85b8c6",
+      "target_va": "0x60b576",
+      "implementation_va": "0x91f6d0",
+      "bridges": [
+        "0x60b576"
+      ],
+      "existing_sources": [
+        {
+          "path": "专题/4060系列事件/证据/callees.json",
+          "source_sha256": "6784b6ffbf2efeca47d7a4051fc14ea0cde016006a72f07bbdf991f4824fabd6",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/4060系列事件/证据/funds.json",
+          "source_sha256": "9e6ae2279cac3df2f4f05660d0971a9dcaf266b013d17dbaa5cd41e992e209a2",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/4060系列事件/证据/helpers.json",
+          "source_sha256": "e5845b6ed88377b80e54faf8014086338cc6f37399b02cf40a3e9d6aa5db5de1",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/40B0系列事件/证据/consumers.json",
+          "source_sha256": "76a4bc859ca6799d937340b4d400a9bdf05571ee2cc2bdaf39f7a75965033d82",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/727F控件状态接口/独审_IDA结果.json",
+          "source_sha256": "964389f27cb76760e2ecc0e993646b3258b17ad4fcc7713ed54c9b85db2fe696",
+          "declared_binary_sha256": null,
+          "current_baseline_declared": false,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/KoNpc记录与消费者/证据/npc_dependencies_raw.json",
+          "source_sha256": "36264755453bca174d803c698adf611b9d4b8d2d2c90603a8470d27b4ae1dcfd",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/TeachMode对象与消费者/函数审阅清单.json",
+          "source_sha256": "6887a74dd2aa8247dcb02cca3c3e447cfa5b7ffe2db26dc17d705f17fffdb00b",
+          "declared_binary_sha256": null,
+          "current_baseline_declared": false,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/TeachMode对象与消费者/证据/teachmode_raw.json",
+          "source_sha256": "731f48028d5d68698809e4adefc6e41cec7262dda2434f9e5188606852d84240",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/八角色命中筛选契约/证据/hit_filter.json",
+          "source_sha256": "e1f0be9b802ef79e7f71b8e7c22e22b88d4e7b7d81f69bbf18af01d17151c134",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/回合继续与落点调度/证据/stage1_dependencies.json",
+          "source_sha256": "0df3d465f6d562c3a7182fb9009e0f909b2d528c3aade12b786bdd42018f5f3b",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/大厅URL读取与缓冲契约/证据/short_helpers_raw.json",
+          "source_sha256": "0b9f73bb5ac3c5af3bd5046c7f4a6ddbcc146a957036134e382bccd54d0489c2",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/整数键树容器契约/证据/direct_dependencies.json",
+          "source_sha256": "f6bfea07965d943fa4bb9495038f63daeca9810600efd27d68aa6461d3c373f3",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/短字符串与缓冲所有权/证据/string_dependencies.json",
+          "source_sha256": "25e83ad29dfcb214b20c60e9fdb55f8baeed63f1da9858897c7b79293e709c87",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/聊天发送与重复提示契约/独审_IDA复读.json",
+          "source_sha256": "eb5798e7281a473cae19a14fc28ff1a25deffe8e71c7a292014939a924dafd73",
+          "declared_binary_sha256": null,
+          "current_baseline_declared": false,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        },
+        {
+          "path": "专题/聊天发送与重复提示契约/证据/chat_contract_discovery.json",
+          "source_sha256": "644a12d04a84e96ace1feefffca1d9a2e28d9e97d78d606374dd08f57742ae1a",
+          "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+          "current_baseline_declared": true,
+          "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+        }
+      ]
+    }
+  ],
+  "data_references": [],
+  "strings": [],
+  "rejected_string_candidates": [],
+  "incoming": {
+    "0x85b800": [
+      {
+        "site_va": "0x601963",
+        "target_va": "0x85b800",
+        "kind": 19,
+        "is_code": true,
+        "text": "jmp     sub_85B800",
+        "verified_bridge": true,
+        "final_implementation_va": "0x85b800"
+      },
+      {
+        "site_va": "0x858e73",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x858e50",
+          "site_va": "0x858e73",
+          "assembly": [
+            {
+              "site_va": "0x858e5c",
+              "text": "lea     edi, [ebp+var_C0]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e5c",
+                "size": 6,
+                "idb_hex": "8dbd40ffffff",
+                "disk_hex": "8dbd40ffffff",
+                "matching": true,
+                "sha256": "307813ed8b995e876681e2745f90ffd7beb09b1537756677291122dc968171ae"
+              }
+            },
+            {
+              "site_va": "0x858e62",
+              "text": "mov     ecx, 30h",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e62",
+                "size": 5,
+                "idb_hex": "b930000000",
+                "disk_hex": "b930000000",
+                "matching": true,
+                "sha256": "7e582730780ca1e14490ba6350351642e2a53b424254edf0ae3fdf56015ed690"
+              }
+            },
+            {
+              "site_va": "0x858e67",
+              "text": "mov     eax, 0CCCCCCCCh",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e67",
+                "size": 5,
+                "idb_hex": "b8cccccccc",
+                "disk_hex": "b8cccccccc",
+                "matching": true,
+                "sha256": "9004234a7d69ed19713335d4ccd3d4875635a7b2463e3a86a7bf79ac14433de4"
+              }
+            },
+            {
+              "site_va": "0x858e6c",
+              "text": "rep stosd",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e6c",
+                "size": 2,
+                "idb_hex": "f3ab",
+                "disk_hex": "f3ab",
+                "matching": true,
+                "sha256": "be64e01700d02279579ec731e86a76ebdbc0f1ec3262648125a06d280b03a180"
+              }
+            },
+            {
+              "site_va": "0x858e6e",
+              "text": "mov     ecx, offset unk_ACB8E8",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e6e",
+                "size": 5,
+                "idb_hex": "b9e8b8ac00",
+                "disk_hex": "b9e8b8ac00",
+                "matching": true,
+                "sha256": "02e2d05d1cfbc0d2c3a770d6894a6b6e3aa96e8e28efe3d8f3b74cb4ef672db8"
+              }
+            },
+            {
+              "site_va": "0x858e73",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e73",
+                "size": 5,
+                "idb_hex": "e8eb8adaff",
+                "disk_hex": "e8eb8adaff",
+                "matching": true,
+                "sha256": "000df6ed4bc8124f47e55a1a3481ebc30c64c013ad83badf51f4ac77afa4d7c5"
+              }
+            },
+            {
+              "site_va": "0x858e78",
+              "text": "pop     edi",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e78",
+                "size": 1,
+                "idb_hex": "5f",
+                "disk_hex": "5f",
+                "matching": true,
+                "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde"
+              }
+            },
+            {
+              "site_va": "0x858e79",
+              "text": "pop     esi",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e79",
+                "size": 1,
+                "idb_hex": "5e",
+                "disk_hex": "5e",
+                "matching": true,
+                "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb"
+              }
+            },
+            {
+              "site_va": "0x858e7a",
+              "text": "pop     ebx",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e7a",
+                "size": 1,
+                "idb_hex": "5b",
+                "disk_hex": "5b",
+                "matching": true,
+                "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811"
+              }
+            },
+            {
+              "site_va": "0x858e7b",
+              "text": "add     esp, 0C0h",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e7b",
+                "size": 6,
+                "idb_hex": "81c4c0000000",
+                "disk_hex": "81c4c0000000",
+                "matching": true,
+                "sha256": "e315b5e0659737ff2cca82a00bec7ec78754a30899de5fc07c520346a53d4fbb"
+              }
+            },
+            {
+              "site_va": "0x858e81",
+              "text": "cmp     ebp, esp",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858e81",
+                "size": 2,
+                "idb_hex": "3bec",
+                "disk_hex": "3bec",
+                "matching": true,
+                "sha256": "8dea518d6a1686ea248940bf8010a25ac433b11c96d7936f2d1b3acc55b538b0"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      },
+      {
+        "site_va": "0x85b64a",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x85b560",
+          "site_va": "0x85b64a",
+          "assembly": [
+            {
+              "site_va": "0x85b637",
+              "text": "push    0; pThrowInfo",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b637",
+                "size": 2,
+                "idb_hex": "6a00",
+                "disk_hex": "6a00",
+                "matching": true,
+                "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2"
+              }
+            },
+            {
+              "site_va": "0x85b639",
+              "text": "push    0; pExceptionObject",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b639",
+                "size": 2,
+                "idb_hex": "6a00",
+                "disk_hex": "6a00",
+                "matching": true,
+                "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2"
+              }
+            },
+            {
+              "site_va": "0x85b63b",
+              "text": "call    _CxxThrowException(x,x)",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b63b",
+                "size": 5,
+                "idb_hex": "e84f54dbff",
+                "disk_hex": "e84f54dbff",
+                "matching": true,
+                "sha256": "4e0142d384648e2d163d5e8fa01bea89a6d7c8fb19650d0f304de6a51c68cd3a"
+              }
+            },
+            {
+              "site_va": "0x85b640",
+              "text": "mov     [ebp+var_4], 0FFFFFFFFh",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b640",
+                "size": 7,
+                "idb_hex": "c745fcffffffff",
+                "disk_hex": "c745fcffffffff",
+                "matching": true,
+                "sha256": "697b79162f6777d7ec694f109cea690d1bf85eb4cfe834fa40eb983bbccc30fc"
+              }
+            },
+            {
+              "site_va": "0x85b647",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b647",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85b64a",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b64a",
+                "size": 5,
+                "idb_hex": "e81463daff",
+                "disk_hex": "e81463daff",
+                "matching": true,
+                "sha256": "c063d02ee982b58f13c4a095b5432463eb58f6d38406d67a0daa707b4a33b95a"
+              }
+            },
+            {
+              "site_va": "0x85b64f",
+              "text": "mov     [ebp+var_30], eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b64f",
+                "size": 3,
+                "idb_hex": "8945d0",
+                "disk_hex": "8945d0",
+                "matching": true,
+                "sha256": "9dcac4e3c152a643d85a57bc58b1826d30adf5f5faa9337b6b8c531c15b8f960"
+              }
+            },
+            {
+              "site_va": "0x85b652",
+              "text": "mov     eax, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b652",
+                "size": 3,
+                "idb_hex": "8b45e8",
+                "disk_hex": "8b45e8",
+                "matching": true,
+                "sha256": "6038b609eb5d00ae4f1c3677bda9b66bc03fe57435971a4db38b1ed0590adbcc"
+              }
+            },
+            {
+              "site_va": "0x85b655",
+              "text": "cmp     dword ptr [eax+4], 0",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b655",
+                "size": 4,
+                "idb_hex": "83780400",
+                "disk_hex": "83780400",
+                "matching": true,
+                "sha256": "19f653ee929b14057e975aaaa01589e96352eec0bd5a8afa3c289b07b4377467"
+              }
+            },
+            {
+              "site_va": "0x85b659",
+              "text": "jz      short loc_85B690",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b659",
+                "size": 2,
+                "idb_hex": "7435",
+                "disk_hex": "7435",
+                "matching": true,
+                "sha256": "f413e43d74f8178745c1acb48b2741438ab9ddccf3ed0a4dd451b0419f7ba837"
+              }
+            },
+            {
+              "site_va": "0x85b65b",
+              "text": "mov     eax, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b65b",
+                "size": 3,
+                "idb_hex": "8b45e8",
+                "disk_hex": "8b45e8",
+                "matching": true,
+                "sha256": "6038b609eb5d00ae4f1c3677bda9b66bc03fe57435971a4db38b1ed0590adbcc"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      },
+      {
+        "site_va": "0x85b916",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x85b8f0",
+          "site_va": "0x85b916",
+          "assembly": [
+            {
+              "site_va": "0x85b908",
+              "text": "mov     eax, 0CCCCCCCCh",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b908",
+                "size": 5,
+                "idb_hex": "b8cccccccc",
+                "disk_hex": "b8cccccccc",
+                "matching": true,
+                "sha256": "9004234a7d69ed19713335d4ccd3d4875635a7b2463e3a86a7bf79ac14433de4"
+              }
+            },
+            {
+              "site_va": "0x85b90d",
+              "text": "rep stosd",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b90d",
+                "size": 2,
+                "idb_hex": "f3ab",
+                "disk_hex": "f3ab",
+                "matching": true,
+                "sha256": "be64e01700d02279579ec731e86a76ebdbc0f1ec3262648125a06d280b03a180"
+              }
+            },
+            {
+              "site_va": "0x85b90f",
+              "text": "pop     ecx",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b90f",
+                "size": 1,
+                "idb_hex": "59",
+                "disk_hex": "59",
+                "matching": true,
+                "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552"
+              }
+            },
+            {
+              "site_va": "0x85b910",
+              "text": "mov     [ebp+var_8], ecx",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b910",
+                "size": 3,
+                "idb_hex": "894df8",
+                "disk_hex": "894df8",
+                "matching": true,
+                "sha256": "80ccdc9f6cee3c8efce9788c1161d52c7ad8b09c4a5e1081523fe4e4c1b9925b"
+              }
+            },
+            {
+              "site_va": "0x85b913",
+              "text": "mov     ecx, [ebp+var_8]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b913",
+                "size": 3,
+                "idb_hex": "8b4df8",
+                "disk_hex": "8b4df8",
+                "matching": true,
+                "sha256": "9cde7378397a6e673e4d37b54655175bffb17dfb88b118a992a2c5f88fc5f6ba"
+              }
+            },
+            {
+              "site_va": "0x85b916",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b916",
+                "size": 5,
+                "idb_hex": "e84860daff",
+                "disk_hex": "e84860daff",
+                "matching": true,
+                "sha256": "2c8ede3687255f85890079ced678737a16baa3c0995e714d49cdbc3df8c7aeea"
+              }
+            },
+            {
+              "site_va": "0x85b91b",
+              "text": "mov     esi, eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b91b",
+                "size": 2,
+                "idb_hex": "8bf0",
+                "disk_hex": "8bf0",
+                "matching": true,
+                "sha256": "234f8f2031d456cbb66a9a4907f797ba3e97e213bae11b112af85390c778cb8c"
+              }
+            },
+            {
+              "site_va": "0x85b91d",
+              "text": "mov     ecx, [ebp+var_8]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b91d",
+                "size": 3,
+                "idb_hex": "8b4df8",
+                "disk_hex": "8b4df8",
+                "matching": true,
+                "sha256": "9cde7378397a6e673e4d37b54655175bffb17dfb88b118a992a2c5f88fc5f6ba"
+              }
+            },
+            {
+              "site_va": "0x85b920",
+              "text": "call    sub_602D7C",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b920",
+                "size": 5,
+                "idb_hex": "e85774daff",
+                "disk_hex": "e85774daff",
+                "matching": true,
+                "sha256": "bef05b8d60e1a46b535283597e5440fff7545533c4227652731e178b182a7c07"
+              }
+            },
+            {
+              "site_va": "0x85b925",
+              "text": "cmp     esi, eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b925",
+                "size": 2,
+                "idb_hex": "3bf0",
+                "disk_hex": "3bf0",
+                "matching": true,
+                "sha256": "30bff8fc9de9f58e27962b68df187b7abfca59a7765406ef5f51e6ab777c7800"
+              }
+            },
+            {
+              "site_va": "0x85b927",
+              "text": "jnb     short loc_85B946",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85b927",
+                "size": 2,
+                "idb_hex": "731d",
+                "disk_hex": "731d",
+                "matching": true,
+                "sha256": "1982694227afe555c14ab66db47fd1fc2fdeb0a1a1dff7cbfb1fff3ef1840837"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      },
+      {
+        "site_va": "0x85c2f6",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x85c2d0",
+          "site_va": "0x85c2f6",
+          "assembly": [
+            {
+              "site_va": "0x85c2e8",
+              "text": "mov     eax, 0CCCCCCCCh",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2e8",
+                "size": 5,
+                "idb_hex": "b8cccccccc",
+                "disk_hex": "b8cccccccc",
+                "matching": true,
+                "sha256": "9004234a7d69ed19713335d4ccd3d4875635a7b2463e3a86a7bf79ac14433de4"
+              }
+            },
+            {
+              "site_va": "0x85c2ed",
+              "text": "rep stosd",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2ed",
+                "size": 2,
+                "idb_hex": "f3ab",
+                "disk_hex": "f3ab",
+                "matching": true,
+                "sha256": "be64e01700d02279579ec731e86a76ebdbc0f1ec3262648125a06d280b03a180"
+              }
+            },
+            {
+              "site_va": "0x85c2ef",
+              "text": "pop     ecx",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2ef",
+                "size": 1,
+                "idb_hex": "59",
+                "disk_hex": "59",
+                "matching": true,
+                "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552"
+              }
+            },
+            {
+              "site_va": "0x85c2f0",
+              "text": "mov     [ebp+var_8], ecx",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2f0",
+                "size": 3,
+                "idb_hex": "894df8",
+                "disk_hex": "894df8",
+                "matching": true,
+                "sha256": "80ccdc9f6cee3c8efce9788c1161d52c7ad8b09c4a5e1081523fe4e4c1b9925b"
+              }
+            },
+            {
+              "site_va": "0x85c2f3",
+              "text": "mov     ecx, [ebp+var_8]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2f3",
+                "size": 3,
+                "idb_hex": "8b4df8",
+                "disk_hex": "8b4df8",
+                "matching": true,
+                "sha256": "9cde7378397a6e673e4d37b54655175bffb17dfb88b118a992a2c5f88fc5f6ba"
+              }
+            },
+            {
+              "site_va": "0x85c2f6",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2f6",
+                "size": 5,
+                "idb_hex": "e86856daff",
+                "disk_hex": "e86856daff",
+                "matching": true,
+                "sha256": "41ae45ce513de9f59fcad67a912420c7bba8ab10c6da22e30e14073de9309d58"
+              }
+            },
+            {
+              "site_va": "0x85c2fb",
+              "text": "test    eax, eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2fb",
+                "size": 2,
+                "idb_hex": "85c0",
+                "disk_hex": "85c0",
+                "matching": true,
+                "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1"
+              }
+            },
+            {
+              "site_va": "0x85c2fd",
+              "text": "jnz     short loc_85C30B",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2fd",
+                "size": 2,
+                "idb_hex": "750c",
+                "disk_hex": "750c",
+                "matching": true,
+                "sha256": "1f39a9b3a90c11a3d6a6ce33f095308491a43cea49a94bc692e4ab11de704f79"
+              }
+            },
+            {
+              "site_va": "0x85c2ff",
+              "text": "mov     [ebp+var_F4], 0",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c2ff",
+                "size": 10,
+                "idb_hex": "c7850cffffff00000000",
+                "disk_hex": "c7850cffffff00000000",
+                "matching": true,
+                "sha256": "cc296425559ed54959d0b685dc08a8203312d50c413974ce18c97d29e29bd172"
+              }
+            },
+            {
+              "site_va": "0x85c309",
+              "text": "jmp     short loc_85C329",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c309",
+                "size": 2,
+                "idb_hex": "eb1e",
+                "disk_hex": "eb1e",
+                "matching": true,
+                "sha256": "d7b868d4ef35db14db2c9ec6c5572e3216d3797b28a656214f33ed82565fa37d"
+              }
+            },
+            {
+              "site_va": "0x85c30b",
+              "text": "lea     eax, [ebp+var_EC]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85c30b",
+                "size": 6,
+                "idb_hex": "8d8514ffffff",
+                "disk_hex": "8d8514ffffff",
+                "matching": true,
+                "sha256": "ab9fe1ce69dfab9833f2b05f0605670413949a5f9e1ac96dce2adb81f4d5b82a"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      },
+      {
+        "site_va": "0x85cd0d",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x85ccb0",
+          "site_va": "0x85cd0d",
+          "assembly": [
+            {
+              "site_va": "0x85ccfc",
+              "text": "mov     [ebp+var_30], eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ccfc",
+                "size": 3,
+                "idb_hex": "8945d0",
+                "disk_hex": "8945d0",
+                "matching": true,
+                "sha256": "9dcac4e3c152a643d85a57bc58b1826d30adf5f5faa9337b6b8c531c15b8f960"
+              }
+            },
+            {
+              "site_va": "0x85ccff",
+              "text": "cmp     [ebp+arg_4], 0",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ccff",
+                "size": 4,
+                "idb_hex": "837d0c00",
+                "disk_hex": "837d0c00",
+                "matching": true,
+                "sha256": "f86b9b8dff579a3efbd513c025d456edd9b0b8bd7192f56584262f8ef1db47d3"
+              }
+            },
+            {
+              "site_va": "0x85cd03",
+              "text": "jnz     short loc_85CD0A",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd03",
+                "size": 2,
+                "idb_hex": "7505",
+                "disk_hex": "7505",
+                "matching": true,
+                "sha256": "bdd555450aa9fbe84cc950719dc1a4f86814cddcaa6772e868ebc728a600a5b4"
+              }
+            },
+            {
+              "site_va": "0x85cd05",
+              "text": "jmp     loc_85CFE5",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd05",
+                "size": 5,
+                "idb_hex": "e9db020000",
+                "disk_hex": "e9db020000",
+                "matching": true,
+                "sha256": "c7a661fd5adbcea22e159a62aeaef513f354143dce8e27d9dc446e24a9d154ef"
+              }
+            },
+            {
+              "site_va": "0x85cd0a",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd0a",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85cd0d",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd0d",
+                "size": 5,
+                "idb_hex": "e8514cdaff",
+                "disk_hex": "e8514cdaff",
+                "matching": true,
+                "sha256": "3d097ff705fd28be72023a6e557bd1e9e536ab8ffdf53de4b5a3d587652b7b24"
+              }
+            },
+            {
+              "site_va": "0x85cd12",
+              "text": "mov     esi, eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd12",
+                "size": 2,
+                "idb_hex": "8bf0",
+                "disk_hex": "8bf0",
+                "matching": true,
+                "sha256": "234f8f2031d456cbb66a9a4907f797ba3e97e213bae11b112af85390c778cb8c"
+              }
+            },
+            {
+              "site_va": "0x85cd14",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd14",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85cd17",
+              "text": "call    sub_6036B9",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd17",
+                "size": 5,
+                "idb_hex": "e89d69daff",
+                "disk_hex": "e89d69daff",
+                "matching": true,
+                "sha256": "7c48306de5d05022a3db755979ac8580ff7e95bb170535836309545a5c657a95"
+              }
+            },
+            {
+              "site_va": "0x85cd1c",
+              "text": "sub     eax, esi",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd1c",
+                "size": 2,
+                "idb_hex": "2bc6",
+                "disk_hex": "2bc6",
+                "matching": true,
+                "sha256": "52f6ca2836ec1fface3545a24bb804b37683ce606c88ad773dfbc5a08980c055"
+              }
+            },
+            {
+              "site_va": "0x85cd1e",
+              "text": "cmp     eax, [ebp+arg_4]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd1e",
+                "size": 3,
+                "idb_hex": "3b450c",
+                "disk_hex": "3b450c",
+                "matching": true,
+                "sha256": "b5248541cd23de438cfdc819ce6e67ce38c0435db2634dcf975a00f5b06fec7a"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      },
+      {
+        "site_va": "0x85cd33",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x85ccb0",
+          "site_va": "0x85cd33",
+          "assembly": [
+            {
+              "site_va": "0x85cd21",
+              "text": "jnb     short loc_85CD30",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd21",
+                "size": 2,
+                "idb_hex": "730d",
+                "disk_hex": "730d",
+                "matching": true,
+                "sha256": "a0fa38e27b0f787dcc2bfb3b89c8273ddf9ef2ee943a2d216c787996c56ad18e"
+              }
+            },
+            {
+              "site_va": "0x85cd23",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd23",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85cd26",
+              "text": "call    sub_60B003",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd26",
+                "size": 5,
+                "idb_hex": "e8d8e2daff",
+                "disk_hex": "e8d8e2daff",
+                "matching": true,
+                "sha256": "250b010e036081074375977623b56c63bc4069c8565312ea56c6a3573dda2788"
+              }
+            },
+            {
+              "site_va": "0x85cd2b",
+              "text": "jmp     loc_85CFE5",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd2b",
+                "size": 5,
+                "idb_hex": "e9b5020000",
+                "disk_hex": "e9b5020000",
+                "matching": true,
+                "sha256": "1277a7dacf5f3c618e81b2ee56615439f8dacffaf13379e4de43165b21f0352c"
+              }
+            },
+            {
+              "site_va": "0x85cd30",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd30",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85cd33",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd33",
+                "size": 5,
+                "idb_hex": "e82b4cdaff",
+                "disk_hex": "e82b4cdaff",
+                "matching": true,
+                "sha256": "e2bc4f730a72ab7c76a3aaf70a18b598cf181930b96863020ed20bd1f6413ad9"
+              }
+            },
+            {
+              "site_va": "0x85cd38",
+              "text": "add     eax, [ebp+arg_4]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd38",
+                "size": 3,
+                "idb_hex": "03450c",
+                "disk_hex": "03450c",
+                "matching": true,
+                "sha256": "0c5417d8239655253a497d679c90bfd7f57460b038dee65f5a4b3cbe840f7bab"
+              }
+            },
+            {
+              "site_va": "0x85cd3b",
+              "text": "cmp     [ebp+var_30], eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd3b",
+                "size": 3,
+                "idb_hex": "3945d0",
+                "disk_hex": "3945d0",
+                "matching": true,
+                "sha256": "4df547e19866fba12dc0d6d98a8b2c6cc45f3a4a3a66f3cfda4f2df6cdfab446"
+              }
+            },
+            {
+              "site_va": "0x85cd3e",
+              "text": "jnb     loc_85CEBF",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd3e",
+                "size": 6,
+                "idb_hex": "0f837b010000",
+                "disk_hex": "0f837b010000",
+                "matching": true,
+                "sha256": "cc39a6ac120051b1ed0615271f910f1d8c37322961039ba6c145036fa35268ef"
+              }
+            },
+            {
+              "site_va": "0x85cd44",
+              "text": "mov     esi, [ebp+var_30]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd44",
+                "size": 3,
+                "idb_hex": "8b75d0",
+                "disk_hex": "8b75d0",
+                "matching": true,
+                "sha256": "54ddfc8384ab2a16072326705c042e9642c8731a142fce70973fbc138f060263"
+              }
+            },
+            {
+              "site_va": "0x85cd47",
+              "text": "shr     esi, 1",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd47",
+                "size": 2,
+                "idb_hex": "d1ee",
+                "disk_hex": "d1ee",
+                "matching": true,
+                "sha256": "54de350cfbbd8cd288d37a4bec21c868ce9fd5a600342a636e965153524ac124"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      },
+      {
+        "site_va": "0x85cd7e",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x85ccb0",
+          "site_va": "0x85cd7e",
+          "assembly": [
+            {
+              "site_va": "0x85cd69",
+              "text": "add     eax, [ebp+var_30]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd69",
+                "size": 3,
+                "idb_hex": "0345d0",
+                "disk_hex": "0345d0",
+                "matching": true,
+                "sha256": "123e1e7697f02f8af90cf83c2f6d75e84d755796d3a96f986f3d90ea1c0da905"
+              }
+            },
+            {
+              "site_va": "0x85cd6c",
+              "text": "mov     [ebp+var_11C], eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd6c",
+                "size": 6,
+                "idb_hex": "8985e4feffff",
+                "disk_hex": "8985e4feffff",
+                "matching": true,
+                "sha256": "eb6bab06b50f91731002bd07b2826e5c8ec397b619c37d1425f78e45d60d2fb9"
+              }
+            },
+            {
+              "site_va": "0x85cd72",
+              "text": "mov     ecx, [ebp+var_11C]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd72",
+                "size": 6,
+                "idb_hex": "8b8de4feffff",
+                "disk_hex": "8b8de4feffff",
+                "matching": true,
+                "sha256": "9c03117a89a89c8845487f8eddd296c8c4940d961a472a72aeb5347dac9c8164"
+              }
+            },
+            {
+              "site_va": "0x85cd78",
+              "text": "mov     [ebp+var_30], ecx",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd78",
+                "size": 3,
+                "idb_hex": "894dd0",
+                "disk_hex": "894dd0",
+                "matching": true,
+                "sha256": "2ce7944fea591cb02ec070901af78f4df85f23d227d4f7bdd95dd57ac2dd066a"
+              }
+            },
+            {
+              "site_va": "0x85cd7b",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd7b",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85cd7e",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd7e",
+                "size": 5,
+                "idb_hex": "e8e04bdaff",
+                "disk_hex": "e8e04bdaff",
+                "matching": true,
+                "sha256": "f4140c8178483f48a676016dfaafcd866d9774afc742a32cfc6c7ceec66f27a6"
+              }
+            },
+            {
+              "site_va": "0x85cd83",
+              "text": "add     eax, [ebp+arg_4]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd83",
+                "size": 3,
+                "idb_hex": "03450c",
+                "disk_hex": "03450c",
+                "matching": true,
+                "sha256": "0c5417d8239655253a497d679c90bfd7f57460b038dee65f5a4b3cbe840f7bab"
+              }
+            },
+            {
+              "site_va": "0x85cd86",
+              "text": "cmp     [ebp+var_30], eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd86",
+                "size": 3,
+                "idb_hex": "3945d0",
+                "disk_hex": "3945d0",
+                "matching": true,
+                "sha256": "4df547e19866fba12dc0d6d98a8b2c6cc45f3a4a3a66f3cfda4f2df6cdfab446"
+              }
+            },
+            {
+              "site_va": "0x85cd89",
+              "text": "jnb     short loc_85CD99",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd89",
+                "size": 2,
+                "idb_hex": "730e",
+                "disk_hex": "730e",
+                "matching": true,
+                "sha256": "016e803dab124a8ce43aebdf25a656be01badf4dfab9d29ea7535f8a0f081df5"
+              }
+            },
+            {
+              "site_va": "0x85cd8b",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd8b",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85cd8e",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd8e",
+                "size": 5,
+                "idb_hex": "e8d04bdaff",
+                "disk_hex": "e8d04bdaff",
+                "matching": true,
+                "sha256": "7ce3e8d2df5ba4adb1ebb2df6264ba2ec76ead29c15bdb7bca4c0750f2f7ccdc"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      },
+      {
+        "site_va": "0x85cd8e",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x85ccb0",
+          "site_va": "0x85cd8e",
+          "assembly": [
+            {
+              "site_va": "0x85cd7e",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd7e",
+                "size": 5,
+                "idb_hex": "e8e04bdaff",
+                "disk_hex": "e8e04bdaff",
+                "matching": true,
+                "sha256": "f4140c8178483f48a676016dfaafcd866d9774afc742a32cfc6c7ceec66f27a6"
+              }
+            },
+            {
+              "site_va": "0x85cd83",
+              "text": "add     eax, [ebp+arg_4]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd83",
+                "size": 3,
+                "idb_hex": "03450c",
+                "disk_hex": "03450c",
+                "matching": true,
+                "sha256": "0c5417d8239655253a497d679c90bfd7f57460b038dee65f5a4b3cbe840f7bab"
+              }
+            },
+            {
+              "site_va": "0x85cd86",
+              "text": "cmp     [ebp+var_30], eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd86",
+                "size": 3,
+                "idb_hex": "3945d0",
+                "disk_hex": "3945d0",
+                "matching": true,
+                "sha256": "4df547e19866fba12dc0d6d98a8b2c6cc45f3a4a3a66f3cfda4f2df6cdfab446"
+              }
+            },
+            {
+              "site_va": "0x85cd89",
+              "text": "jnb     short loc_85CD99",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd89",
+                "size": 2,
+                "idb_hex": "730e",
+                "disk_hex": "730e",
+                "matching": true,
+                "sha256": "016e803dab124a8ce43aebdf25a656be01badf4dfab9d29ea7535f8a0f081df5"
+              }
+            },
+            {
+              "site_va": "0x85cd8b",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd8b",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85cd8e",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd8e",
+                "size": 5,
+                "idb_hex": "e8d04bdaff",
+                "disk_hex": "e8d04bdaff",
+                "matching": true,
+                "sha256": "7ce3e8d2df5ba4adb1ebb2df6264ba2ec76ead29c15bdb7bca4c0750f2f7ccdc"
+              }
+            },
+            {
+              "site_va": "0x85cd93",
+              "text": "add     eax, [ebp+arg_4]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd93",
+                "size": 3,
+                "idb_hex": "03450c",
+                "disk_hex": "03450c",
+                "matching": true,
+                "sha256": "0c5417d8239655253a497d679c90bfd7f57460b038dee65f5a4b3cbe840f7bab"
+              }
+            },
+            {
+              "site_va": "0x85cd96",
+              "text": "mov     [ebp+var_30], eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd96",
+                "size": 3,
+                "idb_hex": "8945d0",
+                "disk_hex": "8945d0",
+                "matching": true,
+                "sha256": "9dcac4e3c152a643d85a57bc58b1826d30adf5f5faa9337b6b8c531c15b8f960"
+              }
+            },
+            {
+              "site_va": "0x85cd99",
+              "text": "mov     eax, [ebp+var_30]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd99",
+                "size": 3,
+                "idb_hex": "8b45d0",
+                "disk_hex": "8b45d0",
+                "matching": true,
+                "sha256": "dc16c414af96b89d71c868d5d09ea35f0674c13a6234b7dfc5340da4cdf1ae4a"
+              }
+            },
+            {
+              "site_va": "0x85cd9c",
+              "text": "push    eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd9c",
+                "size": 1,
+                "idb_hex": "50",
+                "disk_hex": "50",
+                "matching": true,
+                "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2"
+              }
+            },
+            {
+              "site_va": "0x85cd9d",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85cd9d",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      },
+      {
+        "site_va": "0x85ce4a",
+        "target_va": "0x601963",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_601963",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x85ccb0",
+          "site_va": "0x85ce4a",
+          "assembly": [
+            {
+              "site_va": "0x85ce37",
+              "text": "push    0; pThrowInfo",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce37",
+                "size": 2,
+                "idb_hex": "6a00",
+                "disk_hex": "6a00",
+                "matching": true,
+                "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2"
+              }
+            },
+            {
+              "site_va": "0x85ce39",
+              "text": "push    0; pExceptionObject",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce39",
+                "size": 2,
+                "idb_hex": "6a00",
+                "disk_hex": "6a00",
+                "matching": true,
+                "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2"
+              }
+            },
+            {
+              "site_va": "0x85ce3b",
+              "text": "call    _CxxThrowException(x,x)",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce3b",
+                "size": 5,
+                "idb_hex": "e84f3cdbff",
+                "disk_hex": "e84f3cdbff",
+                "matching": true,
+                "sha256": "15be6c5be726b3ae363b86f0d2e3930142b2e416d7a83cae6ba4ed8e27628b70"
+              }
+            },
+            {
+              "site_va": "0x85ce40",
+              "text": "mov     [ebp+var_4], 0FFFFFFFFh",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce40",
+                "size": 7,
+                "idb_hex": "c745fcffffffff",
+                "disk_hex": "c745fcffffffff",
+                "matching": true,
+                "sha256": "697b79162f6777d7ec694f109cea690d1bf85eb4cfe834fa40eb983bbccc30fc"
+              }
+            },
+            {
+              "site_va": "0x85ce47",
+              "text": "mov     ecx, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce47",
+                "size": 3,
+                "idb_hex": "8b4de8",
+                "disk_hex": "8b4de8",
+                "matching": true,
+                "sha256": "783384d6aa3d9559bd03f574cac11456ecd5adccdd99b2f7a9cba853db2a33c2"
+              }
+            },
+            {
+              "site_va": "0x85ce4a",
+              "text": "call    sub_601963",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce4a",
+                "size": 5,
+                "idb_hex": "e8144bdaff",
+                "disk_hex": "e8144bdaff",
+                "matching": true,
+                "sha256": "b837623e6208322b28dc8bfaee34ad42f6a77ec34b42af1fb1b5caaa408de307"
+              }
+            },
+            {
+              "site_va": "0x85ce4f",
+              "text": "add     eax, [ebp+arg_4]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce4f",
+                "size": 3,
+                "idb_hex": "03450c",
+                "disk_hex": "03450c",
+                "matching": true,
+                "sha256": "0c5417d8239655253a497d679c90bfd7f57460b038dee65f5a4b3cbe840f7bab"
+              }
+            },
+            {
+              "site_va": "0x85ce52",
+              "text": "mov     [ebp+arg_4], eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce52",
+                "size": 3,
+                "idb_hex": "89450c",
+                "disk_hex": "89450c",
+                "matching": true,
+                "sha256": "cb41614f04d4cf817909a62137a9522f2c9edbb0ac046ca072ef62f880c64189"
+              }
+            },
+            {
+              "site_va": "0x85ce55",
+              "text": "mov     eax, [ebp+var_18]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce55",
+                "size": 3,
+                "idb_hex": "8b45e8",
+                "disk_hex": "8b45e8",
+                "matching": true,
+                "sha256": "6038b609eb5d00ae4f1c3677bda9b66bc03fe57435971a4db38b1ed0590adbcc"
+              }
+            },
+            {
+              "site_va": "0x85ce58",
+              "text": "cmp     dword ptr [eax+4], 0",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce58",
+                "size": 4,
+                "idb_hex": "83780400",
+                "disk_hex": "83780400",
+                "matching": true,
+                "sha256": "19f653ee929b14057e975aaaa01589e96352eec0bd5a8afa3c289b07b4377467"
+              }
+            },
+            {
+              "site_va": "0x85ce5c",
+              "text": "jz      short loc_85CE93",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x85ce5c",
+                "size": 2,
+                "idb_hex": "7435",
+                "disk_hex": "7435",
+                "matching": true,
+                "sha256": "f413e43d74f8178745c1acb48b2741438ab9ddccf3ed0a4dd451b0419f7ba837"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      }
+    ],
+    "0x85b870": [
+      {
+        "site_va": "0x606f49",
+        "target_va": "0x85b870",
+        "kind": 19,
+        "is_code": true,
+        "text": "jmp     sub_85B870",
+        "verified_bridge": true,
+        "final_implementation_va": "0x85b870"
+      },
+      {
+        "site_va": "0x858edb",
+        "target_va": "0x606f49",
+        "kind": 17,
+        "is_code": true,
+        "text": "call    sub_606F49",
+        "verified_bridge": false,
+        "final_implementation_va": null,
+        "owner_window": {
+          "owner_va": "0x858ea0",
+          "site_va": "0x858edb",
+          "assembly": [
+            {
+              "site_va": "0x858ece",
+              "text": "xor     eax, eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ece",
+                "size": 2,
+                "idb_hex": "33c0",
+                "disk_hex": "33c0",
+                "matching": true,
+                "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3"
+              }
+            },
+            {
+              "site_va": "0x858ed0",
+              "text": "jmp     short loc_858EE2",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ed0",
+                "size": 2,
+                "idb_hex": "eb10",
+                "disk_hex": "eb10",
+                "matching": true,
+                "sha256": "baf194fee6f784a24814f8c93d26f9a473033936b2cbbfd04399ae10d5966baa"
+              }
+            },
+            {
+              "site_va": "0x858ed2",
+              "text": "mov     eax, [ebp+arg_0]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ed2",
+                "size": 3,
+                "idb_hex": "8b4508",
+                "disk_hex": "8b4508",
+                "matching": true,
+                "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94"
+              }
+            },
+            {
+              "site_va": "0x858ed5",
+              "text": "push    eax",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ed5",
+                "size": 1,
+                "idb_hex": "50",
+                "disk_hex": "50",
+                "matching": true,
+                "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2"
+              }
+            },
+            {
+              "site_va": "0x858ed6",
+              "text": "mov     ecx, offset unk_ACB8E8",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ed6",
+                "size": 5,
+                "idb_hex": "b9e8b8ac00",
+                "disk_hex": "b9e8b8ac00",
+                "matching": true,
+                "sha256": "02e2d05d1cfbc0d2c3a770d6894a6b6e3aa96e8e28efe3d8f3b74cb4ef672db8"
+              }
+            },
+            {
+              "site_va": "0x858edb",
+              "text": "call    sub_606F49",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858edb",
+                "size": 5,
+                "idb_hex": "e869e0daff",
+                "disk_hex": "e869e0daff",
+                "matching": true,
+                "sha256": "17c18b3d433a6ca87b4718c3cbbd9904040b30dfc405abf5e6bc635ef02c8b80"
+              }
+            },
+            {
+              "site_va": "0x858ee0",
+              "text": "mov     eax, [eax]",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ee0",
+                "size": 2,
+                "idb_hex": "8b00",
+                "disk_hex": "8b00",
+                "matching": true,
+                "sha256": "736aaffccc35e5ac4a9c0d7b2f64ae9ed7ead848f3eb93c8ad4b50b9b76b5e39"
+              }
+            },
+            {
+              "site_va": "0x858ee2",
+              "text": "pop     edi",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ee2",
+                "size": 1,
+                "idb_hex": "5f",
+                "disk_hex": "5f",
+                "matching": true,
+                "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde"
+              }
+            },
+            {
+              "site_va": "0x858ee3",
+              "text": "pop     esi",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ee3",
+                "size": 1,
+                "idb_hex": "5e",
+                "disk_hex": "5e",
+                "matching": true,
+                "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb"
+              }
+            },
+            {
+              "site_va": "0x858ee4",
+              "text": "pop     ebx",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ee4",
+                "size": 1,
+                "idb_hex": "5b",
+                "disk_hex": "5b",
+                "matching": true,
+                "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811"
+              }
+            },
+            {
+              "site_va": "0x858ee5",
+              "text": "add     esp, 0C0h",
+              "is_code": true,
+              "bytes": {
+                "start_va": "0x858ee5",
+                "size": 6,
+                "idb_hex": "81c4c0000000",
+                "disk_hex": "81c4c0000000",
+                "matching": true,
+                "sha256": "e315b5e0659737ff2cca82a00bec7ec78754a30899de5fc07c520346a53d4fbb"
+              }
+            }
+          ],
+          "pending_status": "有限调用窗口；不计作owner完整审阅"
+        }
+      }
+    ]
+  },
+  "explicit_owner_windows": [],
+  "data_windows": [],
+  "reuse_sources": [
+    {
+      "path": "专题/高扇入函数群筛选/证据/highfanout_raw.json",
+      "source_sha256": "30f3513c2400dc786cc7f5366cef5aed55639e9cd6cd4cb765f5824c8e80b8b2",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/4060系列事件/证据/callees.json",
+      "source_sha256": "6784b6ffbf2efeca47d7a4051fc14ea0cde016006a72f07bbdf991f4824fabd6",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/4060系列事件/证据/funds.json",
+      "source_sha256": "9e6ae2279cac3df2f4f05660d0971a9dcaf266b013d17dbaa5cd41e992e209a2",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/4060系列事件/证据/helpers.json",
+      "source_sha256": "e5845b6ed88377b80e54faf8014086338cc6f37399b02cf40a3e9d6aa5db5de1",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/40B0系列事件/证据/consumers.json",
+      "source_sha256": "76a4bc859ca6799d937340b4d400a9bdf05571ee2cc2bdaf39f7a75965033d82",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/727F控件状态接口/独审_IDA结果.json",
+      "source_sha256": "964389f27cb76760e2ecc0e993646b3258b17ad4fcc7713ed54c9b85db2fe696",
+      "declared_binary_sha256": null,
+      "current_baseline_declared": false,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/KoNpc记录与消费者/证据/npc_dependencies_raw.json",
+      "source_sha256": "36264755453bca174d803c698adf611b9d4b8d2d2c90603a8470d27b4ae1dcfd",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/TeachMode对象与消费者/函数审阅清单.json",
+      "source_sha256": "6887a74dd2aa8247dcb02cca3c3e447cfa5b7ffe2db26dc17d705f17fffdb00b",
+      "declared_binary_sha256": null,
+      "current_baseline_declared": false,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/TeachMode对象与消费者/证据/teachmode_raw.json",
+      "source_sha256": "731f48028d5d68698809e4adefc6e41cec7262dda2434f9e5188606852d84240",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/八角色命中筛选契约/证据/hit_filter.json",
+      "source_sha256": "e1f0be9b802ef79e7f71b8e7c22e22b88d4e7b7d81f69bbf18af01d17151c134",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/回合继续与落点调度/证据/stage1_dependencies.json",
+      "source_sha256": "0df3d465f6d562c3a7182fb9009e0f909b2d528c3aade12b786bdd42018f5f3b",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/大厅URL读取与缓冲契约/证据/short_helpers_raw.json",
+      "source_sha256": "0b9f73bb5ac3c5af3bd5046c7f4a6ddbcc146a957036134e382bccd54d0489c2",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/整数键树容器契约/证据/direct_dependencies.json",
+      "source_sha256": "f6bfea07965d943fa4bb9495038f63daeca9810600efd27d68aa6461d3c373f3",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/短字符串与缓冲所有权/证据/string_dependencies.json",
+      "source_sha256": "25e83ad29dfcb214b20c60e9fdb55f8baeed63f1da9858897c7b79293e709c87",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/聊天发送与重复提示契约/独审_IDA复读.json",
+      "source_sha256": "eb5798e7281a473cae19a14fc28ff1a25deffe8e71c7a292014939a924dafd73",
+      "declared_binary_sha256": null,
+      "current_baseline_declared": false,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    },
+    {
+      "path": "专题/聊天发送与重复提示契约/证据/chat_contract_discovery.json",
+      "source_sha256": "644a12d04a84e96ace1feefffca1d9a2e28d9e97d78d606374dd08f57742ae1a",
+      "declared_binary_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+      "current_baseline_declared": true,
+      "pending_status": "仅复用来源；语义和版本有效性仍须按记录复核"
+    }
+  ],
+  "verified_direct_bridges": [
+    {
+      "start_va": "0x606d6e",
+      "size": 5,
+      "idb_hex": "e9cd492500",
+      "disk_hex": "e9cd492500",
+      "matching": true,
+      "sha256": "32d1fde769163f264ae547c739348b72e3a22b9c8746bf93cba9e4b92f76d86a",
+      "target_va": "0x85b740",
+      "pending_status": "已核直接E9桥；不代表业务已审阅"
+    },
+    {
+      "start_va": "0x6042b2",
+      "size": 5,
+      "idb_hex": "e9a9832500",
+      "disk_hex": "e9a9832500",
+      "matching": true,
+      "sha256": "c979d76c988368b770163af01b17c2964945a5783cda6e0a17534b271304ee90",
+      "target_va": "0x85c660",
+      "pending_status": "已核直接E9桥；不代表业务已审阅"
+    },
+    {
+      "start_va": "0x60c87c",
+      "size": 5,
+      "idb_hex": "e98ff22400",
+      "disk_hex": "e98ff22400",
+      "matching": true,
+      "sha256": "cfe936b579db91f5b0c19ed8b04dd7724cc5ceae021b584ff0eecea2a99b4890",
+      "target_va": "0x85bb10",
+      "pending_status": "已核直接E9桥；不代表业务已审阅"
+    },
+    {
+      "start_va": "0x60b576",
+      "size": 5,
+      "idb_hex": "e955413100",
+      "disk_hex": "e955413100",
+      "matching": true,
+      "sha256": "794f26514b1abc50c4e29f017e0a263f8a1a574bb4c82de7bbcafac16f5d9257",
+      "target_va": "0x91f6d0",
+      "pending_status": "已核直接E9桥；不代表业务已审阅"
+    },
+    {
+      "start_va": "0x601963",
+      "size": 5,
+      "idb_hex": "e9989e2500",
+      "disk_hex": "e9989e2500",
+      "matching": true,
+      "sha256": "c991ae4dbcce5e5ea820a57e64f44757a3f738308d61e183b6ef8f213c5f9a2e",
+      "target_va": "0x85b800",
+      "pending_status": "已核直接E9桥；不代表业务已审阅"
+    },
+    {
+      "start_va": "0x606f49",
+      "size": 5,
+      "idb_hex": "e922492500",
+      "disk_hex": "e922492500",
+      "matching": true,
+      "sha256": "835a301116fb1d3121700376c69688b4d1334046316fa317d0c7dc646d6bc809",
+      "target_va": "0x85b870",
+      "pending_status": "已核直接E9桥；不代表业务已审阅"
+    }
+  ]
+}

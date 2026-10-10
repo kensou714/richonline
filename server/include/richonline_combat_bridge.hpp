@@ -15,8 +15,6 @@ struct RichonlineCombatActorRef {
     RichonlineActorStatus* status;
     RichonlineCombatCapabilities capabilities;
     bool* active=nullptr;
-    std::optional<std::uint32_t>* attack_building_source=nullptr;
-    std::optional<std::uint32_t>* defense_building_source=nullptr;
 };
 struct RichonlineCombatBridgeResult {
     std::vector<Bytes> packets;

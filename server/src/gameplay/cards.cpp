@@ -100,12 +100,8 @@ RichonlineBossCards::PreparedReward RichonlineBossCards::prepare_random_reward(c
             // NEW7F8780 leaves a full hand unchanged and still continues the event.
             if(std::string_view(error.what())!="richonline_chance_inventory_full") throw;
         }
-        const auto safe=std::all_of(resulting.begin(),resulting.end(),[&](const auto& slot) {
-            if(slot.card_id==-1 || std::find(tile_reward_cards_.begin(),tile_reward_cards_.end(),slot.card_id)!=tile_reward_cards_.end()) return true;
-            const auto count=[&](const auto& inventory){int total=0;for(const auto& old:inventory)if(old.card_id==slot.card_id)total+=old.count;return total;};
-            return count(resulting)<=count(source);
-        });
-        if(safe) candidates.push_back({card,resulting});
+        // 合成产物由 CombCard 与客户端插入顺序决定，不应反过来改变抽卡概率。
+        candidates.push_back({card,resulting});
     }
     if(candidates.empty()) throw CodecError("richonline_card_tile_no_safe_reward");
     const auto selected=tile_random_(candidates.size());

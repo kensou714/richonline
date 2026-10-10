@@ -1,5 +1,6 @@
 #include "richonline_mall_service.hpp"
 #include "richonline_lobby_error.hpp"
+#include "lua_server.hpp"
 #include <bit>
 #include <limits>
 
@@ -13,6 +14,7 @@ RichonlineMallService::RichonlineMallService(const RichonlineMallCatalog& catalo
        (policy_.date_version==RichonlineInventoryDateVersion::compat_2021_v1&&policy_.verified_client_compatibility_id!=richonline_inventory_compatibility_id))
         throw CodecError("mall_client_date_mode_mismatch");
     static_cast<void>(encode_richonline_inventory_date(13,{},policy_.date_version));
+    script_=LuaServer::create();
 }
 std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage& storage,const std::string& username,
     std::int64_t role,const Frame& frame,std::int64_t now) {
@@ -66,9 +68,49 @@ std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage
         const auto mode=(request.encoded_item>>12U)&15U;
         const auto& term=product.term.at(mode-1);
         const bool timed=term.years!=0||term.months!=0||term.days!=0;
-        const auto expiry=timed?richonline_inventory_calendar_expiry(now,term.years,term.months,term.days):0;
-        if(product.fold!=1)return reject("mall_purchase_bundle_grant_unproven");
-        if(product.level!=0)return reject("mall_purchase_level_rule_unproven");
+        std::int64_t expiry=0;
+        if(script_) {
+            // Lua 规划商品资格和期限，核心日历函数保持月底裁剪及 UTC 时间语义。
+            // 此阶段没有数据库副作用；脚本失败只能拒绝本次购买，不能先扣钱。
+            LuaValue plan;
+            try {
+                plan=script_->call("mall.purchase_policy",{{"product",product.id},{"currency",mode},
+                    {"fold",product.fold},{"level",product.level},{"score",product.score},
+                    {"price",product.price.at(mode-1)},{"type",product.type},{"subtype",product.subtype},
+                    {"term",{{"years",term.years},{"months",term.months},{"days",term.days}}},
+                    {"date_epoch",static_cast<std::uint16_t>(policy_.date_version)}},
+                    {{"mall.calendar_expiry",[&](const LuaValue& args) {
+                        const auto integer=[&](const char* key,std::uint32_t maximum) {
+                            const auto& value=args.at(key);
+                            if(!value.is_number_integer() || value<0 || value>maximum)
+                                throw CodecError("lua_mall_term_invalid");
+                            return value.get<std::uint32_t>();
+                        };
+                        const auto years=integer("years",100),months=integer("months",1200),days=integer("days",36600);
+                        const auto expires=years || months || days ? richonline_inventory_calendar_expiry(now,years,months,days) : 0;
+                        return LuaValue{{"expires_at",expires},{"year",expires ? richonline_inventory_utc_date(expires).year : 0}};
+                    }}});
+                if(!plan.at("allowed").get<bool>()) {
+                    const auto reason=plan.at("reason").get<std::string>();
+                    if(reason.empty() || reason.size()>256 || reason.find_first_of("\r\n")!=reason.npos)
+                        throw CodecError("lua_mall_refusal_invalid");
+                    return reject(reason);
+                }
+                const auto& value=plan.at("expires_at");
+                if(!value.is_number_integer() || value<0 || value>253402300799LL)
+                    throw CodecError("lua_mall_expiry_invalid");
+                expiry=value.get<std::int64_t>();
+                // 现有客户端按资源显示价格和期限；活动改变这些值前必须有配套协议。
+                if(expiry!=(timed?richonline_inventory_calendar_expiry(now,term.years,term.months,term.days):0))
+                    throw CodecError("lua_mall_expiry_resource_mismatch");
+            } catch(const std::exception& error) {
+                return reject(std::string("mall_script_policy_failed: ")+error.what());
+            }
+        } else {
+            expiry=timed?richonline_inventory_calendar_expiry(now,term.years,term.months,term.days):0;
+            if(product.fold!=1)return reject("mall_purchase_bundle_grant_unproven");
+            if(product.level!=0)return reject("mall_purchase_level_rule_unproven");
+        }
         if(sequence_==std::numeric_limits<std::uint64_t>::max())throw CodecError("mall_operation_sequence_exhausted");
         RichonlineMallPurchase purchase{operation_prefix_+":"+std::to_string(++sequence_),request,
             {richonline_inventory_key_from_expiry(request.encoded_item,expiry,policy_.date_version),expiry,

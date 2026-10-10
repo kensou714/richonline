@@ -44,6 +44,11 @@ public:
     RichonlineChanceInventory discard(const RichonlineChanceInventory& inventory,
         std::int8_t slot) const;
     bool contains_card(std::int16_t card) const noexcept { return cards_.contains(card); }
+    std::vector<std::int16_t> reward_candidates(std::string_view map) const {
+        std::vector<std::int16_t> result;
+        for(const auto card:cards_) if(automatic_card_eligible(map,card)) result.push_back(card);
+        return result;
+    }
     // NEW800A50 automatic use checks typeCARD and EMP membership. It does not
     // check Prop.enable; ordinary reward admission keeps contains_card.
     bool automatic_card_eligible(std::string_view map,std::int16_t card) const;

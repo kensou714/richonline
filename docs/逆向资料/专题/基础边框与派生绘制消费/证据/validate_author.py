@@ -9,6 +9,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[4]
 EXPECTED = 'a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2'
 RAW_SHA = 'da3aa15cabf76aa2ee3a30600dca3691491d1dedd57b62c23398e3fdf5fc3fd2'
+SUPPLEMENT_SHA = 'd3741576bb9242cafef4b84269c62608719147b28d13dac9729ebf2f37613016'
 
 
 def sha(blob):
@@ -87,11 +88,25 @@ def validate():
     scan(raw)
     for row in raw['functions']:
         declared(row)
+    supplement_blob = (HERE / 'supplement_raw.json').read_bytes()
+    assert sha(supplement_blob) == SUPPLEMENT_SHA
+    supplement = json.loads(supplement_blob)
+    assert supplement['disk_sha256'] == EXPECTED
+    assert len(supplement['functions']) == 1 and supplement['functions'][0]['seed_va'] == '0x8ea8d0'
+    assert not supplement['calls'] and not supplement['verified_direct_bridges']
+    scan(supplement)
+    declared(supplement['functions'][0])
+    jump, = supplement['data_windows']
+    assert jump['start_va'] == '0x8e4330' and jump['size'] == 16
+    assert struct.unpack('<4I', bytes.fromhex(jump['idb_hex'])) == (0x8e41e8, 0x8e420a, 0x8e422c, 0x8e4248)
     formal = json.loads((HERE / 'formal_functions.json').read_bytes())
     assert formal['source_sha256'] == RAW_SHA and len(formal['functions']) == 4
-    for row in formal['functions']:
-        source = pointer(raw, row['source']['json_pointer'])
-        assert row['source']['sha256'] == RAW_SHA
+    assert formal['supplement_sha256'] == SUPPLEMENT_SHA and len(formal['dependency_functions']) == 1
+    assert formal['data_windows'] == supplement['data_windows']
+    for row in formal['functions'] + formal['dependency_functions']:
+        is_dependency = row['va'] == '0x8ea8d0'
+        source = pointer(supplement if is_dependency else raw, row['source']['json_pointer'])
+        assert row['source']['sha256'] == (SUPPLEMENT_SHA if is_dependency else RAW_SHA)
         assert row['va'] == source['seed_va'] and row['end_va'] == source['end_va']
         assert row['pseudocode'] == source['pseudocode'] and row['decompile_error'] == source['decompile_error']
         assert row['assembly'] == [dict(va=i['site_va'], text=i['text'], is_code=i['is_code']) for i in source['assembly']]
@@ -126,8 +141,9 @@ def validate():
     assert len([s for s in sections if 0 <= 0xACC3C8 - base - s[1] and 0xACC3CC - base - s[1] <= s[0]]) == 1
     review = json.loads((HERE.parent / 'function_review.json').read_bytes())
     assert len(review['functions']) == 4 and len(review['reused_reviews']) == 1
+    assert len(review['dependency_reviews']) == 1 and review['dependency_reviews'][0]['va'] == '0x8ea8d0'
     assert review['reused_reviews'][0]['status'] == '部分分析'
-    for row in review['functions'] + review['reused_reviews']:
+    for row in review['functions'] + review['reused_reviews'] + review['dependency_reviews']:
         assert row['unknown'] and not row['full_dependency_closure'] and row['anchors']
         for ref in row['source_records']:
             source_bytes = (HERE.parent / ref['path']).read_bytes()
@@ -138,12 +154,14 @@ def validate():
             source = json.loads((HERE.parent / anchor['path']).read_bytes())
             assert pointer(source, anchor['pointer']) == anchor['value']
             assert int(anchor['site_va'], 16) in heads
-    # 独审另锁其06文件；作者只冻结本人的00至05，避免把独审草稿当终稿。
-    docs = sorted(p for p in HERE.parent.glob('*.txt') if p.name[:2] in ('00', '01', '02', '03', '04', '05'))
-    assert len(docs) == 6
+    # 独审另锁其06文件；作者冻结本人的00至05和07，避免把独审草稿当终稿。
+    docs = sorted(p for p in HERE.parent.glob('*.txt') if p.name[:2] in ('00', '01', '02', '03', '04', '05', '07'))
+    assert len(docs) == 7
     assert all(not line.strip() or line.startswith('//') for path in docs for line in path.read_text(encoding='utf-8').splitlines())
     result = dict(status='PASS', disk_sha256=EXPECTED, bounded_raw_sha256=RAW_SHA,
                   fresh_functions=4, fresh_declared_bytes=4459, fresh_instruction_entries=1422,
+                  supplement_sha256=SUPPLEMENT_SHA, dependency_functions=1, dependency_declared_bytes=252,
+                  dependency_instruction_entries=len(supplement['functions'][0]['assembly']), jump_table_bytes=16,
                   reused_subject_reviews=1, reused_records=3, unique_saved_ranges=len(ranges),
                   unique_verified_e9_bridges=len(bridges), instruction_heads=len(heads),
                   virtual_pointer_slot='ACC3C8只有IDB四字节快照，无PE磁盘raw支持，不作相等声明',

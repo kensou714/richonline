@@ -12,6 +12,7 @@ DOCS = ROOT / 'docs/逆向资料'
 HERE = Path(__file__).resolve().parent
 EXPECTED = 'a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2'
 RAW_SHA = 'da3aa15cabf76aa2ee3a30600dca3691491d1dedd57b62c23398e3fdf5fc3fd2'
+SUPPLEMENT_SHA = 'd3741576bb9242cafef4b84269c62608719147b28d13dac9729ebf2f37613016'
 SEEDS = (0x8E41D0, 0x90C070, 0x902180, 0x90A430, 0x8E46E0)
 
 
@@ -25,7 +26,7 @@ def pointer(node, path):
     return node
 
 
-def authored_bundle(raw):
+def authored_bundle(raw, supplement):
     """独立重建允许的适配字段，并把作者断言和逐指令锚绑定回原记录。"""
     topic = HERE.parent
     formal_path = HERE / 'formal_functions.json'
@@ -47,6 +48,19 @@ def authored_bundle(raw):
             source=dict(path='证据/bounded_raw.json', sha256=RAW_SHA,
                         json_pointer='/functions/' + str(index)))
         assert adapted == expected, ('formal无损适配', index)
+    assert formal['supplement_sha256'] == SUPPLEMENT_SHA
+    assert formal['data_windows'] == supplement['data_windows']
+    dependency, = formal['dependency_functions']
+    original, = supplement['functions']
+    ranges = [dict(va=block['start_va'], **{key:value for key,value in block.items()
+               if key != 'start_va'}) for block in original['chunk_byte_ranges']]
+    assert dependency == dict(va=original['seed_va'], end_va=original['end_va'], name=original['name'],
+        status='必要依赖机械适配；不增加固定四主体',
+        assembly=[dict(va=line['site_va'], text=line['text'], is_code=line['is_code']) for line in original['assembly']],
+        pseudocode=original['pseudocode'], decompile_error=original['decompile_error'],
+        declared_chunks=[dict(start_va=block['va'], end_va=hex(int(block['va'], 16)+block['size']), is_main=True)
+                         for block in ranges], chunk_byte_ranges=ranges, bytes_match_disk=True,
+        source=dict(path='证据/supplement_raw.json', sha256=SUPPLEMENT_SHA, json_pointer='/functions/0'))
     reuse_path = HERE / 'reused_raw.json'
     reused = json.loads(reuse_path.read_bytes())
     assert reused['schema'] == 'richonline-exact-reused-records-1' and len(reused['records']) == 3
@@ -66,12 +80,15 @@ def authored_bundle(raw):
     review = json.loads(review_path.read_bytes())
     assert review['schema'] == 'richonline-function-review-1' and review['disk_sha256'] == EXPECTED
     assert len(review['functions']) == 4 and len(review['reused_reviews']) == 1
+    assert len(review['dependency_reviews']) == 1
     expected_rows = [(row, '证据/formal_functions.json', '/functions/' + str(index), True,
                       '局部语义已审阅') for index,row in enumerate(formal['functions'])]
     expected_rows.append((reused['records'][0]['original_record'], '证据/reused_raw.json',
                           '/records/0/original_record', False, '部分分析'))
+    expected_rows.append((dependency, '证据/formal_functions.json', '/dependency_functions/0', True, '局部语义已审阅'))
     anchor_count = 0
-    for row, (source, path, where, fresh, status) in zip(review['functions']+review['reused_reviews'], expected_rows):
+    for row, (source, path, where, fresh, status) in zip(
+            review['functions']+review['reused_reviews']+review['dependency_reviews'], expected_rows):
         assert row['va'] == source['va'] and row['name'] == source['name']
         assert row['fresh_evidence'] is fresh and row['status'] == status
         assert row['full_dependency_closure'] is False and row['unknown'] and row['conclusion']
@@ -87,7 +104,7 @@ def authored_bundle(raw):
     history = pointer(json.loads(history_path.read_bytes()), '/functions/17')
     assert history['va'] == '0x8e46e0' and history['review_status'] == '部分分析'
     docs = sorted(topic.glob('*.txt'))
-    assert [path.name[:2] for path in docs] == ['00', '01', '02', '03', '04', '05', '06']
+    assert [path.name[:2] for path in docs] == ['00', '01', '02', '03', '04', '05', '06', '07']
     assert all(not line.strip() or line.startswith('//') for path in docs
                for line in path.read_text(encoding='utf-8').splitlines())
     validation_path = HERE / 'author_validation.json'
@@ -97,14 +114,18 @@ def authored_bundle(raw):
     assert author['fresh_functions'] == 4 and author['fresh_declared_bytes'] == 4459
     assert author['fresh_instruction_entries'] == 1422 and author['reused_subject_reviews'] == 1
     assert author['reused_records'] == 3
+    assert author['supplement_sha256'] == SUPPLEMENT_SHA and author['dependency_functions'] == 1
+    assert author['dependency_declared_bytes'] == 252 and author['dependency_instruction_entries'] == 90
+    assert author['jump_table_bytes'] == 16
     author_docs = {path.name:sha(path.read_bytes()) for path in docs if path.name[:2] != '06'}
     assert author['documents'] == author_docs
-    artifacts = [formal_path, reuse_path, review_path, HERE/'build_artifacts.py',
-                 HERE/'validate_author.py', validation_path, history_path]
-    return dict(instruction_anchors=anchor_count, fresh_reviews=4, historical_partial_reviews=1,
+    artifacts = [formal_path, reuse_path, review_path, HERE/'build_artifacts.py', HERE/'bounded_raw.json',
+                 HERE/'supplement_raw.json', HERE/'validate_author.py', validation_path, history_path,
+                 HERE/'independent_review.py']
+    return dict(instruction_anchors=anchor_count, fresh_reviews=4, historical_partial_reviews=1, dependency_reviews=1,
                 documents={path.name:sha(path.read_bytes()) for path in docs},
                 artifacts={str(path.relative_to(DOCS)).replace('\\', '/'):sha(path.read_bytes())
-                           for path in artifacts}, final_supplements_bound=False)
+                           for path in artifacts}, final_supplements_bound=True)
 
 
 def audit(final=False):
@@ -165,6 +186,13 @@ def audit(final=False):
     assert tuple(int(s['seed_va'], 16) for s in raw['seeds']) == SEEDS
     assert tuple(int(f['seed_va'], 16) for f in raw['functions']) == SEEDS[:4]
     walk(raw)
+    supplement_path = HERE / 'supplement_raw.json'
+    assert sha(supplement_path.read_bytes()) == SUPPLEMENT_SHA
+    supplement = json.loads(supplement_path.read_bytes())
+    assert supplement['schema'] == 'richonline-bounded-supplement-25-1'
+    assert supplement['disk_sha256'] == EXPECTED and supplement['seeds'] == ['0x8ea8d0']
+    assert supplement['calls'] == supplement['verified_direct_bridges'] == []
+    walk(supplement)
     transcript = ['// 当前PE独立重解码；原证调用窗不登记owner完整完成。']
     subjects, decoded, calls = [], {}, {}
     for row in raw['current_chunk_audits']:
@@ -191,6 +219,26 @@ def audit(final=False):
                              instructions=len(instructions), chunks=len(row['chunk_byte_ranges']),
                              origin='新主体' if va in SEEDS[:4] else '旧局部消费者完整字节重核'))
     assert tuple(decoded) == SEEDS
+    helper, = supplement['functions']
+    assert helper['seed_va'] == '0x8ea8d0' and helper['end_va'] == '0x8ea9cc'
+    helper_block, = helper['chunk_byte_ranges']
+    helper_instructions = list(decoder.disasm(read(0x8EA8D0, 252), 0x8EA8D0))
+    assert len(helper_instructions) == 90 and sum(i.size for i in helper_instructions) == 252
+    assert helper_block['start_va'] == '0x8ea8d0' and helper_block['size'] == 252
+    assert [i.address for i in helper_instructions] == [int(i['site_va'], 16) for i in helper['assembly']]
+    assert all(i.mnemonic != 'call' for i in helper_instructions)
+    assert all(i.mnemonic != 'cld' for i in helper_instructions)
+    helper_locator = {i.address:i for i in helper_instructions}
+    assert helper_locator[0x8EA8E3].op_str == 'ecx, 0x1400'
+    assert helper_locator[0x8EA8EC].mnemonic == 'rep stosd'
+    assert helper_locator[0x8EA99B].mnemonic == 'movsx' and helper_locator[0x8EA99B].op_str == 'dx, al'
+    assert all(i.op_str == '0x14' for i in helper_instructions if i.mnemonic == 'ret')
+    refs = [(i.address, o.mem.disp) for i in helper_instructions for o in i.operands
+            if o.type == capstone.x86.X86_OP_MEM and not o.mem.base and not o.mem.index]
+    assert refs == [(int(r['site_va'], 16), int(r['target_va'], 16)) for r in supplement['data_references']]
+    transcript.append('// 必要依赖完整字节独核 0x8ea8d0')
+    transcript.extend('// %08X %s %s %s' % (i.address, i.bytes.hex(), i.mnemonic, i.op_str)
+                      for i in helper_instructions)
     assert calls == {(int(c['seed_va'], 16), int(c['site_va'], 16)):int(c['target_va'], 16)
                      for c in raw['calls']}
     for call in raw['calls']:
@@ -293,6 +341,10 @@ def audit(final=False):
                 for va, instructions in decoded.items() for i in instructions
                 if i.mnemonic == 'call' and i.operands[0].type != capstone.x86.X86_OP_IMM]
     jump_blob = read(0x8E4330, 16)
+    jump_record, = supplement['data_windows']
+    assert jump_record['start_va'] == '0x8e4330' and jump_record['size'] == 16
+    assert jump_record['idb_hex'] == jump_record['disk_hex'] == jump_blob.hex()
+    assert jump_record['matching'] is True and jump_record['sha256'] == sha(jump_blob)
     border = {i.address:i for i in decoded[0x8E41D0]}
 
     def border_model(args, callback_mask=(True,)*8):
@@ -420,12 +472,22 @@ def audit(final=False):
         callback_pointer_slot=dict(va='0xacc3c8', idb_hex='ffffffff', disk_supported=False,
             virtual_section=virtual, runtime_target_verified=False),
         independent_disk_jump_table=dict(va='0x8e4330', size=16, disk_hex=jump_blob.hex(),
-            targets=[hex(v) for v in struct.unpack('<4I', jump_blob)], idb_verified=False),
-        authored_bundle=authored_bundle(raw),
+            targets=[hex(v) for v in struct.unpack('<4I', jump_blob)], idb_verified=True,
+            source=dict(path='证据/supplement_raw.json', sha256=SUPPLEMENT_SHA, pointer='/data_windows/0')),
+        helper_dependency=dict(va='0x8ea8d0', bytes=252, instructions=len(helper_instructions),
+            source=dict(path='证据/supplement_raw.json', sha256=SUPPLEMENT_SHA, pointer='/functions/0'),
+            global_pointer_refs=len(refs), inbound_ecx_consumed=False, five_stack_words=True,
+            rep_stosd_count=0x1400, direction_flag_zero_checked=False, capacity_checked=False),
+        authored_bundle=authored_bundle(raw, supplement),
         border_instruction_model=dict(scope='仅边框有限离线解释；CALL仅采实参，不执行渲染',
             valid_modes=models, callback_masks_per_mode=3, rejected_modes=(0, 5, -1, 0x80000001)))
     if final:
-        raise AssertionError('尚未绑定跳表补证、人工语义、作者终稿与分级清单，禁止PASS')
+        assert result['authored_bundle']['final_supplements_bound'] is True
+        assert result['authored_bundle']['instruction_anchors'] == 1646
+        assert result['independent_disk_jump_table']['idb_verified'] is True
+        assert '状态：静态局部终审 PASS' in (HERE.parent/'06_独立审阅.txt').read_text(encoding='utf-8')
+        result['status'] = 'PASS'
+        result['scope'] = '静态局部语义终审；四新主体及一必要依赖，不声明运行时闭环；旧基础保持部分分析'
     (HERE / 'independent_assembly.txt').write_text('\n'.join(transcript)+'\n', encoding='utf-8')
     return result
 

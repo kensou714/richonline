@@ -12,6 +12,7 @@
 #include "richonline_raw_authority.hpp"
 #include "richonline_npc_aura.hpp"
 #include <chrono>
+#include "lua_server.hpp"
 
 namespace richnet {
 class RichonlineBossCards;
@@ -157,6 +158,9 @@ struct RichonlineBossTurnRules {
     std::array<std::array<std::array<std::uint8_t,2>,13>,31> feast_dates{};
     // NEW actor+152 comes from profile equipment slot2; absence is unknown.
     std::optional<bool> human_purchase_half_price{};
+    std::shared_ptr<LuaServer> script{};
+    std::string script_map{};
+    LuaNative script_database{};
 };
 // 双角色移动，支持显式配置的移动卡状态；动态物件与其他控制状态另行接入。
 // 每个落点都必须显式处理；未知事件不得直接推进回合。

@@ -18,6 +18,7 @@
 #include "richonline_research_cards.hpp"
 #include "richonline_boss_landing.hpp"
 #include "richonline_boss_property.hpp"
+#include "lua_wire.hpp"
 #include <limits>
 #include <chrono>
 
@@ -58,7 +59,6 @@ struct Turns {
     std::optional<std::chrono::steady_clock::time_point> npc_deadline{};
     std::optional<std::uint16_t> npc_pending_counter{},npc_retired_counter{};
     std::array<bool,2> active{true,true};
-    std::array<std::optional<std::uint32_t>,2> attack_building_source{},defense_building_source{};
     std::optional<std::uint64_t> pending_mine_day{};
     std::optional<std::chrono::steady_clock::time_point> controlled_roll_deadline{};
     struct ControlledMove { std::uint16_t counter; };
@@ -105,7 +105,7 @@ struct Turns {
                 capabilities.in_prison=raw.jail1495 && *raw.jail1495!=-1;
             }
             refs[slot]={slot,current_position && slot==actor ? *current_position : init.participants[slot].position,
-                &status[slot],capabilities,&active[slot],&attack_building_source[slot],&defense_building_source[slot]};
+                &status[slot],capabilities,&active[slot]};
         }
         return refs;
     }
@@ -301,7 +301,11 @@ struct Turns {
         return commit_move(std::move(prepared));
     }
     std::vector<Bytes> playable_turn(std::vector<Bytes> messages) {
-        if(actor==1 && rules.combat) {
+        bool script_attack=true;
+        if(actor==1 && rules.combat && rules.script)
+            script_attack=rules.script->call("boss.can_attack",{{"map",rules.script_map},
+                {"actionable",richonline_combat_action_allowed(status[actor])}}).get<bool>();
+        if(actor==1 && rules.combat && script_attack) {
             auto refs=combat_refs();auto attack=rules.combat->boss_turn(refs,actor,rules.combat_random());
             messages.insert(messages.end(),std::make_move_iterator(attack.packets.begin()),
                 std::make_move_iterator(attack.packets.end()));
@@ -353,7 +357,9 @@ struct Turns {
         if(actor!=1 || !rules.ledger || feast_tickets_day==game_date()) return;
         const auto slot=feast_slot();
         if(!slot) return;
-        const auto grant=*slot==0 ? 111U : *slot==6 ? 180U : *slot==8 ? 55U : *slot==11 ? 99U : 0U;
+        const auto grant=rules.script ? rules.script->call("feast.tickets",{{"slot",*slot}}).get<std::uint32_t>() :
+            *slot==0 ? 111U : *slot==6 ? 180U : *slot==8 ? 55U : *slot==11 ? 99U : 0U;
+        if(grant>0x7fffffffU) throw CodecError("lua_feast_tickets_invalid");
         if(!grant) return;
         std::vector<RichonlineGameFundsUpdate> updates;
         for(std::uint8_t target=0;target<active.size();++target) if(active[target]) {
@@ -490,6 +496,15 @@ struct Turns {
         if (rules.npcs) static_cast<void>(rules.npcs->actor_begin(actor,++actor_turns[actor],status[actor]));
         std::vector<Bytes> messages{
             encode_richonline_turn4010({init.game_server_id,static_cast<std::int8_t>(actor),1,0},rules.opaque_turn7)};
+        if(actor==1 && rules.property) {
+            auto enabled=true;
+            if(rules.raw_authority) {
+                const auto scripted=rules.raw_authority->game().scripted_event83830;
+                if(!scripted) throw CodecError("richonline_building_buff_scripted_state_unknown");
+                enabled=*scripted==-1;
+            }
+            rules.property->advance_building_buffs(complete_rounds,active,enabled,rules.log);
+        }
         append_feast_response(messages);
         if(status[actor].possession==4 || status[actor].possession==6) {
             if(!rules.npc_aura || !rules.npc_aura_raw_actor || !rules.ledger || !rules.terminal)
@@ -935,9 +950,22 @@ struct Turns {
                 throw CodecError("richonline_boss_portal_continuation_invalid");
         }
         const auto context=landing_context(landing.position);
-        auto card_result=!richonline_landing_controlled(status[actor]) && rules.chance_landing ? rules.chance_landing(context) : std::nullopt;
-        if(!richonline_landing_controlled(status[actor]) && !card_result && rules.cards) card_result=rules.cards->land(context);
-        auto result=card_result ? std::move(*card_result) : rules.landed(context);
+        const auto native_landing=[&]() {
+            auto card_result=!richonline_landing_controlled(status[actor]) && rules.chance_landing ? rules.chance_landing(context) : std::nullopt;
+            if(!richonline_landing_controlled(status[actor]) && !card_result && rules.cards) card_result=rules.cards->land(context);
+            return card_result ? std::move(*card_result) : rules.landed(context);
+        };
+        std::optional<RichonlineLandingResult> scripted_result;
+        if(rules.script) {
+            const LuaBindings api{{"tile.native",[&](const LuaValue&) {
+                if(scripted_result) throw CodecError("lua_native_landing_already_called");
+                scripted_result=native_landing();return LuaValue(true);
+            }}};
+            rules.script->call("tile.land",{{"type",context.static_type},{"position",context.position},
+                {"actor",context.actor_slot},{"map",rules.script_map}},api);
+            if(!scripted_result) throw CodecError("lua_landing_continuation_required");
+        } else scripted_result=native_landing();
+        auto result=std::move(*scripted_result);
         if(landing.sent_stop) {
             for(auto it=result.messages.begin();it!=result.messages.end();) {
                 if(it->size()>=2 && read_le(View(*it).first(2))==0x4013) {
@@ -1216,7 +1244,9 @@ struct Turns {
             case 162: {
                 if(!rules.ledger) throw CodecError("richonline_lottery_ledger_required");
                 // Explicit simulator policy, not an inferred original jackpot table.
-                constexpr std::uint32_t award=15000;
+                const std::uint32_t award=rules.script ?
+                    rules.script->call("card.lottery_award",LuaValue::object()).get<std::uint32_t>() : 15000U;
+                if(award>0x7fffffffU) throw CodecError("lua_lottery_award_invalid");
                 const auto before=rules.ledger->snapshot(actor);auto after=before.funds;
                 if(after.cash>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max())-award)
                     throw CodecError("richonline_lottery_cash_overflow");
@@ -1243,6 +1273,516 @@ struct Turns {
         };
         if(funds.empty() ? !commit() : !rules.ledger->commit_batch(funds,commit))
             throw CodecError("richonline_auxiliary_card_stale");
+        return messages;
+    }
+    std::vector<Bytes> script_action(View plain) {
+        if(!rules.script) return action(plain);
+        bool called=false;
+        bool database_called=false;
+        std::optional<RichonlineBossCards::PreparedConsumption> script_consumption;
+        std::optional<RichonlineBossProperty::PreparedCombat> script_property;
+        std::optional<RichonlineBossProperty::PreparedStreetEffect> script_street;
+        std::optional<RichonlineGroundObjects::Prepared> script_ground;
+        std::optional<RichonlineGroundSnapshot> script_ground_snapshot;
+        std::vector<RichonlineGameFundsUpdate> script_funds;
+        std::optional<std::uint8_t> script_break_alliance;
+        std::optional<std::pair<std::uint8_t,std::uint8_t>> script_set_alliance;
+        struct ScriptMotion {
+            RichonlineMotionCardPlan card;
+            std::uint8_t target;
+            std::optional<RichonlineNpcSession::PreparedStatusChange> clock;
+            std::optional<PreparedMove> movement;
+        };
+        std::optional<ScriptMotion> script_motion;
+        std::optional<std::uint8_t> script_clear_relations;
+        struct ScriptStatus {
+            std::uint8_t target;
+            RichonlineActorStatus before,after;
+            std::optional<RichonlineNpcSession::PreparedStatusChange> clock;
+        };
+        std::optional<ScriptStatus> script_status;
+        bool script_inventory_cleared=false;
+        bool script_route_previewed=false;
+        struct ScriptPosition {std::uint8_t slot;std::int16_t before,after;};
+        std::vector<ScriptPosition> script_positions;
+        bool script_positions_prepared=false;
+        const auto ground_snapshot=[&]() -> const RichonlineGroundSnapshot& {
+            if(!rules.ground) throw CodecError("lua_ground_authority_required");
+            if(!script_ground_snapshot) script_ground_snapshot=rules.ground->snapshot();
+            return *script_ground_snapshot;
+        };
+        // 单格与批量放置共用准备器；只构造版本化计划，不提前修改地面或手牌。
+        const auto prepare_ground=[&](const LuaValue& objects) {
+            if(called || database_called || !script_consumption || script_ground || !rules.ground || status[actor].frozen)
+                throw CodecError("lua_ground_prepare_out_of_scope");
+            if(!objects.is_array() || objects.size()>topology.cells().size())
+                throw CodecError("lua_ground_objects_invalid");
+            const auto& before=ground_snapshot();
+            auto after=before.objects;
+            for(const auto& object:objects) {
+                const auto integer=[&](const char* key,std::int64_t low,std::int64_t high) {
+                    const auto& value=object.at(key);
+                    if(!value.is_number_integer() || value<low || value>high)
+                        throw CodecError("lua_ground_argument_invalid");
+                    return value.get<std::int64_t>();
+                };
+                const auto position=static_cast<std::int16_t>(integer("position",0,32767));
+                if(static_cast<std::size_t>(position)>=topology.cells().size() || !topology.cell(position).walkable)
+                    throw CodecError("lua_ground_position_invalid");
+                if(!after.emplace(position,RichonlineGroundObject{static_cast<std::int8_t>(integer("npc",0,127)),
+                    static_cast<std::uint8_t>(integer("byte7",0,255)),static_cast<std::uint8_t>(integer("byte8",0,255))}).second)
+                    throw CodecError("richonline_ground_card_target_dynamic_occupied");
+            }
+            script_ground=rules.ground->prepare(before,after);
+            return LuaValue{};
+        };
+        const auto encode=[](const std::vector<Bytes>& messages) {
+            auto result=LuaValue::array();
+            for(const auto& packet:messages) result.push_back(lua_bytes(View(packet)));
+            return result;
+        };
+        LuaBindings api{
+            {"game.native",[&](const LuaValue&) {
+                if(std::exchange(called,true)) throw CodecError("lua_native_request_already_called");
+                if(script_consumption || database_called) throw CodecError("lua_cannot_mix_native_and_prepared_action");
+                return encode(action(plain));
+            }},
+            {"card.prepare",[&](const LuaValue& args) {
+                require_local_controls();
+                if(called || database_called || script_consumption || phase!=Phase::roll || actor!=init.local_slot || !active[actor] || !rules.cards ||
+                    plain.size()<6 || plain[4]>=8 || plain[5]!=0 || read_le(plain.subspan(2,2))!=active_counter)
+                    throw CodecError("lua_card_request_invalid");
+                if(!args.at("card").is_number_integer()) throw CodecError("lua_card_id_invalid");
+                const auto id=args.at("card").get<std::int64_t>();
+                if(id<1||id>32767) throw CodecError("lua_card_id_invalid");
+                script_consumption=rules.cards->prepare_consumption(static_cast<std::int8_t>(plain[4]),static_cast<std::int16_t>(id));
+                if(!script_consumption) throw CodecError("lua_card_not_owned");
+                return LuaValue{{"slot",plain[4]},{"bank",plain[5]}};
+            }},
+            {"motion.prepare",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_motion || !rules.motion_cards || !rules.cards)
+                    throw CodecError("lua_motion_prepare_out_of_scope");
+                const auto card_id=args.at("card").get<std::int64_t>();
+                const auto target_value=args.at("target");
+                if(card_id<1 || card_id>32767 || !target_value.is_number_integer()) throw CodecError("lua_motion_argument_invalid");
+                const auto target=target_value.get<std::int8_t>();
+                const auto expected_card=[&] {
+                    switch(read_le(plain.first(2))) {
+                    case 104:return std::int16_t{1039}; case 105:return std::int16_t{1040}; case 106:return std::int16_t{1041};
+                    case 107:return std::int16_t{1042}; case 136:return std::int16_t{1079}; case 141:return std::int16_t{1084};
+                    default: throw CodecError("lua_motion_opcode_invalid");
+                    }
+                }();
+                if(card_id!=expected_card || phase!=Phase::roll || actor!=init.local_slot || !active[actor]) throw CodecError("lua_motion_card_out_of_phase");
+                const auto request=parse_richonline_motion_card(plain);
+                if(request.target_actor!=target || target<0 || target>=static_cast<std::int8_t>(init.participants.size())) throw CodecError("lua_motion_target_invalid");
+                const auto& person=init.participants[static_cast<std::size_t>(target)];
+                const RichonlineMotionCardTarget before{target,person.position,person.direction,status[static_cast<std::size_t>(target)],active[static_cast<std::size_t>(target)],raw_available(static_cast<std::uint8_t>(target))};
+                auto card=plan_richonline_motion_card(init.game_server_id,request,active_counter,static_cast<std::int8_t>(actor),before,*rules.motion_cards,topology,rules.random,*rules.cards);
+                if(card.consumption.source_inventory!=script_consumption->source_inventory || card.consumption.slot!=script_consumption->slot || card.consumption.card_id!=script_consumption->card_id) throw CodecError("lua_motion_consumption_mismatch");
+                auto inventory=card.consumption.remaining_inventory;
+                if(static_cast<std::uint16_t>(request.kind)==107) {
+                    if(!rules.hibernate) throw CodecError("richonline_sleep_protection_resources_required");
+                    RichonlineProtectionInventory protection_inventory{static_cast<std::uint8_t>(target),static_cast<std::uint8_t>(target),{},std::nullopt,false};
+                    if(static_cast<std::uint8_t>(target)==init.local_slot) protection_inventory.main=inventory;
+                    const auto protection=resolve_richonline_sleep_protection(rules.cards->map_name(),*rules.hibernate->resources,protection_inventory,status[static_cast<std::uint8_t>(target)]);
+                    if(protection.consumed || status[static_cast<std::uint8_t>(target)].protected_from_status) card.after.status=status[static_cast<std::uint8_t>(target)];
+                    if(static_cast<std::uint8_t>(target)==init.local_slot) inventory=protection.after.main;
+                }
+                script_consumption->remaining_inventory=inventory;
+                auto clock=rules.npcs ? std::optional{rules.npcs->prepare_status_change(static_cast<std::uint8_t>(target),status[static_cast<std::uint8_t>(target)],card.after.status)} : std::nullopt;
+                auto movement=card.movement_steps ? std::optional{prepare_move(*card.movement_steps)} : std::nullopt;
+                script_motion=ScriptMotion{std::move(card),static_cast<std::uint8_t>(target),std::move(clock),std::move(movement)};
+                auto movement_packets=LuaValue::array(); if(script_motion->movement) for(const auto& packet:script_motion->movement->messages) movement_packets.push_back(lua_bytes(View(packet)));
+                auto recovery=LuaValue::array(); if(script_motion->card.recovery) recovery.push_back(lua_bytes(View(*script_motion->card.recovery)));
+                return LuaValue{{"response",lua_bytes(View(script_motion->card.response))},{"movement",std::move(movement_packets)},{"recovery",std::move(recovery)},{"continuation",script_motion->card.continuation==RichonlineMotionCardContinuation::await_same_position17 ? "stationary" : "resume"}};
+            }},
+            {"inventory.prepare_clear",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_inventory_cleared)
+                    throw CodecError("lua_inventory_clear_out_of_scope");
+                const auto& cards=args.at("cards");
+                if(!cards.is_array() || cards.size()>8) throw CodecError("lua_inventory_clear_ids_invalid");
+                std::vector<std::int16_t> ids;
+                ids.reserve(cards.size());
+                for(const auto& value:cards) {
+                    if(!value.is_number_integer() || value<1 || value>32767)
+                        throw CodecError("lua_inventory_clear_id_invalid");
+                    ids.push_back(value.get<std::int16_t>());
+                }
+                for(auto& slot:script_consumption->remaining_inventory)
+                    if(std::ranges::find(ids,slot.card_id)!=ids.end()) slot={};
+                script_inventory_cleared=true;
+                return LuaValue{};
+            }},
+            {"property.prepare",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_property || script_street || !rules.property)
+                    throw CodecError("lua_property_prepare_out_of_scope");
+                const auto integer=[&](const char* key,std::int64_t low,std::int64_t high) {
+                    const auto& value=args.at(key);
+                    if(!value.is_number_integer() || value<low || value>high)
+                        throw CodecError("lua_property_argument_invalid");
+                    return value.get<std::int64_t>();
+                };
+                const auto operation=args.at("operation").get<std::string>();
+                const auto source=topology.cell(init.participants[actor].position).property_ref;
+                LuaValue result=LuaValue::object();
+                if(operation=="seal" || operation=="price_rise") {
+                    if(status[actor].frozen) throw CodecError("richonline_street_card_request_invalid");
+                    script_street=rules.property->prepare_street_card(source,operation=="seal" ?
+                        RichonlineBossProperty::StreetEffect::seal : RichonlineBossProperty::StreetEffect::price_rise);
+                    result["affected"]=script_street->affected_properties();
+                } else if(operation=="convert" || operation=="convert_classic") {
+                    const auto ref=static_cast<std::int16_t>(integer("property",0,32767));
+                    const auto kind=static_cast<std::int8_t>(integer("kind",2,20));
+                    script_property=operation=="convert" ? rules.property->prepare_conversion_card(ref,kind,actor) :
+                        rules.property->prepare_classic_conversion_card(ref,kind);
+                } else if(operation=="house") {
+                    script_property=rules.property->prepare_house_card(static_cast<std::int16_t>(integer("position",0,32767)),actor);
+                } else if(operation=="swap") {
+                    script_property=rules.property->prepare_swap_card(source,
+                        static_cast<std::int16_t>(integer("property",0,32767)),args.at("buildings").get<bool>());
+                } else if(operation=="grow") {
+                    script_property=rules.property->prepare_growth_card(source,
+                        args.at("own_only").get<bool>() ? std::optional{actor} : std::nullopt,
+                        static_cast<int>(integer("levels",-5,5)));
+                } else if(operation=="destroy") {
+                    const auto ref=args.at("current").get<bool>() ? source :
+                        static_cast<std::int16_t>(integer("property",0,32767));
+                    script_property=rules.property->prepare_destruction_card(ref,static_cast<std::uint8_t>(integer("levels",1,5)));
+                } else if(operation=="purchase") {
+                    if(!rules.ledger || !rules.human_purchase_half_price)
+                        throw CodecError("richonline_purchase_card_authority_required");
+                    script_property=rules.property->prepare_purchase_card(source,actor);
+                    const auto cost=rules.property->purchase_price(source,actor);
+                    if(!cost || *cost>0x7fffffffU) throw CodecError("richonline_purchase_card_price_invalid");
+                    result["price"]=*cost;
+                } else throw CodecError("lua_property_operation_invalid");
+                return result;
+            }},
+            {"funds.prepare",[&](const LuaValue& args) {
+                if(called || !script_consumption || !rules.ledger)
+                    throw CodecError("lua_funds_prepare_out_of_scope");
+                if(!args.at("actor").is_number_integer()) throw CodecError("lua_funds_actor_invalid");
+                const auto requested_actor=args.at("actor").get<std::int64_t>();
+                if(requested_actor<0 || requested_actor>=static_cast<std::int64_t>(active.size()) || !active[static_cast<std::size_t>(requested_actor)])
+                    throw CodecError("lua_funds_actor_invalid");
+                const auto target=static_cast<std::uint8_t>(requested_actor);
+                if(std::ranges::any_of(script_funds,[&](const auto& entry){return entry.actor==target;}))
+                    throw CodecError("lua_funds_actor_already_prepared");
+                const auto before=rules.ledger->snapshot(target);auto after=before.funds;
+                const auto adjust=[](std::uint32_t value,std::int64_t delta) {
+                    if(delta < -static_cast<std::int64_t>(value) || delta > 0x7fffffffLL-static_cast<std::int64_t>(value))
+                        throw CodecError("lua_funds_out_of_range");
+                    return static_cast<std::uint32_t>(static_cast<std::int64_t>(value)+delta);
+                };
+                const auto delta=[&](const char* key) {
+                    if(!args.contains(key)) return std::int64_t{0};
+                    if(!args.at(key).is_number_integer() || args.at(key)<-0x7fffffffLL || args.at(key)>0x7fffffffLL)
+                        throw CodecError("lua_funds_delta_invalid");
+                    return args.at(key).get<std::int64_t>();
+                };
+                after.cash=adjust(after.cash,delta("cash"));
+                after.tickets=adjust(after.tickets,delta("tickets"));
+                if(args.contains("deposit")) {
+                    if(!after.deposit) throw CodecError("lua_funds_deposit_unknown");
+                    *after.deposit=adjust(*after.deposit,delta("deposit"));
+                }
+                script_funds.push_back({target,before,after});
+                return LuaValue{{"cash",after.cash},{"tickets",after.tickets}};
+            }},
+            {"relations.break",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_break_alliance || script_set_alliance || script_clear_relations)
+                    throw CodecError("lua_relation_prepare_out_of_scope");
+                const auto& value=args.at("target");
+                if(!value.is_number_integer() || value<0 || value>=active.size())
+                    throw CodecError("lua_relation_target_invalid");
+                const auto target=value.get<std::uint8_t>();
+                if(target==actor || !active[target]) throw CodecError("lua_relation_target_invalid");
+                script_break_alliance=target;return LuaValue{};
+            }},
+            {"relations.rules",[&](const LuaValue&) {
+                return LuaValue{{"alliance_days",rules.alliance_days}};
+            }},
+            {"relations.prepare",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_break_alliance || script_set_alliance || script_clear_relations)
+                    throw CodecError("lua_relation_prepare_out_of_scope");
+                const auto& value=args.at("target");
+                const auto& duration=args.at("days");
+                if(!value.is_number_integer() || value<0 || value>=active.size() ||
+                    !duration.is_number_integer() || duration<1 || duration>127)
+                    throw CodecError("lua_relation_argument_invalid");
+                const auto target=value.get<std::uint8_t>();
+                if(target==actor || !active[target]) throw CodecError("lua_relation_target_invalid");
+                script_set_alliance=std::pair{target,duration.get<std::uint8_t>()};
+                return LuaValue{};
+            }},
+            {"relations.clear_actor",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_break_alliance || script_set_alliance || script_clear_relations)
+                    throw CodecError("lua_relation_prepare_out_of_scope");
+                const auto& value=args.at("target");
+                if(!value.is_number_integer() || value<0 || value>=active.size())
+                    throw CodecError("lua_relation_target_invalid");
+                const auto target=value.get<std::uint8_t>();
+                if(!active[target]) throw CodecError("lua_relation_target_invalid");
+                script_clear_relations=target;
+                return LuaValue{};
+            }},
+            {"status.prepare_clear",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_status)
+                    throw CodecError("lua_status_prepare_out_of_scope");
+                const auto& value=args.at("target");
+                const auto& fields=args.at("fields");
+                if(!value.is_number_integer() || value<0 || value>=active.size() ||
+                    !fields.is_array() || fields.empty() || fields.size()>8)
+                    throw CodecError("lua_status_arguments_invalid");
+                const auto target=value.get<std::uint8_t>();
+                if(!active[target]) throw CodecError("lua_status_target_inactive");
+                const auto before=status[target];auto after=before;
+                std::vector<std::string> seen;
+                seen.reserve(fields.size());
+                for(const auto& entry:fields) {
+                    if(!entry.is_string()) throw CodecError("lua_status_field_invalid");
+                    const auto field=entry.get<std::string>();
+                    if(std::ranges::find(seen,field)!=seen.end()) throw CodecError("lua_status_field_duplicate");
+                    seen.push_back(field);
+                    if(field=="possession") richonline_detach_possession(after);
+                    else if(field=="timed_bomb") {after.timed_bomb.reset();after.timed_bomb_owner.reset();}
+                    else if(field=="sleepwalking") after.sleepwalking=0;
+                    else if(field=="turtle") after.turtle=0;
+                    else if(field=="stay") after.stay=0;
+                    else if(field=="one_step") after.one_step=0;
+                    else if(field=="six_steps") after.six_steps=0;
+                    else if(field=="frozen") after.frozen=0;
+                    else throw CodecError("lua_status_field_unsupported");
+                }
+                std::optional<RichonlineNpcSession::PreparedStatusChange> clock;
+                if(rules.npcs && after!=before) clock=rules.npcs->prepare_status_change(target,before,after);
+                script_status=ScriptStatus{target,before,after,std::move(clock)};
+                return LuaValue{};
+            }},
+            {"map.info",[&](const LuaValue&) {
+                return LuaValue{{"width",topology.width()},{"height",topology.height()},{"cells",topology.cells().size()}};
+            }},
+            {"route.preview_open_road",[&](const LuaValue&) {
+                if(called || database_called || !script_consumption || !rules.ground ||
+                    std::exchange(script_route_previewed,true))
+                    throw CodecError("lua_open_road_preview_out_of_scope");
+                // 沿用原有十步寻路参数：不走传送、银行可穿过；这里只读棋盘并消耗本局随机数。
+                const auto route=build_richonline_route(topology,
+                    {init.participants[actor].position,init.participants[actor].direction,10,{},false,true},rules.random);
+                auto directions=LuaValue::array(),landings=LuaValue::array();
+                for(const auto direction:route.directions) directions.push_back(direction);
+                for(const auto position:route.landings) landings.push_back(position);
+                return LuaValue{{"directions",std::move(directions)},{"landings",std::move(landings)}};
+            }},
+            {"actor.relocation_snapshot",[&](const LuaValue&) {
+                if(!script_consumption) throw CodecError("lua_actor_relocation_out_of_scope");
+                auto result=LuaValue::array();
+                for(std::uint8_t slot=0;slot<active.size();++slot)
+                    result.push_back({{"slot",slot},{"active",active[slot]},
+                        {"position",init.participants[slot].position},{"frozen",status[slot].frozen!=0},
+                        {"raw_available",raw_available(slot)}});
+                return result;
+            }},
+            {"actor.prepare_positions",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_positions_prepared)
+                    throw CodecError("lua_actor_position_prepare_out_of_scope");
+                const auto& positions=args.at("positions");
+                if(!positions.is_array() || positions.empty() || positions.size()>active.size())
+                    throw CodecError("lua_actor_positions_invalid");
+                std::vector<ScriptPosition> prepared;
+                prepared.reserve(positions.size());
+                for(const auto& entry:positions) {
+                    const auto& slot_value=entry.at("actor");
+                    const auto& position_value=entry.at("position");
+                    if(!slot_value.is_number_integer() || slot_value<0 || slot_value>=active.size() ||
+                        !position_value.is_number_integer() || position_value<0 || position_value>32767)
+                        throw CodecError("lua_actor_position_invalid");
+                    const auto slot=slot_value.get<std::uint8_t>();
+                    const auto position=position_value.get<std::int16_t>();
+                    if(!active[slot] || static_cast<std::size_t>(position)>=topology.cells().size() ||
+                        !topology.cell(position).walkable ||
+                        std::ranges::any_of(prepared,[&](const auto& previous){return previous.slot==slot;}))
+                        throw CodecError("lua_actor_position_unavailable");
+                    prepared.push_back({slot,init.participants[slot].position,position});
+                }
+                script_positions=std::move(prepared);
+                script_positions_prepared=true;
+                return LuaValue{};
+            }},
+            {"research.traps",[&](const LuaValue& args) {
+                const auto kind=args.at("kind").get<std::string>();
+                const auto* traps=kind=="ice" ? rules.ice_traps.get() :
+                    kind=="fire" && rules.fire_traps ? &rules.fire_traps->traps : nullptr;
+                if(!traps || !rules.ground || !rules.ground_card_visible)
+                    throw CodecError("richonline_boss_research_card_authority_required");
+                return LuaValue{{"freeze_timer",traps->freeze_timer},{"fire_radius",traps->fire_radius},{"fire_rounds",traps->fire_rounds}};
+            }},
+            {"map.cell",[&](const LuaValue& args) {
+                const auto& value=args.at("position");
+                if(!value.is_number_integer() || value<0 || value>=topology.cells().size())
+                    throw CodecError("lua_map_position_invalid");
+                const auto position=value.get<std::int16_t>();
+                const auto& cell=topology.cell(position);
+                const auto occupied=std::ranges::any_of(init.participants,[&](const auto& entry){return entry.position==position;});
+                bool active_occupied=false;
+                for(std::size_t slot=0;slot<active.size();++slot)
+                    if(active[slot] && init.participants[slot].position==position) active_occupied=true;
+                return LuaValue{{"position",position},{"walkable",cell.walkable},{"static_type",cell.static_type},
+                    {"property",cell.property_ref},{"actor_occupied",occupied},
+                    {"active_actor_occupied",active_occupied},{"ground_occupied",rules.ground && ground_snapshot().objects.contains(position)},
+                    {"ground_visible",rules.ground_card_visible && rules.ground_card_visible(actor,init.participants[actor].position,position)}};
+            }},
+            {"ground.prepare",[&](const LuaValue& args) {
+                return prepare_ground(LuaValue::array({args}));
+            }},
+            {"ground.prepare_batch",[&](const LuaValue& args) {
+                return prepare_ground(args.at("objects"));
+            }},
+            {"ground.snapshot",[&](const LuaValue&) {
+                auto objects=LuaValue::array();
+                for(const auto& [position,object]:ground_snapshot().objects)
+                    objects.push_back({{"position",position},{"npc",object.npc},{"byte7",object.byte7},{"byte8",object.byte8}});
+                return objects;
+            }},
+            {"ground.prepare_remove",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || script_ground || !rules.ground || status[actor].frozen)
+                    throw CodecError("lua_ground_prepare_out_of_scope");
+                const auto& positions=args.at("positions");
+                const auto& before=ground_snapshot();
+                if(!positions.is_array() || positions.size()>before.objects.size())
+                    throw CodecError("lua_ground_removals_invalid");
+                auto after=before.objects;
+                for(const auto& position:positions) {
+                    if(!position.is_number_integer() || position<0 || position>32767 ||
+                        after.erase(position.get<std::int16_t>())!=1)
+                        throw CodecError("lua_ground_removal_missing_or_duplicate");
+                }
+                script_ground=rules.ground->prepare(before,after);
+                return LuaValue{};
+            }},
+            {"game.snapshot",[&](const LuaValue&) {
+                auto actors=LuaValue::array();
+                for(std::uint8_t slot=0;slot<active.size();++slot) {
+                    LuaValue value{{"slot",slot},{"active",active[slot]},
+                        {"position",init.participants[slot].position},{"possession",status[slot].possession}};
+                    if(rules.ledger) {const auto funds=rules.ledger->snapshot(slot);
+                        value["cash"]=funds.funds.cash;value["tickets"]=funds.funds.tickets;value["revision"]=funds.revision;
+                        value["deposit"]=funds.funds.deposit ? LuaValue(*funds.funds.deposit) : LuaValue{};}
+                    actors.push_back(std::move(value));
+                }
+                auto inventory=LuaValue::array();
+                if(rules.cards) for(const auto& slot:rules.cards->inventory())
+                    inventory.push_back({{"card",slot.card_id},{"count",slot.count}});
+                return LuaValue{{"actors",actors},{"inventory",inventory},{"actor",actor},
+                    {"calendar",active_counter},{"round",complete_rounds},{"game_id",init.game_server_id},
+                    {"can_act",active[actor] && !richonline_landing_controlled(status[actor])}};
+            }},
+            {"random",[&](const LuaValue& args) {
+                const auto upper=args.at("upper").get<std::int64_t>();
+                if(upper<1||upper>0x7fffffff) throw CodecError("lua_random_bound_invalid");
+                return LuaValue(rules.random(static_cast<std::size_t>(upper))+1);
+            }},
+            {"log",[&](const LuaValue& args) {if(rules.log) rules.log("lua_game "+args.dump());return LuaValue{};}}
+        };
+        if(rules.script_database) api.emplace("db.batch",[&](const LuaValue& request) {
+            if(called || script_consumption) throw CodecError("lua_cannot_mix_database_and_game_transaction");
+            database_called=true;return rules.script_database(request);
+        });
+        LuaValue result;
+        std::vector<Bytes> messages;
+        try {
+            result=rules.script->call("game.action",{{"payload",lua_bytes(plain)},
+                {"opcode",plain.size()>=2?read_le(plain.first(2)):0},{"map",rules.script_map},
+                {"actor",actor},{"calendar",active_counter},{"game_id",init.game_server_id}},api);
+            if(!result.is_array()||result.size()>1024) throw CodecError("lua_game_response_invalid");
+            for(const auto& packet:result) messages.push_back(lua_bytes(packet));
+            if(script_consumption) {
+                if(messages.empty()) throw CodecError("lua_card_response_required");
+                for(const auto& packet:messages)
+                    if(packet.size()<4 || read_le(View(packet).subspan(2,2))!=init.game_server_id)
+                        throw CodecError("lua_card_response_game_mismatch");
+            }
+        } catch(const std::exception& error) {
+            // 新 Lua 卡牌的计划尚未提交，可安全恢复操作；原生接口执行后禁止自动重试。
+            if(!called && !database_called && plain.size()>=2) {
+                const auto opcode=read_le(plain.first(2));
+                if(opcode>=96 && opcode<=174) {
+                    if(rules.log) rules.log(std::string("lua_card_refused reason=")+error.what());
+                    return {encode_richonline_dice_recovery400b(init.game_server_id)};
+                }
+            }
+            throw;
+        }
+        if(script_consumption) {
+            // Lua 完整返回且所有回包都分配成功后，才在同一事务提交库存与余额。
+            const auto commit=[&] {
+                if(rules.cards->inventory()!=script_consumption->source_inventory ||
+                    (script_property && !rules.property->combat_matches(*script_property)) ||
+                    (script_street && !rules.property->street_effect_matches(*script_street)) ||
+                    (script_ground && !rules.ground->matches(*script_ground)) ||
+                    (script_motion && (rules.cards->inventory()!=script_motion->card.consumption.source_inventory ||
+                        status[script_motion->target]!=script_motion->card.before.status ||
+                        init.participants[script_motion->target].direction!=script_motion->card.before.heading ||
+                        (script_motion->clock && !rules.npcs->matches_status_change(*script_motion->clock,status[script_motion->target])))) ||
+                    (script_status && (status[script_status->target]!=script_status->before ||
+                        (script_status->clock && !rules.npcs->matches_status_change(*script_status->clock,status[script_status->target])))) ||
+                    std::ranges::any_of(script_positions,[&](const auto& position) {
+                        return init.participants[position.slot].position!=position.before;})) return false;
+                if(script_property && !rules.property->commit_combat(*script_property)) std::terminate();
+                if(script_street && !rules.property->commit_street_effect(*script_street)) std::terminate();
+                if(script_ground && !rules.ground->commit_prepared(*script_ground)) std::terminate();
+                if(script_break_alliance && static_cast<std::int8_t>(relations1472[actor][*script_break_alliance])>0) {
+                    relations1472[actor][*script_break_alliance]=0;relations1472[*script_break_alliance][actor]=0;
+                }
+                if(script_set_alliance) {
+                    const auto [target,days]=*script_set_alliance;
+                    relations1472[actor][target]=days;relations1472[target][actor]=days;
+                }
+                if(script_motion) {
+                    if(script_motion->clock) {
+                        if(!rules.npcs->commit_status_change(*script_motion->clock,status[script_motion->target])) std::terminate();
+                    } else status[script_motion->target]=script_motion->card.after.status;
+                    init.participants[script_motion->target].direction=script_motion->card.after.heading;
+                    if(read_le(plain.first(2))==107 &&
+                        static_cast<std::int8_t>(relations1472[actor][script_motion->target])>0)
+                        relations1472[actor][script_motion->target]=relations1472[script_motion->target][actor]=0;
+                    // 梦游卡对自己使用时，原生逻辑会先恢复掷骰阶段；若同时产生移动，后续路线提交会切回移动阶段。
+                    if(read_le(plain.first(2))==107 && script_motion->target==actor)
+                        await_roll();
+                    if(script_motion->movement) {
+                        route=std::move(script_motion->movement->route);checkpoint_cursor=0;authenticated_steps=0;phase=Phase::moving;controlled_roll_deadline.reset();
+                    } else if(script_motion->card.continuation==RichonlineMotionCardContinuation::await_same_position17) {
+                        route={};checkpoint_cursor=0;phase=Phase::stationary;
+                    }
+                }
+                if(script_clear_relations) for(std::uint8_t other=0;other<active.size();++other) {
+                    relations1472[*script_clear_relations][other]=0;
+                    relations1472[other][*script_clear_relations]=0;
+                }
+                if(script_status) {
+                    auto& current=status[script_status->target];
+                    if(script_status->clock) {
+                        if(!rules.npcs->commit_status_change(*script_status->clock,current)) std::terminate();
+                    } else current=script_status->after;
+                }
+                for(const auto& position:script_positions)
+                    init.participants[position.slot].position=position.after;
+                rules.cards->commit_inventory(script_consumption->remaining_inventory);return true;
+            };
+            if(script_funds.empty() ? !commit() : !rules.ledger->commit_batch(script_funds,commit))
+                throw CodecError("lua_card_transaction_stale");
+            if(rules.log) rules.log("lua_card_committed card="+std::to_string(script_consumption->card_id)+
+                " slot="+std::to_string(script_consumption->slot)+" funds="+std::to_string(script_funds.size())+
+                " property="+std::to_string(script_property.has_value())+
+                " ground="+std::to_string(script_ground.has_value())+
+                " street_properties="+std::to_string(script_street ? script_street->affected_properties() : 0)+
+                " inventory_clear="+std::to_string(script_inventory_cleared)+
+                " alliance="+std::to_string(script_set_alliance.has_value())+
+                " positions="+std::to_string(script_positions.size())+
+                " status="+std::to_string(script_status.has_value())+
+                " relations_clear="+std::to_string(script_clear_relations.has_value()));
+        }
         return messages;
     }
     std::vector<Bytes> action(View plain) {
@@ -1331,7 +1871,6 @@ struct Turns {
             return messages;
         }
         case 99:
-        case 125: case 126: case 127: case 128: case 129:
         case 146: case 147: case 148: case 149: case 150: case 151:
             // These property/stock effects still need authoritative
             // state. Restore controls without spending an unimplemented card.
@@ -1390,14 +1929,35 @@ struct Turns {
             if(!request) return {encode_richonline_dice_recovery400b(init.game_server_id)};
             const auto target=static_cast<std::uint8_t>(request->target_actor);
             const auto source=landing_context(init.participants[actor].position);
+            const auto target_position=init.participants[target].position;
+            const auto distance_squared=[&](std::int16_t position) {
+                const auto width=static_cast<std::int64_t>(topology.width());
+                const auto dx=position%width-target_position%width;
+                const auto dy=position/width-target_position/width;
+                return dx*dx+dy*dy;
+            };
             std::vector<std::int16_t> candidates;
             if(request->kind==RichonlineDeityCard::summon1047) {
                 if(!rules.npc_summon_candidates) throw CodecError("richonline_boss_summon_policy_required");
                 candidates=rules.npc_summon_candidates(source);
                 for(const auto position:candidates)
                     if(!topology.cell(position).walkable) throw CodecError("richonline_boss_summon_candidate_cell_invalid");
+                std::ranges::sort(candidates,[&](auto left,auto right) {
+                    const auto a=distance_squared(left),b=distance_squared(right);
+                    return a!=b ? a<b : left<right;
+                });
             }
-            return npc_result(rules.npcs->deity_card(plain,source,active_counter,status[target],raw_available(target),candidates,rules.random));
+            auto result=rules.npcs->deity_card(plain,source,active_counter,status[target],raw_available(target),
+                candidates,[](std::size_t) {return std::size_t{0};});
+            if(result.summoned && rules.log) {
+                const auto& god=*result.summoned;
+                rules.log("richonline_summon_selected actor="+std::to_string(actor)+
+                    " target="+std::to_string(target)+" target_position="+std::to_string(target_position)+
+                    " npc="+std::to_string(god.id)+" npc_position="+std::to_string(god.position)+
+                    " distance_squared="+std::to_string(distance_squared(god.position))+
+                    " policy=nearest-target-grid-distance-then-position-v1");
+            }
+            return npc_result(std::move(result));
         }
         case 34:
             if(phase!=Phase::npc || !rules.npcs || !rules.npcs->awaiting_roulette())
@@ -1560,6 +2120,7 @@ struct Turns {
             return response;
         }
         case 96: case 97: case 98: case 120: case 134: case 163:
+        case 125: case 126: case 127: case 128: case 129:
         case 101: case 102: case 114: case 115: case 123: case 166:
         case 169: case 170: case 171: case 172: case 173: case 174: {
             std::optional<RichonlineBossCards::PreparedConsumption> consumption;
@@ -1574,16 +2135,17 @@ struct Turns {
                     read_le(plain.subspan(2,2))!=active_counter || plain[4]>=8 || plain[5]!=0)
                     throw CodecError("richonline_normal_card_request_invalid");
                 const bool conversion=opcode>=169 && opcode<=174;
+                const bool classic_conversion=opcode>=125 && opcode<=129;
                 // NEW 40FD is pyramid (514/16); 40FE is garden (513/15).
                 constexpr std::array<std::int8_t,6> conversion_kinds{11,12,13,14,16,15};
                 const auto kind=conversion ? conversion_kinds.at(opcode-169) : std::int8_t{-1};
-                const auto card_id=conversion ? 498+kind : opcode==163 ? 505 : opcode==166 ? 508 :
+                const auto card_id=classic_conversion ? static_cast<int>(opcode)+939 : conversion ? 498+kind : opcode==163 ? 505 : opcode==166 ? 508 :
                     opcode==96 || opcode==97 || opcode==98 ? static_cast<int>(opcode)+935 : opcode==120 ? 1059 : opcode==134 ? 1077 :
                     opcode==101 ? 1036 : opcode==102 ? 1037 : opcode==114 ? 1051 : opcode==115 ? 1052 : 1062;
                 consumption=rules.cards->prepare_consumption(static_cast<std::int8_t>(plain[4]),
                     static_cast<std::int16_t>(card_id));
                 if(!consumption) throw CodecError("richonline_normal_card_not_owned");
-                const auto response_opcode=conversion || opcode==96 || opcode==97 || opcode==98 || opcode==120 || opcode==134 || opcode==163 ?
+                const auto response_opcode=classic_conversion || conversion || opcode==96 || opcode==97 || opcode==98 || opcode==120 || opcode==134 || opcode==163 ?
                     opcode+0x4050U : opcode==166 ? 0x40f6U :
                     opcode==101 ? 0x40b5U : opcode==102 ? 0x40b6U : opcode==114 ? 0x40c2U : opcode==115 ? 0x40c3U : 0x40cbU;
                 Bytes packet;append_le(packet,response_opcode,2);
@@ -1615,6 +2177,10 @@ struct Turns {
                     const auto property_ref=opcode==101 ? static_cast<std::int16_t>(read_le(plain.subspan(6,2))) :
                         topology.cell(init.participants[actor].position).property_ref;
                     building=rules.property->prepare_destruction_card(property_ref,opcode==101 ? 1 : 5);
+                } else if(classic_conversion) {
+                    if(!rules.property) throw CodecError("richonline_conversion_card_authority_required");
+                    const auto property_ref=static_cast<std::int16_t>(read_le(plain.subspan(6,2)));
+                    building=rules.property->prepare_classic_conversion_card(property_ref,static_cast<std::int8_t>(opcode-123));
                 } else if(conversion) {
                     if(!rules.property) throw CodecError("richonline_conversion_card_authority_required");
                     const auto property_ref=static_cast<std::int16_t>(read_le(plain.subspan(6,2)));
@@ -1977,7 +2543,7 @@ RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& st
     state->active_counter=static_cast<std::uint16_t>(startup.snapshot.calendar_counter);
     return {startup.init,startup.snapshot,startup.envelope,
         [state] { return state->opening(); },
-        [state](const Envelope299&,View plain) { return state->action(plain); },
+        [state](const Envelope299&,View plain) { return state->script_action(plain); },
         [state] { state->phase = Phase::closed; state->route = {}; },
         [state] { return state->poll(); },
         [state](View plain) { return state->retired(plain); }};

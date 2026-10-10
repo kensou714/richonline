@@ -8,6 +8,10 @@ struct RichonlineEquipmentCombatTerms {
     std::int32_t flat_attack=0,attack_percentage=0,flat_defense=0,defense_percentage=0;
     bool operator==(const RichonlineEquipmentCombatTerms&) const = default;
 };
+struct RichonlineBuildingBuffRule {
+    std::int32_t period=0,duration=0;
+    float multiplier=1.0F;
+};
 class RichonlineCombatModifierResources final {
 public:
     static RichonlineCombatModifierResources parse(std::string_view bwb,std::string_view props);
@@ -16,6 +20,9 @@ public:
     // activate the timed Zhong/Chang effect. nullopt is the verified neutral state.
     float attack_building(std::optional<std::uint8_t> active_level) const;
     float defense_building(std::optional<std::uint8_t> active_level) const;
+    // BwbValue CHANG/ZHONG columns: production period, active duration, modifier.
+    // Level is captured when the buff activates, not looked up after an upgrade.
+    const RichonlineBuildingBuffRule& building_buff(std::int8_t kind,std::uint8_t level) const;
     // Exact actor+144 array: 32 encoded words, low12 bits identify Prop; only
     // records with att_desc participate, as NEW 7F3C70/7FAF80 require.
     RichonlineEquipmentCombatTerms equipment(const std::array<std::uint32_t,32>& words,
@@ -23,7 +30,7 @@ public:
     static std::array<std::uint32_t,32> boss_equipment(const RichonlineBossStage& stage);
 private:
     struct Conditional { std::int32_t value=0,threshold=0; char condition=0; };
-    std::array<float,8> attack_building_{},defense_building_{};
+    std::array<RichonlineBuildingBuffRule,8> attack_building_{},defense_building_{};
     std::map<std::uint16_t,std::array<Conditional,4>> equipment_;
     std::uint16_t maximum_prop_=0;
 };

@@ -56,7 +56,8 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
     append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
     RichonlineLandingResult result{{std::move(stop)},RichonlineLandingProgress::complete};
     const bool empty=property.building.level==0;
-    if(!empty && property.building.kind==3) return result;
+    // NEW7ACBC0 reads zero caps for kinds2..6 in the supported single-BOSS stage.
+    if(!empty && property.building.kind>=2 && property.building.kind<=6) return result;
     if (!empty) {
         const auto index=static_cast<std::size_t>(property.building.kind-11);
         const auto skill=ctx.synthetic_actor ? static_cast<int>(construction_.synthetic_skills.at(index)) :
@@ -80,8 +81,16 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
             auto upgraded=property.building;++upgraded.level;
             result=garden_result(ctx.actor_slot,upgraded,std::move(result.messages));
         }
-        if (empty) { property.building.kind=construction_.default_kind;property.missile_rounds=0; }
+        std::optional<RichonlineBuildingBuffState> buffs;
+        if(empty) {
+            auto next=property;next.building={construction_.default_kind,1};
+            const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::construction,
+                buff_property(ctx.property_ref,property),buff_property(ctx.property_ref,next)}};
+            buffs=plan_richonline_building_buff_changes(building_buffs_,changes,buff_recipients());
+            property.building.kind=construction_.default_kind;property.missile_rounds=0;
+        }
         ++property.building.level;
+        if(buffs) commit_buff_state(*buffs);
         ++property_revision_;
     } else {
         deadline_=now_()+timeout_;
@@ -114,8 +123,13 @@ RichonlineLandingResult RichonlineBossProperty::complete_construction(std::int8_
     }
     RichonlineLandingResult result{{richonline_construction_response(game_id_,selection)},RichonlineLandingProgress::complete};
     if (selection!=10) {
+        auto next=property;next.building={selection,1};
+        const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::construction,
+            buff_property(*pending_property_,property),buff_property(*pending_property_,next)}};
+        const auto buffs=plan_richonline_building_buff_changes(building_buffs_,changes,buff_recipients());
         property.building={selection,1};
         property.missile_rounds=0;
+        commit_buff_state(buffs);
         ++property_revision_;
         if (cards_) cards_->commit_inventory(inventory);
     }

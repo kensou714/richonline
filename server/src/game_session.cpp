@@ -1,5 +1,6 @@
 #include "game_session.hpp"
 #include "diagnostic_log.hpp"
+#include "lua_game.hpp"
 
 #include <exception>
 #include <algorithm>
@@ -14,6 +15,7 @@ GameSession::GameSession(ClientVersion version, GameCallbacks callbacks, GameLog
     case ClientVersion::richonline: break;
     default: throw CodecError("invalid_client_version");
     }
+    if (version_ == ClientVersion::richonline) callbacks_ = make_lua_game_callbacks(std::move(callbacks_));
 }
 
 GameSession::~GameSession() { close(); }

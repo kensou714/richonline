@@ -15,7 +15,7 @@ const RichonlineMapPackage& richonline_azhanbo_2_2_package() {
         "azhanbo_2_2","BS_2_2.emp",false,8,1038,
         RichonlineMapReadiness::partial,true,load,configure,
         RichonlineMapChancePolicy{{1038,1039,1040,1079},true},
-        RichonlineMapNpcPolicy{{0,1,2,3,4,6},4,1,2,5,3,true,{1038,1039},1000,
+        RichonlineMapNpcPolicy{{0,1,2,3,4,6,7},4,1,2,5,3,true,{1038,1039},1000,
             RichonlineMapBadluckPolicy{4,RichonlineMapBadluckSelection::uniform_inventory_units_without_replacement}},
         RichonlineMapCombatPolicy{4,80,10,10,
             {RichonlineMapProjectile::missile,RichonlineMapProjectile::nuclear},

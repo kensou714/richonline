@@ -37,6 +37,8 @@ public:
     Storage(const Storage&) = delete;
     Storage& operator=(const Storage&) = delete;
     nlohmann::json dispatch(std::string command, const nlohmann::json& payload);
+    // 受信任的服务器脚本使用参数化批次；同一锁内提交，失败整体回滚。
+    nlohmann::json script_batch(const nlohmann::json& request);
     bool verify_credentials(const std::string& username, std::span<const std::uint8_t> password);
     LoginOutcome login(const std::string& username, std::span<const std::uint8_t> password);
     nlohmann::json roles_for_username(const std::string& username);

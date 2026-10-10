@@ -6,6 +6,50 @@
 #include <set>
 
 namespace richnet {
+RichonlineBuildingBuffRecipients richonline_combat_buff_recipients(const RichonlineCombatSessionView& state) {
+    std::size_t count=state.actors.size();
+    while(count && !state.actors[count-1]) --count;
+    if(!count) throw CodecError("richonline_combat_buff_actors_missing");
+    RichonlineBuildingBuffRecipients result;
+    result.active.resize(count);result.shared.assign(count,std::vector<bool>(count));
+    for(std::size_t actor=0;actor<count;++actor) {
+        result.active[actor]=state.actors[actor] && state.actors[actor]->active;
+        for(std::size_t other=0;other<count;++other) result.shared[actor][other]=state.building_buff_shared[actor][other];
+    }
+    return result;
+}
+RichonlineBuildingBuffState richonline_combat_building_buffs(const RichonlineCombatSessionView& state) {
+    const auto recipients=richonline_combat_buff_recipients(state);
+    auto result=make_richonline_building_buff_state(state.building_buff_registrations[0].size(),recipients.active.size());
+    result.registrations=state.building_buff_registrations;
+    const auto source=[](std::optional<std::uint32_t> value)->std::optional<std::int16_t> {
+        if(!value) return {};
+        if(*value>32767) throw CodecError("richonline_combat_buff_source_invalid");
+        return static_cast<std::int16_t>(*value);
+    };
+    for(std::size_t slot=0;slot<recipients.active.size();++slot) if(state.actors[slot]) {
+        const auto& actor=*state.actors[slot];
+        result.actors[0][slot]={source(actor.defense_building_source),actor.defense_building_level,actor.defense_building_rounds};
+        result.actors[1][slot]={source(actor.attack_building_source),actor.attack_building_level,actor.attack_building_rounds};
+    }
+    return result;
+}
+void set_richonline_combat_building_buffs(RichonlineCombatSessionView& state,const RichonlineBuildingBuffState& buffs) {
+    const auto count=richonline_combat_buff_recipients(state).active.size();
+    if(buffs.actors[0].size()!=count || buffs.actors[1].size()!=count)
+        throw CodecError("richonline_combat_buff_actor_count_invalid");
+    state.building_buff_registrations=buffs.registrations;
+    for(std::size_t slot=0;slot<count;++slot) if(state.actors[slot]) {
+        auto& actor=*state.actors[slot];
+        const auto& defense=buffs.actors[0][slot];const auto& attack=buffs.actors[1][slot];
+        actor.defense_building_source=defense.property;actor.defense_building_level=defense.level;
+        actor.defense_building_rounds=defense.rounds;
+        actor.attack_building_source=attack.property;actor.attack_building_level=attack.level;
+        actor.attack_building_rounds=attack.rounds;
+        if(!defense.property) actor.defense_modifiers.building_multiplier=1.0F;
+        if(!attack.property) actor.attack_modifiers.building_multiplier=1.0F;
+    }
+}
 namespace {
 constexpr auto maximum=std::numeric_limits<std::int32_t>::max();
 bool contains(const std::vector<std::int16_t>& positions,std::int16_t value) {
@@ -186,15 +230,13 @@ void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& worl
             (action==RichonlineBossBlastBuildingEffect::lower_one_level &&
                 (after.level+1!=building.level || after.owner!=building.owner)))
             throw CodecError("richonline_combat_session_building_adapter_invalid");
-        for (auto& actor:state.actors) if (actor) {
-            if (actor->attack_building_source==building.property) {
-                actor->attack_building_source.reset();
-                actor->attack_modifiers.building_multiplier=1.0F;
-            }
-            if (actor->defense_building_source==building.property) {
-                actor->defense_building_source.reset();
-                actor->defense_modifiers.building_multiplier=1.0F;
-            }
+        if(action==RichonlineBossBlastBuildingEffect::lower_one_level) {
+            if(building.property>32767) throw CodecError("richonline_combat_buff_source_invalid");
+            const auto ref=static_cast<std::int16_t>(building.property);
+            const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::blast_downgrade,
+                {ref,building.owner,building.level,building.kind},{ref,after.owner,after.level,after.kind}}};
+            set_richonline_combat_building_buffs(state,plan_richonline_building_buff_changes(
+                richonline_combat_building_buffs(state),changes,richonline_combat_buff_recipients(state)));
         }
         building=std::move(after);
     }
@@ -298,9 +340,15 @@ RichonlineCombatTurnPlan prepare_richonline_boss_combat_turn(const RichonlineCom
             attempt.outcome=RichonlineCombatAttemptOutcome::controlled; continue;
         }
         const auto roll=randomness.rolls[i];
-        if (roll<80) continue;
-        const auto effect=roll<90?RichonlineCombatEffect::mine:
+        std::optional<RichonlineCombatEffect> selected;
+        if(policy.select_attack) selected=policy.select_attack(roll,randomness.bounded);
+        else if(roll>=80) selected=roll<90?RichonlineCombatEffect::mine:
             policy.projectiles[policy.projectiles.size()==1?0:select(randomness,policy.projectiles.size())];
+        if(!selected) continue;
+        const auto effect=*selected;
+        if(effect!=RichonlineCombatEffect::mine &&
+            std::find(policy.projectiles.begin(),policy.projectiles.end(),effect)==policy.projectiles.end())
+            throw CodecError("lua_boss_attack_not_in_policy");
         attempt.effect=effect;
         auto targets=world.targets(boss,effect,plan.after);
         std::set<std::int16_t> unique;

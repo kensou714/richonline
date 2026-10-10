@@ -1,9 +1,98 @@
 # 服务端开发交接
 
+## Lua 移动状态卡入口修正（2026-10-11）
+
+- 1039 乌龟卡、1040 转向卡、1041 停留卡、1042 梦游卡、1079 一步卡和1084 六步卡使用 `motion.prepare` Lua 入口；C++ 继续负责真实道路、动态物件、状态时钟、路线回包和原子提交。
+- 梦游卡对自己使用时在提交阶段恢复掷骰续接，避免卡牌成功后错误停留在移动/结束阶段；受保护目标仍返回原生400B恢复包并不扣卡。
+- 1080–1083 二至五步卡保留 `native_compatibility`，继续走固定步数规划器；`motion.prepare` 明确只接受104/105/106/107/136/141，避免把137–140误送入移动状态计划器。
+- 当前源码与脚本已完成静态差异核对；本环境未提供可执行终端调用，尚未生成新的 EXE，也未覆盖 GUI 安装版。不得把旧商城版本 EXE 与本轮移动卡脚本混配发布。
+
+
+## Lua 商城购买策略（2026-10-11）
+
+- 从最新日志45308确认购买拒绝为`inventory_date_year_unrepresentable`，原2005纪元的4位年份无法编码2026限时商品；没有改客户端/数据库日期版本或伪造永久期限。
+- 新增`mall/purchase.lua`，迁移购买资格和期限规划；核心复核资源期限、编码日期并沿用原子扣款/发货/收据及profile刷新。商城操作日志增加商品编号/键/币种/纪元。
+- C++和全Lua语法编译通过；不运行游戏/协议测试。商城实际购物仍受日期兼容限制，证据与接口边界见`evidence/lua-mall-purchase.md`、`LUA-SERVER.md`。
+- 差异检查通过，确认无服务进程且旧EXE哈希符合上一代快照后，已更新GUI使用的EXE，SHA256 `D50355F4315450B89F92D3FE4A9B030DF26E762BA065AA46444F0E115C4FA96F`。配对备份和回执：`build-migration-backup/lua-mall-policy-645118b2c4804e668b09e6b761df8002/`。
+
+## Lua 清除卡状态事务（2026-10-11）
+
+- 清除卡1078改为Lua独立编排，累计44张卡由Lua规则/编排。Lua列出八类状态和整行关系清除，C++准备NPC附身倒计时、版本校验并在完整回包后与扣卡一起提交。
+- 免疫、攻击/伤害增益、资金和位置沿用原有保留语义。协议与边界见`evidence/normal-cards/lua-clear-status-card.md`和`LUA-SERVER.md`。
+- C++与全部Lua语法编译、`git diff --check -- server`通过；按用户要求未运行游戏/协议测试，实机验证由用户完成。
+- 确认无服务进程后已更新GUI使用的`server/RichOnline.Server.exe`，SHA256 `27286EA8F3C540E1E54C6E18A1C7E76A807C158443578F0EDE2DC0607B3E1914`。`build-migration-backup/lua-clear-status-cae652df0627430ab6b3ae88af7e3952/`保存旧EXE/旧脚本和新脚本快照、回执，回滚按代配对。
+
+## Lua 角色位置卡迁移（2026-10-11）
+
+- 传送1116与换位503改为独立Lua编排，累计43张卡。新接口`actor.relocation_snapshot`、`actor.prepare_positions`让Lua选择目标和轮换关系，C++校验道路/原坐标并与扣卡一起提交；不改变原有落点消息序列。
+- 毒卡1182暂保留原生战斗事务：每个命中格对临时余额重算伤害，破产终局须与库存/资金同一计划完成，不能以多次`funds.prepare`代替。迁移边界见`evidence/normal-cards/lua-relocation-cards.md`。
+- C++和全部Lua语法编译、`git diff --check -- server`通过；按用户要求未运行游戏/协议测试，实机验证由用户完成。
+- 确认无服务进程后已更新GUI使用的`server/RichOnline.Server.exe`，SHA256 `D2110BF13E24E816426EA346C1E26CD5B25076822FCA83C2C2EA2307CC6E8584`。旧EXE/旧脚本与新脚本快照和回执位于`build-migration-backup/lua-relocation-4bdba85db64f4003b7db0fe5a858ac0c/`，回滚按代配对。
+
+## Lua 辅助卡迁移（2026-10-11）
+
+- 同盟1060、察看1072、飞吻1130、武器条约1115、开路1061改为独立Lua规则与回包编排，累计41张卡使用Lua规则/编排。新增对称关系准备、主库存按卡种清除、现有十步寻路预览接口；库存/地面/关系在回包构造后提交。
+- 大厅39/40投票已有成员、超时、结果应用闭环，保留其现有原生事务；毒卡1182及移动/状态卡等仍走原生兼容入口，未宣称全Lua完成。证据与边界见`evidence/normal-cards/lua-auxiliary-cards.md`、`LUA-SERVER.md`。
+- C++目标和全Lua语法编译、`git diff --check -- server`通过；按用户要求未运行游戏/协议测试，实机验证由用户完成。
+- 确认无服务进程后已更新GUI使用的`server/RichOnline.Server.exe`，SHA256 `57D194BA1B0962E21822A809AEE2819ACA7B0AE594F1815B1FA94CE5FD574DA0`。`build-migration-backup/lua-auxiliary-0a96fd88e2fe4c57972c681b2fd69620/`同时保存旧EXE/旧脚本和新脚本快照、回执；回滚须按代配对。
+
+## Lua 研究陷阱与净空卡继续迁移（2026-10-11）
+
+- 1181 冰冻陷阱、1183 火焰陷阱和502净空卡已从整包 native 兼容入口迁入 Lua；Lua 负责请求字段、地图范围、静态格/角色/动态物件筛选和40EB/40ED/40F0回包，C++ 负责版本化事务与踩中/伤害/时钟等既有核心状态。
+- 新增 `map.info`、`research.traps`、`ground.snapshot`、`ground.prepare_batch`、`ground.prepare_remove`，`map.cell` 增加在场角色与动态物件占用，`game.snapshot` 增加 `can_act`。批量火焰放置允许空结果并仍消耗卡，净空允许空地图成功。
+- 所有 Lua 文件包含中文职责注释；`cmake --build server/build --target RichOnline.Server -j 4` 和 `git diff --check -- server` 已通过。按用户要求未启动服务、未运行测试，实机通信由用户验证。
+- 确认服务进程退出后已更新 GUI 使用的 `server/RichOnline.Server.exe`，SHA256 `4FD567A9C17F955A6E2A303263D0187022EE783150573F3AC7B80A6771142C03`。旧程序和当前脚本快照回执保存在 `build-migration-backup/lua-research-ground-a3dca0ba068344029dc461dbf34f5adc/`；旧EXE不能与新脚本快照混搭回滚。
+
+## Lua 地产/资金/放置卡继续迁移（2026-10-11）
+
+- 上一轮为实际进展，本轮继续最新架构任务；旧goal仍活跃，不以模块文件数量声称完整协议完成。
+- 新增28张Lua编排卡，合计33张：20张地产、3张资金、2张街区、3张地面放置。资金计算/地面参数/成功回包进入Lua，地产合法性与增益生命周期仍用C++核心计划器。
+- 核心新增 `property.prepare`、`relations.break`、`map.cell`、`ground.prepare`；`funds.prepare`支持多角色和存款增量。库存、地产、地面、关系和资金在回包完整转换后共同提交。
+- 脚本回包转换失败也可在未调用原生/数据库且未提交时400B恢复，日志增加 `lua_card_committed`。未运行实机测试；最新日志仍为45308旧实例。
+- C++目标、全部Lua语法编译与差异检查通过，完整迁移边界见 `LUA-SERVER.md`，行为依据见 `evidence/normal-cards/lua-property-funds-ground.md`。
+- 确认无服务进程后已更新GUI使用的EXE，SHA256 `B357F98A3E5EF9AC76D693ECC835154F21AC2010882A82452E1AD5AB9205245D`。`build-migration-backup/lua-card-transactions-c8775457f4964758928beee1c39d495b/` 保存旧EXE、新版脚本快照与回执；旧EXE不搭配新版脚本回滚。下面为历史版本记录。
+
+## Lua 业务层（2026-10-11）
+
+- 新增 Lua 5.4 宿主 `richnet_scripting`：脚本快照、每连接独立 VM、内存/指令预算、模块循环检测、受限标准库和错误堆栈均由 EXE 管理。
+- 大厅、对局、落点、随机卡池、节日点券、BOSS 攻击许可和商城入口已提供 Lua 事件；原生兼容事务仍是默认回退，确保迁移期间通信协议、库存和资金原子性不变。
+- `server/scripts` 已拆出 92 个卡牌模块、地图/BOSS/格子注册表、商城和核心协议工具，每个文件含中文职责说明。控制管道新增 `scripts.reload`，只替换新连接使用的脚本快照。
+- Lua 数据库接口为参数化 SQL 批次，禁止事务控制、PRAGMA、ATTACH 和多语句；脚本数据库错误会整体回滚。构建会复制脚本并用 `RichOnline.LuaCompile` 预检查语法。
+- 本轮 C++ 主目标与全部 Lua 语法编译、`git diff --check -- server` 通过；不启动服务或游戏、不运行测试，实机通信验证由用户完成。
+- 确认服务进程已退出后，已更新 GUI 使用的 `server/RichOnline.Server.exe`，SHA256 `71AFF9074992B384829ACBEED020B1AA8BB9DBDA356BA556730E0477FAE2A5C4`。旧版及回执保存在 `build-migration-backup/lua-runtime-a14b97af1b1a431f991ba57f43162d36/`，脚本位于 `server/scripts`。此次包含此前未安装的请神距离、NPC7和经典建筑改造修复。
+- 已完整移入 Lua：乐透及4张视效卡、奖励候选筛选、节日点券表、BOSS攻击选择。其余复杂业务仍在C++兼容层，不能宣称已实现“所有核心接口绑定/所有业务纯Lua”；细节与继续迁移边界见 `LUA-SERVER.md`。
+- 卡片格的四张卡限制改为资源允许且已实现的主动卡池；不再因为合法合成产物不在直接赠卡池中而改变抽卡概率。攻击卡拒绝日志增加实际槽位和完整8格手牌，供追查面板/服务端库存差异。
+- 圣诞点券仍未闭环：本轮 IDA 实例73d0b204c154复核7BE080/66A970只有赠卡入口，未获得固定点券奖励证据，不猜测数量补账；大厅商城功能请求仍需继续核对实际配置/商品拒绝日志。
+
 ## 当前安装状态（2026-10-10）
 
-- GUI 启动路径 `server/RichOnline.Server.exe` 已更新，SHA256：`51CAEE1EF2052D4BCFF62B004FC2A00EF4C400BBADE370282D5CA121AE30CEE1`。旧程序备份为 `build-migration-backup/card-entry-aa0f8af08c264f139707311572ed8f03/RichOnline.Server.before.exe`（SHA256：`EE0CFEF64B1DF183BC6768597CFC8775BD913F1E1B0544EDF60A5029A6F9A2A8`）。更新前确认无服务进程，未启动服务或游戏；实机验证由用户完成。
+- GUI 启动路径 `server/RichOnline.Server.exe` 已更新，SHA256：`D859ED0429B93D2ED608E5DC916CECC40A7A85F3E920B68FE446B0E057403B4B`。旧程序备份为 `build-migration-backup/fortune-null-capture-3477e121073b488d906326a19f61b38d/RichOnline.Server.before.exe`（SHA256：`B19A1FD0EE9C6E0C0EE1D069AD976C8BCD0AC6869233B53A67B2AF96E545FE50`），同目录保存candidate.json。更新前确认无服务进程，编译版/安装版哈希一致，未启动服务或游戏；实机验证由用户完成。
 - 本版包含福神四来源随机两张卡、成对/随机传送出口地雷、飞弹基地周期齐射、节日赠卡和点券同步修复。客户端现有节日资源没有独立万圣节槽，不能把未确认的日期或奖励硬编码为万圣节。
+
+## 待安装增量：请神距离、糊涂神及经典建筑改造卡（2026-10-10）
+
+- 正式会话接入已有NPC7糊涂神规则及主库存清醒卡/状态免疫保护，13张地图池增加7；附身时长来自服务端Npc副本。地面、请神、倒计时、控制移动和BOSS禁止攻击沿用现有消费者。证据见 `evidence/normal-cards/sleep-deity-production.md`。无神/缺卡/无附身等400B恢复已存在，未重复改动。
+
+- 请神112改为按目标角色格坐标距离最近优先，同距离按格号；NPC候选过滤保留此顺序，不再全图随机。新增成功提交日志 `richonline_summon_selected`。距离政策为针对用户反馈的显式规则，不声称客户端暴露原服排序或视口。证据见 `evidence/normal-cards/summon-nearest.md`。
+
+- 125–129已接通40CD–40D1，改kind2–6、保留产权和等级、与扣卡共同提交；非法请求400B。经典改造保留原增益登记；可再改回BOSS特殊建筑。
+- 按客户端单BOSS场景零上限处理经典建筑自有落点，避免负数kind-11索引；建屋卡正等级经典建筑不再误允许升级。BOSS模式不虚构经典租金。
+- 证据见 `evidence/normal-cards/classic-conversion.md`；清单当前70项处理、7项未实现。编译和差异检查通过，未新增/运行测试或启动服务/游戏。
+- 构建候选 `build/RichOnline.Server.exe` SHA256：`091DA2F613C662569318BC967449855C733389F0394EFAC7C4A26CF20C939410`。检测到服务PID45308，尚未覆盖GUI程序，已询问用户停止服务；安装版仍为顶部记录的福神修复版。
+
+## 已安装增量：请神卡召福神导致服务崩溃（2026-10-10）
+
+- `native-14508.jsonl:353` 在112请求后中断；同秒Windows Application 1000记录PID14508服务异常 `0xc0000005`。福神回调捕获了已被move清空的局部cards，调用随机选卡时解引用空指针。
+- 回调改为持有 `rules.cards`；同时修复地面、神庙、福神卡和请神卡四条随机赠卡入口。live IDA核对40C0/4023及恢复操作分支，协议无需改动。证据见 `evidence/normal-cards/fortune-null-capture.md`。
+- 编译与差异检查通过，已备份并更新GUI服务程序；未新增/运行测试，未启动服务或游戏。完整通信协议goal继续。
+
+## 当前增量：长城/图腾柱周期增益（2026-10-10）
+
+- 审计发现生产会话没有激活攻防建筑来源；当前倍率计算器并不等于增益功能可用。live IDA确认有序登记、周期、激活等级、持续时间及轮首顺序，见 `evidence/normal-cards/building-buffs.md`。
+- 已接入地产唯一权威状态、轮首周期生产、持续时间、战斗快照与原子提交；伤害使用激活等级。当前两角色为对手，1480无队友分享，不把1472同盟卡用于共享增益。来源、等级、持续时间和登记表参与地产版本校验。
+- mode3产权变化保留旧登记；换屋按来源地/目标地顺序追加，换地按目标地/来源地顺序。改造删除旧kind首条登记并清对应增益；飞弹降级同时检查两类增益，低于缓存等级才失效。拆屋和街区降级不执行mode4专有的即时清理，避免错误套用飞弹规则。
+- live IDA确认初始地产无主、登记容量为type12地产数、mode3剧本事件期间暂停周期及到期。用户明确选择0级不发增益，保留登记待正等级，规则名 `wait-for-positive-level`。原始证据见 `evidence/normal-cards/building-buff-integration-client.json`。
+- 目标编译与差异检查通过，未新增/运行测试或启动服务；游戏效果由用户验证。新增 `richonline_building_buff_round` / `richonline_building_buff_activated` 日志。原有战斗测试仍含按当前等级/所有权取倍率和任意受损清增益的旧断言，按用户要求本轮未修改或运行测试；不能引用旧断言作为验证。
 
 ## 当前增量：攻击及神明卡入口恢复（2026-10-10）
 

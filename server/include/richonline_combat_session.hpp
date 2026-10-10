@@ -3,6 +3,7 @@
 #include "richonline_combat.hpp"
 #include "richonline_research_cards.hpp"
 #include "richonline_raw_authority.hpp"
+#include "richonline_building_buffs.hpp"
 
 namespace richnet {
 // These are snapshots of the session's shared stores, never a second status or
@@ -17,9 +18,11 @@ struct RichonlineCombatActorView {
     bool active=true,in_hospital=false,in_prison=false,mine_immune_vehicle=false;
     bool attack_modifiers_enabled=true;
     std::int16_t position=-1;
-    // Shared timed-building buff sources (actor+1730/+1734), not all owned
-    // buildings. A blast invalidates the active source even when a level remains.
+    // Snapshot of actor+1730..1737. The activation level survives upgrades and
+    // mode3 ownership changes; expiry clears only the source.
     std::optional<std::uint32_t> attack_building_source,defense_building_source;
+    std::uint8_t attack_building_level=0,defense_building_level=0;
+    std::int8_t attack_building_rounds=0,defense_building_rounds=0;
 };
 struct RichonlineCombatBuildingView {
     std::uint32_t property=0;
@@ -41,7 +44,12 @@ struct RichonlineCombatSessionView {
     RichonlineMineSnapshot mines;
     std::vector<RichonlineCombatBuildingView> buildings;
     std::vector<RichonlineCombatDynamicView> dynamic_npcs;
+    std::array<std::vector<RichonlineBuildingBuffRegistration>,2> building_buff_registrations;
+    std::array<std::array<bool,8>,8> building_buff_shared{};
 };
+RichonlineBuildingBuffState richonline_combat_building_buffs(const RichonlineCombatSessionView&);
+RichonlineBuildingBuffRecipients richonline_combat_buff_recipients(const RichonlineCombatSessionView&);
+void set_richonline_combat_building_buffs(RichonlineCombatSessionView&,const RichonlineBuildingBuffState&);
 enum class RichonlineMissileBaseTarget : std::uint8_t { road, mine, enemy, npc };
 struct RichonlineMissileBaseSalvo {
     std::uint32_t property;
@@ -97,6 +105,9 @@ struct RichonlineBossCombatPolicy {
     // Explicit stage policy. A multi-entry list selects uniformly; no hidden
     // assumption about the relative missile/nuclear probabilities.
     std::vector<RichonlineCombatEffect> projectiles{RichonlineCombatEffect::missile};
+    // Lua 负责 AI 类别选择；核心仍按实际状态和合法格集执行战斗事务。
+    std::function<std::optional<RichonlineCombatEffect>(std::uint8_t,
+        const std::function<std::size_t(std::size_t)>&)> select_attack{};
 };
 enum class RichonlineCombatAttemptOutcome { none,executed,controlled,no_legal_target,actor_eliminated };
 struct RichonlineCombatAttackAttempt {

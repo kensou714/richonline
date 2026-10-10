@@ -1,4 +1,5 @@
 #include "server_lobby_adapter.hpp"
+#include "lua_lobby.hpp"
 #include "richonline_room_directory.hpp"
 #include "richonline_lobby_chat.hpp"
 #include "richonline_lobby_error.hpp"
@@ -258,8 +259,18 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
             }
             if(frame.wire_type==16||frame.wire_type==18||frame.wire_type==63) {
                 const auto log_mall=[&](const std::string& reason,std::size_t frames) {
-                    if(log_) log_("richonline_mall_operation",{{"connection",connection},{"wire_type",frame.wire_type},
-                        {"payload_bytes",frame.payload.size()},{"diagnostic",reason},{"response_frames",frames},{"lobby_preserved",true}});
+                    if(!log_) return;
+                    nlohmann::json detail{{"connection",connection},{"wire_type",frame.wire_type},
+                        {"payload_bytes",frame.payload.size()},{"diagnostic",reason},{"response_frames",frames},{"lobby_preserved",true}};
+                    if((frame.wire_type==18 && frame.payload.size()==16) || (frame.wire_type==63 && frame.payload.size()==8)) {
+                        const auto offset=frame.wire_type==18 ? 8U : 4U;
+                        const auto key=read_le(View(frame.payload).subspan(offset,4));
+                        detail["item_key"]=key;detail["product"]=key&4095U;
+                        detail["currency"]=frame.wire_type==18 ? (key>>12U)&15U : read_le(View(frame.payload).first(4));
+                    }
+                    if(blobs_.richonline_mall_policy)
+                        detail["date_epoch"]=static_cast<std::uint16_t>(blobs_.richonline_mall_policy->date_version);
+                    log_("richonline_mall_operation",detail);
                 };
                 const auto refused=blobs_.richonline_mall_policy?blobs_.richonline_mall_policy->refused:-13;
                 const auto reject=[&](const std::string& reason) {
@@ -475,6 +486,6 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
         peer.profile_attempt.reset();
         queue_pending_profile_refreshes(connection);
     };
-    return result;
+    return make_lua_lobby_callbacks(std::move(result), storage_, log_);
 }
 }

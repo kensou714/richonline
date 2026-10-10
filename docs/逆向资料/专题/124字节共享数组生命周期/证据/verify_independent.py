@@ -13,6 +13,8 @@ ROOT = HERE.parents[4]
 DOCS = ROOT / 'docs/逆向资料'
 EXPECTED = 'a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2'
 RAW_SHA = '9975b7054c435b35bb53826528b218f80c43c5852d80876adba4d98e460ec28d'
+SUPPLEMENT_SHA = 'ddbf83a1e09e062ebaf5dbe06e6418c5ae02b55cd723f0219d6fc93d91eda0b2'
+SUPPLEMENT = {0x6B7C60, 0x6A76E0, 0x6B9AF0, 0x6A1190}
 FRESH = {0x6A4A80, 0x6A4860, 0x6B7CB0}
 OLD = {0x69E600, 0x6AB5F0}
 FIXED = (
@@ -200,6 +202,45 @@ def verify(preflight=False):
                   unique_bridges=len(bridges), calls=len(raw['calls']),
                   data_references=len(raw['data_references']), owner_window_heads=window_heads,
                   sources=sources)
+    supplement = json.loads((HERE / 'supplement_raw.json').read_bytes())
+    assert sha(HERE / 'supplement_raw.json') == SUPPLEMENT_SHA
+    assert supplement['disk_sha256'] == EXPECTED
+    assert sha(DOCS / '全量分析/export_supplements25.py') == supplement['exporter_sha256']
+    assert {int(v, 16) for v in supplement['seeds']} == SUPPLEMENT
+    assert {int(f['seed_va'], 16) for f in supplement['functions']} == SUPPLEMENT
+    supplement_measurements = []
+    for function in supplement['functions']:
+        va = int(function['seed_va'], 16)
+        decoded = [i for block in function['chunk_byte_ranges'] for i in decode(block)]
+        assert [i.address for i in decoded] == [int(a['site_va'], 16) for a in function['assembly']]
+        assert all(a['is_code'] for a in function['assembly'])
+        bodies[va] = decoded
+        supplement_measurements.append(dict(va=hex(va), bytes=sum(i.size for i in decoded),
+                                            instructions=len(decoded)))
+    for row in supplement['verified_direct_bridges']:
+        va = int(row['start_va'], 16)
+        data = audit(row)
+        target = int(row['target_va'], 16)
+        assert len(data) == 5 and data[0] == 0xE9
+        assert va + 5 + struct.unpack_from('<i', data, 1)[0] == target
+        assert va not in bridges or bridges[va] == target
+        bridges[va] = target
+    for call in supplement['calls']:
+        instruction = sites[int(call['site_va'], 16)]
+        assert instruction.mnemonic == 'call' and instruction.operands[0].type == CS_OP_IMM
+        target = instruction.operands[0].imm & 0xFFFFFFFF
+        assert target == int(call['target_va'], 16)
+        for bridge in call['bridges']:
+            assert target == int(bridge, 16)
+            target = bridges[target]
+        assert target == int(call['implementation_va'], 16)
+    assert len(supplement['calls']) == 12
+    assert len(supplement['verified_direct_bridges']) == 5
+    assert not supplement['data_references'] and not supplement['data_windows']
+    assert [(r['bytes'], r['instructions']) for r in supplement_measurements] == [
+        (52, 17), (356, 87), (36, 13), (69, 18)]
+    result.update(supplement_sha256=SUPPLEMENT_SHA, supplement_functions=supplement_measurements,
+                  supplement_calls=12, supplement_unique_bridges=5)
     if preflight:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return result
@@ -223,6 +264,23 @@ def verify(preflight=False):
                                              is_main=b['start_va'] == f['seed_va'])
                                         for b in f['chunk_byte_ranges']]
     assert len(reused['records']) == len(review['reused']) == 14
+    supplement_formal = json.loads((HERE / 'supplement_formal.json').read_bytes())
+    assert supplement_formal['disk_sha256'] == EXPECTED
+    assert supplement_formal['source_sha256'] == SUPPLEMENT_SHA
+    assert len(supplement_formal['functions']) == 4
+    for n, (f, g) in enumerate(zip(supplement['functions'], supplement_formal['functions'])):
+        assert g['source'] == dict(path='证据/supplement_raw.json', sha256=SUPPLEMENT_SHA,
+                                   json_pointer='/functions/' + str(n))
+        assert g['va'] == f['seed_va'] and g['end_va'] == f['end_va']
+        assert all(g[k] == f[k] for k in ('name', 'pseudocode', 'decompile_error'))
+        assert g['assembly'] == [dict(va=a['site_va'], text=a['text'], is_code=a['is_code'])
+                                 for a in f['assembly']]
+        assert g['chunk_byte_ranges'] == [dict(va=b['start_va'], **{k: v for k, v in b.items()
+                                           if k != 'start_va'}) for b in f['chunk_byte_ranges']]
+        assert g['declared_chunks'] == [dict(start_va=b['start_va'],
+                                             end_va=hex(int(b['start_va'], 16) + b['size']),
+                                             is_main=b['start_va'] == f['seed_va'])
+                                        for b in f['chunk_byte_ranges']]
     old_records = {}
     for row in reused['records']:
         original = source(row['source'], HERE)
@@ -250,10 +308,12 @@ def verify(preflight=False):
     assert {int(r['va'], 16) for r in review['reused_reviews']} == OLD
     assert {int(r['va'], 16) for r in review['dependency_reviews']} == {
         0x622D50, 0x6A2350, 0x91BD80, 0x91BD30, 0x91F7E0}
+    assert {int(r['va'], 16) for r in review['supplement_reviews']} == SUPPLEMENT
     anchors = 0
-    for row in review['functions'] + review['reused_reviews'] + review['dependency_reviews']:
+    for row in (review['functions'] + review['reused_reviews'] + review['dependency_reviews']
+                + review['supplement_reviews']):
         assert row['status'] == '局部语义已审阅' and row['conclusion'] and row['unknown']
-        assert row['fresh_evidence'] == (int(row['va'], 16) in FRESH)
+        assert row['fresh_evidence'] == (int(row['va'], 16) in FRESH | (SUPPLEMENT - {0x6A1190}))
         ref, = row['source_records']
         record = source(ref, TOPIC)
         chunks = record.get('declared_chunks', record.get('chunks'))
@@ -266,7 +326,7 @@ def verify(preflight=False):
             assert source(dict(ref, pointer=anchor['pointer']), TOPIC) == anchor['value'] == head['text']
             assert anchor['site_va'] == head['va'] and int(anchor['site_va'], 16) in sites
             anchors += 1
-    assert anchors == 942
+    assert anchors == 1077
 
     semantic = []
 
@@ -304,9 +364,38 @@ def verify(preflight=False):
         (0x622D71, 'add', 'ecx, dword ptr [ebp + 0xc]'), (0x622D82, 'ret', '0x10'),
         (0x91BD87, 'call', '0x601274'), (0x91BD47, 'jne', '0x91bd60'),
         (0x91BD57, 'jne', '0x91bd5e'), (0x91BD5E, 'jmp', '0x91bd34'),
+        (0x6B7C6E, 'mov', 'ecx, dword ptr [ebp - 4]'),
+        (0x6B7C71, 'add', 'ecx, 8'), (0x6B7C74, 'call', '0x60a99b'),
+        (0x6B7C7C, 'mov', 'dword ptr [eax + 4], 0'),
+        (0x6B7C83, 'mov', 'eax, dword ptr [ebp - 4]'), (0x6B7C93, 'ret', ''),
+        (0x6B9AFE, 'mov', 'ecx, dword ptr [ebp - 4]'),
+        (0x6B9B01, 'call', '0x609bb8'), (0x6B9B13, 'ret', ''),
+        (0x6A119E, 'call', '0x608024'),
+        (0x6A11A6, 'mov', 'dword ptr [eax + 0x5e0], 0xffffffff'),
+        (0x6A11B3, 'mov', 'dword ptr [ecx + 0x4f0], 0xffffffff'),
+        (0x6A11C0, 'mov', 'byte ptr [edx + 0x258], 0'), (0x6A11D4, 'ret', ''),
     )
     for check in checks:
         anchor(*check)
+    supplement_zeroes = []
+    for instruction in bodies[0x6A76E0]:
+        assert not any(op.type == CS_OP_MEM and op.mem.disp in (0x5F4, 0x608)
+                       for op in instruction.operands)
+        if (instruction.mnemonic == 'mov' and instruction.operands[0].type == CS_OP_MEM
+                and instruction.operands[0].mem.disp >= 0x640):
+            assert instruction.operands[0].size == 4
+            assert instruction.operands[1].type == CS_OP_IMM and instruction.operands[1].imm == 0
+            supplement_zeroes.append(instruction.operands[0].mem.disp)
+    assert supplement_zeroes == list(range(0x640, 0x668, 4))
+    for n in range(5):
+        va = 0x6A771C + n * 0x31
+        anchor(va, 'call', '0x601cd3')
+        gate = sites[0x6A7703 + n * 0x31]
+        assert gate.mnemonic == 'cmp' and gate.operands[0].type == CS_OP_MEM
+        assert gate.operands[0].mem.disp == 0x640 + n * 4
+        assert gate.operands[1].type == CS_OP_IMM and gate.operands[1].imm == 0
+    assert bridges[0x60A99B] == 0x6B7BB0
+    assert bridges[0x609BB8] == 0x6BA4A0 and bridges[0x608024] == 0x82C4E0
     alloc_fields = [0x5E4, 0x5E8, 0x5EC, 0x5F0, 0x5F4, 0x5F8,
                     0x5FC, 0x600, 0x604, 0x608, 0x60C]
     alloc_calls = [0x6A4B4A + 0x24 * i for i in range(11)]
@@ -356,25 +445,31 @@ def verify(preflight=False):
         text = path.read_text('utf-8-sig')
         assert all(not line.strip() or line.startswith('//') for line in text.splitlines()), str(path)
         documents[path.name] = sha(path)
-    assert len(documents) == 7
+    assert len(documents) == 8
     author = json.loads((HERE / 'author_validation.json').read_bytes())
     assert author['status'] == 'PASS' and author['disk_sha256'] == EXPECTED
     assert author['documents'] == documents
     assert (author['fresh_functions'], author['fresh_declared_bytes'],
-            author['fresh_instruction_entries'], author['reviewed_instruction_anchors']) == (3, 1411, 370, 942)
-    result.update(reused_records=14, review_records=10, review_anchors=anchors,
+            author['fresh_instruction_entries'], author['reviewed_instruction_anchors']) == (3, 1411, 370, 1077)
+    assert (author['supplemental_functions'], author['supplemental_declared_bytes'],
+            author['supplemental_instruction_entries']) == (4, 513, 135)
+    assert (author['total_new_functions'], author['total_new_declared_bytes'],
+            author['total_new_instruction_entries']) == (6, 1855, 487)
+    assert len(saved) == author['unique_saved_ranges'] == 139
+    assert len(bridges) + 1 == author['unique_verified_e9_bridges'] == 37
+    result.update(reused_records=14, review_records=14, review_anchors=anchors,
                   semantic_anchors=semantic, allocation_fields=[hex(f) for f in alloc_fields],
                   free_fields=[hex(f) for f in freed_fields], local_unpaired_fields=['0x5f4', '0x608'],
                   contract_bridges=contract_bridges, final_documents=documents,
                   final_artifacts={name: sha(HERE / name) for name in (
                       'formal_functions.json', 'reused_raw.json', 'build_artifacts.py',
                       'validate_author.py', 'export_bounded.py', 'reused_auxiliary.json',
-                      'author_validation.json')},
-                  reused_auxiliary_records=1, total_verified_bridges=34,
+                      'author_validation.json', 'supplement_raw.json', 'supplement_formal.json')},
+                  reused_auxiliary_records=1, total_verified_bridges=len(bridges) + 1,
                   final_unique_byte_records=len(saved),
                   review_sha256=sha(TOPIC / 'function_review.json'),
                   verifier_sha256=sha(Path(__file__)),
-                  unknown=['回调6B7C60完整语义未采；根深清理及外部owner未闭合。',
+                  unknown=['6B7BB0/6BA4A0/82C4E0仅桥端点；根深清理及外部owner未闭合。',
                            '上游4D0值域、运行时异常行为、动态泄漏及网络可达性未验证。'])
     report = HERE / '独立审阅.txt'
     assert report.is_file(), '独立人工审阅报告尚未落盘'

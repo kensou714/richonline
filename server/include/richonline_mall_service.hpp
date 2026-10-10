@@ -2,6 +2,7 @@
 #include "storage.hpp"
 
 namespace richnet {
+class LuaServer;
 struct RichonlineMallCompatibilityPolicy {
     // NEW77 consumes these DWORDs only to advance the cursor; neither reaches
     // any business callback. Deliberate compatibility padding may therefore be0.
@@ -34,5 +35,6 @@ private:
     RichonlineMallCompatibilityPolicy policy_;
     std::int32_t operation_{};
     std::uint64_t sequence_{};
+    std::shared_ptr<LuaServer> script_;
 };
 }

@@ -1,0 +1,40 @@
+// ============================================================================
+// 大厅分类与索引列表生命周期 / 第28批独立审阅结论
+// ============================================================================
+// 判定：PASS；不修改作者原证与历史专题，不调用IDA，不执行游戏或网络请求。
+// 当前PE SHA256：a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2。
+// 四新主块443字节/131指令；三旧当前块4890字节/1111指令；合计5333字节/1242指令。
+// 两parser各含2291字节主块与46字节异常尾；逐项核旧原始hex与当前PE。
+// 6B8A60旧源仅纯文本，不能冒称旧字节已核；当前216字节块来自root本轮IDA原证。
+// 34个E9桥、177个直接调用、55原窗口记录去重35个窗口均核验；桥不列业务review。
+// 七个数据窗66字节绑定四类型、四指针及两switch表；本体数据共341去重范围。
+// 额外复核旧strcmp136字节范围，合计342范围；不新增该函数覆盖。
+// CHU/ZHONG/GAO/XIN精确ASCII比较，未知/空串/小写/空白均归0；首NUL结束。
+// cdecl分类体ret无立即数，调用点ADD ESP,4；初始化ret8、追加ret4，调用约定不混用。
+// 列表count/capacity/growth/base四DWORD；32/16以元素计，初始128字节。
+// 追加signed比较，复制旧capacity而非count；先覆base再复制/释放，不保证坏状态安全。
+// 清理只清base，计数/容量/增长保留；再次append不属于有效空容器保证。
+// M+5C频道308字节记录数组与四索引列表分开；元素是跨area累计索引，不是ChannelID。
+// 69F750先清旧再读取；6A0130在URL/非零正文/area门之后才清旧。
+// 已促成勘误：TEST EAX,EAX清CF后JBE只拒绝零；原“长度不正”会误导为signed<=0。
+// 25组有限实际主体指令模型已执行：分类13、初始化4、清理2、追加6；库函数明确桩隔离。
+// 模型包括NUL后缀、大小写、容量乘4回绕、负count、零growth，结果只解释指令，不代表输入合法。
+// 旧parser机械全范围通过不代表完整字段/异常状态表语义闭合；只认可列表与重载时序。
+// 未证：网络真实内容、异常/资源耗尽、并发、其他借用者、底层分配失败策略及动态热重载。
+// IDB输入指纹与PE不同，仅本报告逐范围匹配有效，不宣称整个IDB同版。
+// 重放：在证据目录运行 python -X utf8 independent_review.py --final。
+// 证据/independent_final_audit.json保留指令锚、来源SHA、模型结果和全部作者终稿绑定。
+// 作者终稿 SHA256 函数审阅清单.json：a21e73ddf8fa5c7a5dc34f84df0eea0e58072e53afc93ee626844884d3224504。
+// 作者终稿 SHA256 00_有限采证实施计划.txt：55060a157bdda2bc105e9092b3bb2cdd9b07f8a0b94382ac979cd22439516be5。
+// 作者终稿 SHA256 01_类型字符串与列表布局.txt：ae602ce45fffd440d0688c1c4ae4106ebae5cf854b1df766b606fb37f38e174d。
+// 作者终稿 SHA256 02_创建追加与清理契约.txt：a520e1a30122dec1cd85f304371057b72a4c132429c4212d4bf5cabd52fb06d0。
+// 作者终稿 SHA256 03_两种重载时序与失败状态.txt：c88f1b84af04e351702abf23b8524eb5a17b44a86ac6e8eeee8d7bbdd2708c0d。
+// 作者终稿 SHA256 04_证据复用与验证边界.txt：24ca0143b6656dd8c904bc3ffa6fc4ac3559e385159f4cb4350c82498c28d67c。
+// 作者终稿 SHA256 证据/export_bounded.py：7d5b6c92a21e1f553017d19a454f4a7a9cc15e1ce6b838cd6b0b5da3004d6ef3。
+// 作者终稿 SHA256 证据/validate_author.py：6e4cd0976011c4ed35d8160fef4d9052caa860e1183e1c5c46feaee7b26b6bbe。
+// 作者终稿 SHA256 证据/bounded_raw.json：80caf7a717f3f67d960f14bd0749df7ef1a74e9c5150593fd34dfb7f307a881d。
+// 作者终稿 SHA256 证据/formal_functions.json：464a22268988820c3bb56d1a00ca93f8e09304d9666140074bab7566d270d608。
+// 作者终稿 SHA256 证据/semantic_anchors.json：d1cb39ec358246f90c3666d2a01b81bd95cce8dfe3f5b3a30ece788311071453。
+// 作者终稿 SHA256 证据/author_validation.json：73bdba2e2512d89a77f7cf925e40f43973dad237a0c5b2821ed997621c3443cd。
+// 作者终稿 SHA256 证据/type_tables/bounded_raw.json：6852de278eb9d3dad391b0f5b5f60a2c1cf5c4a102a340f368ea2ad417b9bb20。
+// 作者终稿 SHA256 证据/export_type_tables.py：fa927afb48afbc3deda40e912cd0dc0d9a82313ed0e2c7c8bd87bac8bafc85e1。

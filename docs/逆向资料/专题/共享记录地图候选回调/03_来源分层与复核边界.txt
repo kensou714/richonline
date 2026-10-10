@@ -1,0 +1,15 @@
+// ============================================================================
+// 第二十八批 / 来源、旧复用与审阅边界
+// ============================================================================
+// 新原证 bounded_raw.json SHA256 73c4b8febe7b40beed41ab6602dde5dbd8a27fc66dbc79a807686dc8ec23d490。
+// wrapper SHA256 e1e40235098d13f79a725127af55dddc9e892ef001da91ea95ff856af912fd4c。
+// 新主体仅6BA170、6AAA40；旧6A54F0、6AAA80、7E71E0、7DED90逐块补当前PE，不计新主体。
+// 旧记录在formal以source_record_json保存，反序列化逐对象等价但隔离历史status/conclusion，防止中央递归重复计量。
+// 四旧来源路径和JSON Pointer原样保留；旧字节审计含source SHA、当前IDB/磁盘相等和指令边界。
+// 6BA170唯一间接CALL，91F6D0是公共RTC/检查依赖；6AAA40调用922830和RTC桥，均按桥层记录。
+// 十callback窗口及两个摘要读取窗口是有限owner切片，不能认领6A54F0、7E71E0完整函数的新审阅。
+// 主raw的data_windows为空；另有boundary_data/bounded_raw.json六个有限数据窗合计60字节。
+// 补证为模式跳表16B、路径格式7B、rb模式3B、RTC头8B/描述符12B/变量名14B，均核当前PE。
+// 七旧helper契约另以source_record_json绑定并离线核PE；没有运行时对象采样、协议抓包或EXE/IDB修改。
+// 作者验证必须覆盖新主体RET/回调ABI、strcmp完整EAX、旧来源字节、窗口参数和16字节模型。
+// 独审应分别重跑字节解码、空链/失败回调模型、strcmp相等/不等模型，并绑定最终文件SHA。

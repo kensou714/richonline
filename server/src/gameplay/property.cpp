@@ -15,6 +15,10 @@
 
 namespace richnet {
 namespace {
+RichonlineBuildingBuffProperty buff_view(const RichonlineCombatBuildingView& property) {
+    if(property.property>32767) throw CodecError("richonline_property_buff_source_invalid");
+    return {static_cast<std::int16_t>(property.property),property.owner,property.level,property.kind};
+}
 std::shared_ptr<RichonlineGameLedger> initial_ledger(std::array<std::uint32_t,2> cash) {
     for (const auto value:cash)
         if (value>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max()))
@@ -53,6 +57,9 @@ RichonlineBossProperty::RichonlineBossProperty(const std::filesystem::path& root
     purchase_half_price_[1]=boss_land>0 && boss_land<=0x7fffffffU;
     for (const auto& property:initial_properties(root,stage.map_name,topology_).properties)
         properties_.emplace(property.id,Property{property.price,property.owner,{property.kind,property.level},property.district,property.sprite_type});
+    // NEW7DF010 initializes all property owners to-1; production tables start empty.
+    building_buffs_=make_richonline_building_buff_state(properties_.size(),2);
+    buff_resources_=std::make_shared<const RichonlineCombatModifierResources>(RichonlineCombatModifierResources::load(root));
     const auto research=load_original_research_resources(root/"Data"/"BwbValue.kpd");
     const auto missile=research.sections.find("PAO");
     if(missile==research.sections.end()) throw CodecError("richonline_missile_base_resource_missing");
@@ -229,8 +236,13 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
             result.pending_opcode = 0x20;
         } else {
             result.messages.push_back(richonline_property_response(game_id_,true));
+            auto next=property;next.owner=1;
+            const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::ownership,
+                buff_property(ctx.property_ref,property),buff_property(ctx.property_ref,next)}};
+            const auto buffs=plan_richonline_building_buff_changes(building_buffs_,changes,buff_recipients());
             ledger_->adjust(1,funds,{-static_cast<std::int64_t>(*cost),0,0,0});
             property.owner = 1;
+            commit_buff_state(buffs);
             ++property_revision_;
         }
     }
@@ -257,8 +269,13 @@ RichonlineLandingResult RichonlineBossProperty::complete_decision(bool accept) {
     const bool purchase = accept && funds.funds.cash > *cost && !property.owner;
     RichonlineLandingResult result{{richonline_property_response(game_id_,purchase)},RichonlineLandingProgress::complete};
     if (purchase) {
+        auto next=property;next.owner=0;
+        const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::ownership,
+            buff_property(*pending_property_,property),buff_property(*pending_property_,next)}};
+        const auto buffs=plan_richonline_building_buff_changes(building_buffs_,changes,buff_recipients());
         ledger_->adjust(0,funds,{-static_cast<std::int64_t>(*cost),0,0,0});
         property.owner = 0;
+        commit_buff_state(buffs);
         ++property_revision_;
     }
     deadline_.reset();
@@ -291,7 +308,7 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::poll() {
     return complete_decision(false);
 }
 RichonlineBossProperty::CombatSnapshot RichonlineBossProperty::combat_snapshot() const {
-    CombatSnapshot result{property_revision_,{},deadline_.has_value()};
+    CombatSnapshot result{property_revision_,{},deadline_.has_value(),building_buffs_};
     result.buildings.reserve(properties_.size());
     const auto width=topology_.width();
     for (const auto& [ref,property]:properties_) {
@@ -328,10 +345,10 @@ RichonlineCombatBuildingView RichonlineBossProperty::combat_building_effect(
 }
 RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_combat(
     const CombatSnapshot& before,std::span<const RichonlineCombatBuildingView> after,
-    const PreparedMissileRound* missile_round) const {
+    const PreparedMissileRound* missile_round,const RichonlineBuildingBuffState* buffs_after) const {
     const auto current=combat_snapshot();
     if (before.revision!=current.revision || before.decision_pending || current.decision_pending ||
-        before.buildings!=current.buildings || after.size()!=before.buildings.size())
+        before.buildings!=current.buildings || before.buffs!=current.buffs || after.size()!=before.buildings.size())
         throw CodecError("richonline_property_combat_stale");
     if (before.revision==std::numeric_limits<std::uint64_t>::max())
         throw CodecError("richonline_property_combat_revision_overflow");
@@ -355,6 +372,19 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_combat(
             (next.owner && next.owner!=old.owner) ||
             next.kind!=expected_kind)
             throw CodecError("richonline_property_combat_transition_invalid");
+    }
+    if(buffs_after) {
+        for(std::size_t kind=0;kind<2;++kind) {
+            if(buffs_after->registrations[kind].size()!=building_buffs_.registrations[kind].size() ||
+                buffs_after->actors[kind].size()!=2) throw CodecError("richonline_property_buff_snapshot_invalid");
+            for(const auto& entry:buffs_after->registrations[kind])
+                if(entry.property!=-1 && !properties_.contains(entry.property))
+                    throw CodecError("richonline_property_buff_source_invalid");
+            for(const auto& actor:buffs_after->actors[kind])
+                if(actor.property && (!properties_.contains(*actor.property) || actor.level==0 || actor.level>7))
+                    throw CodecError("richonline_property_buff_source_invalid");
+        }
+        result.buffs_after_=*buffs_after;
     }
     return result;
 }
@@ -393,16 +423,22 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_house_car
     if(found==result.after_.end() || found->owner!=actor)
         throw CodecError("richonline_house_card_target_not_owned");
     if(found->level>=7) throw CodecError("richonline_house_card_maximum_level");
-    if(found->kind==3 && found->level>=5) throw CodecError("richonline_house_card_building_cap");
-    if(found->level>0 && found->kind!=3) {
+    if(found->level>0 && found->kind>=2 && found->kind<=6)
+        throw CodecError("richonline_house_card_building_cap");
+    if(found->level>0) {
         if(found->kind<11 || found->kind>20) throw CodecError("richonline_house_card_kind_invalid");
         const auto index=static_cast<std::size_t>(found->kind-11);
         const auto skill=actor==0 ? human_skills_.at(index) : construction_.synthetic_skills.at(index);
         if(found->level>=construction_.scenario_caps.at(index) || found->level>=skill)
             throw CodecError("richonline_house_card_building_cap");
     }
+    const auto old=buff_view(*found);
     if(found->level==0) found->kind=construction_.default_kind;
     ++found->level;
+    if(old.level==0) {
+        const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::construction,old,buff_view(*found)}};
+        plan_buff_changes(result,changes);
+    }
     return result;
 }
 RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_purchase_card(
@@ -418,7 +454,9 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_purchase_
     if(found==result.after_.end() || found->owner==actor ||
         found->kind==8 || found->kind==9 || found->kind==10)
         throw CodecError("richonline_purchase_card_target_invalid");
-    found->owner=actor;
+    const auto old=buff_view(*found);found->owner=actor;
+    const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::ownership,old,buff_view(*found)}};
+    plan_buff_changes(result,changes);
     return result;
 }
 RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_destruction_card(
@@ -449,14 +487,34 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_conversio
         return building.property==static_cast<std::uint32_t>(property_ref);
     });
     if(found==result.after_.end() || !found->owner || found->level==0 || found->kind==kind ||
-        (found->kind!=3 && (found->kind<11 || found->kind>20)))
+        ((found->kind<2 || found->kind>6) && (found->kind<11 || found->kind>20)))
         throw CodecError("richonline_conversion_card_target_invalid");
     const auto index=static_cast<std::size_t>(kind-11);
     const auto skill=actor==0 ? human_skills_.at(index) : construction_.synthetic_skills.at(index);
     if(skill<0 || skill>7) throw CodecError("richonline_conversion_card_skill_invalid");
     // NEW 6823A0 keeps the level, capped by the current actor's ability, even at zero.
+    const auto old=buff_view(*found);
     found->kind=kind;
     found->level=std::min(found->level,static_cast<std::uint8_t>(skill));
+    const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::conversion,old,buff_view(*found)}};
+    plan_buff_changes(result,changes);
+    return result;
+}
+RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_classic_conversion_card(
+    std::int16_t property_ref,std::int8_t kind) const {
+    PreparedCombat result;
+    result.expected_=combat_snapshot();result.after_=result.expected_.buildings;
+    if(property_ref<0 || kind<2 || kind>6 || result.expected_.decision_pending ||
+        result.expected_.revision==std::numeric_limits<std::uint64_t>::max())
+        throw CodecError("richonline_classic_conversion_state_invalid");
+    const auto found=std::ranges::find_if(result.after_,[property_ref](const auto& building) {
+        return building.property==static_cast<std::uint32_t>(property_ref);
+    });
+    if(found==result.after_.end() || properties_.at(property_ref).sprite_type!=12 ||
+        found->level==0 || found->kind==kind || found->kind==8 || found->kind==9 || found->kind==10)
+        throw CodecError("richonline_classic_conversion_target_invalid");
+    // NEW681110 only changes kind; it preserves owner, level and buff registrations.
+    found->kind=kind;
     return result;
 }
 RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_swap_card(
@@ -475,6 +533,7 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_swap_card
     if(properties_.at(source).sprite_type!=properties_.at(target).sprite_type ||
         a->kind==8 || a->kind==9 || a->kind==10 || b->kind==8 || b->kind==9 || b->kind==10)
         throw CodecError("richonline_swap_card_target_invalid");
+    const auto old_a=buff_view(*a),old_b=buff_view(*b);
     if(buildings) {
         if(a->level==0 || b->level==0) throw CodecError("richonline_swap_card_building_empty");
         std::swap(a->kind,b->kind);std::swap(a->level,b->level);
@@ -482,6 +541,12 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_swap_card
         if(a->owner==b->owner) throw CodecError("richonline_swap_card_owner_equal");
         std::swap(a->owner,b->owner);
     }
+    std::array changes{
+        RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::ownership,old_a,buff_view(*a)},
+        RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::ownership,old_b,buff_view(*b)}};
+    // NEW66BDB0 restores source then target;66B940 transfers target then source.
+    if(!buildings) std::swap(changes[0],changes[1]);
+    plan_buff_changes(result,changes);
     return result;
 }
 RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_growth_card(
@@ -509,7 +574,7 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_growth_ca
 }
 bool RichonlineBossProperty::combat_matches(const PreparedCombat& prepared) const noexcept {
     if (deadline_ || prepared.expected_.decision_pending || property_revision_!=prepared.expected_.revision ||
-        prepared.expected_.buildings.size()!=properties_.size()) return false;
+        prepared.expected_.buildings.size()!=properties_.size() || prepared.expected_.buffs!=building_buffs_) return false;
     for (const auto& entry:prepared.expected_.buildings) {
         const auto found=properties_.find(static_cast<std::int16_t>(entry.property));
         if (found==properties_.end() || found->second.owner!=entry.owner ||
@@ -536,6 +601,10 @@ bool RichonlineBossProperty::commit_combat(const PreparedCombat& prepared) noexc
         }
         last_missile_round_=prepared.missile_round_->round_;
         changed=true;
+    }
+    if(prepared.buffs_after_) {
+        changed=changed || *prepared.buffs_after_!=building_buffs_;
+        commit_buff_state(*prepared.buffs_after_);
     }
     if (changed) ++property_revision_;
     return true;

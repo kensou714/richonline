@@ -13,6 +13,7 @@
 #include "original_game_values.hpp"
 #include "original_options.hpp"
 #include "richonline_research_cards.hpp"
+#include "richonline_card_protection.hpp"
 #include <algorithm>
 #include <bit>
 
@@ -82,13 +83,17 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
                 return static_cast<std::int8_t>(raw);
             });
     }
+    auto script=LuaServer::create();
     auto cards=policy.cards ? std::make_shared<RichonlineBossCards>(chance,
         startup.init.game_server_id,package.configure(*policy.cards)) : nullptr;
     if(cards) {
         if(!package.closed_chance) throw CodecError("richonline_card_tile_map_policy_required");
-        cards->configure_tile_rewards(package.closed_chance->playable_reward_cards,policy.random);
+        auto rewards=package.closed_chance->playable_reward_cards;
+        if(script) rewards=script->call("rewards.pool",{{"map",stage.map_name},
+            {"candidates",chance->reward_candidates(stage.map_name)}}).get<std::vector<std::int16_t>>();
+        cards->configure_tile_rewards(std::move(rewards),policy.random);
         if(log) log("richonline_card_tile_policy",{{"room",startup.room.key},{"package",package.id},
-            {"selection_policy","native-uniform-playable-resource-cards-v1"},{"candidates",cards->tile_reward_cards()}});
+            {"selection_policy",script ? "lua-map-eligible-playable-cards-v2" : "native-uniform-playable-resource-cards-v1"},{"candidates",cards->tile_reward_cards()}});
     }
     std::optional<RichonlineOpeningHandPlan> opening_hand;
     if (cards && package.opening_hand) {
@@ -186,6 +191,9 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             throw CodecError("richonline_boss_event_unimplemented");
         }};
     rules.portal_landing=portal_landing;
+    rules.script=std::move(script);
+    rules.script_map=stage.map_name;
+    rules.script_database=policy.script_database;
     rules.research_turn_started=[property](std::uint8_t actor){property->advance_research(actor);};
     rules.cards=std::move(cards);
     rules.property=property;
@@ -212,7 +220,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         auto event_table=std::make_shared<const RichonlineChanceEventTable>(RichonlineChanceEventTable::load(resources));
         const auto status_rules=RichonlineStatusRules::load(resources);
         const auto chance_policy=make_richonline_closed_chance_policy(*event_table,stage.map_name,
-            map_chance.playable_reward_cards,map_chance.enable_motion_status,policy.cards->opaque6_7);
+            rules.cards->tile_reward_cards(),map_chance.enable_motion_status,policy.cards->opaque6_7);
         rules.chance_landing=[event_table,status_rules,chance_policy,chance,ledger,cards=rules.cards,
             random=policy.random,game=startup.init.game_server_id,log,package_id,key=startup.room.key]
             (const RichonlineLandingContext& context)->std::optional<RichonlineLandingResult> {
@@ -327,7 +335,14 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         const auto maximum=load_original_game_values(resources/"Data/GValue.kpd").require(37);
         if(maximum<1 || maximum>127) throw CodecError("richonline_temple_maximum_invalid");
         auto npc_policy=*policy.npcs;
-        npc_policy.fortune_selection=[cards,log,key=startup.room.key](const RichonlineChanceInventory& inventory) {
+        if(!npc_policy.sleep_deity) npc_policy.sleep_deity=RichonlineNpcSleepPolicy{load_richonline_npc_affix(resources,7),
+            "native-main-inventory-awake-card-and-status-v1",
+            [chance,map=stage.map_name](std::uint8_t actor,const RichonlineChanceInventory& inventory,
+                const RichonlineActorStatus& status) {
+                const RichonlineProtectionInventory owned{actor,actor,inventory,std::nullopt,false};
+                return resolve_richonline_sleep_protection(map,*chance,owned,status).main_inventory_projection();
+            }};
+        npc_policy.fortune_selection=[cards=rules.cards,log,key=startup.room.key](const RichonlineChanceInventory& inventory) {
             const auto first=cards->prepare_random_reward(inventory);
             const auto second=cards->prepare_random_reward(first.inventory);
             const std::array chosen{first.card,second.card};

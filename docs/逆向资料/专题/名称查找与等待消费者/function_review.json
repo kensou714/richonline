@@ -10,7 +10,7 @@
       "fresh_evidence": true,
       "conclusion": "ECX对象、栈字串、retn4；先比较对象+42Ch地址，等值返回NULL；否则signed循环，候选与输入最多32字节比较，首个相等返回原候选指针。",
       "unknown": [
-        "未见归一化、复制、分配、NULL字串门；count/base/stride和比较深契约由有限补证另核，返回有效期不能由无free反推永久。"
+        "未见归一化、复制、分配、NULL字串门；getter重新取count且可返回NULL，查找直接交比较；具体容器字段和返回生命周期另证。"
       ],
       "source_records": [
         {
@@ -1562,6 +1562,1428 @@
           "value": "retn    4"
         }
       ]
+    },
+    {
+      "va": "0x858e50",
+      "name": "sub_858E50",
+      "status": "局部语义已审阅",
+      "fresh_evidence": true,
+      "conclusion": "无栈参数；以ACB8E8为ECX调用85B800并原样返回EAX，普通ret。",
+      "unknown": [
+        "count精确字段公式见85B800；全局初始化、并发和清理契约未闭合。"
+      ],
+      "source_records": [
+        {
+          "path": "证据/supplement_formal.json",
+          "sha256": "de0695a485ae5f34f83e3239bfdb8711a42c495079c78f65ad39970d09952551",
+          "pointer": "/functions/0"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x858e50",
+          "end_va": "0x858e8c",
+          "is_main": true
+        }
+      ],
+      "original_byte_ranges": [
+        {
+          "va": "0x858e50",
+          "size": 60,
+          "idb_hex": "558bec81ecc00000005356578dbd40ffffffb930000000b8ccccccccf3abb9e8b8ac00e8eb8adaff5f5e5b81c4c00000003bece8ee26dbff8be55dc3",
+          "disk_hex": "558bec81ecc00000005356578dbd40ffffffb930000000b8ccccccccf3abb9e8b8ac00e8eb8adaff5f5e5b81c4c00000003bece8ee26dbff8be55dc3",
+          "matching": true,
+          "sha256": "05b0b9bfa41148c17585081be66d61d4f8a7041cacdf434e0e54456711afcaa5"
+        }
+      ],
+      "anchors": [
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/0/text",
+          "site_va": "0x858e50",
+          "value": "push    ebp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/1/text",
+          "site_va": "0x858e51",
+          "value": "mov     ebp, esp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/2/text",
+          "site_va": "0x858e53",
+          "value": "sub     esp, 0C0h"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/3/text",
+          "site_va": "0x858e59",
+          "value": "push    ebx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/4/text",
+          "site_va": "0x858e5a",
+          "value": "push    esi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/5/text",
+          "site_va": "0x858e5b",
+          "value": "push    edi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/6/text",
+          "site_va": "0x858e5c",
+          "value": "lea     edi, [ebp+var_C0]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/7/text",
+          "site_va": "0x858e62",
+          "value": "mov     ecx, 30h"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/8/text",
+          "site_va": "0x858e67",
+          "value": "mov     eax, 0CCCCCCCCh"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/9/text",
+          "site_va": "0x858e6c",
+          "value": "rep stosd"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/10/text",
+          "site_va": "0x858e6e",
+          "value": "mov     ecx, offset unk_ACB8E8"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/11/text",
+          "site_va": "0x858e73",
+          "value": "call    sub_601963"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/12/text",
+          "site_va": "0x858e78",
+          "value": "pop     edi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/13/text",
+          "site_va": "0x858e79",
+          "value": "pop     esi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/14/text",
+          "site_va": "0x858e7a",
+          "value": "pop     ebx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/15/text",
+          "site_va": "0x858e7b",
+          "value": "add     esp, 0C0h"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/16/text",
+          "site_va": "0x858e81",
+          "value": "cmp     ebp, esp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/17/text",
+          "site_va": "0x858e83",
+          "value": "call    j___RTC_CheckEsp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/18/text",
+          "site_va": "0x858e88",
+          "value": "mov     esp, ebp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/19/text",
+          "site_va": "0x858e8a",
+          "value": "pop     ebp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/0/assembly/20/text",
+          "site_va": "0x858e8b",
+          "value": "retn"
+        }
+      ]
+    },
+    {
+      "va": "0x858ea0",
+      "name": "sub_858EA0",
+      "status": "局部语义已审阅",
+      "fresh_evidence": true,
+      "conclusion": "栈signed索引；负数或不小于再次读取的count返回NULL，否则ACB8E8对象调用85B870取得槽地址后解引用DWORD返回，普通ret。",
+      "unknown": [
+        "没有slot或槽内指针NULL门；容器具体布局由85B870另核；返回有效期和所有权转移未证。"
+      ],
+      "source_records": [
+        {
+          "path": "证据/supplement_formal.json",
+          "sha256": "de0695a485ae5f34f83e3239bfdb8711a42c495079c78f65ad39970d09952551",
+          "pointer": "/functions/1"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x858ea0",
+          "end_va": "0x858ef6",
+          "is_main": true
+        }
+      ],
+      "original_byte_ranges": [
+        {
+          "va": "0x858ea0",
+          "size": 86,
+          "idb_hex": "558bec81ecc00000005356578dbd40ffffffb930000000b8ccccccccf3ab837d08007c0ae8057edbff3945087c0433c0eb108b450850b9e8b8ac00e869e0daff8b005f5e5b81c4c00000003bece88426dbff8be55dc3",
+          "disk_hex": "558bec81ecc00000005356578dbd40ffffffb930000000b8ccccccccf3ab837d08007c0ae8057edbff3945087c0433c0eb108b450850b9e8b8ac00e869e0daff8b005f5e5b81c4c00000003bece88426dbff8be55dc3",
+          "matching": true,
+          "sha256": "3db84601830bb45d3b4ffb9cc23fc9f621d3382568588037f73d0ed43d6d976a"
+        }
+      ],
+      "anchors": [
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/0/text",
+          "site_va": "0x858ea0",
+          "value": "push    ebp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/1/text",
+          "site_va": "0x858ea1",
+          "value": "mov     ebp, esp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/2/text",
+          "site_va": "0x858ea3",
+          "value": "sub     esp, 0C0h"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/3/text",
+          "site_va": "0x858ea9",
+          "value": "push    ebx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/4/text",
+          "site_va": "0x858eaa",
+          "value": "push    esi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/5/text",
+          "site_va": "0x858eab",
+          "value": "push    edi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/6/text",
+          "site_va": "0x858eac",
+          "value": "lea     edi, [ebp+var_C0]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/7/text",
+          "site_va": "0x858eb2",
+          "value": "mov     ecx, 30h"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/8/text",
+          "site_va": "0x858eb7",
+          "value": "mov     eax, 0CCCCCCCCh"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/9/text",
+          "site_va": "0x858ebc",
+          "value": "rep stosd"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/10/text",
+          "site_va": "0x858ebe",
+          "value": "cmp     [ebp+arg_0], 0"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/11/text",
+          "site_va": "0x858ec2",
+          "value": "jl      short loc_858ECE"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/12/text",
+          "site_va": "0x858ec4",
+          "value": "call    sub_610CCE"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/13/text",
+          "site_va": "0x858ec9",
+          "value": "cmp     [ebp+arg_0], eax"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/14/text",
+          "site_va": "0x858ecc",
+          "value": "jl      short loc_858ED2"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/15/text",
+          "site_va": "0x858ece",
+          "value": "xor     eax, eax"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/16/text",
+          "site_va": "0x858ed0",
+          "value": "jmp     short loc_858EE2"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/17/text",
+          "site_va": "0x858ed2",
+          "value": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/18/text",
+          "site_va": "0x858ed5",
+          "value": "push    eax"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/19/text",
+          "site_va": "0x858ed6",
+          "value": "mov     ecx, offset unk_ACB8E8"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/20/text",
+          "site_va": "0x858edb",
+          "value": "call    sub_606F49"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/21/text",
+          "site_va": "0x858ee0",
+          "value": "mov     eax, [eax]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/22/text",
+          "site_va": "0x858ee2",
+          "value": "pop     edi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/23/text",
+          "site_va": "0x858ee3",
+          "value": "pop     esi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/24/text",
+          "site_va": "0x858ee4",
+          "value": "pop     ebx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/25/text",
+          "site_va": "0x858ee5",
+          "value": "add     esp, 0C0h"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/26/text",
+          "site_va": "0x858eeb",
+          "value": "cmp     ebp, esp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/27/text",
+          "site_va": "0x858eed",
+          "value": "call    j___RTC_CheckEsp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/28/text",
+          "site_va": "0x858ef2",
+          "value": "mov     esp, ebp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/29/text",
+          "site_va": "0x858ef4",
+          "value": "pop     ebp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/1/assembly/30/text",
+          "site_va": "0x858ef5",
+          "value": "retn"
+        }
+      ]
+    },
+    {
+      "va": "0x922830",
+      "name": "_strcmp",
+      "status": "局部语义已审阅",
+      "fresh_evidence": true,
+      "conclusion": "两个字节串的无符号逐字节序比较；相同至NUL返回0，首个不等返回-1或+1；Str1有对齐WORD/DWORD预读。",
+      "unknown": [
+        "不检查NULL和可读长度；物理宽读取可越过逻辑NUL；编码、对象容量和调用环境另证。"
+      ],
+      "source_records": [
+        {
+          "path": "证据/supplement_formal.json",
+          "sha256": "de0695a485ae5f34f83e3239bfdb8711a42c495079c78f65ad39970d09952551",
+          "pointer": "/functions/2"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x922830",
+          "end_va": "0x9228b8",
+          "is_main": true
+        }
+      ],
+      "original_byte_ranges": [
+        {
+          "va": "0x922830",
+          "size": 136,
+          "idb_hex": "8b5424048b4c2408f7c203000000753c8b023a01752e0ac074263a610175250ae4741dc1e8103a410275190ac074113a6103751083c10483c2040ae475d28bff33c0c3901bc0d1e083c001c3f7c20100000074188a0283c2013a0175e783c1010ac074dcf7c20200000074a4668b0283c2023a0175ce0ac074c63a610175c50ae474bd83c102eb88",
+          "disk_hex": "8b5424048b4c2408f7c203000000753c8b023a01752e0ac074263a610175250ae4741dc1e8103a410275190ac074113a6103751083c10483c2040ae475d28bff33c0c3901bc0d1e083c001c3f7c20100000074188a0283c2013a0175e783c1010ac074dcf7c20200000074a4668b0283c2023a0175ce0ac074c63a610175c50ae474bd83c102eb88",
+          "matching": true,
+          "sha256": "b88e392a72effabe7a1bc73017ee600186707911d4eda5691e692edb744e0c9c"
+        }
+      ],
+      "anchors": [
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/0/text",
+          "site_va": "0x922830",
+          "value": "mov     edx, [esp+Str1]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/1/text",
+          "site_va": "0x922834",
+          "value": "mov     ecx, [esp+Str2]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/2/text",
+          "site_va": "0x922838",
+          "value": "test    edx, 3"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/3/text",
+          "site_va": "0x92283e",
+          "value": "jnz     short dopartial"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/4/text",
+          "site_va": "0x922840",
+          "value": "mov     eax, [edx]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/5/text",
+          "site_va": "0x922842",
+          "value": "cmp     al, [ecx]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/6/text",
+          "site_va": "0x922844",
+          "value": "jnz     short donene"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/7/text",
+          "site_va": "0x922846",
+          "value": "or      al, al"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/8/text",
+          "site_va": "0x922848",
+          "value": "jz      short doneeq"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/9/text",
+          "site_va": "0x92284a",
+          "value": "cmp     ah, [ecx+1]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/10/text",
+          "site_va": "0x92284d",
+          "value": "jnz     short donene"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/11/text",
+          "site_va": "0x92284f",
+          "value": "or      ah, ah"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/12/text",
+          "site_va": "0x922851",
+          "value": "jz      short doneeq"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/13/text",
+          "site_va": "0x922853",
+          "value": "shr     eax, 10h"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/14/text",
+          "site_va": "0x922856",
+          "value": "cmp     al, [ecx+2]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/15/text",
+          "site_va": "0x922859",
+          "value": "jnz     short donene"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/16/text",
+          "site_va": "0x92285b",
+          "value": "or      al, al"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/17/text",
+          "site_va": "0x92285d",
+          "value": "jz      short doneeq"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/18/text",
+          "site_va": "0x92285f",
+          "value": "cmp     ah, [ecx+3]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/19/text",
+          "site_va": "0x922862",
+          "value": "jnz     short donene"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/20/text",
+          "site_va": "0x922864",
+          "value": "add     ecx, 4"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/21/text",
+          "site_va": "0x922867",
+          "value": "add     edx, 4"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/22/text",
+          "site_va": "0x92286a",
+          "value": "or      ah, ah"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/23/text",
+          "site_va": "0x92286c",
+          "value": "jnz     short dodwords"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/24/text",
+          "site_va": "0x92286e",
+          "value": "mov     edi, edi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/25/text",
+          "site_va": "0x922870",
+          "value": "xor     eax, eax"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/26/text",
+          "site_va": "0x922872",
+          "value": "retn"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/28/text",
+          "site_va": "0x922874",
+          "value": "sbb     eax, eax"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/29/text",
+          "site_va": "0x922876",
+          "value": "shl     eax, 1"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/30/text",
+          "site_va": "0x922878",
+          "value": "add     eax, 1"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/31/text",
+          "site_va": "0x92287b",
+          "value": "retn"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/32/text",
+          "site_va": "0x92287c",
+          "value": "test    edx, 1"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/33/text",
+          "site_va": "0x922882",
+          "value": "jz      short doword"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/34/text",
+          "site_va": "0x922884",
+          "value": "mov     al, [edx]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/35/text",
+          "site_va": "0x922886",
+          "value": "add     edx, 1"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/36/text",
+          "site_va": "0x922889",
+          "value": "cmp     al, [ecx]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/37/text",
+          "site_va": "0x92288b",
+          "value": "jnz     short donene"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/38/text",
+          "site_va": "0x92288d",
+          "value": "add     ecx, 1"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/39/text",
+          "site_va": "0x922890",
+          "value": "or      al, al"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/40/text",
+          "site_va": "0x922892",
+          "value": "jz      short doneeq"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/41/text",
+          "site_va": "0x922894",
+          "value": "test    edx, 2"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/42/text",
+          "site_va": "0x92289a",
+          "value": "jz      short dodwords"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/43/text",
+          "site_va": "0x92289c",
+          "value": "mov     ax, [edx]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/44/text",
+          "site_va": "0x92289f",
+          "value": "add     edx, 2"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/45/text",
+          "site_va": "0x9228a2",
+          "value": "cmp     al, [ecx]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/46/text",
+          "site_va": "0x9228a4",
+          "value": "jnz     short donene"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/47/text",
+          "site_va": "0x9228a6",
+          "value": "or      al, al"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/48/text",
+          "site_va": "0x9228a8",
+          "value": "jz      short doneeq"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/49/text",
+          "site_va": "0x9228aa",
+          "value": "cmp     ah, [ecx+1]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/50/text",
+          "site_va": "0x9228ad",
+          "value": "jnz     short donene"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/51/text",
+          "site_va": "0x9228af",
+          "value": "or      ah, ah"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/52/text",
+          "site_va": "0x9228b1",
+          "value": "jz      short doneeq"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/53/text",
+          "site_va": "0x9228b3",
+          "value": "add     ecx, 2"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/2/assembly/54/text",
+          "site_va": "0x9228b6",
+          "value": "jmp     short dodwords"
+        }
+      ]
+    },
+    {
+      "va": "0x9228e0",
+      "name": "_strncmp",
+      "status": "局部语义已审阅",
+      "fresh_evidence": true,
+      "conclusion": "n为零不读字串并返回0；DF=0时先在Str1最多n字节内扫描NUL，再比较扫描长度，返回无符号字节序的-1/0/+1。",
+      "unknown": [
+        "不执行cld，依赖DF=0 ABI前提；先扫描可能读过较早的不匹配位置；不检查指针和外部容量。"
+      ],
+      "source_records": [
+        {
+          "path": "证据/supplement_formal.json",
+          "sha256": "de0695a485ae5f34f83e3239bfdb8711a42c495079c78f65ad39970d09952551",
+          "pointer": "/functions/3"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x9228e0",
+          "end_va": "0x922919",
+          "is_main": true
+        }
+      ],
+      "original_byte_ranges": [
+        {
+          "va": "0x9228e0",
+          "size": 57,
+          "idb_hex": "558bec5756538b4d10e3278bd98b7d088bf733c0f2aef7d903cb8bfe8b750cf3a68a46ff33c93a47ff7705740583e902f7d18bc15b5e5fc9c3",
+          "disk_hex": "558bec5756538b4d10e3278bd98b7d088bf733c0f2aef7d903cb8bfe8b750cf3a68a46ff33c93a47ff7705740583e902f7d18bc15b5e5fc9c3",
+          "matching": true,
+          "sha256": "591725832adb8343cdb0b00cb336d17f54bf82c34875ede3bece382072dd0644"
+        }
+      ],
+      "anchors": [
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/0/text",
+          "site_va": "0x9228e0",
+          "value": "push    ebp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/1/text",
+          "site_va": "0x9228e1",
+          "value": "mov     ebp, esp"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/2/text",
+          "site_va": "0x9228e3",
+          "value": "push    edi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/3/text",
+          "site_va": "0x9228e4",
+          "value": "push    esi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/4/text",
+          "site_va": "0x9228e5",
+          "value": "push    ebx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/5/text",
+          "site_va": "0x9228e6",
+          "value": "mov     ecx, [ebp+MaxCount]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/6/text",
+          "site_va": "0x9228e9",
+          "value": "jecxz   short toend_0"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/7/text",
+          "site_va": "0x9228eb",
+          "value": "mov     ebx, ecx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/8/text",
+          "site_va": "0x9228ed",
+          "value": "mov     edi, [ebp+Str1]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/9/text",
+          "site_va": "0x9228f0",
+          "value": "mov     esi, edi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/10/text",
+          "site_va": "0x9228f2",
+          "value": "xor     eax, eax"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/11/text",
+          "site_va": "0x9228f4",
+          "value": "repne scasb"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/12/text",
+          "site_va": "0x9228f6",
+          "value": "neg     ecx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/13/text",
+          "site_va": "0x9228f8",
+          "value": "add     ecx, ebx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/14/text",
+          "site_va": "0x9228fa",
+          "value": "mov     edi, esi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/15/text",
+          "site_va": "0x9228fc",
+          "value": "mov     esi, [ebp+Str2]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/16/text",
+          "site_va": "0x9228ff",
+          "value": "repe cmpsb"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/17/text",
+          "site_va": "0x922901",
+          "value": "mov     al, [esi-1]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/18/text",
+          "site_va": "0x922904",
+          "value": "xor     ecx, ecx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/19/text",
+          "site_va": "0x922906",
+          "value": "cmp     al, [edi-1]"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/20/text",
+          "site_va": "0x922909",
+          "value": "ja      short lastbig"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/21/text",
+          "site_va": "0x92290b",
+          "value": "jz      short toend_0"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/22/text",
+          "site_va": "0x92290d",
+          "value": "sub     ecx, 2"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/23/text",
+          "site_va": "0x922910",
+          "value": "not     ecx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/24/text",
+          "site_va": "0x922912",
+          "value": "mov     eax, ecx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/25/text",
+          "site_va": "0x922914",
+          "value": "pop     ebx"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/26/text",
+          "site_va": "0x922915",
+          "value": "pop     esi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/27/text",
+          "site_va": "0x922916",
+          "value": "pop     edi"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/28/text",
+          "site_va": "0x922917",
+          "value": "leave"
+        },
+        {
+          "path": "证据/supplement_formal.json",
+          "pointer": "/functions/3/assembly/29/text",
+          "site_va": "0x922918",
+          "value": "retn"
+        }
+      ]
+    },
+    {
+      "va": "0x85b800",
+      "name": "sub_85B800",
+      "status": "局部语义已审阅",
+      "fresh_evidence": true,
+      "conclusion": "ECX容器；+4 DWORD为0返回0，否则返回32位(+8减+4)结果算术右移2，普通ret。",
+      "unknown": [
+        "未验证end>=begin、差值整除4、指针来源或同步；不能据此推出取槽公式。"
+      ],
+      "source_records": [
+        {
+          "path": "证据/container_formal.json",
+          "sha256": "932a0c858758693631402e92e517f23bb0158a1dad2c78bd0626877e96022ff5",
+          "pointer": "/functions/0"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x85b800",
+          "end_va": "0x85b85a",
+          "is_main": true
+        }
+      ],
+      "original_byte_ranges": [
+        {
+          "va": "0x85b800",
+          "size": 90,
+          "idb_hex": "558bec81ecd0000000535657518dbd30ffffffb934000000b8ccccccccf3ab59894df88b45f883780400750cc78530ffffff00000000eb158b4df88b55f88b41082b4204c1f802898530ffffff8b8530ffffff5f5e5b8be55dc3",
+          "disk_hex": "558bec81ecd0000000535657518dbd30ffffffb934000000b8ccccccccf3ab59894df88b45f883780400750cc78530ffffff00000000eb158b4df88b55f88b41082b4204c1f802898530ffffff8b8530ffffff5f5e5b8be55dc3",
+          "matching": true,
+          "sha256": "a0ce734238bbc1bbc9383e9bdf2659fe1add3b63e7d3696c7a127459d46c76d1"
+        }
+      ],
+      "anchors": [
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/0/text",
+          "site_va": "0x85b800",
+          "value": "push    ebp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/1/text",
+          "site_va": "0x85b801",
+          "value": "mov     ebp, esp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/2/text",
+          "site_va": "0x85b803",
+          "value": "sub     esp, 0D0h"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/3/text",
+          "site_va": "0x85b809",
+          "value": "push    ebx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/4/text",
+          "site_va": "0x85b80a",
+          "value": "push    esi"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/5/text",
+          "site_va": "0x85b80b",
+          "value": "push    edi"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/6/text",
+          "site_va": "0x85b80c",
+          "value": "push    ecx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/7/text",
+          "site_va": "0x85b80d",
+          "value": "lea     edi, [ebp+var_D0]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/8/text",
+          "site_va": "0x85b813",
+          "value": "mov     ecx, 34h"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/9/text",
+          "site_va": "0x85b818",
+          "value": "mov     eax, 0CCCCCCCCh"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/10/text",
+          "site_va": "0x85b81d",
+          "value": "rep stosd"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/11/text",
+          "site_va": "0x85b81f",
+          "value": "pop     ecx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/12/text",
+          "site_va": "0x85b820",
+          "value": "mov     [ebp+var_8], ecx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/13/text",
+          "site_va": "0x85b823",
+          "value": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/14/text",
+          "site_va": "0x85b826",
+          "value": "cmp     dword ptr [eax+4], 0"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/15/text",
+          "site_va": "0x85b82a",
+          "value": "jnz     short loc_85B838"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/16/text",
+          "site_va": "0x85b82c",
+          "value": "mov     [ebp+var_D0], 0"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/17/text",
+          "site_va": "0x85b836",
+          "value": "jmp     short loc_85B84D"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/18/text",
+          "site_va": "0x85b838",
+          "value": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/19/text",
+          "site_va": "0x85b83b",
+          "value": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/20/text",
+          "site_va": "0x85b83e",
+          "value": "mov     eax, [ecx+8]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/21/text",
+          "site_va": "0x85b841",
+          "value": "sub     eax, [edx+4]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/22/text",
+          "site_va": "0x85b844",
+          "value": "sar     eax, 2"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/23/text",
+          "site_va": "0x85b847",
+          "value": "mov     [ebp+var_D0], eax"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/24/text",
+          "site_va": "0x85b84d",
+          "value": "mov     eax, [ebp+var_D0]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/25/text",
+          "site_va": "0x85b853",
+          "value": "pop     edi"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/26/text",
+          "site_va": "0x85b854",
+          "value": "pop     esi"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/27/text",
+          "site_va": "0x85b855",
+          "value": "pop     ebx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/28/text",
+          "site_va": "0x85b856",
+          "value": "mov     esp, ebp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/29/text",
+          "site_va": "0x85b858",
+          "value": "pop     ebp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/0/assembly/30/text",
+          "site_va": "0x85b859",
+          "value": "retn"
+        }
+      ]
+    },
+    {
+      "va": "0x85b870",
+      "name": "sub_85B870",
+      "status": "局部语义已审阅",
+      "fresh_evidence": true,
+      "conclusion": "ECX容器和一个索引；预压索引和两个局部地址，串联85B740/85C660/85BB10，EAX原样返回，ret4。",
+      "unknown": [
+        "三个下层helper具体参数消费和取槽映射未完全闭合；不能声明base+4*i，不证明数组第i项或所有权。"
+      ],
+      "source_records": [
+        {
+          "path": "证据/container_formal.json",
+          "sha256": "932a0c858758693631402e92e517f23bb0158a1dad2c78bd0626877e96022ff5",
+          "pointer": "/functions/1"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x85b870",
+          "end_va": "0x85b8d1",
+          "is_main": true
+        }
+      ],
+      "original_byte_ranges": [
+        {
+          "va": "0x85b870",
+          "size": 97,
+          "idb_hex": "558bec81ece4000000535657518dbd1cffffffb939000000b8ccccccccf3ab59894df88b4508508d8d2cffffff518d9520ffffff528b4df8e8c1b4daff8bc8e8fe89daff8bc8e8c10fdbff5f5e5b81c4e40000003bece8abfcdaff8be55dc20400",
+          "disk_hex": "558bec81ece4000000535657518dbd1cffffffb939000000b8ccccccccf3ab59894df88b4508508d8d2cffffff518d9520ffffff528b4df8e8c1b4daff8bc8e8fe89daff8bc8e8c10fdbff5f5e5b81c4e40000003bece8abfcdaff8be55dc20400",
+          "matching": true,
+          "sha256": "b633265445e4e3d344ecfa826b13e8f4af764d5a11e89b6ed150632d0119cbd2"
+        }
+      ],
+      "anchors": [
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/0/text",
+          "site_va": "0x85b870",
+          "value": "push    ebp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/1/text",
+          "site_va": "0x85b871",
+          "value": "mov     ebp, esp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/2/text",
+          "site_va": "0x85b873",
+          "value": "sub     esp, 0E4h"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/3/text",
+          "site_va": "0x85b879",
+          "value": "push    ebx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/4/text",
+          "site_va": "0x85b87a",
+          "value": "push    esi"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/5/text",
+          "site_va": "0x85b87b",
+          "value": "push    edi"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/6/text",
+          "site_va": "0x85b87c",
+          "value": "push    ecx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/7/text",
+          "site_va": "0x85b87d",
+          "value": "lea     edi, [ebp+var_E4]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/8/text",
+          "site_va": "0x85b883",
+          "value": "mov     ecx, 39h"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/9/text",
+          "site_va": "0x85b888",
+          "value": "mov     eax, 0CCCCCCCCh"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/10/text",
+          "site_va": "0x85b88d",
+          "value": "rep stosd"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/11/text",
+          "site_va": "0x85b88f",
+          "value": "pop     ecx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/12/text",
+          "site_va": "0x85b890",
+          "value": "mov     [ebp+var_8], ecx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/13/text",
+          "site_va": "0x85b893",
+          "value": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/14/text",
+          "site_va": "0x85b896",
+          "value": "push    eax"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/15/text",
+          "site_va": "0x85b897",
+          "value": "lea     ecx, [ebp+var_D4]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/16/text",
+          "site_va": "0x85b89d",
+          "value": "push    ecx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/17/text",
+          "site_va": "0x85b89e",
+          "value": "lea     edx, [ebp+var_E0]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/18/text",
+          "site_va": "0x85b8a4",
+          "value": "push    edx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/19/text",
+          "site_va": "0x85b8a5",
+          "value": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/20/text",
+          "site_va": "0x85b8a8",
+          "value": "call    sub_606D6E"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/21/text",
+          "site_va": "0x85b8ad",
+          "value": "mov     ecx, eax"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/22/text",
+          "site_va": "0x85b8af",
+          "value": "call    sub_6042B2"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/23/text",
+          "site_va": "0x85b8b4",
+          "value": "mov     ecx, eax"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/24/text",
+          "site_va": "0x85b8b6",
+          "value": "call    sub_60C87C"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/25/text",
+          "site_va": "0x85b8bb",
+          "value": "pop     edi"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/26/text",
+          "site_va": "0x85b8bc",
+          "value": "pop     esi"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/27/text",
+          "site_va": "0x85b8bd",
+          "value": "pop     ebx"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/28/text",
+          "site_va": "0x85b8be",
+          "value": "add     esp, 0E4h"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/29/text",
+          "site_va": "0x85b8c4",
+          "value": "cmp     ebp, esp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/30/text",
+          "site_va": "0x85b8c6",
+          "value": "call    j___RTC_CheckEsp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/31/text",
+          "site_va": "0x85b8cb",
+          "value": "mov     esp, ebp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/32/text",
+          "site_va": "0x85b8cd",
+          "value": "pop     ebp"
+        },
+        {
+          "path": "证据/container_formal.json",
+          "pointer": "/functions/1/assembly/33/text",
+          "site_va": "0x85b8ce",
+          "value": "retn    4"
+        }
+      ]
     }
   ],
   "reused_reviews": [
@@ -2929,5 +4351,14 @@
       "status": "短契约：A76728根getter无栈参数；构造深语义不展开"
     }
   ],
-  "scope": "四新主体与一个指定旧主体局部静态语义；七短依赖仅限定契约，caller窗口、桥及表槽只导航"
+  "scope": "四全局新主本体、六本轮采证依赖（四全局新、两旧CRT重采）与一个指定旧主体局部静态语义；七旧短依赖限定契约，caller窗口、桥及表槽只导航",
+  "evidence_counting": {
+    "global_new_functions": 8,
+    "reacquired_crt_functions": [
+      "0x922830",
+      "0x9228e0"
+    ],
+    "fresh_evidence_meaning": "当前轮次重新采集原证；不等于全局首次出现",
+    "historical_sources": "证据/historical_crt_sources.json"
+  }
 }

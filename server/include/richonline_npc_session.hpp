@@ -11,6 +11,7 @@ struct RichonlineNpcSessionResult {
     RichonlineNpcWait wait;
     bool sent_stop4013;
     std::optional<std::uint8_t> bankrupt_actor{};
+    std::optional<RichonlineSummonedNpc> summoned{};
 };
 struct RichonlineNpcBadluckPolicy {
     std::uint8_t resource_affix_turns;
@@ -108,6 +109,7 @@ public:
     // Candidate positions are an explicit server selection policy: C2S112
     // does not transmit the client's viewport or a chosen ground NPC.
     // The request's target byte is an actor, never an NPC ID.
+    // Eligible positions retain caller order before the chooser is applied.
     RichonlineNpcSessionResult deity_card(View request,const RichonlineLandingContext& source,
         std::uint16_t current_calendar,RichonlineActorStatus& target_status,bool target_selectable,
         std::span<const std::int16_t> candidate_ground_positions,const RichonlineRouteChooser&);

@@ -34,10 +34,10 @@ std::map<std::string,std::map<std::string,std::string>> sections(std::string_vie
     }
     return result;
 }
-float building(const std::array<float,8>& levels,std::optional<std::uint8_t> level) {
+float building(const std::array<RichonlineBuildingBuffRule,8>& levels,std::optional<std::uint8_t> level) {
     if (!level) return 1.0F;
     if (*level==0 || *level>=levels.size()) throw CodecError("richonline_combat_resource_buff_level_invalid");
-    return levels[*level];
+    return levels[*level].multiplier;
 }
 std::vector<std::map<std::string,std::string>> prop_records(std::string_view text) {
     if (text.empty() || text.size()>8U*1024U*1024U || text.find('\0')!=text.npos)
@@ -68,13 +68,14 @@ RichonlineCombatModifierResources RichonlineCombatModifierResources::parse(std::
             if (field==found->second.end()) throw CodecError("richonline_combat_resource_level_missing");
             const auto first=field->second.find(','),last=field->second.rfind(',');
             if (first==field->second.npos || first==last) throw CodecError("richonline_combat_resource_level_invalid");
-            (void)integer(std::string_view(field->second).substr(0,first));
-            (void)integer(std::string_view(field->second).substr(first+1,last-first-1));
+            const auto period=integer(std::string_view(field->second).substr(0,first));
+            const auto duration=integer(std::string_view(field->second).substr(first+1,last-first-1));
             const auto percent=integer(std::string_view(field->second).substr(last+1));
             const bool attack=std::string_view(section)=="ZHONG";
             if ((!attack && percent>100) || percent>10000) throw CodecError("richonline_combat_resource_percentage_invalid");
             const auto base=attack?100+percent:100-percent;
-            (attack?result.attack_building_:result.defense_building_)[level]=static_cast<float>(base)/100.0F;
+            (attack?result.attack_building_:result.defense_building_)[level]=
+                {period,duration,static_cast<float>(base)/100.0F};
         }
     }
     const auto props_parsed=prop_records(props);
@@ -117,6 +118,12 @@ float RichonlineCombatModifierResources::attack_building(std::optional<std::uint
 }
 float RichonlineCombatModifierResources::defense_building(std::optional<std::uint8_t> level) const {
     return building(defense_building_,level);
+}
+const RichonlineBuildingBuffRule& RichonlineCombatModifierResources::building_buff(
+    std::int8_t kind,std::uint8_t level) const {
+    if((kind!=13 && kind!=14) || level==0 || level>=attack_building_.size())
+        throw CodecError("richonline_combat_resource_buff_rule_invalid");
+    return (kind==14 ? attack_building_ : defense_building_)[level];
 }
 RichonlineEquipmentCombatTerms RichonlineCombatModifierResources::equipment(
     const std::array<std::uint32_t,32>& words,std::uint32_t cash) const {

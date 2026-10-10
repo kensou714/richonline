@@ -77,7 +77,7 @@ def validate():
         for chunk in row.get('declared_chunks', []):
             lo, hi = int(chunk['start_va'], 16), int(chunk['end_va'], 16)
             assert any(int(c.get('va', c.get('start_va')), 16) == lo and c['size'] == hi-lo for c in chunks)
-        if row.get('seed_va', row.get('va')) in {'0x6a4a80', '0x6a4860', '0x6b7cb0'}:
+        if row.get('seed_va', row.get('va')) in {'0x6a4a80', '0x6a4860', '0x6b7cb0', '0x6b7c60', '0x6a76e0', '0x6b9af0', '0x6a1190'} and chunks:
             saved_heads = {int(i.get('va', i.get('site_va')), 16) for i in row['assembly'] if i.get('is_code', True)}
             assert saved_heads == known, ('新主体声明块指令不得缺漏', row.get('seed_va', row.get('va')))
         return bool(chunks)
@@ -90,9 +90,27 @@ def validate():
     scan(formal)
     for row in raw['functions']+formal['functions']:
         assert declared(row)
-    direct_bridges = {r['start_va']: r for r in raw['verified_direct_bridges']}
+    supplement_bytes = (HERE/'supplement_raw.json').read_bytes()
+    assert hashlib.sha256(supplement_bytes).hexdigest() == 'ddbf83a1e09e062ebaf5dbe06e6418c5ae02b55cd723f0219d6fc93d91eda0b2'
+    supplement = json.loads(supplement_bytes)
+    supplement_formal = json.loads((HERE/'supplement_formal.json').read_bytes())
+    assert supplement['disk_sha256'] == supplement_formal['disk_sha256'] == EXPECTED
+    assert supplement_formal['source_sha256'] == hashlib.sha256(supplement_bytes).hexdigest()
+    assert len(supplement['functions']) == len(supplement_formal['functions']) == 4
+    scan(supplement)
+    scan(supplement_formal)
+    for row in supplement['functions']+supplement_formal['functions']:
+        assert declared(row)
+    for row in supplement_formal['functions']:
+        old = pointer(supplement, row['source']['json_pointer'])
+        assert row['source']['sha256'] == supplement_formal['source_sha256']
+        assert row['va'] == old['seed_va'] and row['end_va'] == old['end_va']
+        assert row['pseudocode'] == old['pseudocode'] and row['decompile_error'] == old['decompile_error']
+        assert row['assembly'] == [dict(va=i['site_va'], text=i['text'], is_code=i['is_code']) for i in old['assembly']]
+        assert row['chunk_byte_ranges'] == [dict(va=c['start_va'], **{k:v for k,v in c.items() if k!='start_va'}) for c in old['chunk_byte_ranges']]
+    direct_bridges = {r['start_va']: r for r in raw['verified_direct_bridges']+supplement['verified_direct_bridges']}
     direct_calls, indirect_slots = 0, 0
-    for call in raw['calls']:
+    for call in raw['calls']+supplement['calls']:
         va = int(call['site_va'], 16)
         data = disk(va, 5)
         if data[0] == 0xE8:
@@ -158,7 +176,8 @@ def validate():
             assert [(c['start_va'], c['size'], c['idb_hex']) for c in current] == [(c['va'], c['size'], c['idb_hex']) for c in saved]
     review = json.loads((HERE.parent/'function_review.json').read_bytes())
     assert len(review['functions']) == 3 and len(review['reused_reviews']) == 2 and len(review['dependency_reviews']) == 5
-    reviews = review['functions']+review['reused_reviews']+review['dependency_reviews']
+    assert len(review['supplement_reviews']) == 4
+    reviews = review['functions']+review['reused_reviews']+review['dependency_reviews']+review['supplement_reviews']
     for row in reviews:
         assert row['unknown'] and row['anchors']
         for ref in row['source_records']:
@@ -174,13 +193,20 @@ def validate():
             assert pointer(json.loads((HERE.parent/anchor['path']).read_bytes()), anchor['pointer']) == anchor['value']
             assert int(anchor['site_va'], 16) in heads
     docs = list(HERE.parent.glob('*.txt'))
-    assert len(docs) == 7
+    assert len(docs) == 8
     assert all(not line.strip() or line.startswith('//') for p in docs for line in p.read_text(encoding='utf-8').splitlines())
     fresh_bytes = sum(c['size'] for row in formal['functions'] for c in row['chunk_byte_ranges'])
     fresh_instructions = sum(len(row['assembly']) for row in formal['functions'])
     assert (fresh_bytes, fresh_instructions) == (1411, 370)
+    supplement_sizes = {row['va']: (sum(c['size'] for c in row['chunk_byte_ranges']), len(row['assembly'])) for row in supplement_formal['functions']}
+    assert supplement_sizes == {'0x6b7c60': (52,17), '0x6a76e0': (356,87), '0x6b9af0': (36,13), '0x6a1190': (69,18)}
     result = dict(status='PASS', disk_sha256=EXPECTED, prepared_wrapper_sha256=WRAPPER_SHA,
         fresh_functions=3, fresh_declared_bytes=fresh_bytes, fresh_instruction_entries=fresh_instructions,
+        supplemental_functions=4, supplemental_declared_bytes=513, supplemental_instruction_entries=135,
+        supplemental_new_functions=3, supplemental_new_declared_bytes=444, supplemental_new_instruction_entries=117,
+        old_current_supplement=dict(va='0x6a1190', bytes=69, instructions=18),
+        total_new_functions=6, total_new_declared_bytes=1855, total_new_instruction_entries=487,
+        total_current_exported_declared_bytes=1924, total_current_exported_instruction_entries=505,
         reused_subject_reviews=2, finite_dependency_reviews=5, reused_records=len(reused['records']),
         reviewed_instruction_anchors=sum(len(row['anchors']) for row in reviews),
         reused_auxiliary_records=len(auxiliary['records']),
@@ -188,7 +214,7 @@ def validate():
         verified_direct_call_records=direct_calls, verified_indirect_call_slots=indirect_slots,
         weak_original_navigation=weak, callback_bridge_endpoint='0x6b7c60',
         documents={p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in docs},
-        limitation='静态局部生命周期及有限ABI；6A1190旧弱源只导航，callback端点及深释放未由本基批强闭合。')
+        limitation='静态局部生命周期及有限ABI；6A1190旧弱源仍只导航，当前补证另核；6B7BB0/6BA4A0/82C4E0仅桥端点，全部初始化及深释放未强闭合。')
     (HERE/'author_validation.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
     return result
 

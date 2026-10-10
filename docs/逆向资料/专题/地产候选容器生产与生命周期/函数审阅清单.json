@@ -1,0 +1,141 @@
+{
+  "stage": "作者静态审阅；独审另记",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "functions": [
+    {
+      "va": "0x7ecd50",
+      "status": "完整函数静态审阅",
+      "conclusion": "ECX容器构造只清+0C指针并返回this；不清数量/容量/增长",
+      "unknown": "完整类名、上层重建时机与分配失败策略未闭合",
+      "evidence": "证据/formal_functions.json#/functions/0",
+      "document": "01_容器字段与生命周期.txt",
+      "coverage_origin": "本批新原证入口"
+    },
+    {
+      "va": "0x7ecd80",
+      "status": "完整函数静态审阅",
+      "conclusion": "ECX容器析构转7ECF70；恢复this，正常释放后只清指针，无业务成功值",
+      "unknown": "完整类名、上层重建时机与分配失败策略未闭合",
+      "evidence": "证据/formal_functions.json#/functions/1",
+      "document": "01_容器字段与生命周期.txt",
+      "coverage_origin": "旧完整原证本批重采；不计新增原证入口"
+    },
+    {
+      "va": "0x6004b4",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x7ecf70",
+      "unknown": "仅本桥静态目标，不证明后端全部语义或动态可达",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/0",
+      "document": "03_来源分层与复核边界.txt",
+      "coverage_origin": "本批IDA桥原证；全局去重由中央完成"
+    },
+    {
+      "va": "0x60b576",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x91f6d0",
+      "unknown": "仅本桥静态目标，不证明后端全部语义或动态可达",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/1",
+      "document": "03_来源分层与复核边界.txt",
+      "coverage_origin": "本批IDA桥原证；全局去重由中央完成"
+    },
+    {
+      "va": "0x605a9f",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x7ecd50",
+      "unknown": "仅本桥静态目标，不证明后端全部语义或动态可达",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/2",
+      "document": "03_来源分层与复核边界.txt",
+      "coverage_origin": "本批IDA桥原证；全局去重由中央完成"
+    },
+    {
+      "va": "0x60e528",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x7ecd80",
+      "unknown": "仅本桥静态目标，不证明后端全部语义或动态可达",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/3",
+      "document": "03_来源分层与复核边界.txt",
+      "coverage_origin": "本批IDA桥原证；全局去重由中央完成"
+    }
+  ],
+  "dependency_contracts": [
+    {
+      "va": "0x7ecdb0",
+      "contract": "初始化数量/容量/增长并覆盖分配指针，RET8",
+      "scope": "旧中文已逐函数分析；本批只复用并补核，不冒充新增",
+      "evidence": "证据/formal_functions.json#/legacy_reused_functions/0"
+    },
+    {
+      "va": "0x7ece30",
+      "contract": "signed数量/容量比较，按旧容量复制，写低WORD并返回插入下标，RET4",
+      "scope": "旧中文已逐函数分析；本批只复用并补核，不冒充新增",
+      "evidence": "证据/formal_functions.json#/legacy_reused_functions/1"
+    },
+    {
+      "va": "0x63f540",
+      "contract": "运行时R+0 signed BYTE为11或12",
+      "scope": "旧中文已逐函数分析；本批只复用并补核，不冒充新增",
+      "evidence": "证据/formal_functions.json#/legacy_reused_functions/2"
+    },
+    {
+      "va": "0x692030",
+      "contract": "运行时R+1 signed BYTE为8/9/10",
+      "scope": "旧中文已逐函数分析；本批只复用并补核，不冒充新增",
+      "evidence": "证据/formal_functions.json#/legacy_reused_functions/3"
+    },
+    {
+      "va": "0x7ecf70",
+      "contract": "非空指针调用delete[]，返回后清+0C；其他三个DWORD不变",
+      "scope": "旧完整原证短契约复用，非新原证",
+      "evidence": "证据/formal_functions.json#/historical_dependencies/1"
+    }
+  ],
+  "windows": [
+    {
+      "owner_va": "0x7de310",
+      "window_status": "有限生命周期与生产路径复核",
+      "window_conclusion": "C实例、初始参数、递增分流或EH清理动作；不认领完整owner新成果",
+      "evidence": [
+        "证据/formal_functions.json#/caller_windows/0",
+        "证据/formal_functions.json#/caller_windows/1",
+        "证据/bounded_raw.json#/explicit_owner_windows/0",
+        "证据/bounded_raw.json#/explicit_owner_windows/1"
+      ],
+      "document": "02_地图生产顺序与筛选闭环.txt"
+    },
+    {
+      "owner_va": "0x7de5c0",
+      "window_status": "有限生命周期与生产路径复核",
+      "window_conclusion": "C实例、初始参数、递增分流或EH清理动作；不认领完整owner新成果",
+      "evidence": [
+        "证据/formal_functions.json#/caller_windows/2",
+        "证据/formal_functions.json#/caller_windows/3",
+        "证据/bounded_raw.json#/explicit_owner_windows/2",
+        "证据/bounded_raw.json#/explicit_owner_windows/3"
+      ],
+      "document": "02_地图生产顺序与筛选闭环.txt"
+    },
+    {
+      "owner_va": "0x7df010",
+      "window_status": "有限生命周期与生产路径复核",
+      "window_conclusion": "C实例、初始参数、递增分流或EH清理动作；不认领完整owner新成果",
+      "evidence": [
+        "证据/formal_functions.json#/caller_windows/4",
+        "证据/formal_functions.json#/caller_windows/5",
+        "证据/formal_functions.json#/caller_windows/6",
+        "证据/formal_functions.json#/caller_windows/7",
+        "证据/formal_functions.json#/caller_windows/8",
+        "证据/formal_functions.json#/caller_windows/9",
+        "证据/bounded_raw.json#/explicit_owner_windows/4",
+        "证据/bounded_raw.json#/explicit_owner_windows/5",
+        "证据/bounded_raw.json#/explicit_owner_windows/6",
+        "证据/bounded_raw.json#/explicit_owner_windows/7",
+        "证据/bounded_raw.json#/explicit_owner_windows/8",
+        "证据/bounded_raw.json#/explicit_owner_windows/9",
+        "证据/bounded_raw.json#/explicit_owner_windows/10",
+        "证据/bounded_raw.json#/explicit_owner_windows/11"
+      ],
+      "document": "02_地图生产顺序与筛选闭环.txt"
+    }
+  ],
+  "scope": "2当次主体(1全局新+1旧重采)、4IDA桥；4中文旧体与1旧释放短契约独立分层"
+}

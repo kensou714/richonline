@@ -5,14 +5,12 @@
 
 namespace richnet {
 namespace {
-std::optional<std::uint32_t> source(std::optional<std::uint32_t>* ref) { return ref?*ref:std::nullopt; }
 bool unchanged(const RichonlineCombatActorRef& ref,const RichonlineCombatActorView& expected) noexcept {
     return ref.status && *ref.status==expected.status && ref.position==expected.position &&
         ref.capabilities.active==expected.active && ref.capabilities.in_hospital==expected.in_hospital &&
         ref.capabilities.in_prison==expected.in_prison && ref.capabilities.mine_immune_vehicle==expected.mine_immune_vehicle &&
         ref.capabilities.attack_modifiers_enabled==expected.attack_modifiers_enabled &&
-        (!ref.active || *ref.active==expected.active) && source(ref.attack_building_source)==expected.attack_building_source &&
-        source(ref.defense_building_source)==expected.defense_building_source;
+        (!ref.active || *ref.active==expected.active);
 }
 }
 RichonlineCombatBridge::RichonlineCombatBridge(std::uint16_t game,std::shared_ptr<RichonlineGameLedger> ledger,
@@ -37,13 +35,12 @@ RichonlineCombatBridge::Snapshot RichonlineCombatBridge::snapshot(std::span<cons
         actor.active=ref.capabilities.active;actor.in_hospital=ref.capabilities.in_hospital;
         actor.in_prison=ref.capabilities.in_prison;actor.mine_immune_vehicle=ref.capabilities.mine_immune_vehicle;
         actor.attack_modifiers_enabled=ref.capabilities.attack_modifiers_enabled;
-        actor.attack_building_source=source(ref.attack_building_source);
-        actor.defense_building_source=source(ref.defense_building_source);
         actor.funds=ledger_->snapshot(ref.slot);
         if(ref.slot==0) actor.inventory=cards_->inventory();
         state.actors[ref.slot]=actor;
     }
     result.property=property_->combat_snapshot();state.buildings=result.property.buildings;
+    set_richonline_combat_building_buffs(state,result.property.buffs);
     if(result.property.decision_pending) throw CodecError("richonline_combat_bridge_property_pending");
     result.ground=ground_->snapshot();state.mines.revision=result.ground.revision;state.mines.last_day=last_day_;
     for(const auto& [position,object]:result.ground.objects) {
@@ -70,7 +67,8 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::apply(std::span<const Richo
             static_cast<std::uint8_t>(mine.owner),mine.remaining_days}).second)
             throw CodecError("richonline_combat_bridge_ground_collision");
     auto prepared_ground=ground_->prepare(before.ground,after_ground);
-    const auto prepared_property=property_->prepare_combat(before.property,plan.after.buildings,missile_round);
+    const auto buffs=richonline_combat_building_buffs(plan.after);
+    const auto prepared_property=property_->prepare_combat(before.property,plan.after.buildings,missile_round,&buffs);
     // Unchanged actors are also checked by the ledger, so a callback cannot
     // change another actor's funds during planning and escape the CAS.
     std::vector<RichonlineGameFundsUpdate> updates;
@@ -98,8 +96,6 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::apply(std::span<const Richo
         for(const auto& ref:refs) {
             const auto& actor=*plan.after.actors[ref.slot];*ref.status=actor.status;
             if(ref.active) *ref.active=actor.active;
-            if(ref.attack_building_source) *ref.attack_building_source=actor.attack_building_source;
-            if(ref.defense_building_source) *ref.defense_building_source=actor.defense_building_source;
         }
         revision_=plan.after.revision;last_day_=plan.after.mines.last_day;return true;
     });
@@ -153,7 +149,15 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::human_card(std::span<const 
         plan=prepare_richonline_combat_human_card(before.combat,world_,0,request,calendar,consumption);
     } catch(const CodecError& error) {
         if(!recover_refusal) throw;
-        if(log) log(std::string("richonline_attack_card_refused reason=")+error.what());
+        if(log) {
+            auto detail=std::string("richonline_attack_card_refused reason=")+error.what()+
+                " slot="+std::to_string(request.inventory_slot);
+            const auto& inventory=cards_->inventory();
+            for(std::size_t index=0;index<inventory.size();++index)
+                detail+=" hand["+std::to_string(index)+"]="+std::to_string(inventory[index].card_id)+
+                    ":"+std::to_string(inventory[index].count);
+            log(detail);
+        }
         return {{encode_richonline_dice_recovery400b(game_)},{}};
     }
     return apply(refs,before,std::move(*plan));

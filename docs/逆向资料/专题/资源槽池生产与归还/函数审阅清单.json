@@ -1,0 +1,567 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "functions": [
+    {
+      "va": "0x6d75a0",
+      "status": "完整局部分析",
+      "conclusion": "分配30000个DWORD，依次push 29999..0；正常路径返回this；异常尾仅记录清理跳转。",
+      "unknown": "分配失败与push返回均未在本体检查；尾目标62EB20语义及完整生命周期未闭。",
+      "source_path": "专题/资源槽池生产与归还/证据/bounded_raw.json",
+      "source_pointer": "/functions/0",
+      "source_sha256": "32bb1c22c33bd0ca58ba757e74943af2d1da4eb0514d7114c61c2f834ee0ca80",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d75a0",
+          "end_va": "0x6d7630",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa12af0",
+          "end_va": "0xa12b02",
+          "is_main": false
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/0"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6d75db",
+          "original_text": "push    7530h"
+        },
+        {
+          "va": "0x6d75e3",
+          "original_text": "call    sub_608B82"
+        },
+        {
+          "va": "0x6d75e8",
+          "original_text": "mov     [ebp+var_14], 752Fh"
+        },
+        {
+          "va": "0x6d75f4",
+          "original_text": "sub     eax, 1"
+        },
+        {
+          "va": "0x6d75fa",
+          "original_text": "cmp     [ebp+var_14], 0"
+        },
+        {
+          "va": "0x6d75fe",
+          "original_text": "jl      short loc_6D760E"
+        },
+        {
+          "va": "0x6d7607",
+          "original_text": "call    sub_60D21D"
+        },
+        {
+          "va": "0xa12af3",
+          "original_text": "jmp     sub_60EFAA"
+        }
+      ]
+    },
+    {
+      "va": "0x62eae0",
+      "status": "完整局部分析",
+      "conclusion": "只把this+0基址与+8计数清零，返回this；+4容量未写。",
+      "unknown": "自动CDBVariant名字不证明原类型；未分配前capacity无有效初值保证。",
+      "source_path": "专题/资源槽池生产与归还/证据/bounded_raw.json",
+      "source_pointer": "/functions/1",
+      "source_sha256": "32bb1c22c33bd0ca58ba757e74943af2d1da4eb0514d7114c61c2f834ee0ca80",
+      "declared_chunks": [
+        {
+          "start_va": "0x62eae0",
+          "end_va": "0x62eb08",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/1"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x62eaf1",
+          "original_text": "mov     dword ptr [eax], 0"
+        },
+        {
+          "va": "0x62eafa",
+          "original_text": "mov     dword ptr [ecx+8], 0"
+        },
+        {
+          "va": "0x62eb01",
+          "original_text": "mov     eax, [ebp+var_4]"
+        }
+      ]
+    },
+    {
+      "va": "0x6dfc30",
+      "status": "完整局部分析",
+      "conclusion": "清count，保存capacity，容量左移2后分配，原返回指针直接保存base，ret4。",
+      "unknown": "无容量有效域/移位溢出/NULL/旧base释放门；底层分配器异常语义未展开。",
+      "source_path": "专题/资源槽池生产与归还/证据/bounded_raw.json",
+      "source_pointer": "/functions/2",
+      "source_sha256": "32bb1c22c33bd0ca58ba757e74943af2d1da4eb0514d7114c61c2f834ee0ca80",
+      "declared_chunks": [
+        {
+          "start_va": "0x6dfc30",
+          "end_va": "0x6dfc84",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/2"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6dfc4a",
+          "original_text": "mov     dword ptr [eax+8], 0"
+        },
+        {
+          "va": "0x6dfc57",
+          "original_text": "mov     [ecx+4], edx"
+        },
+        {
+          "va": "0x6dfc5d",
+          "original_text": "shl     eax, 2"
+        },
+        {
+          "va": "0x6dfc61",
+          "original_text": "call    CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(uint,int)"
+        },
+        {
+          "va": "0x6dfc72",
+          "original_text": "mov     [ecx], edx"
+        },
+        {
+          "va": "0x6dfc81",
+          "original_text": "retn    4"
+        }
+      ]
+    },
+    {
+      "va": "0x6dfd50",
+      "status": "完整局部分析",
+      "conclusion": "signed count>=capacity，xor EAX后setnl AL，精确返回0或1。",
+      "unknown": "不是slot有效域或去重检查；负count非法状态不受该谓词修复。",
+      "source_path": "专题/资源槽池生产与归还/证据/bounded_raw.json",
+      "source_pointer": "/functions/3",
+      "source_sha256": "32bb1c22c33bd0ca58ba757e74943af2d1da4eb0514d7114c61c2f834ee0ca80",
+      "declared_chunks": [
+        {
+          "start_va": "0x6dfd50",
+          "end_va": "0x6dfd73",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/3"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6dfd64",
+          "original_text": "mov     edx, [eax+8]"
+        },
+        {
+          "va": "0x6dfd67",
+          "original_text": "xor     eax, eax"
+        },
+        {
+          "va": "0x6dfd69",
+          "original_text": "cmp     edx, [ecx+4]"
+        },
+        {
+          "va": "0x6dfd6c",
+          "original_text": "setnl   al"
+        }
+      ]
+    },
+    {
+      "va": "0x6d7690",
+      "status": "完整局部分析",
+      "conclusion": "ECX原pool、一个栈DWORD转发6DFCA0，正常RTC保留结果，ret4。",
+      "unknown": "伪码stdcall省略ECX；不额外检查slot或归还状态。",
+      "source_path": "专题/资源槽池生产与归还/证据/bounded_raw.json",
+      "source_pointer": "/functions/4",
+      "source_sha256": "32bb1c22c33bd0ca58ba757e74943af2d1da4eb0514d7114c61c2f834ee0ca80",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d7690",
+          "end_va": "0x6d76ba",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/4"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6d769e",
+          "original_text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x6d76a2",
+          "original_text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x6d76a5",
+          "original_text": "call    sub_60D21D"
+        },
+        {
+          "va": "0x6d76b7",
+          "original_text": "retn    4"
+        }
+      ]
+    },
+    {
+      "va": "0x6dbdf0",
+      "status": "完整局部分析",
+      "conclusion": "向C+40归还slot，随后无条件清BYTE[C+92A4C+slot]；保留push返回。",
+      "unknown": "失败也清BYTE；本体不清C+580CC反向表，无slot边界门；BYTE业务意义未闭。",
+      "source_path": "专题/资源槽池生产与归还/证据/bounded_raw.json",
+      "source_pointer": "/functions/5",
+      "source_sha256": "32bb1c22c33bd0ca58ba757e74943af2d1da4eb0514d7114c61c2f834ee0ca80",
+      "declared_chunks": [
+        {
+          "start_va": "0x6dbdf0",
+          "end_va": "0x6dbe2a",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/5"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6dbe05",
+          "original_text": "add     ecx, 40h ; '@'"
+        },
+        {
+          "va": "0x6dbe08",
+          "original_text": "call    j_unknown_libname_872"
+        },
+        {
+          "va": "0x6dbe10",
+          "original_text": "add     ecx, [ebp+arg_0]"
+        },
+        {
+          "va": "0x6dbe13",
+          "original_text": "mov     byte ptr [ecx+92A4Ch], 0"
+        },
+        {
+          "va": "0x6dbe27",
+          "original_text": "retn    4"
+        }
+      ]
+    }
+  ],
+  "historical_contracts": [
+    {
+      "va": "0x6dfca0",
+      "status": "既有窄契约复用",
+      "conclusion": "满池谓词AL真返回0，否则base[count]=slot、count++、返回1。",
+      "unknown": "不检查重复slot、slot范围、base非空或负count；泛型其他实例不等同资源池。",
+      "source_path": "专题/角色与精灵动画/证据/动画管理与骰子_IDA原始导出.json",
+      "source_pointer": "/functions/24",
+      "source_sha256": "6517121d65089901f33e079502ea26910fd65dab249381e9c6203fa4344588f0",
+      "declared_chunks": [
+        {
+          "start_va": "0x6dfca0",
+          "end_va": "0x6dfcf6",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/0"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6dfcb1",
+          "original_text": "call    sub_610724"
+        },
+        {
+          "va": "0x6dfcb6",
+          "original_text": "movzx   eax, al"
+        },
+        {
+          "va": "0x6dfccf",
+          "original_text": "mov     [ecx+edx*4], eax"
+        },
+        {
+          "va": "0x6dfcde",
+          "original_text": "mov     [eax+8], edx"
+        },
+        {
+          "va": "0x6dfce1",
+          "original_text": "mov     eax, 1"
+        }
+      ]
+    },
+    {
+      "va": "0x6d7660",
+      "status": "既有窄契约复用",
+      "conclusion": "ECX原pool转发6DFD10，正常RTC保留弹出DWORD。",
+      "unknown": "不增加空池门。",
+      "source_path": "专题/图像资源/证据/20261009_图像加载函数群.json",
+      "source_pointer": "/functions/18",
+      "source_sha256": "c7249d72dc7468b4cac66977ccdd34cbcf7051519df538f8b597ee0d2cd3efd5",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d7660",
+          "end_va": "0x6d7684",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/1"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6d7671",
+          "original_text": "call    sub_6044EC"
+        },
+        {
+          "va": "0x6d767b",
+          "original_text": "call    j___RTC_CheckEsp"
+        }
+      ]
+    },
+    {
+      "va": "0x6dfd10",
+      "status": "既有窄契约复用",
+      "conclusion": "count先减一并写回，再读base[count]，无空池门。",
+      "unknown": "空池会形成-1索引路径，不宣称实机已越界。",
+      "source_path": "专题/图像资源/证据/20261009_图像加载函数群.json",
+      "source_pointer": "/functions/19",
+      "source_sha256": "c7249d72dc7468b4cac66977ccdd34cbcf7051519df538f8b597ee0d2cd3efd5",
+      "declared_chunks": [
+        {
+          "start_va": "0x6dfd10",
+          "end_va": "0x6dfd3f",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/2"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6dfd24",
+          "original_text": "sub     ecx, 1"
+        },
+        {
+          "va": "0x6dfd2a",
+          "original_text": "mov     [edx+8], ecx"
+        },
+        {
+          "va": "0x6dfd38",
+          "original_text": "mov     eax, [eax+ecx*4]"
+        }
+      ]
+    },
+    {
+      "va": "0x6d8130",
+      "status": "部分分析",
+      "conclusion": "15个取槽/登记站跨12配置文件，均用同一Destination+40池，slot写记录+4后反向表保存记录地址。",
+      "unknown": "全loader仅机械核，语义限15站与类别/派生条件；不含完整配置解析失败与全部初始化。",
+      "source_path": "专题/4019系列事件/证据/resource_loader_scope.json",
+      "source_pointer": "/functions/0",
+      "source_sha256": "27806e010c6173904c9741240f89360e9f251b36a25664f3ea4b8c0f331cc0d3",
+      "declared_chunks": [
+        {
+          "start_va": "0x6d8130",
+          "end_va": "0x6da758",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa12c98",
+          "end_va": "0xa12d60",
+          "is_main": false
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/3"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x6d8443",
+          "original_text": "cmp     [ebp+var_20], 0Fh"
+        },
+        {
+          "va": "0x6d8540",
+          "original_text": "cmp     [ebp+var_20], 0Bh"
+        },
+        {
+          "va": "0x6d8544",
+          "original_text": "jz      short loc_6D8550"
+        },
+        {
+          "va": "0x6d8546",
+          "original_text": "cmp     [ebp+var_20], 0Ch"
+        },
+        {
+          "va": "0x6d854a",
+          "original_text": "jnz     loc_6D861C"
+        },
+        {
+          "va": "0x6d8553",
+          "original_text": "add     edx, 2"
+        },
+        {
+          "va": "0x6d85d4",
+          "original_text": "mov     [ecx+edx+8], eax"
+        },
+        {
+          "va": "0x6d8a5f",
+          "original_text": "cmp     [ebp+var_20], 0Ah"
+        },
+        {
+          "va": "0x6d8d25",
+          "original_text": "cmp     [ebp+var_24], 0Ah"
+        },
+        {
+          "va": "0x6d8d50",
+          "original_text": "cmp     [ebp+var_2C], 0Ah"
+        },
+        {
+          "va": "0x6d904f",
+          "original_text": "cmp     [ebp+var_28], 4"
+        },
+        {
+          "va": "0x6d907a",
+          "original_text": "cmp     [ebp+var_2C], 0Ah"
+        },
+        {
+          "va": "0x6d919f",
+          "original_text": "cmp     [ebp+var_28], 1"
+        },
+        {
+          "va": "0x6d91a3",
+          "original_text": "jnz     loc_6D92A9"
+        },
+        {
+          "va": "0x6d91a9",
+          "original_text": "mov     [ebp+var_18], 3"
+        },
+        {
+          "va": "0x6d924d",
+          "original_text": "mov     dword ptr [edx+ecx+8], 0"
+        },
+        {
+          "va": "0x6d9483",
+          "original_text": "cmp     [ebp+var_28], 4"
+        },
+        {
+          "va": "0x6d94ae",
+          "original_text": "cmp     [ebp+var_2C], 64h ; 'd'"
+        },
+        {
+          "va": "0x6d95df",
+          "original_text": "cmp     [ebp+var_28], 1"
+        },
+        {
+          "va": "0x6d95e3",
+          "original_text": "jnz     loc_6D96FB"
+        },
+        {
+          "va": "0x6d95e9",
+          "original_text": "mov     [ebp+var_18], 3"
+        },
+        {
+          "va": "0x6d9699",
+          "original_text": "mov     dword ptr [ecx+eax+8], 0"
+        },
+        {
+          "va": "0x6d98d5",
+          "original_text": "cmp     [ebp+var_20], 64h ; 'd'"
+        },
+        {
+          "va": "0x6d9e1b",
+          "original_text": "cmp     [ebp+var_20], 64h ; 'd'"
+        },
+        {
+          "va": "0x6da361",
+          "original_text": "cmp     [ebp+var_20], 64h ; 'd'"
+        }
+      ]
+    },
+    {
+      "va": "0x627760",
+      "status": "既有窄契约复用",
+      "conclusion": "627760为配置根访问器，连接地图及75C580窗口的ECX身份。",
+      "unknown": "单例构造整体、线程行为与其他子系统生命周期不扩审。",
+      "source_path": "专题/40B0系列事件/证据/monster_helpers.json",
+      "source_pointer": "/functions/0",
+      "source_sha256": "863f39fd5b79cc1c6abe04d8955e06319d3bd43b5f3daeec86c492a2c1eafa8d",
+      "declared_chunks": [
+        {
+          "start_va": "0x627760",
+          "end_va": "0x6277fd",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa11290",
+          "end_va": "0xa112a5",
+          "is_main": false
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/4"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x627790",
+          "original_text": "cmp     dword_A766B0, 0"
+        },
+        {
+          "va": "0x627799",
+          "original_text": "push    99FE8h; Size"
+        },
+        {
+          "va": "0x6277e0",
+          "original_text": "mov     eax, dword_A766B0"
+        }
+      ]
+    },
+    {
+      "va": "0x91f6d0",
+      "status": "既有窄契约复用",
+      "conclusion": "RTC正常相等路径直接返回并保留EAX。",
+      "unknown": "诊断失败分支不展开。",
+      "source_path": "专题/4060系列事件/证据/callees.json",
+      "source_pointer": "/functions/10",
+      "source_sha256": "6784b6ffbf2efeca47d7a4051fc14ea0cde016006a72f07bbdf991f4824fabd6",
+      "declared_chunks": [
+        {
+          "start_va": "0x91f6d0",
+          "end_va": "0x91f6f5",
+          "is_main": true
+        }
+      ],
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/5"
+      },
+      "semantic_anchors": [
+        {
+          "va": "0x91f6d0",
+          "original_text": "jnz     short $esperror$26206"
+        },
+        {
+          "va": "0x91f6d2",
+          "original_text": "retn"
+        }
+      ]
+    }
+  ],
+  "scope": "6新完整局部本体、6旧窄/局部复用；窗口与桥不加函数审阅。"
+}

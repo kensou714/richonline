@@ -64,7 +64,9 @@ public:
         std::uint64_t revision;
         std::vector<RichonlineCombatBuildingView> buildings;
         bool decision_pending;
+        RichonlineBuildingBuffState buffs;
     };
+    void advance_building_buffs(std::uint64_t round,std::span<const bool> active,bool enabled,const GameLogSink& log);
     class PreparedMissileRound {
     public:
         const std::vector<RichonlineMissileBaseSalvo>& salvos() const noexcept { return salvos_; }
@@ -86,6 +88,7 @@ public:
         CombatSnapshot expected_{};
         std::vector<RichonlineCombatBuildingView> after_;
         std::optional<PreparedMissileRound> missile_round_;
+        std::optional<RichonlineBuildingBuffState> buffs_after_;
         friend class RichonlineBossProperty;
     };
     // All methods share the session's serialization. No second ownership store.
@@ -93,11 +96,13 @@ public:
     RichonlineCombatBuildingView combat_building_effect(const RichonlineCombatBuildingView&,
         RichonlineBossBlastBuildingEffect) const;
     PreparedCombat prepare_combat(const CombatSnapshot&,
-        std::span<const RichonlineCombatBuildingView> after,const PreparedMissileRound* missile_round=nullptr) const;
+        std::span<const RichonlineCombatBuildingView> after,const PreparedMissileRound* missile_round=nullptr,
+        const RichonlineBuildingBuffState* buffs_after=nullptr) const;
     PreparedCombat prepare_house_card(std::int16_t position,std::uint8_t actor) const;
     PreparedCombat prepare_purchase_card(std::int16_t property_ref,std::uint8_t actor) const;
     PreparedCombat prepare_destruction_card(std::int16_t property_ref,std::uint8_t levels) const;
     PreparedCombat prepare_conversion_card(std::int16_t property_ref,std::int8_t kind,std::uint8_t actor) const;
+    PreparedCombat prepare_classic_conversion_card(std::int16_t property_ref,std::int8_t kind) const;
     PreparedCombat prepare_swap_card(std::int16_t source,std::int16_t target,bool buildings) const;
     PreparedCombat prepare_growth_card(std::int16_t source,std::optional<std::uint8_t> owner,int levels) const;
     bool combat_matches(const PreparedCombat&) const noexcept;
@@ -126,6 +131,13 @@ private:
     struct MissileRule { std::uint8_t rounds,shots; RichonlineMissileBaseTarget target; };
     std::array<MissileRule,7> missile_rules_{};
     std::optional<std::uint64_t> last_missile_round_;
+    RichonlineBuildingBuffState building_buffs_;
+    std::shared_ptr<const RichonlineCombatModifierResources> buff_resources_;
+    std::optional<std::uint64_t> last_buff_round_;
+    RichonlineBuildingBuffRecipients buff_recipients() const;
+    RichonlineBuildingBuffProperty buff_property(std::int16_t ref,const Property&) const;
+    void plan_buff_changes(PreparedCombat&,std::span<const RichonlineBuildingBuffChange>) const;
+    void commit_buff_state(const RichonlineBuildingBuffState&) noexcept;
     std::chrono::milliseconds timeout_{0};
     Now now_;
     std::optional<Clock::time_point> deadline_;

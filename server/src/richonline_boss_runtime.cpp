@@ -276,6 +276,7 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_runtime(
                 read_le(View(extension).subspan(68,4)));
             RichonlineBossSessionPolicy session_policy{selected.opaque_turn7,selected.inactive_ui_dice,
                 {selected.opaque20_23,0,selected.optional_tail},uniform_choice,selected_cards,selected_bank};
+            session_policy.script_database=[&storage](const LuaValue& request) {return storage.script_batch(request);};
             RichonlineStartupPlan raw_plan{startup.init,startup.snapshot,startup.envelope,{},{},{}};
             auto raw_authority=attach_richonline_raw_authority(raw_plan);
             const bool closed_raw=package.raw_status_policy==RichonlineMapRawStatusPolicy::closed_boss_initial_status;

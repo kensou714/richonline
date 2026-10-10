@@ -1,0 +1,719 @@
+{
+  "schema": "richonline.bounded-semantic-review.v1",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "topic": "角色标记图像选择与控件消费；历史目录名保留",
+  "functions": [
+    {
+      "va": "0x6f4db0",
+      "status": "完整分析",
+      "conclusion": "cdecl一参数；R的记录类别为2或7时，按另一根的有符号数量扫描R的角色标记BYTE，首非零i调用T的(10,47,i+40,-1)并直接返回；未匹配返回-1。",
+      "unknown": "输入索引合法域、标记数组容量、资源47业务名及运行时UI效果未证。",
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/0"
+      },
+      "source_sha256": "d3f6cc36649f163aab76931e1fa8b62573be4027e6f57f7a5cdc06764df053a6",
+      "declared_chunks": [
+        {
+          "start_va": "0x6f4db0",
+          "end_va": "0x6f4e63",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 59,
+      "semantic_anchors": [
+        {
+          "va": "0x6f4ddf",
+          "tokens": [
+            "cmp eax, 2"
+          ]
+        },
+        {
+          "va": "0x6f4df0",
+          "tokens": [
+            "cmp eax, 7"
+          ]
+        },
+        {
+          "va": "0x6f4e1c",
+          "tokens": [
+            "jge"
+          ]
+        },
+        {
+          "va": "0x6f4e2e",
+          "tokens": [
+            "movzx eax, al"
+          ]
+        },
+        {
+          "va": "0x6f4e3c",
+          "tokens": [
+            "0x28"
+          ]
+        },
+        {
+          "va": "0x6f4e40",
+          "tokens": [
+            "0x2f"
+          ]
+        },
+        {
+          "va": "0x6f4e42",
+          "tokens": [
+            "0xa"
+          ]
+        },
+        {
+          "va": "0x6f4e50",
+          "tokens": [
+            "jmp 0x6f4e55"
+          ]
+        },
+        {
+          "va": "0x6f4e52",
+          "tokens": [
+            "0xffffffff"
+          ]
+        },
+        {
+          "va": "0x6f4e62",
+          "tokens": [
+            "ret"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x7014a0",
+      "status": "完整分析",
+      "conclusion": "thiscall一索引、ret4；读DWORD[DWORD[this]+1128*index+12]，本体无范围或空指针检查。",
+      "unknown": "记录生产者对index与根初始化的保障不在本函数内；类别2/7正式业务名待证。",
+      "evidence_ref": {
+        "file": "formal_functions.json",
+        "pointer": "/functions/1"
+      },
+      "source_sha256": "d3f6cc36649f163aab76931e1fa8b62573be4027e6f57f7a5cdc06764df053a6",
+      "declared_chunks": [
+        {
+          "start_va": "0x7014a0",
+          "end_va": "0x7014c6",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 13,
+      "semantic_anchors": [
+        {
+          "va": "0x7014b1",
+          "tokens": [
+            "0x468"
+          ]
+        },
+        {
+          "va": "0x7014ba",
+          "tokens": [
+            "[ecx]"
+          ]
+        },
+        {
+          "va": "0x7014bc",
+          "tokens": [
+            "0xc"
+          ]
+        },
+        {
+          "va": "0x7014c3",
+          "tokens": [
+            "ret 4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x756460",
+      "status": "部分分析",
+      "conclusion": "输入指针两DWORD分别写this+48/+4C；this+4C传6F4DB0，结果无-1过滤进入控件7的6FA7F0；另有期限图像及文本接口。",
+      "unknown": "列表提供者、虚函数具体派生实现及调用注册/用户触发未完整恢复；不认整函数业务完成。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/0"
+      },
+      "source_sha256": "d76969ddad24c540f150ce75ed598279a016ffb43428fb8ef7f4f50876fa7330",
+      "declared_chunks": [
+        {
+          "start_va": "0x756460",
+          "end_va": "0x75666f",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 178,
+      "semantic_anchors": [
+        {
+          "va": "0x75649a",
+          "tokens": [
+            "0x48"
+          ]
+        },
+        {
+          "va": "0x7564a6",
+          "tokens": [
+            "0x4c"
+          ]
+        },
+        {
+          "va": "0x75663a",
+          "tokens": [
+            "0x4c"
+          ]
+        },
+        {
+          "va": "0x75663e",
+          "tokens": [
+            "call 0x60bfdf"
+          ]
+        },
+        {
+          "va": "0x756646",
+          "tokens": [
+            "push eax"
+          ]
+        },
+        {
+          "va": "0x756649",
+          "tokens": [
+            "push 7"
+          ]
+        },
+        {
+          "va": "0x756658",
+          "tokens": [
+            "call 0x60bb48"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x762e10",
+      "status": "部分分析",
+      "conclusion": "this+64与第二gate的AL共同决定刷新；取DWORD[buffer+4*selection+4]给6F4DB0，无-1门直交控件C3；门失败仍进入76308F后布局路径；ret4但未读取栈参数。",
+      "unknown": "选择列表生产、容量与后半尺寸/位置函数完整业务契约未恢复；不认整函数业务完成。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/1"
+      },
+      "source_sha256": "d76969ddad24c540f150ce75ed598279a016ffb43428fb8ef7f4f50876fa7330",
+      "declared_chunks": [
+        {
+          "start_va": "0x762e10",
+          "end_va": "0x763160",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 277,
+      "semantic_anchors": [
+        {
+          "va": "0x762e3a",
+          "tokens": [
+            "0x64"
+          ]
+        },
+        {
+          "va": "0x762e40",
+          "tokens": [
+            "je 0x76308f"
+          ]
+        },
+        {
+          "va": "0x762e57",
+          "tokens": [
+            "je 0x76308f"
+          ]
+        },
+        {
+          "va": "0x762e60",
+          "tokens": [
+            "0x64",
+            "0"
+          ]
+        },
+        {
+          "va": "0x762ead",
+          "tokens": [
+            "ecx*4 + 4"
+          ]
+        },
+        {
+          "va": "0x762fcc",
+          "tokens": [
+            "call 0x60bfdf"
+          ]
+        },
+        {
+          "va": "0x762fd4",
+          "tokens": [
+            "push eax"
+          ]
+        },
+        {
+          "va": "0x762fd7",
+          "tokens": [
+            "0xc3"
+          ]
+        },
+        {
+          "va": "0x762fe9",
+          "tokens": [
+            "call 0x60bb48"
+          ]
+        },
+        {
+          "va": "0x76315d",
+          "tokens": [
+            "ret 4"
+          ]
+        }
+      ]
+    }
+  ],
+  "historical_contracts": [
+    {
+      "va": "0x627c20",
+      "status": "复用局部契约",
+      "conclusion": "A766E0懒取根R，分配14C；R+0为本批1128字节记录数组基址。",
+      "unknown": "构造器及分配失败业务恢复不展开。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/2"
+      },
+      "source_sha256": "a41f45ac4afa3852bf70accf9b5196701bf4cbfc0925e75d86812537e6f6c796",
+      "declared_chunks": [
+        {
+          "start_va": "0x627c20",
+          "end_va": "0x627cbd",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa11350",
+          "end_va": "0xa11365",
+          "is_main": false
+        }
+      ],
+      "instruction_count": 46,
+      "semantic_anchors": [
+        {
+          "va": "0x627c50",
+          "tokens": [
+            "0xa766e0"
+          ]
+        },
+        {
+          "va": "0x627c59",
+          "tokens": [
+            "0x14c"
+          ]
+        },
+        {
+          "va": "0x627ca0",
+          "tokens": [
+            "0xa766e0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6dba40",
+      "status": "复用局部契约",
+      "conclusion": "case10由48字节跳表独证；有符号检查两个索引，读DWORD[T的3AC00指针+1200*a3+12*a4+4]，本题a3=47/a4=i+40。",
+      "unknown": "其他case及图像记录生产不在本批语义认领；case10没有根或数据指针NULL门。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/3"
+      },
+      "source_sha256": "a41f45ac4afa3852bf70accf9b5196701bf4cbfc0925e75d86812537e6f6c796",
+      "declared_chunks": [
+        {
+          "start_va": "0x6dba40",
+          "end_va": "0x6dbdb4",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 256,
+      "semantic_anchors": [
+        {
+          "va": "0x6dba74",
+          "tokens": [
+            "0x6dbdb4"
+          ]
+        },
+        {
+          "va": "0x6dbac1",
+          "tokens": [
+            "jl"
+          ]
+        },
+        {
+          "va": "0x6dbac9",
+          "tokens": [
+            "0x3abfc"
+          ]
+        },
+        {
+          "va": "0x6dbacf",
+          "tokens": [
+            "jge"
+          ]
+        },
+        {
+          "va": "0x6dbad7",
+          "tokens": [
+            "0x64"
+          ]
+        },
+        {
+          "va": "0x6dbadb",
+          "tokens": [
+            "jge"
+          ]
+        },
+        {
+          "va": "0x6dbae0",
+          "tokens": [
+            "0x4b0"
+          ]
+        },
+        {
+          "va": "0x6dbae9",
+          "tokens": [
+            "0x3ac00"
+          ]
+        },
+        {
+          "va": "0x6dbaf2",
+          "tokens": [
+            "0xc"
+          ]
+        },
+        {
+          "va": "0x6dbaf5",
+          "tokens": [
+            "+ 4]"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6276a0",
+      "status": "复用局部契约",
+      "conclusion": "A766D0懒取独立档案根，分配8；本题仅经646590读取根首DWORD计数。",
+      "unknown": "档案3204字节记录不与R的1128字节记录合并。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/4"
+      },
+      "source_sha256": "731f48028d5d68698809e4adefc6e41cec7262dda2434f9e5188606852d84240",
+      "declared_chunks": [
+        {
+          "start_va": "0x6276a0",
+          "end_va": "0x62773a",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa11270",
+          "end_va": "0xa11285",
+          "is_main": false
+        }
+      ],
+      "instruction_count": 46,
+      "semantic_anchors": [
+        {
+          "va": "0x6276d0",
+          "tokens": [
+            "0xa766d0"
+          ]
+        },
+        {
+          "va": "0x6276d9",
+          "tokens": [
+            "push 8"
+          ]
+        },
+        {
+          "va": "0x62771d",
+          "tokens": [
+            "0xa766d0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x627760",
+      "status": "复用局部契约",
+      "conclusion": "A766B0懒取图像资源根T，分配99FE8；供6DBA40查询。",
+      "unknown": "根构造和加载过程不在本批展开。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/5"
+      },
+      "source_sha256": "731f48028d5d68698809e4adefc6e41cec7262dda2434f9e5188606852d84240",
+      "declared_chunks": [
+        {
+          "start_va": "0x627760",
+          "end_va": "0x6277fd",
+          "is_main": true
+        },
+        {
+          "start_va": "0xa11290",
+          "end_va": "0xa112a5",
+          "is_main": false
+        }
+      ],
+      "instruction_count": 46,
+      "semantic_anchors": [
+        {
+          "va": "0x627790",
+          "tokens": [
+            "0xa766b0"
+          ]
+        },
+        {
+          "va": "0x627799",
+          "tokens": [
+            "0x99fe8"
+          ]
+        },
+        {
+          "va": "0x6277e0",
+          "tokens": [
+            "0xa766b0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x646610",
+      "status": "复用局部契约",
+      "conclusion": "ECX=R，两个参数为i/input；取record(input)+14h的指针后读第i个BYTE，ret8。",
+      "unknown": "指针容量、i上限和input合法域无本地保护。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/6"
+      },
+      "source_sha256": "731f48028d5d68698809e4adefc6e41cec7262dda2434f9e5188606852d84240",
+      "declared_chunks": [
+        {
+          "start_va": "0x646610",
+          "end_va": "0x64663c",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 15,
+      "semantic_anchors": [
+        {
+          "va": "0x646621",
+          "tokens": [
+            "0x468"
+          ]
+        },
+        {
+          "va": "0x64662c",
+          "tokens": [
+            "0x14"
+          ]
+        },
+        {
+          "va": "0x646633",
+          "tokens": [
+            "mov al, byte ptr [eax + ecx]"
+          ]
+        },
+        {
+          "va": "0x646639",
+          "tokens": [
+            "ret 8"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6fa7f0",
+      "status": "复用局部契约",
+      "conclusion": "ECX=C，单个数值参数包装为8E1C70(C,C+A4,0,value)；ret4。",
+      "unknown": "返回寄存器不定义统一成功标志；资源加载与绘制不在包装器内。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/7"
+      },
+      "source_sha256": "731f48028d5d68698809e4adefc6e41cec7262dda2434f9e5188606852d84240",
+      "declared_chunks": [
+        {
+          "start_va": "0x6fa7f0",
+          "end_va": "0x6fa826",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 19,
+      "semantic_anchors": [
+        {
+          "va": "0x6fa802",
+          "tokens": [
+            "push 0"
+          ]
+        },
+        {
+          "va": "0x6fa807",
+          "tokens": [
+            "0xa4"
+          ]
+        },
+        {
+          "va": "0x6fa811",
+          "tokens": [
+            "call 0x60da8d"
+          ]
+        },
+        {
+          "va": "0x6fa823",
+          "tokens": [
+            "ret 4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x646590",
+      "status": "复用局部契约",
+      "conclusion": "返回DWORD[this]；本题this来自6276A0，解释为扫描数量。",
+      "unknown": "单独函数无类别、计数正值或NULL检查。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/8"
+      },
+      "source_sha256": "b705dce1be32f97c97ba85998ccce0af4f0c67c80d8ebf6be3500a0e2ec4e21b",
+      "declared_chunks": [
+        {
+          "start_va": "0x646590",
+          "end_va": "0x6465a7",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 10,
+      "semantic_anchors": [
+        {
+          "va": "0x6465a1",
+          "tokens": [
+            "mov eax, dword ptr [eax]"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x8e1c70",
+      "status": "复用局部契约",
+      "conclusion": "写P+40*state+24图像数值；旧值变化且旧值非-1时可调ACC3C8+2C回调，再写新值；依据C+180/+181门刷新。",
+      "unknown": "回调表实例及绘图效果复用旧专题；没有value=-1拒绝门。",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/9"
+      },
+      "source_sha256": "48f211f50edce414b44584010fb1ef53520012ad154ed4a5c8d6d0c609c9ce79",
+      "declared_chunks": [
+        {
+          "start_va": "0x8e1c70",
+          "end_va": "0x8e1ce1",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 46,
+      "semantic_anchors": [
+        {
+          "va": "0x8e1c85",
+          "tokens": [
+            "eax*8 + 0x18"
+          ]
+        },
+        {
+          "va": "0x8e1c91",
+          "tokens": [
+            "cmp eax, -1"
+          ]
+        },
+        {
+          "va": "0x8e1c9c",
+          "tokens": [
+            "0x2c"
+          ]
+        },
+        {
+          "va": "0x8e1caa",
+          "tokens": [
+            "mov dword ptr [ebx], ebp"
+          ]
+        },
+        {
+          "va": "0x8e1cac",
+          "tokens": [
+            "0x181"
+          ]
+        },
+        {
+          "va": "0x8e1cb6",
+          "tokens": [
+            "0x180"
+          ]
+        },
+        {
+          "va": "0x8e1cd5",
+          "tokens": [
+            "call 0x6033ee"
+          ]
+        }
+      ]
+    }
+  ],
+  "owner_windows": [
+    {
+      "owner_va": "0x747e10",
+      "site_va": "0x748206",
+      "status": "局部窗口分析",
+      "start_va": "0x7481f8",
+      "end_va": "0x748216",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/0"
+      },
+      "conclusion": "对象+50传入，返回后压0/7",
+      "unknown": "前后五指令窗口不能证明完整owner、变量生产或最终控件调用。"
+    },
+    {
+      "owner_va": "0x75ad50",
+      "site_va": "0x75b547",
+      "status": "局部窗口分析",
+      "start_va": "0x75b534",
+      "end_va": "0x75b55a",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/1"
+      },
+      "conclusion": "局部var_140传入，返回后压0/139Fh",
+      "unknown": "前后五指令窗口不能证明完整owner、变量生产或最终控件调用。"
+    }
+  ],
+  "data_evidence": [
+    {
+      "file": "switch_table/bounded_raw.json",
+      "pointer": "/data_windows/0",
+      "conclusion": "6DBDB4起12项48B，slot10=6DBABD；不计函数覆盖"
+    }
+  ],
+  "summary": {
+    "reviewed_functions": 4,
+    "complete": 2,
+    "partial": 2,
+    "reviewed_instructions": 527,
+    "historical_contracts": 8,
+    "historical_contract_instructions": 484,
+    "owner_windows": 2,
+    "direct_bridges": 32
+  },
+  "boundary": "完整仅指两新函数局部静态契约；两旧consumer部分分析、八旧helper复用、两显式窗口分列；非客户端动态验证。"
+}

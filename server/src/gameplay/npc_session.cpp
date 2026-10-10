@@ -388,9 +388,11 @@ RichonlineNpcSessionResult RichonlineNpcSession::deity_card(View request,const R
     if(decoded.kind==RichonlineDeityCard::summon1047) {
         if(!choose) throw CodecError("richonline_npc_session_summon_policy_missing");
         std::vector<std::pair<std::int16_t,RichonlineGroundObject>> candidates;
-        for(const auto& entry:before_ground.objects)
-            if(supported_npc(entry.second.npc) && std::find(candidates_allowed.begin(),candidates_allowed.end(),entry.first)!=candidates_allowed.end())
-                candidates.push_back(entry);
+        for(const auto position:candidates_allowed) {
+            const auto entry=before_ground.objects.find(position);
+            if(entry!=before_ground.objects.end() && supported_npc(entry->second.npc))
+                candidates.push_back(*entry);
+        }
         if(candidates.empty()) throw CodecError("richonline_npc_session_visible_god_missing");
         const auto index=choose(candidates.size());
         if(index>=candidates.size()) throw CodecError("richonline_npc_session_summon_rng_invalid");
@@ -438,6 +440,7 @@ RichonlineNpcSessionResult RichonlineNpcSession::deity_card(View request,const R
     if(!ground_->commit_prepared(prepared_ground)) throw CodecError("richonline_npc_session_ground_stale");
     spawner_=std::move(staged_spawner);cards_->commit_inventory(next_inventory);
     target_status=next_status;clocks_[target]=next_clock;++clock_generations_[target];
+    result.summoned=selected;
     if(result.wait==RichonlineNpcWait::roulette34)
         pending_=PendingMoney{source.actor_slot,decoded.calendar,*next_status.possession,RichonlineDeityMoneyOrigin::summoned_card,false};
     return result;

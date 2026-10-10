@@ -13,7 +13,35 @@ DOCS = ROOT / 'docs/逆向资料'
 SHA = 'a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2'
 FRESH = {0x6b20a0, 0x6b81d0, 0x6ad9f0, 0x73d560}
 REUSED = {0x6aebe0}
-FINAL_SHA = {}
+EXTRA = {0x858e50, 0x858ea0, 0x922830, 0x9228e0, 0x85b800, 0x85b870}
+FINAL_SHA = {
+    '独立审阅.txt': '1899adf659dd5f66c35db1b7b6a8bed11d120955c836360a33226b9508c46016',
+    '独立语义复核.txt': '9ff18fe2212313253abba957b225c19eb421fc8a11de93e405aa095b40bc43fd',
+    '00_有限采证实施计划.txt': '321d0e2650ffce351f16f768de444c0526ea332fe57d9bbc227b03e1cb7d19f1',
+    '00_阅读入口.txt': '6919dc79fbe9884e86e24a52051b8a3d84c886803db1a7d4b5ff582935b4f9aa',
+    '01_名称查找接口与返回边界.txt': '438b041070bb6a9576ee72c4c8357eb4b5d6858fa06caeab5dce2b7001037825',
+    '02_两组界面消费者与低字节ABI.txt': '1868714e54dcb2a9c686ae3ee2cfb30c1fccefee5d59c3bf2fac82b4ae325da6',
+    '03_邮件与记录消费者对照.txt': '17084132c41ca3fea5f5ff22f2d62edbd5f33051f7433fb0d04c0f6338185340',
+    '04_证据分层与后续缺口.txt': '339ff0ce69d129c2019cebea3282ecca3a982ec8d2295785304fade4c68f264d',
+    '05_名称容器与比较器补证.txt': 'f74f5c034586943605d5fd5cfed3f1bd34423286f342324b618a05d9399971e8',
+    'function_review.json': 'ed821c1f427bac49b48d263bbf7baff55b81b58b714b193c4ea54ae67466f180',
+    '证据/author_validation.json': 'f2df17acfad4d51fc9d29cc439d4fc50c4c51517c01805f0593d6978210eb792',
+    '证据/bounded_raw.json': '15be75a1ad6266da6a0df0010c3316ec45619f2e78f05ae691ddc50f4a50c1d6',
+    '证据/build_artifacts.py': 'b1b19012231956ffbb66eb1e92a19b9d56c550ab31a9265f4580fe1fc011cd6f',
+    '证据/container_formal.json': '932a0c858758693631402e92e517f23bb0158a1dad2c78bd0626877e96022ff5',
+    '证据/container_template_navigation.json': '35f2b0699f756d865e1abcc5e4e2ad7922e6b73874b23279a27d37043631c96e',
+    '证据/export_bounded.py': '81d24d58390fc223f1b326883bf84a6bd43a5e254ac4fe6a1224b851acee3e81',
+    '证据/export_container.py': '39a4167af1b34291e6ffa4394af76e6e209651baf2a95efcad26a5883c992cf9',
+    '证据/formal_functions.json': 'cd9940a7efd72bd7c10cb1f21f6734bdd490bf98d8f3808b78848ac0b190b193',
+    '证据/network_production_navigation.json': '01180775911ca89665fec9064b4fcfba5f6fe1017d2d90f3f24f4e946d8c20c1',
+    '证据/reused_raw.json': 'ee58756789775fbdc477e3ce6537fedbc1de5450956bdf9d6c59381581c71d26',
+    '证据/source_navigation.json': 'a5116ed511d7954af20ee1c66925bc2cf9a69cdbcb48c93d929ce17337c8f843',
+    '证据/supplement_formal.json': 'de0695a485ae5f34f83e3239bfdb8711a42c495079c78f65ad39970d09952551',
+    '证据/supplement_raw.json': '5211fcf04136f28f57a91453be58a22d8f01304f98393371726d06a4ef9770bf',
+    '证据/validate_author.py': '10ada2ae050e718a24e49a4fd308fcfa2f118a2a7222319d65fd27febb7fbac4',
+    '证据/historical_crt_sources.json': 'fd644f887ebb1eb619726868054fd2529deccd0bdfc9cb711a133895e15f0235',
+    '证据/container_dependency/bounded_raw.json': '50b81df4ceb2447338eee2df17334ebc7cc75944b9cc725dc30db056d05071cc',
+}
 PREVIEW_SHA = {
     '00_有限采证实施计划.txt': '321d0e2650ffce351f16f768de444c0526ea332fe57d9bbc227b03e1cb7d19f1',
     '00_阅读入口.txt': '295bf339e057a9f0b3b4acd0d889c570d26f79c83c463786d8ac3a60dcfc2300',
@@ -333,13 +361,63 @@ def review():
     assert path == (DOCS / '专题/四类型辅助请求与队列/证据/reused_network.json').resolve()
     assert ref['pointer'] == '' and digest(path.read_bytes()) == ref['sha256']
     assert production['original_document'] == historical_network
+    supplemental = runpy.run_path(str(HERE / 'independent_supplement_verify.py'), run_name='independent_readonly')['verify']()
+    history = load(HERE / 'historical_crt_sources.json')
+    assert len(history['records']) == 3
+    identities = supplemental['old_crt_sources'] + [supplemental['old_crt_reread']]
+    for entry, identity, range_key in zip(history['records'], identities, ['chunks', 'chunk_byte_ranges', None]):
+        ref = entry['source']
+        path = (HERE / ref['path']).resolve()
+        assert path == (DOCS / '专题' / identity['path']).resolve()
+        assert ref['sha256'] == identity['sha256'] == digest(path.read_bytes())
+        assert ref['pointer'] == identity['json_pointer']
+        assert entry['original_record'] == pointer(load(path), ref['pointer'])
+        assert entry['range_key'] == range_key
+    for raw_name, formal_name, status, scope in [
+        ('supplement_raw.json', 'supplement_formal.json', '必要依赖无损机械适配；语义见function_review.json',
+         '四个必要依赖完整声明块无损适配，保留922873非代码填充'),
+        ('container_dependency/bounded_raw.json', 'container_formal.json', '必要容器依赖无损适配；下层模板语义限定',
+         '两必要依赖无损适配；85B870不外推取槽公式'),
+    ]:
+        extra_raw = load(HERE / raw_name)
+        raw_digest = digest((HERE / raw_name).read_bytes())
+        extra_formal = load(HERE / formal_name)
+        expected = []
+        for index, f in enumerate(extra_raw['functions']):
+            ranges = [dict(va=c['start_va'], **{k: v for k, v in c.items() if k != 'start_va'})
+                      for c in f['chunk_byte_ranges']]
+            expected.append(dict(va=f['seed_va'], end_va=f['end_va'], name=f['name'], status=status,
+                pseudocode=f['pseudocode'], decompile_error=f['decompile_error'],
+                assembly=[dict(va=r['site_va'], text=r['text'], is_code=r['is_code']) for r in f['assembly']],
+                declared_chunks=[dict(start_va=c['va'], end_va=hex(int(c['va'], 16) + c['size']),
+                                      is_main=c['va'] == f['seed_va']) for c in ranges],
+                chunk_byte_ranges=ranges, bytes_match_disk=all(c['matching'] for c in ranges),
+                source=dict(path='证据/' + raw_name, sha256=raw_digest, json_pointer='/functions/' + str(index))))
+        assert extra_formal == dict(schema='richonline-formal-bounded-adaptation-1', disk_sha256=SHA,
+            source_sha256=raw_digest, functions=expected, scope=scope)
+    template = load(HERE / 'container_template_navigation.json')
+    ref = template['source']
+    path = (HERE / ref['path']).resolve()
+    assert digest(path.read_bytes()) == ref['sha256']
+    assert pointer(load(path), ref['pointer']) == template['original_record']
+    record = template['original_record']['function']
+    assert record['va'] == '0x85bb10'
+    body = [i for c in record['chunks'] for i in code(c)]
+    assert len(body) == len(record['instructions'])
+    for ins, row in zip(body, record['instructions']):
+        assert hex(ins.address) == row['va'] and ins.size == row['size'] and ins.bytes.hex() == row['hex']
+    assert instructions[0x85bb33].op_str == 'ecx, dword ptr [ebp - 8]'
+    assert instructions[0x85bb36].op_str == '0x60b7f6'
+    assert instructions[0x85bb4e].mnemonic == 'ret'
+    for w in template['original_record']['windows']:
+        code(w['block'])
     manifest = load(HERE.parent / 'function_review.json')
     assert manifest['disk_sha256'] == SHA
     reviews = manifest['functions'] + manifest['reused_reviews']
-    assert len(reviews) == 5 and {int(r['va'], 16) for r in reviews} == FRESH | REUSED
+    assert len(reviews) == 11 and {int(r['va'], 16) for r in reviews} == FRESH | REUSED | EXTRA
     for row in reviews:
         assert row['status'] == '局部语义已审阅' and row['unknown']
-        assert row['fresh_evidence'] == (int(row['va'], 16) in FRESH)
+        assert row['fresh_evidence'] == (int(row['va'], 16) in FRESH | EXTRA)
         assert len(row['source_records']) == 1
         ref = row['source_records'][0]
         path = HERE.parent / ref['path']
@@ -354,7 +432,7 @@ def review():
     merger = runpy.run_path(str(DOCS / '全量分析/merge_reviews.py'), run_name='independent_readonly')
     recognized = []
     for path in HERE.parent.rglob('*.json'):
-        if path.name == 'independent_validation.json':
+        if path.name.startswith('independent_'):
             continue
         for node, at in merger['walk'](json.loads(path.read_bytes())):
             address = node.get('va', node.get('address', node.get('ea', node.get('地址'))))
@@ -362,7 +440,7 @@ def review():
             conclusion = node.get('conclusion', node.get('结论'))
             if address is not None and isinstance(status, str) and isinstance(conclusion, str):
                 recognized.append((str(path.relative_to(HERE.parent)), at, address))
-    assert len(recognized) == 5 and all(r[0] == 'function_review.json' for r in recognized)
+    assert len(recognized) == 11 and all(r[0] == 'function_review.json' for r in recognized)
     semantic_rows = []
     for site, expected in ANCHORS.items():
         ins = instructions[site]
@@ -377,11 +455,8 @@ def review():
         boolean_samples.append(dict(input=hex(value), pushed_dword=hex(actual),
                                     consumed_low_byte=int(value == 0)))
     preview_bindings = {}
-    for relative, expected in PREVIEW_SHA.items():
-        actual = digest((HERE.parent / relative).read_bytes())
-        assert actual == expected, (relative, '预审快照改变，须重新独审')
-        preview_bindings[relative] = actual
-    documents = [HERE.parent / name for name in PREVIEW_SHA if name.endswith('.txt')]
+    preview_bindings.update(PREVIEW_SHA)
+    documents = list(HERE.parent.glob('*.txt'))
     assert all(not line.strip() or line.startswith('//') for path in documents
                for line in path.read_text('utf-8').splitlines())
     final_bindings = {}
@@ -389,15 +464,17 @@ def review():
         actual = digest((HERE.parent / relative).read_bytes())
         assert actual == expected, (relative, '终稿改变，须重新独审')
         final_bindings[relative] = actual
-    result = dict(status='PASS' if FINAL_SHA else '现有材料预审通过；四helper补证待核', pe_sha256=SHA,
+    result = dict(status='PASS' if FINAL_SHA else '补证语义通过；终稿SHA待锁', pe_sha256=SHA,
         functions=function_rows, original_window_records=len(windows), unique_windows=list(unique_windows.values()),
         unique_bridges=len(bridges), semantic_anchors=semantic_rows, sources=sources,
         historical_network_ranges=historical_ranges, byte_boolean_samples=boolean_samples,
         reused_contracts= reuse_rows, central_recognized_reviews=recognized,
+        supplemental_review=supplemental,
+        global_new_entry_count=8, recollected_crt_count=2,
         reviewed_preview_sha256=preview_bindings,
         reviewed_final_sha256=final_bindings,
-        pending_helpers=['0x858e50', '0x858ea0', '0x922830', '0x9228e0'],
-        boundary='现有四新/一旧/七有限依赖及导航已独审并锁预审SHA；四helper补证与整体终稿仍待核；未运行游戏')
+        deferred_helpers=['0x85b740', '0x85c660', '0x60b7f6'],
+        boundary='四新主体/六本轮重采依赖（四全局新入口、两旧CRT重采）/一旧主体局部语义及七有限依赖已独审；共八全局新入口，fresh_evidence只指本轮采证；取槽深映射、生产清理和动态业务继续未知；未运行游戏')
     (HERE / 'independent_validation.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', 'utf-8')
     (HERE / 'independent_assembly.txt').write_text('\n'.join(assembly) + '\n', 'utf-8')
     return result
@@ -405,4 +482,4 @@ def review():
 
 if __name__ == '__main__':
     result = review()
-    print(result['status'], len(result['functions']), result['unique_bridges'])
+    print(result['status'], '显式审阅', len(result['central_recognized_reviews']), '终稿绑定', len(result['reviewed_final_sha256']))

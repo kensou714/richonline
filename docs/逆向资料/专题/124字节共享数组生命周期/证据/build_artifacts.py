@@ -34,7 +34,7 @@ NOTES = {
 OLD_NOTES = {
     '0x69e600': (
         '完整旧本体含异常尾已读；入口顺序调用6A1190、6A2350、6A76E0、6A4860，均ECX=M。后续释放780/770/77C与514..540等对象、清容器及销毁基类；本体无直接5F4/608释放。',
-        '6A1190旧源无VA/字节，只作导航；其608024及6A76E0/6B9AF0深调用待有限补证。完整析构入口不等于整棵释放图闭合，不能由本体缺字段宣称全局泄漏。'),
+        '6A1190当前补证承担字节核验；6A76E0不涉及5F4/608，6B9AF0只转6BA4A0，6A1190先转82C4E0。后两深端点未递归审阅，不能由已读本体缺字段宣称全局泄漏。'),
     '0x6ab5f0': (
         'UI73/64查询与UI70(0,0)之后，6AB630以ECX=M无条件调用6A4A80；随后清其他记录及写+AB0=0、BYTE+AB4=0、GetTickCount到+AB8。retn4。',
         '本体未直接读输入arg，也无重建前N/索引/状态门；UI深算法与消息身份未闭合。只审此入口对数组重建的调用前提。'),
@@ -42,7 +42,7 @@ OLD_NOTES = {
 DEPENDENCY_NOTES = {
     '0x622d50': (
         '四栈参(base,stride,count,callback)，RET10h；count先减1、JS退出，否则ECX=base间接调callback、base+=stride后回环。callback结果不用；本次stride124、callback60D34E。',
-        '无base/callback/容量门。count=0及除INT_MIN外负值首轮退出；INT_MIN减1回绕正数例外。回调端点尚须完整补证，不能由地址登记命名全部构造职责。'),
+        '无base/callback/容量门。count=0及除INT_MIN外负值首轮退出；INT_MIN减1回绕正数例外。回调6B7C60完整补证已审，但其+8深调用6B7BB0未展开，不能称清零全部124字节。'),
     '0x6a2350': (
         '完整291B本体按非0门释放并清4D4、4E0、4E4、4E8、4EC五字段；未读写5F4/608，无业务深调用。',
         '只限定该析构前置清理入口；这五字段与共享数组11列表不合并，未核全部其他owner。'),
@@ -55,6 +55,13 @@ DEPENDENCY_NOTES = {
     '0x91f7e0': (
         'cdecl一参数指针，转调operator-delete入口后retn；包装无数组遍历或元素析构。',
         '只核包装字节与ABI，不由delete[]显示名推定元素析构/所有权，深层delete allocator不在本批完成清单。'),
+}
+
+SUPPLEMENT_NOTES = {
+    '0x6b7c60': ('ECX=元素R，6B7C74以ECX=R+8调用60A99B桥到6B7BB0，再6B7C7C将DWORD[R+4]置0；EAX=R，retn无栈参。', '6B7BB0仅端点导航，+8子对象初始化范围未知；本体未写+00/+60..78，不等于全124字节清零或释放旧+04。'),
+    '0x6a76e0': ('依次按非0门释放并清DWORD[M+640/644/648/64C/650]，随后无条件清DWORD[M+654/658/65C/660/664]；retn无栈参。', '本体无5F4/608访问；五列表与其后五计数的全部业务含义未展开，不能代替整个M释放图。'),
+    '0x6b9af0': ('以ECX=M调用609BB8桥到6BA4A0，随后RTC检查和retn；本体无直接5F4/608访问或分配释放。', '6BA4A0仅已核桥端点导航；自动COleDispParams显示名不证明类型/析构所有权，深释放未闭合。'),
+    '0x6a1190': ('当前69B完整补证：ECX=M在6A119E经608024调用82C4E0；返回后6A11A6写DWORD+5E0=-1、6A11B3写DWORD+4F0=-1、6A11C0写BYTE+258=0；retn无栈参。', '82C4E0仅端点导航；本体未直接free或读写5F4/608，深副作用仍未知；不将残留EAX当BOOL。'),
 }
 
 
@@ -81,7 +88,7 @@ def review(row, path, pointer, payload, notes, level):
                for i, x in enumerate(assembly) if x.get('is_code', True)]
     conclusion, unknown = notes[row['va']]
     return dict(va=row['va'], name=row.get('name', ''), status='局部语义已审阅', review_level=level,
-                fresh_evidence=level == '新主体', conclusion=conclusion, unknown=[unknown], anchors=anchors,
+                fresh_evidence=level in ('新主体', '新主体必要依赖补证'), conclusion=conclusion, unknown=[unknown], anchors=anchors,
                 declared_chunks=row.get('declared_chunks', row.get('chunks', [])),
                 original_byte_ranges=row.get('chunk_byte_ranges', row.get('byte_ranges', row.get('chunks', []))),
                 source_records=[dict(path=path, sha256=hashlib.sha256(payload).hexdigest(), pointer=pointer)])
@@ -131,6 +138,25 @@ def build():
     assert len(bridge_records) == 1
     write('reused_auxiliary.json', dict(schema='richonline-exact-reused-auxiliary-1', records=bridge_records))
     formal_bytes = (HERE/'formal_functions.json').read_bytes()
+    supplement_bytes = (HERE/'supplement_raw.json').read_bytes()
+    assert hashlib.sha256(supplement_bytes).hexdigest() == 'ddbf83a1e09e062ebaf5dbe06e6418c5ae02b55cd723f0219d6fc93d91eda0b2'
+    supplement = json.loads(supplement_bytes)
+    supplement_functions = []
+    for i, row in enumerate(supplement['functions']):
+        ranges = [dict(va=c['start_va'], **{k: v for k, v in c.items() if k != 'start_va'}) for c in row['chunk_byte_ranges']]
+        supplement_functions.append(dict(va=row['seed_va'], end_va=row['end_va'], name=row['name'],
+            status='机械适配；补证语义见function_review.json',
+            assembly=[dict(va=x['site_va'], text=x['text'], is_code=x['is_code']) for x in row['assembly']],
+            pseudocode=row['pseudocode'], decompile_error=row['decompile_error'], chunk_byte_ranges=ranges,
+            declared_chunks=[dict(start_va=c['va'], end_va=hex(int(c['va'], 16)+c['size']), is_main=c['va']==row['seed_va']) for c in ranges],
+            bytes_match_disk=all(c['matching'] for c in ranges),
+            source=dict(path='证据/supplement_raw.json', sha256=hashlib.sha256(supplement_bytes).hexdigest(), json_pointer=f'/functions/{i}')))
+    write('supplement_formal.json', dict(schema='richonline-formal-bounded-adaptation-1', disk_sha256=EXPECTED,
+        source_sha256=hashlib.sha256(supplement_bytes).hexdigest(), functions=supplement_functions,
+        scope='4必要补证主体无损适配，其中6A1190为旧弱源当前补证；不重计基批'))
+    supplement_formal_bytes = (HERE/'supplement_formal.json').read_bytes()
+    supplement_reviews = [review(row, '证据/supplement_formal.json', f'/functions/{i}', supplement_formal_bytes,
+        SUPPLEMENT_NOTES, '旧弱源当前补证' if row['va']=='0x6a1190' else '新主体必要依赖补证') for i, row in enumerate(supplement_functions)]
     new_reviews = [review(row, '证据/formal_functions.json', f'/functions/{i}', formal_bytes, NOTES, '新主体') for i, row in enumerate(functions)]
     reused_bytes = (HERE/'reused_raw.json').read_bytes()
     old_reviews, dependency_reviews = [], []
@@ -143,8 +169,9 @@ def build():
             dependency_reviews.append(review(*args, DEPENDENCY_NOTES, '有限依赖ABI与字段配对'))
     write('../function_review.json', dict(schema='richonline-function-review-1', topic='124字节共享数组生命周期',
           disk_sha256=EXPECTED, functions=new_reviews, reused_reviews=old_reviews, dependency_reviews=dependency_reviews,
+          supplement_reviews=supplement_reviews,
           reused=[dict(va=r['va'], source=r['source'], status=r['role']) for r in records],
-          scope='3新主体+2旧主体局部生命周期审阅；5旧依赖有限契约另计。根及内容writer仅原证复用；深释放未强闭合。'))
+          scope='基批3新主体+2旧主体局部审阅+5旧有限依赖；补证3新必要依赖+1旧弱源当前补证。根及内容writer仅复用；深释放未强闭合。'))
     return dict(fresh=len(new_reviews), reused_reviews=len(old_reviews), dependency_reviews=len(dependency_reviews), reused_records=len(records))
 
 

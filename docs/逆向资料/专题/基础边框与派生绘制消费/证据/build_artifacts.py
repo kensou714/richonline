@@ -7,6 +7,7 @@ HERE = Path(__file__).resolve().parent
 TOPICS = HERE.parents[1]
 EXPECTED = 'a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2'
 RAW_SHA = 'da3aa15cabf76aa2ee3a30600dca3691491d1dedd57b62c23398e3fdf5fc3fd2'
+SUPPLEMENT_SHA = 'd3741576bb9242cafef4b84269c62608719147b28d13dac9729ebf2f37613016'
 SEEDS = ('0x8e41d0', '0x90c070', '0x902180', '0x90a430')
 NOTES = {
     '0x8e41d0': ('五DWORD栈参、retn14h；mode1..4以固定四色向E+04六词回调提交两轮四边，其他返回mode-1；合法mode最后EAX=0。',
@@ -20,6 +21,8 @@ NOTES = {
                  ['具体控件类别与标记生产者未恢复；表E、样式索引无NULL/范围门；图像/字符串附加参数、资源所有权和callback深目标未知。']),
     '0x8e46e0': ('旧基础绘制可见/样式局部消费重核：mode>=5图索引/字符串，字符串指针及首BYTE门；mode<5颜色fill及mode>0边框。',
                  ['维持部分分析；完整注册、实例类别、资源所有权、回调深目标及实机效果未闭合；本批不升级旧完整语义。']),
+    '0x8ea8d0': ('五词栈参、retn14h，ECX不作this；先清全局表+6C连续5000h字节，再按节点前缀整段复制及start/length截取，或signed BYTE扩展WORD填充，最后写额外NUL。',
+                 ['表及源容量、节点一致性/环、共享区所有权、重入与并发未知；没有本地容量门，返回寄存器残值不构成稳定成功接口。']),
 }
 REUSE = (
     ('控件回调与事件表/证据/基础消费者.json', '/functions/1', '0x8e46e0', '旧主体原证；当前块另重核'),
@@ -74,8 +77,24 @@ def build():
                               bytes_match_disk=all(c['matching'] is True for c in ranges),
                               source=dict(path='证据/bounded_raw.json', sha256=RAW_SHA,
                                           json_pointer='/functions/' + str(i))))
+    supplement_blob = (HERE / 'supplement_raw.json').read_bytes()
+    assert sha(supplement_blob) == SUPPLEMENT_SHA
+    supplement = json.loads(supplement_blob)
+    dependency_functions = []
+    for i, row in enumerate(supplement['functions']):
+        ranges = [dict(va=c['start_va'], **{k: v for k, v in c.items() if k != 'start_va'})
+                  for c in row['chunk_byte_ranges']]
+        dependency_functions.append(dict(va=row['seed_va'], end_va=row['end_va'], name=row['name'],
+            status='必要依赖机械适配；不增加固定四主体',
+            assembly=[dict(va=x['site_va'], text=x['text'], is_code=x['is_code']) for x in row['assembly']],
+            pseudocode=row['pseudocode'], decompile_error=row['decompile_error'],
+            declared_chunks=[dict(start_va=c['va'], end_va=hex(int(c['va'], 16)+c['size']), is_main=True) for c in ranges],
+            chunk_byte_ranges=ranges, bytes_match_disk=all(c['matching'] is True for c in ranges),
+            source=dict(path='证据/supplement_raw.json', sha256=SUPPLEMENT_SHA, json_pointer='/functions/'+str(i))))
     write('formal_functions.json', dict(schema='richonline-formal-bounded-adaptation-1',
           disk_sha256=EXPECTED, source_sha256=RAW_SHA, functions=functions,
+          supplement_sha256=SUPPLEMENT_SHA, dependency_functions=dependency_functions,
+          data_windows=supplement['data_windows'],
           scope='四新主体指令/伪码/声明块机械无损适配，不增加语义完成结论'))
     records = []
     for path, where, va, role in REUSE:
@@ -92,12 +111,15 @@ def build():
                       True, '局部语义已审阅') for i, row in enumerate(functions)]
     old_review = review(records[0]['original_record'], '证据/reused_raw.json',
                         '/records/0/original_record', reused_bytes, False, '部分分析')
+    dependency_reviews = [review(row, '证据/formal_functions.json', '/dependency_functions/'+str(i), formal_bytes,
+                                 True, '局部语义已审阅') for i, row in enumerate(dependency_functions)]
     write('../function_review.json', dict(schema='richonline-function-review-1',
           topic='基础边框与派生绘制消费', disk_sha256=EXPECTED,
-          functions=reviews, reused_reviews=[old_review],
+          functions=reviews, reused_reviews=[old_review], dependency_reviews=dependency_reviews,
           scope='四新入口局部静态契约、旧8E46E0保持部分分析；caller/桥/辅助不升格完整语义'))
     return dict(fresh_functions=len(functions), reused_records=len(records),
-                reused_subject_reviews=1, semantic_instruction_anchors=sum(len(r['anchors']) for r in reviews) + len(old_review['anchors']))
+                reused_subject_reviews=1, dependency_functions=len(dependency_reviews),
+                semantic_instruction_anchors=sum(len(r['anchors']) for r in reviews + dependency_reviews) + len(old_review['anchors']))
 
 
 if __name__ == '__main__':
