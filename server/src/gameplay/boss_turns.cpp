@@ -1466,6 +1466,20 @@ struct Turns {
             std::optional<std::chrono::steady_clock::time_point> deadline;
         };
         std::optional<ScriptGodCard> script_god_card;
+        struct ScriptSummonSnapshot {
+            std::uint8_t source,target;
+            std::uint16_t calendar;
+            std::uint64_t turn;
+            std::int16_t source_position,target_position;
+            RichonlineActorStatus source_status,target_status;
+            RichonlineRawActorState target_raw;
+            std::vector<RichonlineSummonedNpc> candidates;
+        };
+        std::optional<ScriptSummonSnapshot> script_summon_snapshot;
+        std::optional<RichonlineNpcSession::PreparedDeityCard> script_summon;
+        std::optional<std::chrono::steady_clock::time_point> script_summon_deadline;
+        std::optional<std::chrono::steady_clock::time_point> script_summon_roll_deadline;
+        std::string script_summon_log;
         std::optional<RichonlineHibernateSnapshot> script_hibernate_snapshot;
         std::optional<PreparedHibernate> script_hibernate;
         struct ScriptAttack {
@@ -1839,6 +1853,53 @@ struct Turns {
                 script_clear_relations=target;
                 return LuaValue{};
             }},
+            {"npc.summon_candidates",[&](const LuaValue& args) {
+                require_local_controls();
+                if(called || database_called || !script_consumption || script_consumption->card_id!=1047 ||
+                    script_summon_snapshot || !rules.npcs || !rules.raw_authority || !rules.npc_summon_candidates ||
+                    npc_landing || npc_pending_counter || phase!=Phase::roll || actor!=init.local_slot ||
+                    plain.size()!=8 || read_le(plain.first(2))!=112)
+                    throw CodecError("lua_summon_snapshot_out_of_scope");
+                const auto& value=args.at("target");
+                if(!value.is_number_integer() || value<0 || value>=active.size() || value!=plain[6])
+                    throw CodecError("lua_summon_target_invalid");
+                const auto target=value.get<std::uint8_t>();
+                if(!active[target] || !raw_available(target)) throw CodecError("lua_summon_target_unavailable");
+                const auto allowed=rules.npc_summon_candidates(landing_context(init.participants[actor].position));
+                for(const auto position:allowed)
+                    if(!topology.cell(position).walkable) throw CodecError("richonline_boss_summon_candidate_cell_invalid");
+                auto candidates=rules.npcs->summon_candidates(allowed);
+                const auto position=init.participants[target].position;
+                const auto width=static_cast<std::int64_t>(topology.width());
+                auto result=LuaValue::array();
+                for(const auto& candidate:candidates) {
+                    const auto dx=candidate.position%width-position%width,dy=candidate.position/width-position/width;
+                    result.push_back({{"position",candidate.position},{"npc",candidate.id},{"distance_squared",dx*dx+dy*dy}});
+                }
+                script_summon_snapshot=ScriptSummonSnapshot{actor,target,active_counter,turn_sequence,
+                    init.participants[actor].position,position,status[actor],status[target],
+                    rules.raw_authority->actor(target),std::move(candidates)};
+                return result;
+            }},
+            {"npc.prepare_summon",[&](const LuaValue& args) {
+                if(called || database_called || !script_consumption || !script_summon_snapshot || script_summon)
+                    throw CodecError("lua_summon_prepare_out_of_scope");
+                const auto& position=args.at("position");const auto& snapshot=*script_summon_snapshot;
+                if(!position.is_number_integer() || position<0 || position>32767)
+                    throw CodecError("lua_summon_position_invalid");
+                const auto chosen=position.get<std::int16_t>();
+                if(std::ranges::none_of(snapshot.candidates,[&](const auto& candidate){return candidate.position==chosen;}))
+                    throw CodecError("lua_summon_position_not_candidate");
+                const std::array selected{chosen};
+                auto prepared=rules.npcs->prepare_deity_card(plain,landing_context(init.participants[actor].position),
+                    active_counter,status[snapshot.target],raw_available(snapshot.target),selected,
+                    [](std::size_t){return std::size_t{0};});
+                const auto& packets=prepared.result().messages;
+                auto effects=LuaValue::array();
+                for(std::size_t i=1;i<packets.size();++i) effects.push_back(lua_bytes(View(packets[i])));
+                script_summon=std::move(prepared);
+                return effects;
+            }},
             {"npc.prepare_attach",[&](const LuaValue& args) {
                 if(called || database_called || !script_consumption || script_status || script_god_card ||
                     !rules.npcs || npc_landing || npc_pending_counter || plain.size()!=6)
@@ -2090,6 +2151,35 @@ struct Turns {
             for(const auto& packet:result) messages.push_back(lua_bytes(packet));
             if(script_ground && (script_positions_prepared || script_motion || script_movement))
                 throw CodecError("lua_ground_cannot_mix_movement");
+            if(script_summon_snapshot) {
+                if(!script_summon || script_attack || script_hibernate_snapshot || script_motion || script_movement ||
+                    script_shuffle || script_jail || script_dismiss || script_god_card || script_property || script_street ||
+                    script_ground || script_status || script_break_alliance || script_set_alliance || script_clear_relations ||
+                    script_positions_prepared || script_inventory_cleared || !script_funds.empty())
+                    throw CodecError("lua_summon_cannot_mix_mutations");
+                if(messages!=script_summon->result().messages)
+                    throw CodecError("lua_summon_response_invalid");
+                const auto& result=script_summon->result();
+                if(!result.summoned || result.continuation!=RichonlineNpcContinuation::restore_action ||
+                    (result.wait!=RichonlineNpcWait::none && result.wait!=RichonlineNpcWait::roulette34))
+                    throw CodecError("lua_summon_continuation_invalid");
+                const auto& snapshot=*script_summon_snapshot;
+                const auto width=static_cast<std::int64_t>(topology.width());
+                const auto position=result.summoned->position;
+                const auto dx=position%width-snapshot.target_position%width,dy=position/width-snapshot.target_position/width;
+                script_summon_log="richonline_summon_selected actor="+std::to_string(actor)+
+                    " target="+std::to_string(snapshot.target)+" target_position="+std::to_string(snapshot.target_position)+
+                    " npc="+std::to_string(result.summoned->id)+" npc_position="+std::to_string(position)+
+                    " distance_squared="+std::to_string(dx*dx+dy*dy)+
+                    " policy=nearest-target-grid-distance-then-position-v1 lua_card=1047";
+                // 所有时钟回调在提交前完成；召来糊涂神后使用受控掷骰超时，钱神等待34。
+                const auto now=rules.now();
+                if(script_summon->result().wait==RichonlineNpcWait::roulette34)
+                    script_summon_deadline=now+rules.npc_roulette_timeout;
+                const auto& next=script_summon_snapshot->target==actor ? script_summon->after_status() : status[actor];
+                if(next.possession==7 || next.sleepwalking)
+                    script_summon_roll_deadline=now+rules.controlled_roll_timeout;
+            }
             if(script_attack) {
                 if(script_hibernate_snapshot || script_motion || script_movement || script_shuffle || script_jail ||
                     script_dismiss || script_god_card || script_property || script_street || script_ground || script_status ||
@@ -2180,6 +2270,25 @@ struct Turns {
                 }
             }
             throw;
+        }
+        if(script_summon) {
+            const auto& snapshot=*script_summon_snapshot;
+            if(phase!=Phase::roll || actor!=snapshot.source || active_counter!=snapshot.calendar || turn_sequence!=snapshot.turn ||
+                npc_landing || npc_pending_counter || !active[actor] || !active[snapshot.target] ||
+                init.participants[actor].position!=snapshot.source_position ||
+                init.participants[snapshot.target].position!=snapshot.target_position || status[actor]!=snapshot.source_status ||
+                status[snapshot.target]!=snapshot.target_status || rules.raw_authority->actor(snapshot.target)!=snapshot.target_raw ||
+                rules.cards->inventory()!=script_consumption->source_inventory)
+                throw CodecError("lua_summon_snapshot_changed");
+            auto result=rules.npcs->commit_deity_card(*script_summon,status[snapshot.target]);
+            if(result.wait==RichonlineNpcWait::roulette34) {
+                npc_pending_counter=active_counter;npc_retired_counter.reset();
+                npc_deadline=script_summon_deadline;phase=Phase::npc;
+            } else {
+                npc_deadline.reset();phase=Phase::roll;controlled_roll_deadline=script_summon_roll_deadline;
+            }
+            if(rules.log) rules.log(script_summon_log);
+            return std::move(result.messages);
         }
         if(script_attack) {
             if(phase!=Phase::roll || actor!=script_attack->actor || active_counter!=script_attack->calendar ||

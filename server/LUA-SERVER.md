@@ -40,6 +40,7 @@
 | `relations.clear_actor` | `{target=1}` | 准备清除指定在场角色与所有人的双向同盟计数；只允许本动作一份关系计划 |
 | `status.prepare_clear` | `{target=1,fields={"possession","frozen"}}` | 准备清除脚本指定的受支持状态；NPC 附身时钟随状态一起版本化提交 |
 | `npc.prepare_detach` | `{target=1}` | 当前仅送神1048/请求113；复核附身和NPC会话空闲，准备解除附身状态及对应时钟，验证唯一七字节40C1并恢复掷骰 |
+| `npc.summon_candidates` / `npc.prepare_summon` | `{target=1}` / `{position=123}` | 当前仅请神1047/112；读取受支持地面神及到目标的平方格距，Lua选最近者。核心准备地面消耗/补充、附身/保护、奖励与34等待，返回40C0后的效果包，完整返回后一次提交 |
 | `npc.prepare_attach` | `{npc=0}` 或 `{npc=3}` | 当前仅财神1069/130、福神1070/131；准备替换旧附身、资源时钟和财神34转盘等待；NPC会话必须空闲 |
 | `inventory.prepare_fortune` | 无 | 福神附身准备后仅可调用一次；基于扣卡后库存按现有开放卡池顺序选两张，准备插入/合成，返回卡号数组 |
 | `property.prepare` | `{operation="convert",property=12,kind=12}` | 准备一个版本化地产操作，与扣卡和资金共同提交 |
@@ -118,3 +119,5 @@ Lua 准备事务成功返回前不改权威状态；原生兼容调用可能已�
 定时炸弹1045已使用 `combat.prepare_timed_bomb`：Lua校验目标并构造40BE，C++准备原始状态资格、倒计时、归属与库存事务。与攻击卡共用响应完整性校验及延迟提交，旧原生入口复用同一准备路径。证据见 `evidence/normal-cards/lua-timed-bomb-card.md`。
 
 引爆501已使用 `combat.prepare_detonation`：Lua校验八字节请求、准备扣卡并构造40EF，随后按原序返回核心生成的4017及连锁效果。请求尾部未初始化，不作为目标或响应字段。核心复用真实可视范围选根与连锁战斗计划，完整响应验证后一次性提交地雷移除、伤害、保护卡和库存；实际破产时不发送恢复掷骰400B。证据见 `evidence/normal-cards/lua-detonation-card.md`。
+
+请神1047已迁移最近目标选神与40C0编排：同距选较小格号；候选仍来自部署的允许位置和已支持神明，不假定客户端视口。C++不透明NPC计划负责扣卡、地面神移除/随机补充、清旧附身、资源时钟、福神奖励、衰神失卡和糊涂神保护。Lua成功返回完整包后复核目标原始状态、回合、库存、地面版本、NPC时钟、补充器随机状态及角色/宠物占格，统一提交；自己召钱神等待34，自己召糊涂神进入受控掷骰。证据见 `evidence/normal-cards/lua-summon-card.md`。

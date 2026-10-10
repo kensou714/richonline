@@ -73,6 +73,11 @@ public:
     // Identity counts COMPLETE rounds, starts at1, and must have no gaps.
     RichonlineNpcSpawnResult finish_round(RichonlineGroundObjects&,std::uint64_t identity,
         std::span<const std::int16_t> reserved = {});
+    // 同一会话准备期间不能覆盖其他补充/回合刷新推进的随机数或时钟。
+    bool same_progress(const RichonlineNpcSpawner& other) const noexcept {
+        return game_==other.game_ && initialized_==other.initialized_ &&
+            last_round_==other.last_round_ && random_==other.random_;
+    }
 private:
     std::uint16_t game_;
     RichonlineNpcSpawnPolicy policy_;

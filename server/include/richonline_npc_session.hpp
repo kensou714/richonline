@@ -123,6 +123,22 @@ public:
     RichonlineNpcSessionResult deity_card(View request,const RichonlineLandingContext& source,
         std::uint16_t current_calendar,RichonlineActorStatus& target_status,bool target_selectable,
         std::span<const std::int16_t> candidate_ground_positions,const RichonlineRouteChooser&);
+    class PreparedDeityCard final {
+    public:
+        const RichonlineNpcSessionResult& result() const;
+        const RichonlineActorStatus& after_status() const;
+    private:
+        struct Data;
+        std::shared_ptr<Data> data_;
+        explicit PreparedDeityCard(std::shared_ptr<Data>);
+        friend class RichonlineNpcSession;
+    };
+    // 先规划地面消耗/补充、库存、目标附身及转盘等待；Lua完整返回后才允许提交。
+    PreparedDeityCard prepare_deity_card(View request,const RichonlineLandingContext& source,
+        std::uint16_t current_calendar,const RichonlineActorStatus& target_status,bool target_selectable,
+        std::span<const std::int16_t> candidate_ground_positions,const RichonlineRouteChooser&);
+    RichonlineNpcSessionResult commit_deity_card(PreparedDeityCard&,RichonlineActorStatus& target_status);
+    std::vector<RichonlineSummonedNpc> summon_candidates(std::span<const std::int16_t>) const;
     bool awaiting_roulette() const noexcept;
     bool awaiting_settlement() const noexcept;
 private:

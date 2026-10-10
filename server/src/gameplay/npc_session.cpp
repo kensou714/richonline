@@ -412,8 +412,42 @@ RichonlineNpcSessionResult RichonlineNpcSession::wealth_card(View request,const 
     pending_=PendingMoney{context.actor_slot,decoded.calendar,0,plan.money_origin,false};
     return result;
 }
-RichonlineNpcSessionResult RichonlineNpcSession::deity_card(View request,const RichonlineLandingContext& source,
-    std::uint16_t calendar,RichonlineActorStatus& target_status,bool target_selectable,
+struct RichonlineNpcSession::PreparedDeityCard::Data {
+    const RichonlineNpcSession* owner;
+    std::uint8_t target;
+    std::array<std::uint64_t,2> generations;
+    RichonlineActorStatus before_status,after_status;
+    RichonlinePossessionClock before_clock,after_clock;
+    RichonlineGroundObjects::Prepared ground;
+    RichonlineNpcSpawner before_spawner,after_spawner;
+    RichonlineChanceInventory before_inventory,after_inventory;
+    std::vector<std::int16_t> reservations;
+    RichonlineNpcSessionResult result;
+    std::optional<PendingMoney> pending;
+    bool consumed=false;
+};
+RichonlineNpcSession::PreparedDeityCard::PreparedDeityCard(std::shared_ptr<Data> data):data_(std::move(data)) {}
+const RichonlineNpcSessionResult& RichonlineNpcSession::PreparedDeityCard::result() const {
+    if(!data_ || data_->consumed) throw CodecError("richonline_deity_plan_consumed");
+    return data_->result;
+}
+const RichonlineActorStatus& RichonlineNpcSession::PreparedDeityCard::after_status() const {
+    if(!data_ || data_->consumed) throw CodecError("richonline_deity_plan_consumed");
+    return data_->after_status;
+}
+std::vector<RichonlineSummonedNpc> RichonlineNpcSession::summon_candidates(
+    std::span<const std::int16_t> allowed) const {
+    const auto ground=ground_->snapshot();std::vector<RichonlineSummonedNpc> result;
+    for(const auto position:allowed) {
+        const auto entry=ground.objects.find(position);
+        if(entry!=ground.objects.end() && supported_npc(entry->second.npc))
+            result.push_back({position,entry->second.npc,affix_turns(entry->second.npc),true,true});
+    }
+    return result;
+}
+RichonlineNpcSession::PreparedDeityCard RichonlineNpcSession::prepare_deity_card(
+    View request,const RichonlineLandingContext& source,
+    std::uint16_t calendar,const RichonlineActorStatus& target_status,bool target_selectable,
     std::span<const std::int16_t> candidates_allowed,const RichonlineRouteChooser& choose) {
     const auto decoded=parse_richonline_deity_card(request);
     check_actor(source.actor_slot,source.actor_status);
@@ -429,6 +463,10 @@ RichonlineNpcSessionResult RichonlineNpcSession::deity_card(View request,const R
     admit_clock_change(target);
     if(target==source.actor_slot && target_status!=source.actor_status)
         throw CodecError("richonline_npc_session_context_stale");
+    const auto before_status=target_status;
+    const auto before_clock=clocks_[target];
+    const auto generations=clock_generations_;
+    const auto before_spawner=spawner_;
     const auto before_ground=ground_->snapshot();
     std::optional<RichonlineSummonedNpc> selected;
     if(decoded.kind==RichonlineDeityCard::summon1047) {
@@ -474,23 +512,48 @@ RichonlineNpcSessionResult RichonlineNpcSession::deity_card(View request,const R
         next_status=sleep.status_after;next_clock.npc=next_status.possession;next_clock.turns=sleep.possession_turns;
         result.wait=RichonlineNpcWait::none;
     }
-    auto staged_ground=*ground_;auto staged_spawner=spawner_;
+    auto staged_ground=*ground_;auto staged_spawner=before_spawner;
+    const auto reserved=placement_reservations();
     if(selected) {
         if(!staged_ground.consume(selected->position,before_ground.objects.at(selected->position)))
             throw CodecError("richonline_npc_session_ground_stale");
-        const auto reserved=placement_reservations();
         append(result.messages,staged_spawner.replenish_minimum(staged_ground,reserved).messages);
     }
     auto prepared_ground=ground_->prepare(before_ground,staged_ground.snapshot().objects);
     if(cards_->inventory()!=plan.consumption.source_inventory)
         throw CodecError("richonline_npc_session_inventory_changed");
-    if(!ground_->commit_prepared(prepared_ground)) throw CodecError("richonline_npc_session_ground_stale");
-    spawner_=std::move(staged_spawner);cards_->commit_inventory(next_inventory);
-    target_status=next_status;clocks_[target]=next_clock;++clock_generations_[target];
     result.summoned=selected;
+    std::optional<PendingMoney> pending;
     if(result.wait==RichonlineNpcWait::roulette34)
-        pending_=PendingMoney{source.actor_slot,decoded.calendar,*next_status.possession,RichonlineDeityMoneyOrigin::summoned_card,false};
-    return result;
+        pending=PendingMoney{source.actor_slot,decoded.calendar,*next_status.possession,RichonlineDeityMoneyOrigin::summoned_card,false};
+    return PreparedDeityCard{std::make_shared<PreparedDeityCard::Data>(PreparedDeityCard::Data{
+        this,target,generations,before_status,next_status,before_clock,next_clock,std::move(prepared_ground),
+        before_spawner,std::move(staged_spawner),plan.consumption.source_inventory,next_inventory,reserved,
+        std::move(result),pending,false})};
+}
+RichonlineNpcSessionResult RichonlineNpcSession::commit_deity_card(
+    PreparedDeityCard& prepared,RichonlineActorStatus& target_status) {
+    if(!prepared.data_ || prepared.data_->owner!=this || prepared.data_->consumed)
+        throw CodecError("richonline_deity_plan_owner_or_consumed");
+    auto& plan=*prepared.data_;
+    const auto reserved=placement_reservations();
+    if(pending_ || clock_generations_!=plan.generations || target_status!=plan.before_status ||
+        !same_clock(clocks_[plan.target],plan.before_clock) || !spawner_.same_progress(plan.before_spawner) ||
+        cards_->inventory()!=plan.before_inventory || !ground_->matches(plan.ground) || reserved!=plan.reservations)
+        throw CodecError("richonline_deity_plan_stale");
+    // 此后无回调/分配；地面、随机序列、库存、附身和等待共同切换。
+    plan.consumed=true;
+    if(!ground_->commit_prepared(plan.ground)) throw CodecError("richonline_npc_session_ground_stale");
+    spawner_=std::move(plan.after_spawner);cards_->commit_inventory(plan.after_inventory);
+    target_status=plan.after_status;clocks_[plan.target]=plan.after_clock;++clock_generations_[plan.target];
+    pending_=plan.pending;
+    return std::move(plan.result);
+}
+RichonlineNpcSessionResult RichonlineNpcSession::deity_card(View request,const RichonlineLandingContext& source,
+    std::uint16_t calendar,RichonlineActorStatus& target_status,bool target_selectable,
+    std::span<const std::int16_t> candidates_allowed,const RichonlineRouteChooser& choose) {
+    auto prepared=prepare_deity_card(request,source,calendar,target_status,target_selectable,candidates_allowed,choose);
+    return commit_deity_card(prepared,target_status);
 }
 bool RichonlineNpcSession::awaiting_settlement() const noexcept {return pending_ && pending_->settlement;}
 }
