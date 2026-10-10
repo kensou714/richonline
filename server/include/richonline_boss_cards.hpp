@@ -42,6 +42,10 @@ public:
         RichonlineChanceInventory source_inventory, remaining_inventory;
         Bytes confirmation40e8;
     };
+    struct PreparedReward {
+        std::int16_t card;
+        RichonlineChanceInventory inventory;
+    };
     RichonlineBossCards(std::shared_ptr<const RichonlineChanceResources> resources,
         std::uint16_t game_id, const RichonlineBossCardPolicy& policy);
     void configure_tile_rewards(std::vector<std::int16_t> playable_cards,RichonlineRouteChooser random);
@@ -50,6 +54,8 @@ public:
     std::string_view map_name() const noexcept { return award_.map(); }
     RichonlineChanceInventory prepare_reward() const;
     RichonlineChanceInventory prepare_add(std::int16_t card_id,std::int16_t count=1) const;
+    PreparedReward prepare_random_reward() const;
+    PreparedReward prepare_random_reward(const RichonlineChanceInventory& source) const;
     PreparedDiscard prepare_discard(const RichonlineCardDiscardRequest50& request,std::int8_t actor) const;
     std::optional<PendingTargetEffect> prepare_target_effect(const RichonlineTargetCardRequest& request) const;
     std::optional<PreparedConsumption> prepare_consumption(std::int8_t slot,std::int16_t card_id) const;

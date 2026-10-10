@@ -1,0 +1,1581 @@
+// 当前PE独立重解码；旧范围重核与语义完成分开；调用窗不登记owner完成。
+// 当前主体 0x8fc6a0
+// 008FC6A0 56 push esi
+// 008FC6A1 8bf1 mov esi, ecx
+// 008FC6A3 e8ce57d1ff call 0x611e76
+// 008FC6A8 85c0 test eax, eax
+// 008FC6AA 0f8c1f010000 jl 0x8fc7cf
+// 008FC6B0 0fbe4c240c movsx ecx, byte ptr [esp + 0xc]
+// 008FC6B5 83e92b sub ecx, 0x2b
+// 008FC6B8 742e je 0x8fc6e8
+// 008FC6BA 83e902 sub ecx, 2
+// 008FC6BD 7415 je 0x8fc6d4
+// 008FC6BF 83e910 sub ecx, 0x10
+// 008FC6C2 0f8507010000 jne 0x8fc7cf
+// 008FC6C8 8b4c2408 mov ecx, dword ptr [esp + 8]
+// 008FC6CC 898e44030000 mov dword ptr [esi + 0x344], ecx
+// 008FC6D2 eb26 jmp 0x8fc6fa
+// 008FC6D4 8b542408 mov edx, dword ptr [esp + 8]
+// 008FC6D8 8b8e44030000 mov ecx, dword ptr [esi + 0x344]
+// 008FC6DE 2bca sub ecx, edx
+// 008FC6E0 898e44030000 mov dword ptr [esi + 0x344], ecx
+// 008FC6E6 eb12 jmp 0x8fc6fa
+// 008FC6E8 8b4c2408 mov ecx, dword ptr [esp + 8]
+// 008FC6EC 8b9644030000 mov edx, dword ptr [esi + 0x344]
+// 008FC6F2 03d1 add edx, ecx
+// 008FC6F4 899644030000 mov dword ptr [esi + 0x344], edx
+// 008FC6FA 8b961c030000 mov edx, dword ptr [esi + 0x31c]
+// 008FC700 8b8e10030000 mov ecx, dword ptr [esi + 0x310]
+// 008FC706 53 push ebx
+// 008FC707 8b9e44030000 mov ebx, dword ptr [esi + 0x344]
+// 008FC70D 55 push ebp
+// 008FC70E 57 push edi
+// 008FC70F 8d3c1a lea edi, [edx + ebx]
+// 008FC712 8d69ff lea ebp, [ecx - 1]
+// 008FC715 3bfd cmp edi, ebp
+// 008FC717 7e0b jle 0x8fc724
+// 008FC719 2bca sub ecx, edx
+// 008FC71B 49 dec ecx
+// 008FC71C 898e44030000 mov dword ptr [esi + 0x344], ecx
+// 008FC722 eb4e jmp 0x8fc772
+// 008FC724 3bd8 cmp ebx, eax
+// 008FC726 7c1c jl 0x8fc744
+// 008FC728 8b961c030000 mov edx, dword ptr [esi + 0x31c]
+// 008FC72E 48 dec eax
+// 008FC72F 898644030000 mov dword ptr [esi + 0x344], eax
+// 008FC735 03c2 add eax, edx
+// 008FC737 3bc1 cmp eax, ecx
+// 008FC739 7d37 jge 0x8fc772
+// 008FC73B 42 inc edx
+// 008FC73C 89961c030000 mov dword ptr [esi + 0x31c], edx
+// 008FC742 eb2e jmp 0x8fc772
+// 008FC744 33c0 xor eax, eax
+// 008FC746 3bf8 cmp edi, eax
+// 008FC748 7d0e jge 0x8fc758
+// 008FC74A 3bd0 cmp edx, eax
+// 008FC74C 741e je 0x8fc76c
+// 008FC74E f7da neg edx
+// 008FC750 899644030000 mov dword ptr [esi + 0x344], edx
+// 008FC756 eb1a jmp 0x8fc772
+// 008FC758 3bd8 cmp ebx, eax
+// 008FC75A 7d16 jge 0x8fc772
+// 008FC75C 3bf8 cmp edi, eax
+// 008FC75E 89be1c030000 mov dword ptr [esi + 0x31c], edi
+// 008FC764 7d06 jge 0x8fc76c
+// 008FC766 89861c030000 mov dword ptr [esi + 0x31c], eax
+// 008FC76C 898644030000 mov dword ptr [esi + 0x344], eax
+// 008FC772 8b9648030000 mov edx, dword ptr [esi + 0x348]
+// 008FC778 8b8618030000 mov eax, dword ptr [esi + 0x318]
+// 008FC77E 03c2 add eax, edx
+// 008FC780 85c0 test eax, eax
+// 008FC782 743c je 0x8fc7c0
+// 008FC784 8b9e44030000 mov ebx, dword ptr [esi + 0x344]
+// 008FC78A 8d4c2418 lea ecx, [esp + 0x18]
+// 008FC78E 6a01 push 1
+// 008FC790 51 push ecx
+// 008FC791 50 push eax
+// 008FC792 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FC798 03c3 add eax, ebx
+// 008FC79A 8d1480 lea edx, [eax + eax*4]
+// 008FC79D 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FC7A3 c1e205 shl edx, 5
+// 008FC7A6 8d4c0208 lea ecx, [edx + eax + 8]
+// 008FC7AA 51 push ecx
+// 008FC7AB 8bce mov ecx, esi
+// 008FC7AD e81d6dd0ff call 0x6034cf
+// 008FC7B2 8b542418 mov edx, dword ptr [esp + 0x18]
+// 008FC7B6 6a2b push 0x2b
+// 008FC7B8 52 push edx
+// 008FC7B9 8bce mov ecx, esi
+// 008FC7BB e886a5d0ff call 0x606d46
+// 008FC7C0 ff15bc3cad00 call dword ptr [0xad3cbc]
+// 008FC7C6 5f pop edi
+// 008FC7C7 5d pop ebp
+// 008FC7C8 898654030000 mov dword ptr [esi + 0x354], eax
+// 008FC7CE 5b pop ebx
+// 008FC7CF 5e pop esi
+// 008FC7D0 c20800 ret 8
+// 当前主体 0x8fc830
+// 008FC830 56 push esi
+// 008FC831 8bf1 mov esi, ecx
+// 008FC833 57 push edi
+// 008FC834 33ff xor edi, edi
+// 008FC836 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FC83C 8b8e44030000 mov ecx, dword ptr [esi + 0x344]
+// 008FC842 8d1408 lea edx, [eax + ecx]
+// 008FC845 8b8e50020000 mov ecx, dword ptr [esi + 0x250]
+// 008FC84B 8d0492 lea eax, [edx + edx*4]
+// 008FC84E c1e005 shl eax, 5
+// 008FC851 8b440808 mov eax, dword ptr [eax + ecx + 8]
+// 008FC855 3bc7 cmp eax, edi
+// 008FC857 0f8425030000 je 0x8fcb82
+// 008FC85D 663938 cmp word ptr [eax], di
+// 008FC860 0f841c030000 je 0x8fcb82
+// 008FC866 0fbe442410 movsx eax, byte ptr [esp + 0x10]
+// 008FC86B 83e82b sub eax, 0x2b
+// 008FC86E 745b je 0x8fc8cb
+// 008FC870 83e802 sub eax, 2
+// 008FC873 7442 je 0x8fc8b7
+// 008FC875 83e810 sub eax, 0x10
+// 008FC878 0f8510030000 jne 0x8fcb8e
+// 008FC87E 8b44240c mov eax, dword ptr [esp + 0xc]
+// 008FC882 83f8ff cmp eax, -1
+// 008FC885 7550 jne 0x8fc8d7
+// 008FC887 8b8e9c010000 mov ecx, dword ptr [esi + 0x19c]
+// 008FC88D 89be48030000 mov dword ptr [esi + 0x348], edi
+// 008FC893 3bcf cmp ecx, edi
+// 008FC895 89be18030000 mov dword ptr [esi + 0x318], edi
+// 008FC89B 0f84ed020000 je 0x8fcb8e
+// 008FC8A1 8b9164040000 mov edx, dword ptr [ecx + 0x464]
+// 008FC8A7 89916c040000 mov dword ptr [ecx + 0x46c], edx
+// 008FC8AD e8904ed0ff call 0x601742
+// 008FC8B2 5f pop edi
+// 008FC8B3 5e pop esi
+// 008FC8B4 c20800 ret 8
+// 008FC8B7 8b44240c mov eax, dword ptr [esp + 0xc]
+// 008FC8BB 8b8e48030000 mov ecx, dword ptr [esi + 0x348]
+// 008FC8C1 2bc8 sub ecx, eax
+// 008FC8C3 898e48030000 mov dword ptr [esi + 0x348], ecx
+// 008FC8C9 eb12 jmp 0x8fc8dd
+// 008FC8CB 8b4c240c mov ecx, dword ptr [esp + 0xc]
+// 008FC8CF 8b8648030000 mov eax, dword ptr [esi + 0x348]
+// 008FC8D5 03c1 add eax, ecx
+// 008FC8D7 898648030000 mov dword ptr [esi + 0x348], eax
+// 008FC8DD 8b8648030000 mov eax, dword ptr [esi + 0x348]
+// 008FC8E3 53 push ebx
+// 008FC8E4 3bc7 cmp eax, edi
+// 008FC8E6 7d75 jge 0x8fc95d
+// 008FC8E8 8b8e18030000 mov ecx, dword ptr [esi + 0x318]
+// 008FC8EE 3bcf cmp ecx, edi
+// 008FC8F0 754e jne 0x8fc940
+// 008FC8F2 3bd7 cmp edx, edi
+// 008FC8F4 89be48030000 mov dword ptr [esi + 0x348], edi
+// 008FC8FA 0f8e26010000 jle 0x8fca26
+// 008FC900 6a2d push 0x2d
+// 008FC902 6a01 push 1
+// 008FC904 8bce mov ecx, esi
+// 008FC906 e8d0a0d0ff call 0x6069db
+// 008FC90B 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FC911 8b8e44030000 mov ecx, dword ptr [esi + 0x344]
+// 008FC917 03c1 add eax, ecx
+// 008FC919 6a3d push 0x3d
+// 008FC91B 8d1480 lea edx, [eax + eax*4]
+// 008FC91E 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FC924 c1e205 shl edx, 5
+// 008FC927 8b4c0214 mov ecx, dword ptr [edx + eax + 0x14]
+// 008FC92B 8b9618030000 mov edx, dword ptr [esi + 0x318]
+// 008FC931 2bca sub ecx, edx
+// 008FC933 51 push ecx
+// 008FC934 8bce mov ecx, esi
+// 008FC936 e80ba4d0ff call 0x606d46
+// 008FC93B e9e6000000 jmp 0x8fca26
+// 008FC940 03c1 add eax, ecx
+// 008FC942 3bc7 cmp eax, edi
+// 008FC944 898618030000 mov dword ptr [esi + 0x318], eax
+// 008FC94A 7d06 jge 0x8fc952
+// 008FC94C 89be18030000 mov dword ptr [esi + 0x318], edi
+// 008FC952 89be48030000 mov dword ptr [esi + 0x348], edi
+// 008FC958 e9c9000000 jmp 0x8fca26
+// 008FC95D 8bce mov ecx, esi
+// 008FC95F e8afe0d0ff call 0x60aa13
+// 008FC964 398648030000 cmp dword ptr [esi + 0x348], eax
+// 008FC96A 0f8eb6000000 jle 0x8fca26
+// 008FC970 8bce mov ecx, esi
+// 008FC972 e89ce0d0ff call 0x60aa13
+// 008FC977 8b9648030000 mov edx, dword ptr [esi + 0x348]
+// 008FC97D 8b9e18030000 mov ebx, dword ptr [esi + 0x318]
+// 008FC983 2bd0 sub edx, eax
+// 008FC985 8d4c2414 lea ecx, [esp + 0x14]
+// 008FC989 03da add ebx, edx
+// 008FC98B 6a01 push 1
+// 008FC98D 8bc3 mov eax, ebx
+// 008FC98F 51 push ecx
+// 008FC990 8b8e44030000 mov ecx, dword ptr [esi + 0x344]
+// 008FC996 50 push eax
+// 008FC997 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FC99D 899e18030000 mov dword ptr [esi + 0x318], ebx
+// 008FC9A3 03c1 add eax, ecx
+// 008FC9A5 8d1480 lea edx, [eax + eax*4]
+// 008FC9A8 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FC9AE c1e205 shl edx, 5
+// 008FC9B1 8d4c0208 lea ecx, [edx + eax + 8]
+// 008FC9B5 51 push ecx
+// 008FC9B6 8bce mov ecx, esi
+// 008FC9B8 e8126bd0ff call 0x6034cf
+// 008FC9BD 397c2414 cmp dword ptr [esp + 0x14], edi
+// 008FC9C1 7456 je 0x8fca19
+// 008FC9C3 8b9644030000 mov edx, dword ptr [esi + 0x344]
+// 008FC9C9 6a01 push 1
+// 008FC9CB 50 push eax
+// 008FC9CC 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FC9D2 03c2 add eax, edx
+// 008FC9D4 8d1480 lea edx, [eax + eax*4]
+// 008FC9D7 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FC9DD c1e205 shl edx, 5
+// 008FC9E0 8d4c0208 lea ecx, [edx + eax + 8]
+// 008FC9E4 51 push ecx
+// 008FC9E5 8bce mov ecx, esi
+// 008FC9E7 e875f1d0ff call 0x60bb61
+// 008FC9EC 8b9644030000 mov edx, dword ptr [esi + 0x344]
+// 008FC9F2 50 push eax
+// 008FC9F3 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FC9F9 03c2 add eax, edx
+// 008FC9FB 8d1480 lea edx, [eax + eax*4]
+// 008FC9FE 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FCA04 c1e205 shl edx, 5
+// 008FCA07 8d4c0208 lea ecx, [edx + eax + 8]
+// 008FCA0B 51 push ecx
+// 008FCA0C 8bce mov ecx, esi
+// 008FCA0E e86c5bd0ff call 0x60257f
+// 008FCA13 898618030000 mov dword ptr [esi + 0x318], eax
+// 008FCA19 8bce mov ecx, esi
+// 008FCA1B e8f3dfd0ff call 0x60aa13
+// 008FCA20 898648030000 mov dword ptr [esi + 0x348], eax
+// 008FCA26 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FCA2C 8b9644030000 mov edx, dword ptr [esi + 0x344]
+// 008FCA32 8b8e48030000 mov ecx, dword ptr [esi + 0x348]
+// 008FCA38 8b9e18030000 mov ebx, dword ptr [esi + 0x318]
+// 008FCA3E 03c2 add eax, edx
+// 008FCA40 55 push ebp
+// 008FCA41 03d9 add ebx, ecx
+// 008FCA43 8d1480 lea edx, [eax + eax*4]
+// 008FCA46 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FCA4C c1e205 shl edx, 5
+// 008FCA4F 3b5c0214 cmp ebx, dword ptr [edx + eax + 0x14]
+// 008FCA53 0f85c4000000 jne 0x8fcb1d
+// 008FCA59 3bcf cmp ecx, edi
+// 008FCA5B 0f85bc000000 jne 0x8fcb1d
+// 008FCA61 8bce mov ecx, esi
+// 008FCA63 e8abdfd0ff call 0x60aa13
+// 008FCA68 8bae18030000 mov ebp, dword ptr [esi + 0x318]
+// 008FCA6E 8d4c2418 lea ecx, [esp + 0x18]
+// 008FCA72 2be8 sub ebp, eax
+// 008FCA74 6a01 push 1
+// 008FCA76 8bc5 mov eax, ebp
+// 008FCA78 51 push ecx
+// 008FCA79 89ae18030000 mov dword ptr [esi + 0x318], ebp
+// 008FCA7F 8bae44030000 mov ebp, dword ptr [esi + 0x344]
+// 008FCA85 50 push eax
+// 008FCA86 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FCA8C 03c5 add eax, ebp
+// 008FCA8E 8d1480 lea edx, [eax + eax*4]
+// 008FCA91 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FCA97 c1e205 shl edx, 5
+// 008FCA9A 8d4c0208 lea ecx, [edx + eax + 8]
+// 008FCA9E 51 push ecx
+// 008FCA9F 8bce mov ecx, esi
+// 008FCAA1 e8296ad0ff call 0x6034cf
+// 008FCAA6 397c2418 cmp dword ptr [esp + 0x18], edi
+// 008FCAAA 7456 je 0x8fcb02
+// 008FCAAC 8b8e44030000 mov ecx, dword ptr [esi + 0x344]
+// 008FCAB2 6a01 push 1
+// 008FCAB4 50 push eax
+// 008FCAB5 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FCABB 03c1 add eax, ecx
+// 008FCABD 8d1480 lea edx, [eax + eax*4]
+// 008FCAC0 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FCAC6 c1e205 shl edx, 5
+// 008FCAC9 8d4c0208 lea ecx, [edx + eax + 8]
+// 008FCACD 51 push ecx
+// 008FCACE 8bce mov ecx, esi
+// 008FCAD0 e88cf0d0ff call 0x60bb61
+// 008FCAD5 8b9644030000 mov edx, dword ptr [esi + 0x344]
+// 008FCADB 50 push eax
+// 008FCADC 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FCAE2 03c2 add eax, edx
+// 008FCAE4 8d1480 lea edx, [eax + eax*4]
+// 008FCAE7 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FCAED c1e205 shl edx, 5
+// 008FCAF0 8d4c0208 lea ecx, [edx + eax + 8]
+// 008FCAF4 51 push ecx
+// 008FCAF5 8bce mov ecx, esi
+// 008FCAF7 e8835ad0ff call 0x60257f
+// 008FCAFC 898618030000 mov dword ptr [esi + 0x318], eax
+// 008FCB02 39be18030000 cmp dword ptr [esi + 0x318], edi
+// 008FCB08 7d06 jge 0x8fcb10
+// 008FCB0A 89be18030000 mov dword ptr [esi + 0x318], edi
+// 008FCB10 8bce mov ecx, esi
+// 008FCB12 e8fcded0ff call 0x60aa13
+// 008FCB17 898648030000 mov dword ptr [esi + 0x348], eax
+// 008FCB1D 8b9618030000 mov edx, dword ptr [esi + 0x318]
+// 008FCB23 8b8648030000 mov eax, dword ptr [esi + 0x348]
+// 008FCB29 03c2 add eax, edx
+// 008FCB2B 5d pop ebp
+// 008FCB2C 3bc7 cmp eax, edi
+// 008FCB2E 7440 je 0x8fcb70
+// 008FCB30 8b9e44030000 mov ebx, dword ptr [esi + 0x344]
+// 008FCB36 8d4c2414 lea ecx, [esp + 0x14]
+// 008FCB3A 6a01 push 1
+// 008FCB3C 51 push ecx
+// 008FCB3D 50 push eax
+// 008FCB3E 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FCB44 03c3 add eax, ebx
+// 008FCB46 8d1480 lea edx, [eax + eax*4]
+// 008FCB49 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008FCB4F c1e205 shl edx, 5
+// 008FCB52 8d4c0208 lea ecx, [edx + eax + 8]
+// 008FCB56 51 push ecx
+// 008FCB57 8bce mov ecx, esi
+// 008FCB59 e87169d0ff call 0x6034cf
+// 008FCB5E 8b542414 mov edx, dword ptr [esp + 0x14]
+// 008FCB62 8b8648030000 mov eax, dword ptr [esi + 0x348]
+// 008FCB68 03c2 add eax, edx
+// 008FCB6A 898648030000 mov dword ptr [esi + 0x348], eax
+// 008FCB70 ff15bc3cad00 call dword ptr [0xad3cbc]
+// 008FCB76 5b pop ebx
+// 008FCB77 898654030000 mov dword ptr [esi + 0x354], eax
+// 008FCB7D 5f pop edi
+// 008FCB7E 5e pop esi
+// 008FCB7F c20800 ret 8
+// 008FCB82 89be18030000 mov dword ptr [esi + 0x318], edi
+// 008FCB88 89be48030000 mov dword ptr [esi + 0x348], edi
+// 008FCB8E 5f pop edi
+// 008FCB8F 5e pop esi
+// 008FCB90 c20800 ret 8
+// 当前主体 0x8fccd0
+// 008FCCD0 56 push esi
+// 008FCCD1 8bf1 mov esi, ecx
+// 008FCCD3 83c8ff or eax, 0xffffffff
+// 008FCCD6 57 push edi
+// 008FCCD7 89865c030000 mov dword ptr [esi + 0x35c], eax
+// 008FCCDD 898658030000 mov dword ptr [esi + 0x358], eax
+// 008FCCE3 898664030000 mov dword ptr [esi + 0x364], eax
+// 008FCCE9 898660030000 mov dword ptr [esi + 0x360], eax
+// 008FCCEF 8b44240c mov eax, dword ptr [esp + 0xc]
+// 008FCCF3 50 push eax
+// 008FCCF4 e8a7e1d0ff call 0x60aea0
+// 008FCCF9 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FCCFF 8bbe44030000 mov edi, dword ptr [esi + 0x344]
+// 008FCD05 8b9610030000 mov edx, dword ptr [esi + 0x310]
+// 008FCD0B 8bc8 mov ecx, eax
+// 008FCD0D 03cf add ecx, edi
+// 008FCD0F 3bca cmp ecx, edx
+// 008FCD11 7e1e jle 0x8fcd31
+// 008FCD13 8bca mov ecx, edx
+// 008FCD15 2bc8 sub ecx, eax
+// 008FCD17 898e44030000 mov dword ptr [esi + 0x344], ecx
+// 008FCD1D 7912 jns 0x8fcd31
+// 008FCD1F 03c8 add ecx, eax
+// 008FCD21 c7864403000000000000 mov dword ptr [esi + 0x344], 0
+// 008FCD2B 898e1c030000 mov dword ptr [esi + 0x31c], ecx
+// 008FCD31 85d2 test edx, edx
+// 008FCD33 7508 jne 0x8fcd3d
+// 008FCD35 52 push edx
+// 008FCD36 8bce mov ecx, esi
+// 008FCD38 e87e52d1ff call 0x611fbb
+// 008FCD3D 5f pop edi
+// 008FCD3E 5e pop esi
+// 008FCD3F c20400 ret 4
+// 当前主体 0x90ce80
+// 0090CE80 83ec0c sub esp, 0xc
+// 0090CE83 53 push ebx
+// 0090CE84 55 push ebp
+// 0090CE85 8b6c2418 mov ebp, dword ptr [esp + 0x18]
+// 0090CE89 56 push esi
+// 0090CE8A 57 push edi
+// 0090CE8B 894c2414 mov dword ptr [esp + 0x14], ecx
+// 0090CE8F 8b4500 mov eax, dword ptr [ebp]
+// 0090CE92 85c0 test eax, eax
+// 0090CE94 0f84e0010000 je 0x90d07a
+// 0090CE9A 66833800 cmp word ptr [eax], 0
+// 0090CE9E 0f84d6010000 je 0x90d07a
+// 0090CEA4 50 push eax
+// 0090CEA5 c744241400000000 mov dword ptr [esp + 0x14], 0
+// 0090CEAD e8d133d0ff call 0x610283
+// 0090CEB2 8a5528 mov dl, byte ptr [ebp + 0x28]
+// 0090CEB5 8b5c2428 mov ebx, dword ptr [esp + 0x28]
+// 0090CEB9 83c404 add esp, 4
+// 0090CEBC 33c9 xor ecx, ecx
+// 0090CEBE 84d2 test dl, dl
+// 0090CEC0 89442418 mov dword ptr [esp + 0x18], eax
+// 0090CEC4 0f8581000000 jne 0x90cf4b
+// 0090CECA 33f6 xor esi, esi
+// 0090CECC 85c0 test eax, eax
+// 0090CECE 7e23 jle 0x90cef3
+// 0090CED0 8b7d08 mov edi, dword ptr [ebp + 8]
+// 0090CED3 8b44242c mov eax, dword ptr [esp + 0x2c]
+// 0090CED7 33d2 xor edx, edx
+// 0090CED9 8a1437 mov dl, byte ptr [edi + esi]
+// 0090CEDC 03d1 add edx, ecx
+// 0090CEDE 3bd3 cmp edx, ebx
+// 0090CEE0 7f27 jg 0x90cf09
+// 0090CEE2 7504 jne 0x90cee8
+// 0090CEE4 84c0 test al, al
+// 0090CEE6 744c je 0x90cf34
+// 0090CEE8 8bca mov ecx, edx
+// 0090CEEA 8b542418 mov edx, dword ptr [esp + 0x18]
+// 0090CEEE 46 inc esi
+// 0090CEEF 3bf2 cmp esi, edx
+// 0090CEF1 7ce4 jl 0x90ced7
+// 0090CEF3 8b542428 mov edx, dword ptr [esp + 0x28]
+// 0090CEF7 8b442418 mov eax, dword ptr [esp + 0x18]
+// 0090CEFB 5f pop edi
+// 0090CEFC 2bcb sub ecx, ebx
+// 0090CEFE 5e pop esi
+// 0090CEFF 5d pop ebp
+// 0090CF00 890a mov dword ptr [edx], ecx
+// 0090CF02 5b pop ebx
+// 0090CF03 83c40c add esp, 0xc
+// 0090CF06 c21000 ret 0x10
+// 0090CF09 8b7c2428 mov edi, dword ptr [esp + 0x28]
+// 0090CF0D 8bd1 mov edx, ecx
+// 0090CF0F 2bd3 sub edx, ebx
+// 0090CF11 8917 mov dword ptr [edi], edx
+// 0090CF13 0f84e1000000 je 0x90cffa
+// 0090CF19 50 push eax
+// 0090CF1A 8d442414 lea eax, [esp + 0x14]
+// 0090CF1E 50 push eax
+// 0090CF1F 51 push ecx
+// 0090CF20 8b4c2420 mov ecx, dword ptr [esp + 0x20]
+// 0090CF24 55 push ebp
+// 0090CF25 e8a565cfff call 0x6034cf
+// 0090CF2A 5f pop edi
+// 0090CF2B 5e pop esi
+// 0090CF2C 5d pop ebp
+// 0090CF2D 5b pop ebx
+// 0090CF2E 83c40c add esp, 0xc
+// 0090CF31 c21000 ret 0x10
+// 0090CF34 8b4c2428 mov ecx, dword ptr [esp + 0x28]
+// 0090CF38 8d4601 lea eax, [esi + 1]
+// 0090CF3B 5f pop edi
+// 0090CF3C 5e pop esi
+// 0090CF3D 5d pop ebp
+// 0090CF3E c70100000000 mov dword ptr [ecx], 0
+// 0090CF44 5b pop ebx
+// 0090CF45 83c40c add esp, 0xc
+// 0090CF48 c21000 ret 0x10
+// 0090CF4B 8b4504 mov eax, dword ptr [ebp + 4]
+// 0090CF4E 33f6 xor esi, esi
+// 0090CF50 85c0 test eax, eax
+// 0090CF52 89742424 mov dword ptr [esp + 0x24], esi
+// 0090CF56 749b je 0x90cef3
+// 0090CF58 8a5008 mov dl, byte ptr [eax + 8]
+// 0090CF5B 84d2 test dl, dl
+// 0090CF5D 741b je 0x90cf7a
+// 0090CF5F 8b5004 mov edx, dword ptr [eax + 4]
+// 0090CF62 03d1 add edx, ecx
+// 0090CF64 3bd3 cmp edx, ebx
+// 0090CF66 7f67 jg 0x90cfcf
+// 0090CF68 750c jne 0x90cf76
+// 0090CF6A 8a4c242c mov cl, byte ptr [esp + 0x2c]
+// 0090CF6E 84c9 test cl, cl
+// 0090CF70 0f8490000000 je 0x90d006
+// 0090CF76 8bca mov ecx, edx
+// 0090CF78 eb3d jmp 0x90cfb7
+// 0090CF7A 8b28 mov ebp, dword ptr [eax]
+// 0090CF7C 33ff xor edi, edi
+// 0090CF7E 85ed test ebp, ebp
+// 0090CF80 7e31 jle 0x90cfb3
+// 0090CF82 8b542420 mov edx, dword ptr [esp + 0x20]
+// 0090CF86 8b7208 mov esi, dword ptr [edx + 8]
+// 0090CF89 8b542424 mov edx, dword ptr [esp + 0x24]
+// 0090CF8D 03f2 add esi, edx
+// 0090CF8F 33d2 xor edx, edx
+// 0090CF91 8a16 mov dl, byte ptr [esi]
+// 0090CF93 03d1 add edx, ecx
+// 0090CF95 3bd3 cmp edx, ebx
+// 0090CF97 0f8f81000000 jg 0x90d01e
+// 0090CF9D 750c jne 0x90cfab
+// 0090CF9F 8a4c242c mov cl, byte ptr [esp + 0x2c]
+// 0090CFA3 84c9 test cl, cl
+// 0090CFA5 0f84b3000000 je 0x90d05e
+// 0090CFAB 47 inc edi
+// 0090CFAC 46 inc esi
+// 0090CFAD 3bfd cmp edi, ebp
+// 0090CFAF 8bca mov ecx, edx
+// 0090CFB1 7cdc jl 0x90cf8f
+// 0090CFB3 8b6c2420 mov ebp, dword ptr [esp + 0x20]
+// 0090CFB7 8b742424 mov esi, dword ptr [esp + 0x24]
+// 0090CFBB 8b38 mov edi, dword ptr [eax]
+// 0090CFBD 8b400c mov eax, dword ptr [eax + 0xc]
+// 0090CFC0 03f7 add esi, edi
+// 0090CFC2 85c0 test eax, eax
+// 0090CFC4 89742424 mov dword ptr [esp + 0x24], esi
+// 0090CFC8 758e jne 0x90cf58
+// 0090CFCA e924ffffff jmp 0x90cef3
+// 0090CFCF 8b542428 mov edx, dword ptr [esp + 0x28]
+// 0090CFD3 8bc1 mov eax, ecx
+// 0090CFD5 2bc3 sub eax, ebx
+// 0090CFD7 8902 mov dword ptr [edx], eax
+// 0090CFD9 741f je 0x90cffa
+// 0090CFDB 8b44242c mov eax, dword ptr [esp + 0x2c]
+// 0090CFDF 8d542410 lea edx, [esp + 0x10]
+// 0090CFE3 50 push eax
+// 0090CFE4 52 push edx
+// 0090CFE5 51 push ecx
+// 0090CFE6 8b4c2420 mov ecx, dword ptr [esp + 0x20]
+// 0090CFEA 55 push ebp
+// 0090CFEB e8df64cfff call 0x6034cf
+// 0090CFF0 5f pop edi
+// 0090CFF1 5e pop esi
+// 0090CFF2 5d pop ebp
+// 0090CFF3 5b pop ebx
+// 0090CFF4 83c40c add esp, 0xc
+// 0090CFF7 c21000 ret 0x10
+// 0090CFFA 8bc6 mov eax, esi
+// 0090CFFC 5f pop edi
+// 0090CFFD 5e pop esi
+// 0090CFFE 5d pop ebp
+// 0090CFFF 5b pop ebx
+// 0090D000 83c40c add esp, 0xc
+// 0090D003 c21000 ret 0x10
+// 0090D006 8b442428 mov eax, dword ptr [esp + 0x28]
+// 0090D00A 5f pop edi
+// 0090D00B 5e pop esi
+// 0090D00C 5d pop ebp
+// 0090D00D c70000000000 mov dword ptr [eax], 0
+// 0090D013 8b442418 mov eax, dword ptr [esp + 0x18]
+// 0090D017 5b pop ebx
+// 0090D018 83c40c add esp, 0xc
+// 0090D01B c21000 ret 0x10
+// 0090D01E 8b542428 mov edx, dword ptr [esp + 0x28]
+// 0090D022 8bc1 mov eax, ecx
+// 0090D024 2bc3 sub eax, ebx
+// 0090D026 8902 mov dword ptr [edx], eax
+// 0090D028 7423 je 0x90d04d
+// 0090D02A 8b44242c mov eax, dword ptr [esp + 0x2c]
+// 0090D02E 8d542410 lea edx, [esp + 0x10]
+// 0090D032 50 push eax
+// 0090D033 8b442424 mov eax, dword ptr [esp + 0x24]
+// 0090D037 52 push edx
+// 0090D038 51 push ecx
+// 0090D039 8b4c2420 mov ecx, dword ptr [esp + 0x20]
+// 0090D03D 50 push eax
+// 0090D03E e88c64cfff call 0x6034cf
+// 0090D043 5f pop edi
+// 0090D044 5e pop esi
+// 0090D045 5d pop ebp
+// 0090D046 5b pop ebx
+// 0090D047 83c40c add esp, 0xc
+// 0090D04A c21000 ret 0x10
+// 0090D04D 8b4c2424 mov ecx, dword ptr [esp + 0x24]
+// 0090D051 8d040f lea eax, [edi + ecx]
+// 0090D054 5f pop edi
+// 0090D055 5e pop esi
+// 0090D056 5d pop ebp
+// 0090D057 5b pop ebx
+// 0090D058 83c40c add esp, 0xc
+// 0090D05B c21000 ret 0x10
+// 0090D05E 8b442424 mov eax, dword ptr [esp + 0x24]
+// 0090D062 8b542428 mov edx, dword ptr [esp + 0x28]
+// 0090D066 8d440701 lea eax, [edi + eax + 1]
+// 0090D06A 5f pop edi
+// 0090D06B 5e pop esi
+// 0090D06C 5d pop ebp
+// 0090D06D c70200000000 mov dword ptr [edx], 0
+// 0090D073 5b pop ebx
+// 0090D074 83c40c add esp, 0xc
+// 0090D077 c21000 ret 0x10
+// 0090D07A 8b442428 mov eax, dword ptr [esp + 0x28]
+// 0090D07E 5f pop edi
+// 0090D07F 5e pop esi
+// 0090D080 5d pop ebp
+// 0090D081 c70000000000 mov dword ptr [eax], 0
+// 0090D087 33c0 xor eax, eax
+// 0090D089 5b pop ebx
+// 0090D08A 83c40c add esp, 0xc
+// 0090D08D c21000 ret 0x10
+// 当前主体 0x90d120
+// 0090D120 53 push ebx
+// 0090D121 8b5c2408 mov ebx, dword ptr [esp + 8]
+// 0090D125 56 push esi
+// 0090D126 57 push edi
+// 0090D127 8b03 mov eax, dword ptr [ebx]
+// 0090D129 85c0 test eax, eax
+// 0090D12B 0f8481000000 je 0x90d1b2
+// 0090D131 66833800 cmp word ptr [eax], 0
+// 0090D135 747b je 0x90d1b2
+// 0090D137 8a4b28 mov cl, byte ptr [ebx + 0x28]
+// 0090D13A 33c0 xor eax, eax
+// 0090D13C 84c9 test cl, cl
+// 0090D13E 7453 je 0x90d193
+// 0090D140 8b4b04 mov ecx, dword ptr [ebx + 4]
+// 0090D143 33f6 xor esi, esi
+// 0090D145 85c9 test ecx, ecx
+// 0090D147 746b je 0x90d1b4
+// 0090D149 8b7c2414 mov edi, dword ptr [esp + 0x14]
+// 0090D14D 8a5108 mov dl, byte ptr [ecx + 8]
+// 0090D150 84d2 test dl, dl
+// 0090D152 8b11 mov edx, dword ptr [ecx]
+// 0090D154 7408 je 0x90d15e
+// 0090D156 03d6 add edx, esi
+// 0090D158 3bd7 cmp edx, edi
+// 0090D15A 7f58 jg 0x90d1b4
+// 0090D15C eb06 jmp 0x90d164
+// 0090D15E 03d6 add edx, esi
+// 0090D160 3bd7 cmp edx, edi
+// 0090D162 7f14 jg 0x90d178
+// 0090D164 8b7104 mov esi, dword ptr [ecx + 4]
+// 0090D167 8b490c mov ecx, dword ptr [ecx + 0xc]
+// 0090D16A 03c6 add eax, esi
+// 0090D16C 8bf2 mov esi, edx
+// 0090D16E 85c9 test ecx, ecx
+// 0090D170 75db jne 0x90d14d
+// 0090D172 5f pop edi
+// 0090D173 5e pop esi
+// 0090D174 5b pop ebx
+// 0090D175 c20800 ret 8
+// 0090D178 3bf7 cmp esi, edi
+// 0090D17A 8bce mov ecx, esi
+// 0090D17C 7d36 jge 0x90d1b4
+// 0090D17E 8b7308 mov esi, dword ptr [ebx + 8]
+// 0090D181 33d2 xor edx, edx
+// 0090D183 8a140e mov dl, byte ptr [esi + ecx]
+// 0090D186 03c2 add eax, edx
+// 0090D188 41 inc ecx
+// 0090D189 3bcf cmp ecx, edi
+// 0090D18B 7cf4 jl 0x90d181
+// 0090D18D 5f pop edi
+// 0090D18E 5e pop esi
+// 0090D18F 5b pop ebx
+// 0090D190 c20800 ret 8
+// 0090D193 8b7c2414 mov edi, dword ptr [esp + 0x14]
+// 0090D197 33c9 xor ecx, ecx
+// 0090D199 85ff test edi, edi
+// 0090D19B 7e17 jle 0x90d1b4
+// 0090D19D 8b7308 mov esi, dword ptr [ebx + 8]
+// 0090D1A0 33d2 xor edx, edx
+// 0090D1A2 8a140e mov dl, byte ptr [esi + ecx]
+// 0090D1A5 03c2 add eax, edx
+// 0090D1A7 41 inc ecx
+// 0090D1A8 3bcf cmp ecx, edi
+// 0090D1AA 7cf4 jl 0x90d1a0
+// 0090D1AC 5f pop edi
+// 0090D1AD 5e pop esi
+// 0090D1AE 5b pop ebx
+// 0090D1AF c20800 ret 8
+// 0090D1B2 33c0 xor eax, eax
+// 0090D1B4 5f pop edi
+// 0090D1B5 5e pop esi
+// 0090D1B6 5b pop ebx
+// 0090D1B7 c20800 ret 8
+// 当前主体 0x90d310
+// 0090D310 53 push ebx
+// 0090D311 55 push ebp
+// 0090D312 56 push esi
+// 0090D313 8b5c2414 mov ebx, dword ptr [esp + 0x14]
+// 0090D317 57 push edi
+// 0090D318 8b7c2414 mov edi, dword ptr [esp + 0x14]
+// 0090D31C 8a4728 mov al, byte ptr [edi + 0x28]
+// 0090D31F 84c0 test al, al
+// 0090D321 754a jne 0x90d36d
+// 0090D323 8b07 mov eax, dword ptr [edi]
+// 0090D325 50 push eax
+// 0090D326 e8582fd0ff call 0x610283
+// 0090D32B 83c404 add esp, 4
+// 0090D32E 8bf0 mov esi, eax
+// 0090D330 8d5301 lea edx, [ebx + 1]
+// 0090D333 3bd6 cmp edx, esi
+// 0090D335 0f8dd4000000 jge 0x90d40f
+// 0090D33B 8b4f08 mov ecx, dword ptr [edi + 8]
+// 0090D33E 8a0c11 mov cl, byte ptr [ecx + edx]
+// 0090D341 84c9 test cl, cl
+// 0090D343 0f85bd000000 jne 0x90d406
+// 0090D349 8a44241c mov al, byte ptr [esp + 0x1c]
+// 0090D34D 84c0 test al, al
+// 0090D34F 7513 jne 0x90d364
+// 0090D351 84c9 test cl, cl
+// 0090D353 0f85ad000000 jne 0x90d406
+// 0090D359 84c0 test al, al
+// 0090D35B 0f85a5000000 jne 0x90d406
+// 0090D361 42 inc edx
+// 0090D362 ebcf jmp 0x90d333
+// 0090D364 8a4728 mov al, byte ptr [edi + 0x28]
+// 0090D367 8bda mov ebx, edx
+// 0090D369 84c0 test al, al
+// 0090D36B 74b6 je 0x90d323
+// 0090D36D 8b4f04 mov ecx, dword ptr [edi + 4]
+// 0090D370 33ff xor edi, edi
+// 0090D372 85c9 test ecx, ecx
+// 0090D374 7472 je 0x90d3e8
+// 0090D376 8d4301 lea eax, [ebx + 1]
+// 0090D379 3bf8 cmp edi, eax
+// 0090D37B 7f42 jg 0x90d3bf
+// 0090D37D 8b11 mov edx, dword ptr [ecx]
+// 0090D37F 8d343a lea esi, [edx + edi]
+// 0090D382 3bf3 cmp esi, ebx
+// 0090D384 7e39 jle 0x90d3bf
+// 0090D386 8b5104 mov edx, dword ptr [ecx + 4]
+// 0090D389 85d2 test edx, edx
+// 0090D38B 8a54241c mov dl, byte ptr [esp + 0x1c]
+// 0090D38F 7504 jne 0x90d395
+// 0090D391 84d2 test dl, dl
+// 0090D393 752e jne 0x90d3c3
+// 0090D395 80790800 cmp byte ptr [ecx + 8], 0
+// 0090D399 7556 jne 0x90d3f1
+// 0090D39B 3bc6 cmp eax, esi
+// 0090D39D 7506 jne 0x90d3a5
+// 0090D39F 84d2 test dl, dl
+// 0090D3A1 7459 je 0x90d3fc
+// 0090D3A3 3bc6 cmp eax, esi
+// 0090D3A5 7d36 jge 0x90d3dd
+// 0090D3A7 8b6c2414 mov ebp, dword ptr [esp + 0x14]
+// 0090D3AB 8b6d08 mov ebp, dword ptr [ebp + 8]
+// 0090D3AE 803c2800 cmp byte ptr [eax + ebp], 0
+// 0090D3B2 755d jne 0x90d411
+// 0090D3B4 84d2 test dl, dl
+// 0090D3B6 7459 je 0x90d411
+// 0090D3B8 40 inc eax
+// 0090D3B9 3bc6 cmp eax, esi
+// 0090D3BB 7cf1 jl 0x90d3ae
+// 0090D3BD eb1e jmp 0x90d3dd
+// 0090D3BF 8a54241c mov dl, byte ptr [esp + 0x1c]
+// 0090D3C3 3bf8 cmp edi, eax
+// 0090D3C5 7f16 jg 0x90d3dd
+// 0090D3C7 8b01 mov eax, dword ptr [ecx]
+// 0090D3C9 8d3438 lea esi, [eax + edi]
+// 0090D3CC 3bf3 cmp esi, ebx
+// 0090D3CE 7e0d jle 0x90d3dd
+// 0090D3D0 8b7104 mov esi, dword ptr [ecx + 4]
+// 0090D3D3 85f6 test esi, esi
+// 0090D3D5 7506 jne 0x90d3dd
+// 0090D3D7 84d2 test dl, dl
+// 0090D3D9 7402 je 0x90d3dd
+// 0090D3DB 03d8 add ebx, eax
+// 0090D3DD 8b11 mov edx, dword ptr [ecx]
+// 0090D3DF 8b490c mov ecx, dword ptr [ecx + 0xc]
+// 0090D3E2 03fa add edi, edx
+// 0090D3E4 85c9 test ecx, ecx
+// 0090D3E6 758e jne 0x90d376
+// 0090D3E8 8bc7 mov eax, edi
+// 0090D3EA 5f pop edi
+// 0090D3EB 5e pop esi
+// 0090D3EC 5d pop ebp
+// 0090D3ED 5b pop ebx
+// 0090D3EE c20c00 ret 0xc
+// 0090D3F1 8b01 mov eax, dword ptr [ecx]
+// 0090D3F3 03c7 add eax, edi
+// 0090D3F5 5f pop edi
+// 0090D3F6 5e pop esi
+// 0090D3F7 5d pop ebp
+// 0090D3F8 5b pop ebx
+// 0090D3F9 c20c00 ret 0xc
+// 0090D3FC 5f pop edi
+// 0090D3FD 5e pop esi
+// 0090D3FE 8d4301 lea eax, [ebx + 1]
+// 0090D401 5d pop ebp
+// 0090D402 5b pop ebx
+// 0090D403 c20c00 ret 0xc
+// 0090D406 5f pop edi
+// 0090D407 5e pop esi
+// 0090D408 5d pop ebp
+// 0090D409 8bc2 mov eax, edx
+// 0090D40B 5b pop ebx
+// 0090D40C c20c00 ret 0xc
+// 0090D40F 8bc6 mov eax, esi
+// 0090D411 5f pop edi
+// 0090D412 5e pop esi
+// 0090D413 5d pop ebp
+// 0090D414 5b pop ebx
+// 0090D415 c20c00 ret 0xc
+// 当前主体 0x8fae70
+// 008FAE70 b80c500000 mov eax, 0x500c
+// 008FAE75 e86d9bd0ff call 0x6049e7
+// 008FAE7A 53 push ebx
+// 008FAE7B 55 push ebp
+// 008FAE7C 56 push esi
+// 008FAE7D 8bf1 mov esi, ecx
+// 008FAE7F 57 push edi
+// 008FAE80 8a8670030000 mov al, byte ptr [esi + 0x370]
+// 008FAE86 84c0 test al, al
+// 008FAE88 0f85a7030000 jne 0x8fb235
+// 008FAE8E 8bac2420500000 mov ebp, dword ptr [esp + 0x5020]
+// 008FAE95 33db xor ebx, ebx
+// 008FAE97 3beb cmp ebp, ebx
+// 008FAE99 0f8496030000 je 0x8fb235
+// 008FAE9F 66395d00 cmp word ptr [ebp], bx
+// 008FAEA3 0f848c030000 je 0x8fb235
+// 008FAEA9 8bbe5c030000 mov edi, dword ptr [esi + 0x35c]
+// 008FAEAF 83ffff cmp edi, -1
+// 008FAEB2 7434 je 0x8faee8
+// 008FAEB4 8b9664030000 mov edx, dword ptr [esi + 0x364]
+// 008FAEBA 83faff cmp edx, -1
+// 008FAEBD 7429 je 0x8faee8
+// 008FAEBF 8b8e58030000 mov ecx, dword ptr [esi + 0x358]
+// 008FAEC5 83f9ff cmp ecx, -1
+// 008FAEC8 741e je 0x8faee8
+// 008FAECA 8b8660030000 mov eax, dword ptr [esi + 0x360]
+// 008FAED0 83f8ff cmp eax, -1
+// 008FAED3 7413 je 0x8faee8
+// 008FAED5 3bfa cmp edi, edx
+// 008FAED7 7504 jne 0x8faedd
+// 008FAED9 3bc8 cmp ecx, eax
+// 008FAEDB 740b je 0x8faee8
+// 008FAEDD 50 push eax
+// 008FAEDE 51 push ecx
+// 008FAEDF 52 push edx
+// 008FAEE0 57 push edi
+// 008FAEE1 8bce mov ecx, esi
+// 008FAEE3 e8a021d1ff call 0x60d088
+// 008FAEE8 b9ff130000 mov ecx, 0x13ff
+// 008FAEED 33c0 xor eax, eax
+// 008FAEEF 8d7c241e lea edi, [esp + 0x1e]
+// 008FAEF3 66895c241c mov word ptr [esp + 0x1c], bx
+// 008FAEF8 f3ab rep stosd dword ptr es:[edi], eax
+// 008FAEFA 55 push ebp
+// 008FAEFB 895c2414 mov dword ptr [esp + 0x14], ebx
+// 008FAEFF 66ab stosw word ptr es:[edi], ax
+// 008FAF01 e87d53d1ff call 0x610283
+// 008FAF06 8bf8 mov edi, eax
+// 008FAF08 a1c8c3ac00 mov eax, dword ptr [0xacc3c8]
+// 008FAF0D 83c404 add esp, 4
+// 008FAF10 399828510000 cmp dword ptr [eax + 0x5128], ebx
+// 008FAF16 7540 jne 0x8faf58
+// 008FAF18 55 push ebp
+// 008FAF19 e8f460d0ff call 0x601012
+// 008FAF1E 8a8c2428500000 mov cl, byte ptr [esp + 0x5028]
+// 008FAF25 83c404 add esp, 4
+// 008FAF28 84c9 test cl, cl
+// 008FAF2A 7463 je 0x8faf8f
+// 008FAF2C 8b8e38030000 mov ecx, dword ptr [esi + 0x338]
+// 008FAF32 83f9ff cmp ecx, -1
+// 008FAF35 7419 je 0x8faf50
+// 008FAF37 8b9634030000 mov edx, dword ptr [esi + 0x334]
+// 008FAF3D 8d2c02 lea ebp, [edx + eax]
+// 008FAF40 3be9 cmp ebp, ecx
+// 008FAF42 7e0c jle 0x8faf50
+// 008FAF44 8bf9 mov edi, ecx
+// 008FAF46 898e34030000 mov dword ptr [esi + 0x334], ecx
+// 008FAF4C 2bfa sub edi, edx
+// 008FAF4E eb3f jmp 0x8faf8f
+// 008FAF50 018634030000 add dword ptr [esi + 0x334], eax
+// 008FAF56 eb37 jmp 0x8faf8f
+// 008FAF58 8a842424500000 mov al, byte ptr [esp + 0x5024]
+// 008FAF5F 84c0 test al, al
+// 008FAF61 742c je 0x8faf8f
+// 008FAF63 8b8638030000 mov eax, dword ptr [esi + 0x338]
+// 008FAF69 83f8ff cmp eax, -1
+// 008FAF6C 7413 je 0x8faf81
+// 008FAF6E 8b8e34030000 mov ecx, dword ptr [esi + 0x334]
+// 008FAF74 8d1439 lea edx, [ecx + edi]
+// 008FAF77 3bd0 cmp edx, eax
+// 008FAF79 7e06 jle 0x8faf81
+// 008FAF7B 8bf8 mov edi, eax
+// 008FAF7D 2bf9 sub edi, ecx
+// 008FAF7F eb08 jmp 0x8faf89
+// 008FAF81 8b8634030000 mov eax, dword ptr [esi + 0x334]
+// 008FAF87 03c7 add eax, edi
+// 008FAF89 898634030000 mov dword ptr [esi + 0x334], eax
+// 008FAF8F 8bae1c030000 mov ebp, dword ptr [esi + 0x31c]
+// 008FAF95 8b8644030000 mov eax, dword ptr [esi + 0x344]
+// 008FAF9B 8b9650020000 mov edx, dword ptr [esi + 0x250]
+// 008FAFA1 03c5 add eax, ebp
+// 008FAFA3 8d0c80 lea ecx, [eax + eax*4]
+// 008FAFA6 c1e105 shl ecx, 5
+// 008FAFA9 8d4c1108 lea ecx, [ecx + edx + 8]
+// 008FAFAD 8b11 mov edx, dword ptr [ecx]
+// 008FAFAF 85d2 test edx, edx
+// 008FAFB1 0f848c000000 je 0x8fb043
+// 008FAFB7 66833a00 cmp word ptr [edx], 0
+// 008FAFBB 0f8482000000 je 0x8fb043
+// 008FAFC1 8b9648030000 mov edx, dword ptr [esi + 0x348]
+// 008FAFC7 8d442418 lea eax, [esp + 0x18]
+// 008FAFCB 6a01 push 1
+// 008FAFCD 50 push eax
+// 008FAFCE 039618030000 add edx, dword ptr [esi + 0x318]
+// 008FAFD4 52 push edx
+// 008FAFD5 51 push ecx
+// 008FAFD6 8bce mov ecx, esi
+// 008FAFD8 e8f284d0ff call 0x6034cf
+// 008FAFDD 8b961c030000 mov edx, dword ptr [esi + 0x31c]
+// 008FAFE3 8bd8 mov ebx, eax
+// 008FAFE5 8b8644030000 mov eax, dword ptr [esi + 0x344]
+// 008FAFEB 8b8e50020000 mov ecx, dword ptr [esi + 0x250]
+// 008FAFF1 03c2 add eax, edx
+// 008FAFF3 8d0480 lea eax, [eax + eax*4]
+// 008FAFF6 c1e005 shl eax, 5
+// 008FAFF9 8b540808 mov edx, dword ptr [eax + ecx + 8]
+// 008FAFFD 52 push edx
+// 008FAFFE e88052d1ff call 0x610283
+// 008FB003 8b8e1c030000 mov ecx, dword ptr [esi + 0x31c]
+// 008FB009 89442414 mov dword ptr [esp + 0x14], eax
+// 008FB00D 8b8644030000 mov eax, dword ptr [esi + 0x344]
+// 008FB013 83c404 add esp, 4
+// 008FB016 03c1 add eax, ecx
+// 008FB018 8b8e50020000 mov ecx, dword ptr [esi + 0x250]
+// 008FB01E 8d0480 lea eax, [eax + eax*4]
+// 008FB021 c1e005 shl eax, 5
+// 008FB024 85db test ebx, ebx
+// 008FB026 8b4c0808 mov ecx, dword ptr [eax + ecx + 8]
+// 008FB02A 8d44241c lea eax, [esp + 0x1c]
+// 008FB02E 7623 jbe 0x8fb053
+// 008FB030 8bd3 mov edx, ebx
+// 008FB032 668b29 mov bp, word ptr [ecx]
+// 008FB035 83c102 add ecx, 2
+// 008FB038 668928 mov word ptr [eax], bp
+// 008FB03B 83c002 add eax, 2
+// 008FB03E 4a dec edx
+// 008FB03F 75f1 jne 0x8fb032
+// 008FB041 eb10 jmp 0x8fb053
+// 008FB043 3b8610030000 cmp eax, dword ptr [esi + 0x310]
+// 008FB049 7c08 jl 0x8fb053
+// 008FB04B 55 push ebp
+// 008FB04C 8bce mov ecx, esi
+// 008FB04E e8686fd1ff call 0x611fbb
+// 008FB053 8b842420500000 mov eax, dword ptr [esp + 0x5020]
+// 008FB05A 8d2c1b lea ebp, [ebx + ebx]
+// 008FB05D 85ff test edi, edi
+// 008FB05F 8d4c2c1c lea ecx, [esp + ebp + 0x1c]
+// 008FB063 761d jbe 0x8fb082
+// 008FB065 8bd0 mov edx, eax
+// 008FB067 897c2414 mov dword ptr [esp + 0x14], edi
+// 008FB06B 2bca sub ecx, edx
+// 008FB06D 668b10 mov dx, word ptr [eax]
+// 008FB070 66891401 mov word ptr [ecx + eax], dx
+// 008FB074 8b542414 mov edx, dword ptr [esp + 0x14]
+// 008FB078 83c002 add eax, 2
+// 008FB07B 4a dec edx
+// 008FB07C 89542414 mov dword ptr [esp + 0x14], edx
+// 008FB080 75eb jne 0x8fb06d
+// 008FB082 8b542410 mov edx, dword ptr [esp + 0x10]
+// 008FB086 2bd3 sub edx, ebx
+// 008FB088 85d2 test edx, edx
+// 008FB08A 7e3a jle 0x8fb0c6
+// 008FB08C 8b8644030000 mov eax, dword ptr [esi + 0x344]
+// 008FB092 8b8e1c030000 mov ecx, dword ptr [esi + 0x31c]
+// 008FB098 03c1 add eax, ecx
+// 008FB09A 8b8e50020000 mov ecx, dword ptr [esi + 0x250]
+// 008FB0A0 8d0480 lea eax, [eax + eax*4]
+// 008FB0A3 c1e005 shl eax, 5
+// 008FB0A6 8b440808 mov eax, dword ptr [eax + ecx + 8]
+// 008FB0AA 8d0c3b lea ecx, [ebx + edi]
+// 008FB0AD 03c5 add eax, ebp
+// 008FB0AF 85d2 test edx, edx
+// 008FB0B1 8d4c4c1c lea ecx, [esp + ecx*2 + 0x1c]
+// 008FB0B5 760f jbe 0x8fb0c6
+// 008FB0B7 668b28 mov bp, word ptr [eax]
+// 008FB0BA 83c002 add eax, 2
+// 008FB0BD 668929 mov word ptr [ecx], bp
+// 008FB0C0 83c102 add ecx, 2
+// 008FB0C3 4a dec edx
+// 008FB0C4 75f1 jne 0x8fb0b7
+// 008FB0C6 8a966c030000 mov dl, byte ptr [esi + 0x36c]
+// 008FB0CC 8b8644030000 mov eax, dword ptr [esi + 0x344]
+// 008FB0D2 52 push edx
+// 008FB0D3 8b961c030000 mov edx, dword ptr [esi + 0x31c]
+// 008FB0D9 8b8e50020000 mov ecx, dword ptr [esi + 0x250]
+// 008FB0DF 03c2 add eax, edx
+// 008FB0E1 8d0480 lea eax, [eax + eax*4]
+// 008FB0E4 c1e005 shl eax, 5
+// 008FB0E7 8d540808 lea edx, [eax + ecx + 8]
+// 008FB0EB 8d442420 lea eax, [esp + 0x20]
+// 008FB0EF 52 push edx
+// 008FB0F0 50 push eax
+// 008FB0F1 e8286cd0ff call 0x601d1e
+// 008FB0F6 8b8644030000 mov eax, dword ptr [esi + 0x344]
+// 008FB0FC 8b8e1c030000 mov ecx, dword ptr [esi + 0x31c]
+// 008FB102 8b9650020000 mov edx, dword ptr [esi + 0x250]
+// 008FB108 03c1 add eax, ecx
+// 008FB10A 83c40c add esp, 0xc
+// 008FB10D 03df add ebx, edi
+// 008FB10F 8d0c80 lea ecx, [eax + eax*4]
+// 008FB112 c1e105 shl ecx, 5
+// 008FB115 6a3d push 0x3d
+// 008FB117 53 push ebx
+// 008FB118 8d441108 lea eax, [ecx + edx + 8]
+// 008FB11C 8bce mov ecx, esi
+// 008FB11E 50 push eax
+// 008FB11F e85b74d0ff call 0x60257f
+// 008FB124 8b9618030000 mov edx, dword ptr [esi + 0x318]
+// 008FB12A 8bce mov ecx, esi
+// 008FB12C 2bc2 sub eax, edx
+// 008FB12E 50 push eax
+// 008FB12F e812bcd0ff call 0x606d46
+// 008FB134 8a842424500000 mov al, byte ptr [esp + 0x5024]
+// 008FB13B 84c0 test al, al
+// 008FB13D 750e jne 0x8fb14d
+// 008FB13F 85ff test edi, edi
+// 008FB141 7e0a jle 0x8fb14d
+// 008FB143 8bce mov ecx, esi
+// 008FB145 e8e474d0ff call 0x60262e
+// 008FB14A 4f dec edi
+// 008FB14B 75f6 jne 0x8fb143
+// 008FB14D 8a863c030000 mov al, byte ptr [esi + 0x33c]
+// 008FB153 84c0 test al, al
+// 008FB155 7416 je 0x8fb16d
+// 008FB157 8b8e44030000 mov ecx, dword ptr [esi + 0x344]
+// 008FB15D 8b961c030000 mov edx, dword ptr [esi + 0x31c]
+// 008FB163 03ca add ecx, edx
+// 008FB165 51 push ecx
+// 008FB166 8bce mov ecx, esi
+// 008FB168 e88862d0ff call 0x6013f5
+// 008FB16D 8b8e9c010000 mov ecx, dword ptr [esi + 0x19c]
+// 008FB173 85c9 test ecx, ecx
+// 008FB175 7411 je 0x8fb188
+// 008FB177 8b9618030000 mov edx, dword ptr [esi + 0x318]
+// 008FB17D 89916c040000 mov dword ptr [ecx + 0x46c], edx
+// 008FB183 e8ba65d0ff call 0x601742
+// 008FB188 8b8ea0010000 mov ecx, dword ptr [esi + 0x1a0]
+// 008FB18E 85c9 test ecx, ecx
+// 008FB190 7411 je 0x8fb1a3
+// 008FB192 8b861c030000 mov eax, dword ptr [esi + 0x31c]
+// 008FB198 89816c040000 mov dword ptr [ecx + 0x46c], eax
+// 008FB19E e89f65d0ff call 0x601742
+// 008FB1A3 8b869c010000 mov eax, dword ptr [esi + 0x19c]
+// 008FB1A9 85c0 test eax, eax
+// 008FB1AB 7437 je 0x8fb1e4
+// 008FB1AD 8bbe14030000 mov edi, dword ptr [esi + 0x314]
+// 008FB1B3 8bce mov ecx, esi
+// 008FB1B5 e859f8d0ff call 0x60aa13
+// 008FB1BA 3bf8 cmp edi, eax
+// 008FB1BC 7d15 jge 0x8fb1d3
+// 008FB1BE 8bce mov ecx, esi
+// 008FB1C0 e84ef8d0ff call 0x60aa13
+// 008FB1C5 8b8e9c010000 mov ecx, dword ptr [esi + 0x19c]
+// 008FB1CB 898160040000 mov dword ptr [ecx + 0x460], eax
+// 008FB1D1 eb0c jmp 0x8fb1df
+// 008FB1D3 8b8e9c010000 mov ecx, dword ptr [esi + 0x19c]
+// 008FB1D9 89b960040000 mov dword ptr [ecx + 0x460], edi
+// 008FB1DF e85e65d0ff call 0x601742
+// 008FB1E4 8b86a0010000 mov eax, dword ptr [esi + 0x1a0]
+// 008FB1EA 85c0 test eax, eax
+// 008FB1EC 7447 je 0x8fb235
+// 008FB1EE 8bbe10030000 mov edi, dword ptr [esi + 0x310]
+// 008FB1F4 8bce mov ecx, esi
+// 008FB1F6 e87b6cd1ff call 0x611e76
+// 008FB1FB 3bf8 cmp edi, eax
+// 008FB1FD 7d25 jge 0x8fb224
+// 008FB1FF 8bce mov ecx, esi
+// 008FB201 e8706cd1ff call 0x611e76
+// 008FB206 8b8ea0010000 mov ecx, dword ptr [esi + 0x1a0]
+// 008FB20C 898160040000 mov dword ptr [ecx + 0x460], eax
+// 008FB212 e82b65d0ff call 0x601742
+// 008FB217 5f pop edi
+// 008FB218 5e pop esi
+// 008FB219 5d pop ebp
+// 008FB21A 5b pop ebx
+// 008FB21B 81c40c500000 add esp, 0x500c
+// 008FB221 c20800 ret 8
+// 008FB224 8b8ea0010000 mov ecx, dword ptr [esi + 0x1a0]
+// 008FB22A 89b960040000 mov dword ptr [ecx + 0x460], edi
+// 008FB230 e80d65d0ff call 0x601742
+// 008FB235 5f pop edi
+// 008FB236 5e pop esi
+// 008FB237 5d pop ebp
+// 008FB238 5b pop ebx
+// 008FB239 81c40c500000 add esp, 0x500c
+// 008FB23F c20800 ret 8
+// 指定依赖旧完整范围重核 0x8f4b10
+// 008F4B10 8b4178 mov eax, dword ptr [ecx + 0x78]
+// 008F4B13 85c0 test eax, eax
+// 008F4B15 7503 jne 0x8f4b1a
+// 008F4B17 33c0 xor eax, eax
+// 008F4B19 c3 ret 
+// 008F4B1A 8b91a0010000 mov edx, dword ptr [ecx + 0x1a0]
+// 008F4B20 85d2 test edx, edx
+// 008F4B22 741c je 0x8f4b40
+// 008F4B24 8a8283010000 mov al, byte ptr [edx + 0x183]
+// 008F4B2A 84c0 test al, al
+// 008F4B2C 7512 jne 0x8f4b40
+// 008F4B2E 8b8160010000 mov eax, dword ptr [ecx + 0x160]
+// 008F4B34 8b8a60010000 mov ecx, dword ptr [edx + 0x160]
+// 008F4B3A 2bc1 sub eax, ecx
+// 008F4B3C 83e804 sub eax, 4
+// 008F4B3F c3 ret 
+// 008F4B40 8b8160010000 mov eax, dword ptr [ecx + 0x160]
+// 008F4B46 83e804 sub eax, 4
+// 008F4B49 c3 ret 
+// 指定依赖旧完整范围重核 0x8f4ba0
+// 008F4BA0 56 push esi
+// 008F4BA1 8bf1 mov esi, ecx
+// 008F4BA3 8b4678 mov eax, dword ptr [esi + 0x78]
+// 008F4BA6 85c0 test eax, eax
+// 008F4BA8 7504 jne 0x8f4bae
+// 008F4BAA 33c0 xor eax, eax
+// 008F4BAC 5e pop esi
+// 008F4BAD c3 ret 
+// 008F4BAE 8bce mov ecx, esi
+// 008F4BB0 e8236cd1ff call 0x60b7d8
+// 008F4BB5 8b8e9c010000 mov ecx, dword ptr [esi + 0x19c]
+// 008F4BBB 85c9 test ecx, ecx
+// 008F4BBD 7428 je 0x8f4be7
+// 008F4BBF 8a8183010000 mov al, byte ptr [ecx + 0x183]
+// 008F4BC5 84c0 test al, al
+// 008F4BC7 751e jne 0x8f4be7
+// 008F4BC9 8b8664010000 mov eax, dword ptr [esi + 0x164]
+// 008F4BCF 8b9164010000 mov edx, dword ptr [ecx + 0x164]
+// 008F4BD5 8b8e4c020000 mov ecx, dword ptr [esi + 0x24c]
+// 008F4BDB 2bc2 sub eax, edx
+// 008F4BDD 8b5678 mov edx, dword ptr [esi + 0x78]
+// 008F4BE0 5e pop esi
+// 008F4BE1 03ca add ecx, edx
+// 008F4BE3 99 cdq 
+// 008F4BE4 f7f9 idiv ecx
+// 008F4BE6 c3 ret 
+// 008F4BE7 8b8e4c020000 mov ecx, dword ptr [esi + 0x24c]
+// 008F4BED 8b4678 mov eax, dword ptr [esi + 0x78]
+// 008F4BF0 03c8 add ecx, eax
+// 008F4BF2 8b8664010000 mov eax, dword ptr [esi + 0x164]
+// 008F4BF8 99 cdq 
+// 008F4BF9 f7f9 idiv ecx
+// 008F4BFB 5e pop esi
+// 008F4BFC c3 ret 
+// 指定依赖旧完整范围重核 0x8f4c20
+// 008F4C20 55 push ebp
+// 008F4C21 8b6c2408 mov ebp, dword ptr [esp + 8]
+// 008F4C25 57 push edi
+// 008F4C26 8bf9 mov edi, ecx
+// 008F4C28 8b8710030000 mov eax, dword ptr [edi + 0x310]
+// 008F4C2E 3be8 cmp ebp, eax
+// 008F4C30 0f8dd8010000 jge 0x8f4e0e
+// 008F4C36 8b8f50020000 mov ecx, dword ptr [edi + 0x250]
+// 008F4C3C 48 dec eax
+// 008F4C3D 898710030000 mov dword ptr [edi + 0x310], eax
+// 008F4C43 8d44ad00 lea eax, [ebp + ebp*4]
+// 008F4C47 c1e005 shl eax, 5
+// 008F4C4A 53 push ebx
+// 008F4C4B 8b9f0c030000 mov ebx, dword ptr [edi + 0x30c]
+// 008F4C51 8b540828 mov edx, dword ptr [eax + ecx + 0x28]
+// 008F4C55 56 push esi
+// 008F4C56 8d3408 lea esi, [eax + ecx]
+// 008F4C59 8b874c020000 mov eax, dword ptr [edi + 0x24c]
+// 008F4C5F 03d0 add edx, eax
+// 008F4C61 2bda sub ebx, edx
+// 008F4C63 899f0c030000 mov dword ptr [edi + 0x30c], ebx
+// 008F4C69 8b4608 mov eax, dword ptr [esi + 8]
+// 008F4C6C 33db xor ebx, ebx
+// 008F4C6E 3bc3 cmp eax, ebx
+// 008F4C70 7409 je 0x8f4c7b
+// 008F4C72 50 push eax
+// 008F4C73 e88500d1ff call 0x604cfd
+// 008F4C78 83c404 add esp, 4
+// 008F4C7B 8b4610 mov eax, dword ptr [esi + 0x10]
+// 008F4C7E 3bc3 cmp eax, ebx
+// 008F4C80 7409 je 0x8f4c8b
+// 008F4C82 50 push eax
+// 008F4C83 e87500d1ff call 0x604cfd
+// 008F4C88 83c404 add esp, 4
+// 008F4C8B 8b460c mov eax, dword ptr [esi + 0xc]
+// 008F4C8E 3bc3 cmp eax, ebx
+// 008F4C90 741b je 0x8f4cad
+// 008F4C92 8b480c mov ecx, dword ptr [eax + 0xc]
+// 008F4C95 894e0c mov dword ptr [esi + 0xc], ecx
+// 008F4C98 8b15c4c3ac00 mov edx, dword ptr [0xacc3c4]
+// 008F4C9E 89500c mov dword ptr [eax + 0xc], edx
+// 008F4CA1 a3c4c3ac00 mov dword ptr [0xacc3c4], eax
+// 008F4CA6 8b460c mov eax, dword ptr [esi + 0xc]
+// 008F4CA9 3bc3 cmp eax, ebx
+// 008F4CAB 75e5 jne 0x8f4c92
+// 008F4CAD 895e08 mov dword ptr [esi + 8], ebx
+// 008F4CB0 895e10 mov dword ptr [esi + 0x10], ebx
+// 008F4CB3 895e14 mov dword ptr [esi + 0x14], ebx
+// 008F4CB6 c746280c000000 mov dword ptr [esi + 0x28], 0xc
+// 008F4CBD 895e18 mov dword ptr [esi + 0x18], ebx
+// 008F4CC0 895e1c mov dword ptr [esi + 0x1c], ebx
+// 008F4CC3 895e20 mov dword ptr [esi + 0x20], ebx
+// 008F4CC6 895e24 mov dword ptr [esi + 0x24], ebx
+// 008F4CC9 8d4634 lea eax, [esi + 0x34]
+// 008F4CCC b904000000 mov ecx, 4
+// 008F4CD1 ba000000ff mov edx, 0xff000000
+// 008F4CD6 895010 mov dword ptr [eax + 0x10], edx
+// 008F4CD9 8918 mov dword ptr [eax], ebx
+// 008F4CDB 83c004 add eax, 4
+// 008F4CDE 49 dec ecx
+// 008F4CDF 75f5 jne 0x8f4cd6
+// 008F4CE1 895e2c mov dword ptr [esi + 0x2c], ebx
+// 008F4CE4 895e0c mov dword ptr [esi + 0xc], ebx
+// 008F4CE7 c6463000 mov byte ptr [esi + 0x30], 0
+// 008F4CEB 8b8710030000 mov eax, dword ptr [edi + 0x310]
+// 008F4CF1 45 inc ebp
+// 008F4CF2 40 inc eax
+// 008F4CF3 3be8 cmp ebp, eax
+// 008F4CF5 7d55 jge 0x8f4d4c
+// 008F4CF7 8d5cad00 lea ebx, [ebp + ebp*4]
+// 008F4CFB c1e305 shl ebx, 5
+// 008F4CFE 8b8f50020000 mov ecx, dword ptr [edi + 0x250]
+// 008F4D04 6a01 push 1
+// 008F4D06 8b140b mov edx, dword ptr [ebx + ecx]
+// 008F4D09 8d340b lea esi, [ebx + ecx]
+// 008F4D0C 8d4e08 lea ecx, [esi + 8]
+// 008F4D0F 899660ffffff mov dword ptr [esi - 0xa0], edx
+// 008F4D15 8a4604 mov al, byte ptr [esi + 4]
+// 008F4D18 51 push ecx
+// 008F4D19 8d8e68ffffff lea ecx, [esi - 0x98]
+// 008F4D1F 888664ffffff mov byte ptr [esi - 0x9c], al
+// 008F4D25 e81faad0ff call 0x5ff749
+// 008F4D2A 8d5654 lea edx, [esi + 0x54]
+// 008F4D2D 6a01 push 1
+// 008F4D2F 52 push edx
+// 008F4D30 8d4eb4 lea ecx, [esi - 0x4c]
+// 008F4D33 e811aad0ff call 0x5ff749
+// 008F4D38 8b8710030000 mov eax, dword ptr [edi + 0x310]
+// 008F4D3E 45 inc ebp
+// 008F4D3F 81c3a0000000 add ebx, 0xa0
+// 008F4D45 40 inc eax
+// 008F4D46 3be8 cmp ebp, eax
+// 008F4D48 7cb4 jl 0x8f4cfe
+// 008F4D4A 33db xor ebx, ebx
+// 008F4D4C 8baf10030000 mov ebp, dword ptr [edi + 0x310]
+// 008F4D52 8b9750020000 mov edx, dword ptr [edi + 0x250]
+// 008F4D58 8d6cad00 lea ebp, [ebp + ebp*4]
+// 008F4D5C c1e505 shl ebp, 5
+// 008F4D5F 03ea add ebp, edx
+// 008F4D61 8d7508 lea esi, [ebp + 8]
+// 008F4D64 c74500ffffffff mov dword ptr [ebp], 0xffffffff
+// 008F4D6B c6450400 mov byte ptr [ebp + 4], 0
+// 008F4D6F 8b06 mov eax, dword ptr [esi]
+// 008F4D71 3bc3 cmp eax, ebx
+// 008F4D73 7409 je 0x8f4d7e
+// 008F4D75 50 push eax
+// 008F4D76 e882ffd0ff call 0x604cfd
+// 008F4D7B 83c404 add esp, 4
+// 008F4D7E 8b4608 mov eax, dword ptr [esi + 8]
+// 008F4D81 3bc3 cmp eax, ebx
+// 008F4D83 7409 je 0x8f4d8e
+// 008F4D85 50 push eax
+// 008F4D86 e872ffd0ff call 0x604cfd
+// 008F4D8B 83c404 add esp, 4
+// 008F4D8E 8b4604 mov eax, dword ptr [esi + 4]
+// 008F4D91 3bc3 cmp eax, ebx
+// 008F4D93 741b je 0x8f4db0
+// 008F4D95 8b480c mov ecx, dword ptr [eax + 0xc]
+// 008F4D98 894e04 mov dword ptr [esi + 4], ecx
+// 008F4D9B 8b15c4c3ac00 mov edx, dword ptr [0xacc3c4]
+// 008F4DA1 89500c mov dword ptr [eax + 0xc], edx
+// 008F4DA4 a3c4c3ac00 mov dword ptr [0xacc3c4], eax
+// 008F4DA9 8b4604 mov eax, dword ptr [esi + 4]
+// 008F4DAC 3bc3 cmp eax, ebx
+// 008F4DAE 75e5 jne 0x8f4d95
+// 008F4DB0 8bce mov ecx, esi
+// 008F4DB2 e81193d1ff call 0x60e0c8
+// 008F4DB7 8d4d54 lea ecx, [ebp + 0x54]
+// 008F4DBA e8a001d1ff call 0x604f5f
+// 008F4DBF 399fa0010000 cmp dword ptr [edi + 0x1a0], ebx
+// 008F4DC5 7437 je 0x8f4dfe
+// 008F4DC7 8bb710030000 mov esi, dword ptr [edi + 0x310]
+// 008F4DCD 8bcf mov ecx, edi
+// 008F4DCF e8a2d0d1ff call 0x611e76
+// 008F4DD4 3bf0 cmp esi, eax
+// 008F4DD6 7d15 jge 0x8f4ded
+// 008F4DD8 8bcf mov ecx, edi
+// 008F4DDA e897d0d1ff call 0x611e76
+// 008F4DDF 8b8fa0010000 mov ecx, dword ptr [edi + 0x1a0]
+// 008F4DE5 898160040000 mov dword ptr [ecx + 0x460], eax
+// 008F4DEB eb0c jmp 0x8f4df9
+// 008F4DED 8b8fa0010000 mov ecx, dword ptr [edi + 0x1a0]
+// 008F4DF3 89b160040000 mov dword ptr [ecx + 0x460], esi
+// 008F4DF9 e844c9d0ff call 0x601742
+// 008F4DFE 8bcf mov ecx, edi
+// 008F4E00 e89863d1ff call 0x60b19d
+// 008F4E05 8bcf mov ecx, edi
+// 008F4E07 e8799ed1ff call 0x60ec85
+// 008F4E0C 5e pop esi
+// 008F4E0D 5b pop ebx
+// 008F4E0E 5f pop edi
+// 008F4E0F 5d pop ebp
+// 008F4E10 c20400 ret 4
+// 指定依赖旧完整范围重核 0x8f39d0
+// 008F39D0 51 push ecx
+// 008F39D1 53 push ebx
+// 008F39D2 55 push ebp
+// 008F39D3 8b6c2410 mov ebp, dword ptr [esp + 0x10]
+// 008F39D7 56 push esi
+// 008F39D8 8bf1 mov esi, ecx
+// 008F39DA 57 push edi
+// 008F39DB 8b8624030000 mov eax, dword ptr [esi + 0x324]
+// 008F39E1 3be8 cmp ebp, eax
+// 008F39E3 0f8c11020000 jl 0x8f3bfa
+// 008F39E9 33db xor ebx, ebx
+// 008F39EB 48 dec eax
+// 008F39EC 85c0 test eax, eax
+// 008F39EE 895c2418 mov dword ptr [esp + 0x18], ebx
+// 008F39F2 7e5d jle 0x8f3a51
+// 008F39F4 33ff xor edi, edi
+// 008F39F6 8bae50020000 mov ebp, dword ptr [esi + 0x250]
+// 008F39FC 6a01 push 1
+// 008F39FE 8b842fa0000000 mov eax, dword ptr [edi + ebp + 0xa0]
+// 008F3A05 8d942fa8000000 lea edx, [edi + ebp + 0xa8]
+// 008F3A0C 89042f mov dword ptr [edi + ebp], eax
+// 008F3A0F 8a8c2fa4000000 mov cl, byte ptr [edi + ebp + 0xa4]
+// 008F3A16 884c2f04 mov byte ptr [edi + ebp + 4], cl
+// 008F3A1A 52 push edx
+// 008F3A1B 8d4c2f08 lea ecx, [edi + ebp + 8]
+// 008F3A1F e825bdd0ff call 0x5ff749
+// 008F3A24 8d842ff4000000 lea eax, [edi + ebp + 0xf4]
+// 008F3A2B 6a01 push 1
+// 008F3A2D 50 push eax
+// 008F3A2E 8d4c2f54 lea ecx, [edi + ebp + 0x54]
+// 008F3A32 e812bdd0ff call 0x5ff749
+// 008F3A37 8b442418 mov eax, dword ptr [esp + 0x18]
+// 008F3A3B 8b8e24030000 mov ecx, dword ptr [esi + 0x324]
+// 008F3A41 40 inc eax
+// 008F3A42 81c7a0000000 add edi, 0xa0
+// 008F3A48 49 dec ecx
+// 008F3A49 89442418 mov dword ptr [esp + 0x18], eax
+// 008F3A4D 3bc1 cmp eax, ecx
+// 008F3A4F 7ca5 jl 0x8f39f6
+// 008F3A51 8b8624030000 mov eax, dword ptr [esi + 0x324]
+// 008F3A57 8d1480 lea edx, [eax + eax*4]
+// 008F3A5A 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008F3A60 c1e205 shl edx, 5
+// 008F3A63 8dbc0260ffffff lea edi, [edx + eax - 0xa0]
+// 008F3A6A 8d4f08 lea ecx, [edi + 8]
+// 008F3A6D c707ffffffff mov dword ptr [edi], 0xffffffff
+// 008F3A73 885f04 mov byte ptr [edi + 4], bl
+// 008F3A76 e8e414d1ff call 0x604f5f
+// 008F3A7B 8d4f54 lea ecx, [edi + 0x54]
+// 008F3A7E e8dc14d1ff call 0x604f5f
+// 008F3A83 8b8624030000 mov eax, dword ptr [esi + 0x324]
+// 008F3A89 8b9650020000 mov edx, dword ptr [esi + 0x250]
+// 008F3A8F 8b6e78 mov ebp, dword ptr [esi + 0x78]
+// 008F3A92 8d0c80 lea ecx, [eax + eax*4]
+// 008F3A95 c1e105 shl ecx, 5
+// 008F3A98 8dbc1160ffffff lea edi, [ecx + edx - 0xa0]
+// 008F3A9F 8d4f08 lea ecx, [edi + 8]
+// 008F3AA2 c707ffffffff mov dword ptr [edi], 0xffffffff
+// 008F3AA8 885f04 mov byte ptr [edi + 4], bl
+// 008F3AAB e818a6d1ff call 0x60e0c8
+// 008F3AB0 8d4f54 lea ecx, [edi + 0x54]
+// 008F3AB3 e810a6d1ff call 0x60e0c8
+// 008F3AB8 896f28 mov dword ptr [edi + 0x28], ebp
+// 008F3ABB 896f74 mov dword ptr [edi + 0x74], ebp
+// 008F3ABE 8b8624030000 mov eax, dword ptr [esi + 0x324]
+// 008F3AC4 8b8e50020000 mov ecx, dword ptr [esi + 0x250]
+// 008F3ACA c744241004000000 mov dword ptr [esp + 0x10], 4
+// 008F3AD2 8d0480 lea eax, [eax + eax*4]
+// 008F3AD5 c1e005 shl eax, 5
+// 008F3AD8 899c0860ffffff mov dword ptr [eax + ecx - 0xa0], ebx
+// 008F3ADF 8b8624030000 mov eax, dword ptr [esi + 0x324]
+// 008F3AE5 8d4e58 lea ecx, [esi + 0x58]
+// 008F3AE8 8d1480 lea edx, [eax + eax*4]
+// 008F3AEB 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008F3AF1 c1e205 shl edx, 5
+// 008F3AF4 8bf9 mov edi, ecx
+// 008F3AF6 889c0264ffffff mov byte ptr [edx + eax - 0x9c], bl
+// 008F3AFD 8b8624030000 mov eax, dword ptr [esi + 0x324]
+// 008F3B03 8d1480 lea edx, [eax + eax*4]
+// 008F3B06 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008F3B0C c1e205 shl edx, 5
+// 008F3B0F 8d840268ffffff lea eax, [edx + eax - 0x98]
+// 008F3B16 2bf8 sub edi, eax
+// 008F3B18 89580c mov dword ptr [eax + 0xc], ebx
+// 008F3B1B 8b5120 mov edx, dword ptr [ecx + 0x20]
+// 008F3B1E 895020 mov dword ptr [eax + 0x20], edx
+// 008F3B21 8b5110 mov edx, dword ptr [ecx + 0x10]
+// 008F3B24 895010 mov dword ptr [eax + 0x10], edx
+// 008F3B27 8b5114 mov edx, dword ptr [ecx + 0x14]
+// 008F3B2A 895014 mov dword ptr [eax + 0x14], edx
+// 008F3B2D 8b5118 mov edx, dword ptr [ecx + 0x18]
+// 008F3B30 895018 mov dword ptr [eax + 0x18], edx
+// 008F3B33 8b511c mov edx, dword ptr [ecx + 0x1c]
+// 008F3B36 89501c mov dword ptr [eax + 0x1c], edx
+// 008F3B39 8d513c lea edx, [ecx + 0x3c]
+// 008F3B3C 89542418 mov dword ptr [esp + 0x18], edx
+// 008F3B40 8d502c lea edx, [eax + 0x2c]
+// 008F3B43 8b2c17 mov ebp, dword ptr [edi + edx]
+// 008F3B46 892a mov dword ptr [edx], ebp
+// 008F3B48 8b6c2418 mov ebp, dword ptr [esp + 0x18]
+// 008F3B4C 83c204 add edx, 4
+// 008F3B4F 8b6d00 mov ebp, dword ptr [ebp]
+// 008F3B52 896a0c mov dword ptr [edx + 0xc], ebp
+// 008F3B55 8b6c2418 mov ebp, dword ptr [esp + 0x18]
+// 008F3B59 83c504 add ebp, 4
+// 008F3B5C 896c2418 mov dword ptr [esp + 0x18], ebp
+// 008F3B60 8b6c2410 mov ebp, dword ptr [esp + 0x10]
+// 008F3B64 4d dec ebp
+// 008F3B65 896c2410 mov dword ptr [esp + 0x10], ebp
+// 008F3B69 75d8 jne 0x8f3b43
+// 008F3B6B 8b5124 mov edx, dword ptr [ecx + 0x24]
+// 008F3B6E c744241804000000 mov dword ptr [esp + 0x18], 4
+// 008F3B76 895024 mov dword ptr [eax + 0x24], edx
+// 008F3B79 8a4928 mov cl, byte ptr [ecx + 0x28]
+// 008F3B7C 884828 mov byte ptr [eax + 0x28], cl
+// 008F3B7F 8b8624030000 mov eax, dword ptr [esi + 0x324]
+// 008F3B85 8d4e0c lea ecx, [esi + 0xc]
+// 008F3B88 8d1480 lea edx, [eax + eax*4]
+// 008F3B8B 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008F3B91 c1e205 shl edx, 5
+// 008F3B94 8bf9 mov edi, ecx
+// 008F3B96 8d4402b4 lea eax, [edx + eax - 0x4c]
+// 008F3B9A 2bf8 sub edi, eax
+// 008F3B9C 89580c mov dword ptr [eax + 0xc], ebx
+// 008F3B9F 8b5120 mov edx, dword ptr [ecx + 0x20]
+// 008F3BA2 895020 mov dword ptr [eax + 0x20], edx
+// 008F3BA5 8b5110 mov edx, dword ptr [ecx + 0x10]
+// 008F3BA8 895010 mov dword ptr [eax + 0x10], edx
+// 008F3BAB 8b5114 mov edx, dword ptr [ecx + 0x14]
+// 008F3BAE 895014 mov dword ptr [eax + 0x14], edx
+// 008F3BB1 8b5118 mov edx, dword ptr [ecx + 0x18]
+// 008F3BB4 895018 mov dword ptr [eax + 0x18], edx
+// 008F3BB7 8b511c mov edx, dword ptr [ecx + 0x1c]
+// 008F3BBA 89501c mov dword ptr [eax + 0x1c], edx
+// 008F3BBD 8d593c lea ebx, [ecx + 0x3c]
+// 008F3BC0 8d502c lea edx, [eax + 0x2c]
+// 008F3BC3 8b2c17 mov ebp, dword ptr [edi + edx]
+// 008F3BC6 83c304 add ebx, 4
+// 008F3BC9 892a mov dword ptr [edx], ebp
+// 008F3BCB 8b6bfc mov ebp, dword ptr [ebx - 4]
+// 008F3BCE 896a10 mov dword ptr [edx + 0x10], ebp
+// 008F3BD1 8b6c2418 mov ebp, dword ptr [esp + 0x18]
+// 008F3BD5 83c204 add edx, 4
+// 008F3BD8 4d dec ebp
+// 008F3BD9 896c2418 mov dword ptr [esp + 0x18], ebp
+// 008F3BDD 75e4 jne 0x8f3bc3
+// 008F3BDF 8b5124 mov edx, dword ptr [ecx + 0x24]
+// 008F3BE2 895024 mov dword ptr [eax + 0x24], edx
+// 008F3BE5 8a4928 mov cl, byte ptr [ecx + 0x28]
+// 008F3BE8 884828 mov byte ptr [eax + 0x28], cl
+// 008F3BEB 8bce mov ecx, esi
+// 008F3BED e893b0d1ff call 0x60ec85
+// 008F3BF2 5f pop edi
+// 008F3BF3 5e pop esi
+// 008F3BF4 5d pop ebp
+// 008F3BF5 5b pop ebx
+// 008F3BF6 59 pop ecx
+// 008F3BF7 c20400 ret 4
+// 008F3BFA 8b8638030000 mov eax, dword ptr [esi + 0x338]
+// 008F3C00 83f8ff cmp eax, -1
+// 008F3C03 740f je 0x8f3c14
+// 008F3C05 8b9634030000 mov edx, dword ptr [esi + 0x334]
+// 008F3C0B 42 inc edx
+// 008F3C0C 3bd0 cmp edx, eax
+// 008F3C0E 0f8f19010000 jg 0x8f3d2d
+// 008F3C14 8b8610030000 mov eax, dword ptr [esi + 0x310]
+// 008F3C1A 3bc5 cmp eax, ebp
+// 008F3C1C 7e57 jle 0x8f3c75
+// 008F3C1E 8d1c80 lea ebx, [eax + eax*4]
+// 008F3C21 c1e305 shl ebx, 5
+// 008F3C24 2bc5 sub eax, ebp
+// 008F3C26 89442410 mov dword ptr [esp + 0x10], eax
+// 008F3C2A 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008F3C30 6a01 push 1
+// 008F3C32 8b8c0360ffffff mov ecx, dword ptr [ebx + eax - 0xa0]
+// 008F3C39 8d3c03 lea edi, [ebx + eax]
+// 008F3C3C 890f mov dword ptr [edi], ecx
+// 008F3C3E 8a9764ffffff mov dl, byte ptr [edi - 0x9c]
+// 008F3C44 8d8768ffffff lea eax, [edi - 0x98]
+// 008F3C4A 8d4f08 lea ecx, [edi + 8]
+// 008F3C4D 50 push eax
+// 008F3C4E 885704 mov byte ptr [edi + 4], dl
+// 008F3C51 e8f3bad0ff call 0x5ff749
+// 008F3C56 8d4fb4 lea ecx, [edi - 0x4c]
+// 008F3C59 6a01 push 1
+// 008F3C5B 51 push ecx
+// 008F3C5C 8d4f54 lea ecx, [edi + 0x54]
+// 008F3C5F e8e5bad0ff call 0x5ff749
+// 008F3C64 8b442410 mov eax, dword ptr [esp + 0x10]
+// 008F3C68 81eba0000000 sub ebx, 0xa0
+// 008F3C6E 48 dec eax
+// 008F3C6F 89442410 mov dword ptr [esp + 0x10], eax
+// 008F3C73 75b5 jne 0x8f3c2a
+// 008F3C75 8b9e50020000 mov ebx, dword ptr [esi + 0x250]
+// 008F3C7B 8d7cad00 lea edi, [ebp + ebp*4]
+// 008F3C7F c1e705 shl edi, 5
+// 008F3C82 8bef mov ebp, edi
+// 008F3C84 03eb add ebp, ebx
+// 008F3C86 33db xor ebx, ebx
+// 008F3C88 8d4d08 lea ecx, [ebp + 8]
+// 008F3C8B c74500ffffffff mov dword ptr [ebp], 0xffffffff
+// 008F3C92 885d04 mov byte ptr [ebp + 4], bl
+// 008F3C95 e8c512d1ff call 0x604f5f
+// 008F3C9A 8d4d54 lea ecx, [ebp + 0x54]
+// 008F3C9D e8bd12d1ff call 0x604f5f
+// 008F3CA2 8b5678 mov edx, dword ptr [esi + 0x78]
+// 008F3CA5 8bef mov ebp, edi
+// 008F3CA7 89542410 mov dword ptr [esp + 0x10], edx
+// 008F3CAB 8b9650020000 mov edx, dword ptr [esi + 0x250]
+// 008F3CB1 03ea add ebp, edx
+// 008F3CB3 8d4d08 lea ecx, [ebp + 8]
+// 008F3CB6 c74500ffffffff mov dword ptr [ebp], 0xffffffff
+// 008F3CBD 885d04 mov byte ptr [ebp + 4], bl
+// 008F3CC0 e803a4d1ff call 0x60e0c8
+// 008F3CC5 8d4d54 lea ecx, [ebp + 0x54]
+// 008F3CC8 e8fba3d1ff call 0x60e0c8
+// 008F3CCD 8b442410 mov eax, dword ptr [esp + 0x10]
+// 008F3CD1 8d5658 lea edx, [esi + 0x58]
+// 008F3CD4 894528 mov dword ptr [ebp + 0x28], eax
+// 008F3CD7 894574 mov dword ptr [ebp + 0x74], eax
+// 008F3CDA 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008F3CE0 53 push ebx
+// 008F3CE1 52 push edx
+// 008F3CE2 891c07 mov dword ptr [edi + eax], ebx
+// 008F3CE5 8b8e50020000 mov ecx, dword ptr [esi + 0x250]
+// 008F3CEB 885c0f04 mov byte ptr [edi + ecx + 4], bl
+// 008F3CEF 8b8650020000 mov eax, dword ptr [esi + 0x250]
+// 008F3CF5 8d4c0708 lea ecx, [edi + eax + 8]
+// 008F3CF9 e84bbad0ff call 0x5ff749
+// 008F3CFE 8b9650020000 mov edx, dword ptr [esi + 0x250]
+// 008F3D04 8d4e0c lea ecx, [esi + 0xc]
+// 008F3D07 53 push ebx
+// 008F3D08 51 push ecx
+// 008F3D09 8d4c1754 lea ecx, [edi + edx + 0x54]
+// 008F3D0D e837bad0ff call 0x5ff749
+// 008F3D12 8b8e10030000 mov ecx, dword ptr [esi + 0x310]
+// 008F3D18 8b442418 mov eax, dword ptr [esp + 0x18]
+// 008F3D1C 41 inc ecx
+// 008F3D1D 3bc3 cmp eax, ebx
+// 008F3D1F 898e10030000 mov dword ptr [esi + 0x310], ecx
+// 008F3D25 7406 je 0x8f3d2d
+// 008F3D27 ff8634030000 inc dword ptr [esi + 0x334]
+// 008F3D2D 5f pop edi
+// 008F3D2E 5e pop esi
+// 008F3D2F 5d pop ebp
+// 008F3D30 5b pop ebx
+// 008F3D31 59 pop ecx
+// 008F3D32 c20400 ret 4
+// 指定依赖旧完整范围重核 0x8eb410
+// 008EB410 56 push esi
+// 008EB411 8bf1 mov esi, ecx
+// 008EB413 57 push edi
+// 008EB414 8b8660040000 mov eax, dword ptr [esi + 0x460]
+// 008EB41A 8bbe68040000 mov edi, dword ptr [esi + 0x468]
+// 008EB420 8b8e6c040000 mov ecx, dword ptr [esi + 0x46c]
+// 008EB426 2bc7 sub eax, edi
+// 008EB428 3bc8 cmp ecx, eax
+// 008EB42A 7e16 jle 0x8eb442
+// 008EB42C 85c0 test eax, eax
+// 008EB42E 89866c040000 mov dword ptr [esi + 0x46c], eax
+// 008EB434 7d1c jge 0x8eb452
+// 008EB436 c7866c04000000000000 mov dword ptr [esi + 0x46c], 0
+// 008EB440 eb10 jmp 0x8eb452
+// 008EB442 8b9664040000 mov edx, dword ptr [esi + 0x464]
+// 008EB448 3bca cmp ecx, edx
+// 008EB44A 7d06 jge 0x8eb452
+// 008EB44C 89966c040000 mov dword ptr [esi + 0x46c], edx
+// 008EB452 8b9664040000 mov edx, dword ptr [esi + 0x464]
+// 008EB458 53 push ebx
+// 008EB459 2bc2 sub eax, edx
+// 008EB45B 85c0 test eax, eax
+// 008EB45D 7e30 jle 0x8eb48f
+// 008EB45F 8a8680010000 mov al, byte ptr [esi + 0x180]
+// 008EB465 84c0 test al, al
+// 008EB467 7426 je 0x8eb48f
+// 008EB469 8dbe40020000 lea edi, [esi + 0x240]
+// 008EB46F bb03000000 mov ebx, 3
+// 008EB474 837f0c03 cmp dword ptr [edi + 0xc], 3
+// 008EB478 750a jne 0x8eb484
+// 008EB47A 6a00 push 0
+// 008EB47C 57 push edi
+// 008EB47D 8bce mov ecx, esi
+// 008EB47F e86a7fd1ff call 0x6033ee
+// 008EB484 81c7b0000000 add edi, 0xb0
+// 008EB48A 4b dec ebx
+// 008EB48B 75e7 jne 0x8eb474
+// 008EB48D eb24 jmp 0x8eb4b3
+// 008EB48F 8dbe40020000 lea edi, [esi + 0x240]
+// 008EB495 bb03000000 mov ebx, 3
+// 008EB49A 837f0c03 cmp dword ptr [edi + 0xc], 3
+// 008EB49E 740a je 0x8eb4aa
+// 008EB4A0 6a03 push 3
+// 008EB4A2 57 push edi
+// 008EB4A3 8bce mov ecx, esi
+// 008EB4A5 e8447fd1ff call 0x6033ee
+// 008EB4AA 81c7b0000000 add edi, 0xb0
+// 008EB4B0 4b dec ebx
+// 008EB4B1 75e7 jne 0x8eb49a
+// 008EB4B3 8b8e90010000 mov ecx, dword ptr [esi + 0x190]
+// 008EB4B9 5b pop ebx
+// 008EB4BA 85c9 test ecx, ecx
+// 008EB4BC 7412 je 0x8eb4d0
+// 008EB4BE 8b966c040000 mov edx, dword ptr [esi + 0x46c]
+// 008EB4C4 8b01 mov eax, dword ptr [ecx]
+// 008EB4C6 56 push esi
+// 008EB4C7 6a3d push 0x3d
+// 008EB4C9 52 push edx
+// 008EB4CA ff9080000000 call dword ptr [eax + 0x80]
+// 008EB4D0 8b06 mov eax, dword ptr [esi]
+// 008EB4D2 8bce mov ecx, esi
+// 008EB4D4 ff5020 call dword ptr [eax + 0x20]
+// 008EB4D7 5f pop edi
+// 008EB4D8 5e pop esi
+// 008EB4D9 c3 ret 

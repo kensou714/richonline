@@ -106,7 +106,12 @@ RichonlineFortunePlan plan_richonline_fortune(const RichonlineFortuneContext& ct
         for(const auto card:chosen) append_le(reward,static_cast<std::uint16_t>(card),2);
         messages.push_back(std::move(reward));
     }
-    auto after_status=status; after_status.possession=3;
+    auto after_status=status;
+    // NEW673D50 replaces the old god through6050 before attaching fortune.
+    // Temple callers have already attached it; do not detach during reward-only planning.
+    if(ctx.origin==RichonlineNpcOrigin::fortune_card1070 && after_status.possession)
+        richonline_detach_possession(after_status);
+    after_status.possession=3;
     return {std::move(messages),inventory,after,status,after_status,funds,funds.funds,
         rules.fortune_affix_turns,continuation,ctx.origin==RichonlineNpcOrigin::ground,false};
 }
@@ -177,7 +182,10 @@ RichonlineWealthCardPlan plan_richonline_wealth_card(std::uint16_t game,const Ri
     if(--used.count==0) used={};
     auto response=packet(0x40d2,game);
     response.push_back(static_cast<std::uint8_t>(request.slot)); response.push_back(static_cast<std::uint8_t>(request.bank));
-    auto after_status=status; after_status.possession=0;
+    auto after_status=status;
+    // NEW673AF0 queues6050 before6051, including replacement of the same god.
+    if(after_status.possession) richonline_detach_possession(after_status);
+    after_status.possession=0;
     return {std::move(response),inventory,after,status,after_status,affix,34,RichonlineDeityMoneyOrigin::summoned_card};
 }
 std::array<std::int8_t,4> select_richonline_badluck_half(RichonlineChanceInventory inventory,

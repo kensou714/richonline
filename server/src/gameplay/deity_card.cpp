@@ -41,6 +41,8 @@ RichonlineDeityCardPlan plan_richonline_deity_card(std::uint16_t game,
     response.push_back(static_cast<std::uint8_t>(r.slot));response.push_back(static_cast<std::uint8_t>(r.bank));
     if(summon) {
         append_le(response,static_cast<std::uint16_t>(npc->position),2);
+        // NEW66EB40 removes the old attachment before applying the new one.
+        if(after.status.possession) richonline_detach_possession(after.status);
         after.status.possession=npc->id;
         if(target.actor==active_actor) switch(npc->id) {
         case 0:case 1:continuation=RichonlineDeityCardContinuation::await_money34;break;

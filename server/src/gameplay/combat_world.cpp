@@ -131,6 +131,8 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
     result.target_policy=policy.range.name;
     result.world.width=static_cast<std::uint16_t>(topology.width());
     result.world.height=static_cast<std::uint16_t>(topology.height());
+    for(const auto& cell:topology.cells()) if(cell.walkable)
+        result.world.missile_base_roads.push_back(cell.position);
     result.world.resources=RichonlineCombatResources::parse(decoded(resources/"Data"/"Prop.kpd"),
         decoded(resources/"Data"/"Npc.kpd"),decoded(resources/"Data"/"GValue.kpd"));
     result.world.step=[topology](std::int16_t position,std::uint8_t direction) {

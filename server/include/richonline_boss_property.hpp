@@ -45,11 +45,38 @@ public:
         bool operator==(const Building&) const = default;
     };
     std::optional<Building> building(std::int16_t property_ref) const noexcept;
+    enum class StreetEffect { seal, price_rise };
+    class PreparedStreetEffect {
+    public:
+        std::size_t affected_properties() const noexcept { return properties_.size(); }
+    private:
+        PreparedStreetEffect()=default;
+        const RichonlineBossProperty* owner_=nullptr;
+        std::uint64_t revision_=0;
+        StreetEffect effect_=StreetEffect::seal;
+        std::vector<std::int16_t> properties_;
+        friend class RichonlineBossProperty;
+    };
+    PreparedStreetEffect prepare_street_card(std::int16_t property_ref,StreetEffect) const;
+    bool street_effect_matches(const PreparedStreetEffect&) const noexcept;
+    bool commit_street_effect(const PreparedStreetEffect&) noexcept;
     struct CombatSnapshot {
         std::uint64_t revision;
         std::vector<RichonlineCombatBuildingView> buildings;
         bool decision_pending;
     };
+    class PreparedMissileRound {
+    public:
+        const std::vector<RichonlineMissileBaseSalvo>& salvos() const noexcept { return salvos_; }
+        const std::vector<std::pair<std::int16_t,std::uint8_t>>& clocks() const noexcept { return clocks_; }
+    private:
+        PreparedMissileRound()=default;
+        std::uint64_t revision_=0,round_=0;
+        std::vector<std::pair<std::int16_t,std::uint8_t>> clocks_;
+        std::vector<RichonlineMissileBaseSalvo> salvos_;
+        friend class RichonlineBossProperty;
+    };
+    std::optional<PreparedMissileRound> prepare_missile_round(std::uint64_t round) const;
     class PreparedCombat {
     public:
         const CombatSnapshot& expected() const noexcept { return expected_; }
@@ -58,6 +85,7 @@ public:
         PreparedCombat()=default;
         CombatSnapshot expected_{};
         std::vector<RichonlineCombatBuildingView> after_;
+        std::optional<PreparedMissileRound> missile_round_;
         friend class RichonlineBossProperty;
     };
     // All methods share the session's serialization. No second ownership store.
@@ -65,7 +93,7 @@ public:
     RichonlineCombatBuildingView combat_building_effect(const RichonlineCombatBuildingView&,
         RichonlineBossBlastBuildingEffect) const;
     PreparedCombat prepare_combat(const CombatSnapshot&,
-        std::span<const RichonlineCombatBuildingView> after) const;
+        std::span<const RichonlineCombatBuildingView> after,const PreparedMissileRound* missile_round=nullptr) const;
     PreparedCombat prepare_house_card(std::int16_t position,std::uint8_t actor) const;
     PreparedCombat prepare_purchase_card(std::int16_t property_ref,std::uint8_t actor) const;
     PreparedCombat prepare_destruction_card(std::int16_t property_ref,std::uint8_t levels) const;
@@ -89,9 +117,15 @@ private:
         Building building;
         std::int16_t street;
         std::int8_t sprite_type;
+        std::uint8_t missile_rounds=0;
+        std::uint8_t sealed_days=0;
+        std::uint8_t price_rise_days=0;
     };
     std::map<std::int16_t,Property> properties_;
     std::uint64_t property_revision_=0;
+    struct MissileRule { std::uint8_t rounds,shots; RichonlineMissileBaseTarget target; };
+    std::array<MissileRule,7> missile_rules_{};
+    std::optional<std::uint64_t> last_missile_round_;
     std::chrono::milliseconds timeout_{0};
     Now now_;
     std::optional<Clock::time_point> deadline_;

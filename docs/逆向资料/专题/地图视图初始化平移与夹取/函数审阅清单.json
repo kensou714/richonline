@@ -1,0 +1,775 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "scope": "第二十四批；完整指声明块内局部契约，不表示全部外部调用图闭合。",
+  "functions": [
+    {
+      "va": "0x7b6c90",
+      "status": "完整分析",
+      "conclusion": "四DWORD槽取低WORD，初始化两矩形、地图边界及两零字段，ret10h并返回this。",
+      "unknown": "未写字段和第二矩形实际显示用途未知；本体不做夹取或参数校验。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x7b6c90",
+          "end_va": "0x7b6d49",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 50,
+      "semantic_anchors": [
+        {
+          "va": "0x7b6ca1",
+          "tokens": [
+            "word ptr",
+            "8"
+          ]
+        },
+        {
+          "va": "0x7b6ca5",
+          "tokens": [
+            "word ptr",
+            "[eax]"
+          ]
+        },
+        {
+          "va": "0x7b6cf4",
+          "tokens": [
+            "0x18"
+          ]
+        },
+        {
+          "va": "0x7b6cff",
+          "tokens": [
+            "0x1a"
+          ]
+        },
+        {
+          "va": "0x7b6d06",
+          "tokens": [
+            "0x262"
+          ]
+        },
+        {
+          "va": "0x7b6d0f",
+          "tokens": [
+            "0x218"
+          ]
+        },
+        {
+          "va": "0x7b6d46",
+          "tokens": [
+            "ret",
+            "0x10"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x7b6ef0",
+      "status": "完整分析",
+      "conclusion": "符号扩展两套左上WORD，加DWORD位移，截断写回后调用7B6D50；ret8。",
+      "unknown": "栈诊断深层行为未扩；返回寄存器不作为统一成功标志。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x7b6ef0",
+          "end_va": "0x7b6f5a",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 33,
+      "semantic_anchors": [
+        {
+          "va": "0x7b6f01",
+          "tokens": [
+            "movsx",
+            "4"
+          ]
+        },
+        {
+          "va": "0x7b6f05",
+          "tokens": [
+            "add",
+            "dword ptr"
+          ]
+        },
+        {
+          "va": "0x7b6f2d",
+          "tokens": [
+            "word ptr",
+            "0x20"
+          ]
+        },
+        {
+          "va": "0x7b6f45",
+          "tokens": [
+            "call",
+            "0x611697"
+          ]
+        },
+        {
+          "va": "0x7b6f57",
+          "tokens": [
+            "ret",
+            "8"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x638150",
+      "status": "部分分析",
+      "conclusion": "从G+C14第一矩形左上向C+18/+1C目标按步进移动，未达经计时门，已达返回1。",
+      "unknown": "对象生命周期、目标和步进生产者、计时初值及触发时机未闭；到达当步仍返回0。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x638150",
+          "end_va": "0x6382e4",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 134,
+      "semantic_anchors": [
+        {
+          "va": "0x63817f",
+          "tokens": [
+            "call",
+            "0x60be81"
+          ]
+        },
+        {
+          "va": "0x63819e",
+          "tokens": [
+            "0x18"
+          ]
+        },
+        {
+          "va": "0x6381b2",
+          "tokens": [
+            "eax",
+            "1"
+          ]
+        },
+        {
+          "va": "0x6381c2",
+          "tokens": [
+            "call",
+            "0x6107f1"
+          ]
+        },
+        {
+          "va": "0x63821e",
+          "tokens": [
+            "0xc"
+          ]
+        },
+        {
+          "va": "0x6382cf",
+          "tokens": [
+            "call",
+            "0x60ee10"
+          ]
+        },
+        {
+          "va": "0x6382d4",
+          "tokens": [
+            "xor",
+            "eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x650c10",
+      "status": "部分分析",
+      "conclusion": "坐标阈值或37/39及38/40门产生25单位位移；左、上优先；非零时平移G+C14。",
+      "unknown": "外部输入对象、坐标空间、按键值来源和触发时机未闭；无统一成功返回。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x650c10",
+          "end_va": "0x650d4c",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 101,
+      "semantic_anchors": [
+        {
+          "va": "0x650c2a",
+          "tokens": [
+            "0x19"
+          ]
+        },
+        {
+          "va": "0x650c51",
+          "tokens": [
+            "cmp"
+          ]
+        },
+        {
+          "va": "0x650c55",
+          "tokens": [
+            "push",
+            "0x25"
+          ]
+        },
+        {
+          "va": "0x650c72",
+          "tokens": [
+            "jmp",
+            "0x650cad"
+          ]
+        },
+        {
+          "va": "0x650cc3",
+          "tokens": [
+            "push",
+            "0x26"
+          ]
+        },
+        {
+          "va": "0x650ce1",
+          "tokens": [
+            "jmp",
+            "0x650d1c"
+          ]
+        },
+        {
+          "va": "0x650d33",
+          "tokens": [
+            "0xc14"
+          ]
+        },
+        {
+          "va": "0x650d39",
+          "tokens": [
+            "call",
+            "0x60ee10"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x7b6d50",
+      "status": "完整分析",
+      "conclusion": "两矩形各先左上夹零，再写WORD右下，超地图界时回推左上；有符号WORD比较。",
+      "unknown": "地图界小于视图尺寸时会回推负左上；无二次夹零，WORD回绕不等于无限精度clamp；EAX路径相关。",
+      "evidence_refs": [
+        {
+          "file": "reused_functions.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x7b6d50",
+          "end_va": "0x7b6ee8",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 128,
+      "semantic_anchors": [
+        {
+          "va": "0x7b6d61",
+          "tokens": [
+            "movsx",
+            "4"
+          ]
+        },
+        {
+          "va": "0x7b6d98",
+          "tokens": [
+            "word ptr",
+            "8"
+          ]
+        },
+        {
+          "va": "0x7b6dc3",
+          "tokens": [
+            "jle"
+          ]
+        },
+        {
+          "va": "0x7b6de5",
+          "tokens": [
+            "word ptr",
+            "4"
+          ]
+        },
+        {
+          "va": "0x7b6e2e",
+          "tokens": [
+            "word ptr",
+            "0x20"
+          ]
+        },
+        {
+          "va": "0x7b6ee0",
+          "tokens": [
+            "word ptr",
+            "0x22"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x7e1600",
+      "status": "完整分析",
+      "conclusion": "对编号两次有符号除以M+1C，余数写outX，商写outY且返回商；ret0Ch。",
+      "unknown": "不检查除零、INT_MIN/-1、索引范围和输出指针。",
+      "evidence_refs": [
+        {
+          "file": "reused_functions.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x7e1600",
+          "end_va": "0x7e1632",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 20,
+      "semantic_anchors": [
+        {
+          "va": "0x7e1614",
+          "tokens": [
+            "cdq"
+          ]
+        },
+        {
+          "va": "0x7e1615",
+          "tokens": [
+            "idiv",
+            "0x1c"
+          ]
+        },
+        {
+          "va": "0x7e161b",
+          "tokens": [
+            "edx"
+          ]
+        },
+        {
+          "va": "0x7e1624",
+          "tokens": [
+            "idiv",
+            "0x1c"
+          ]
+        },
+        {
+          "va": "0x7e162a",
+          "tokens": [
+            "eax"
+          ]
+        },
+        {
+          "va": "0x7e162f",
+          "tokens": [
+            "ret",
+            "0xc"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x7b6f60",
+      "status": "完整分析",
+      "conclusion": "除余得格坐标，DWORD中心64*x+32、48*y+24减signed WORD尺寸SAR1，截断写两左上后夹取。",
+      "unknown": "负奇数半尺寸向负无穷，中心与WORD可回绕；编号合法性和诊断依赖未扩。",
+      "evidence_refs": [
+        {
+          "file": "reused_functions.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x7b6f60",
+          "end_va": "0x7b703d",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 77,
+      "semantic_anchors": [
+        {
+          "va": "0x7b6f98",
+          "tokens": [
+            "call",
+            "0x607eb7"
+          ]
+        },
+        {
+          "va": "0x7b6fa0",
+          "tokens": [
+            "shl",
+            "6"
+          ]
+        },
+        {
+          "va": "0x7b6fa9",
+          "tokens": [
+            "imul",
+            "0x30"
+          ]
+        },
+        {
+          "va": "0x7b6fc7",
+          "tokens": [
+            "sar",
+            "1"
+          ]
+        },
+        {
+          "va": "0x7b6fd1",
+          "tokens": [
+            "word ptr",
+            "4"
+          ]
+        },
+        {
+          "va": "0x7b7017",
+          "tokens": [
+            "call",
+            "0x611697"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6919f0",
+      "status": "完整分析",
+      "conclusion": "返回DWORD[M+1C]左移6所得地图横向像素界；无内部调用。",
+      "unknown": "列数生产者和有效范围不在本体；DWORD回绕保留。",
+      "evidence_refs": [
+        {
+          "file": "formal_dependencies.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x6919f0",
+          "end_va": "0x691a0b",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 11,
+      "semantic_anchors": [
+        {
+          "va": "0x691a01",
+          "tokens": [
+            "0x1c"
+          ]
+        },
+        {
+          "va": "0x691a04",
+          "tokens": [
+            "shl",
+            "6"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x691a20",
+      "status": "完整分析",
+      "conclusion": "返回DWORD[M+20]乘48所得地图纵向像素界；无内部调用。",
+      "unknown": "行数生产者和有效范围不在本体；DWORD回绕保留。",
+      "evidence_refs": [
+        {
+          "file": "formal_dependencies.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x691a20",
+          "end_va": "0x691a3b",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 11,
+      "semantic_anchors": [
+        {
+          "va": "0x691a31",
+          "tokens": [
+            "0x20"
+          ]
+        },
+        {
+          "va": "0x691a34",
+          "tokens": [
+            "imul",
+            "0x30"
+          ]
+        }
+      ]
+    }
+  ],
+  "direct_bridges": [
+    {
+      "va": "0x60b044",
+      "status": "直接跳板核验",
+      "source_sha256": "8477f8c9db1249a56f6361db3eaa6edbbaba6fb2357a34244c4c0095708ac755",
+      "evidence_ref": {
+        "file": "formal_dependencies.json",
+        "pointer": "/functions/0"
+      },
+      "instruction_count": 1,
+      "semantic_anchors": [
+        {
+          "va": "0x60b044",
+          "tokens": [
+            "jmp",
+            "0x6919f0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x60bf9e",
+      "status": "直接跳板核验",
+      "source_sha256": "8477f8c9db1249a56f6361db3eaa6edbbaba6fb2357a34244c4c0095708ac755",
+      "evidence_ref": {
+        "file": "formal_dependencies.json",
+        "pointer": "/functions/1"
+      },
+      "instruction_count": 1,
+      "semantic_anchors": [
+        {
+          "va": "0x60bf9e",
+          "tokens": [
+            "jmp",
+            "0x691a20"
+          ]
+        }
+      ]
+    }
+  ],
+  "owner_windows": [
+    {
+      "owner_va": "0x64f2a0",
+      "site_va": "0x64f50a",
+      "start_va": "0x64f4f6",
+      "end_va": "0x64f51f",
+      "status": "局部窗口分析",
+      "conclusion": "仅初始化尺寸、参数栈与居中调用局部契约。",
+      "unknown": "不认领64F2A0全业务控制流。",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/0"
+      }
+    },
+    {
+      "owner_va": "0x64f2a0",
+      "site_va": "0x64f519",
+      "start_va": "0x64f504",
+      "end_va": "0x64f532",
+      "status": "局部窗口分析",
+      "conclusion": "仅初始化尺寸、参数栈与居中调用局部契约。",
+      "unknown": "不认领64F2A0全业务控制流。",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/1"
+      }
+    },
+    {
+      "owner_va": "0x64f2a0",
+      "site_va": "0x64f532",
+      "start_va": "0x64f51e",
+      "end_va": "0x64f546",
+      "status": "局部窗口分析",
+      "conclusion": "仅初始化尺寸、参数栈与居中调用局部契约。",
+      "unknown": "不认领64F2A0全业务控制流。",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/2"
+      }
+    },
+    {
+      "owner_va": "0x64f2a0",
+      "site_va": "0x64f54c",
+      "start_va": "0x64f53a",
+      "end_va": "0x64f568",
+      "status": "局部窗口分析",
+      "conclusion": "仅初始化尺寸、参数栈与居中调用局部契约。",
+      "unknown": "不认领64F2A0全业务控制流。",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/3"
+      }
+    }
+  ],
+  "historical_contracts": [
+    {
+      "va": "0x64f2a0",
+      "status": "既有局部契约复用",
+      "source_path": "专题/TeachMode序号生产与根对象/证据/load_source_raw.json",
+      "source_pointer": "/functions/1",
+      "source_sha256": "06008a7d44550eda2a756b6729c3657a6f68d52c5d07243b0fe8294956872c6c",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/3"
+      },
+      "instruction_count": 250,
+      "semantic_anchors": [
+        {
+          "va": "0x64f504",
+          "tokens": [
+            "0x65c"
+          ]
+        },
+        {
+          "va": "0x64f50f",
+          "tokens": [
+            "push",
+            "eax"
+          ]
+        },
+        {
+          "va": "0x64f51f",
+          "tokens": [
+            "0x239"
+          ]
+        },
+        {
+          "va": "0x64f524",
+          "tokens": [
+            "0x26d"
+          ]
+        },
+        {
+          "va": "0x64f52c",
+          "tokens": [
+            "0xc14"
+          ]
+        },
+        {
+          "va": "0x64f541",
+          "tokens": [
+            "push",
+            "0"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x63e0e0",
+      "status": "既有局部契约复用",
+      "source_path": "专题/TeachMode对象与消费者/证据/teachmode_raw.json",
+      "source_pointer": "/functions/45",
+      "source_sha256": "731f48028d5d68698809e4adefc6e41cec7262dda2434f9e5188606852d84240",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/4"
+      },
+      "instruction_count": 10,
+      "semantic_anchors": [
+        {
+          "va": "0x63e0f1",
+          "tokens": [
+            "add",
+            "0xc14"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x63e000",
+      "status": "既有局部契约复用",
+      "source_path": "专题/40C1状态事件/证据/animation_fields.json",
+      "source_pointer": "/functions/0",
+      "source_sha256": "6a94caedf6eefa158af07a3a8ebbc0701f7b7b8348e58614d2a98cbdffc47f55",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/5"
+      },
+      "instruction_count": 10,
+      "semantic_anchors": [
+        {
+          "va": "0x63e011",
+          "tokens": [
+            "add",
+            "4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x81bd10",
+      "status": "既有局部契约复用",
+      "source_path": "专题/40C1状态事件/证据/animation_fields.json",
+      "source_pointer": "/functions/5",
+      "source_sha256": "6a94caedf6eefa158af07a3a8ebbc0701f7b7b8348e58614d2a98cbdffc47f55",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/6"
+      },
+      "instruction_count": 38,
+      "semantic_anchors": [
+        {
+          "va": "0x81bd43",
+          "tokens": [
+            "jbe"
+          ]
+        },
+        {
+          "va": "0x81bd53",
+          "tokens": [
+            "jb"
+          ]
+        },
+        {
+          "va": "0x81bd67",
+          "tokens": [
+            "4",
+            "eax"
+          ]
+        },
+        {
+          "va": "0x81bd6a",
+          "tokens": [
+            "al",
+            "1"
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "reviewed_functions": 9,
+    "complete": 7,
+    "partial": 2,
+    "new_seed_bodies": 4,
+    "deepened_historical_bodies": 3,
+    "new_dimension_bodies": 2,
+    "direct_bridges": 2,
+    "owner_windows": 4,
+    "historical_contracts": 4,
+    "reviewed_instructions": 565,
+    "historical_contract_instructions": 308
+  }
+}

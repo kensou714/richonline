@@ -41,8 +41,11 @@ struct RichonlineNpcSessionPolicy {
     std::optional<RichonlineNpcBadluckPolicy> badluck{};
     std::optional<RichonlineTicketChestRules> ticket_chest{};
     std::optional<RichonlineNpcSleepPolicy> sleep_deity{};
-    // Temple6051 only: these gods remain unavailable to ground/card dispatch.
+    // NPC4/6 durations and aura capability for temple, ground and summon card.
     std::optional<std::array<std::uint8_t,2>> temple_aura_affix{};
+    // Production supplies two ordered draws against the inventory after card consumption.
+    // Absence retains the explicitly configured fixed reward policy for standalone callers.
+    std::function<std::array<std::int16_t,2>(const RichonlineChanceInventory&)> fortune_selection{};
 };
 
 // One serialized room executor owns this coordinator, the ground container,

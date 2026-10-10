@@ -211,6 +211,72 @@ std::size_t select(const RichonlineBossAttackRandomness& randomness,std::size_t 
     return result;
 }
 }
+RichonlineCombatTurnPlan prepare_richonline_missile_base_round(const RichonlineCombatSessionView& before,
+    const RichonlineCombatWorld& world,std::span<const RichonlineMissileBaseSalvo> salvos,
+    const std::function<std::size_t(std::size_t)>& random) {
+    auto plan=initial(before,world);
+    const auto size=static_cast<std::uint32_t>(world.width)*world.height;
+    std::set<std::int16_t> roads;
+    for(const auto position:world.missile_base_roads)
+        if(position<0 || static_cast<std::uint32_t>(position)>=size || !roads.insert(position).second)
+            throw CodecError("richonline_missile_base_roads_invalid");
+    if(!salvos.empty() && (roads.empty() || !random))
+        throw CodecError("richonline_missile_base_world_missing");
+    std::set<std::uint32_t> sources;
+    bool changed=false,terminal=false;
+    for(const auto& salvo:salvos) {
+        const auto source=std::ranges::find_if(before.buildings,[&](const auto& building) {
+            return building.property==salvo.property;
+        });
+        if(source==before.buildings.end() || source->kind!=12 || source->level!=salvo.level ||
+            source->owner!=salvo.owner || !sources.insert(salvo.property).second ||
+            !salvo.level || !salvo.shots || salvo.shots>127 || salvo.owner>=before.actors.size() ||
+            !before.actors[salvo.owner] || static_cast<unsigned>(salvo.target)>3)
+            throw CodecError("richonline_missile_base_salvo_invalid");
+        auto& volley=plan.base_volleys.emplace_back(RichonlineMissileBaseVolley{salvo,{}});
+        const auto& owner=*plan.after.actors[salvo.owner];
+        // Preserve the requested BOSS control restriction for its automatic building attacks too.
+        volley.controlled=salvo.owner==1 && (owner.in_hospital || owner.in_prison ||
+            !richonline_combat_action_allowed(owner.status) || owner.status.one_step ||
+            owner.status.six_steps || owner.status.turtle || owner.status.stay);
+        for(std::uint8_t shot=0;shot<salvo.shots && !volley.controlled && !terminal && owner.active;++shot) {
+            std::vector<std::int16_t> candidates;
+            switch(salvo.target) {
+            case RichonlineMissileBaseTarget::road:candidates=world.missile_base_roads;break;
+            case RichonlineMissileBaseTarget::mine:
+                for(const auto& mine:plan.after.mines.mines) candidates.push_back(mine.position);
+                break;
+            case RichonlineMissileBaseTarget::enemy:
+                for(const auto& actor:plan.after.actors)
+                    if(actor && actor->slot!=salvo.owner && actor->active && !actor->in_hospital && !actor->in_prison)
+                        candidates.push_back(actor->position);
+                break;
+            case RichonlineMissileBaseTarget::npc:
+                for(const auto& npc:plan.after.dynamic_npcs) candidates.push_back(npc.position);
+                break;
+            }
+            std::erase_if(candidates,[&](const auto position){return !roads.contains(position);});
+            if(candidates.empty()) break;
+            const auto selected=random(candidates.size());
+            if(selected>=candidates.size()) throw CodecError("richonline_missile_base_random_invalid");
+            const auto target=candidates[selected];
+            // NEW66E830: flag1 queues only the map effect, without a hand charge or action restoration.
+            Bytes packet;append_le(packet,0x40bf,2);append_le(packet,before.game_id,2);
+            packet.push_back(0);packet.push_back(0xff);append_le(packet,static_cast<std::uint16_t>(target),2);
+            packet.push_back(salvo.owner);packet.push_back(1);
+            plan.packets.push_back(std::move(packet));volley.targets.push_back(target);
+            projectile(plan,world,salvo.owner,RichonlineCombatEffect::missile,target);
+            changed=true;
+            terminal=std::ranges::any_of(plan.after.actors,[&](const auto& actor) {
+                return actor && !actor->active && before.actors[actor->slot]->active;
+            });
+        }
+    }
+    // NEW65DF30 queues phase8 after the salvo; even an empty round advances the client clock once.
+    Bytes tick;append_le(tick,0x4016,2);append_le(tick,before.game_id,2);plan.packets.push_back(std::move(tick));
+    finish(plan,changed);
+    return plan;
+}
 RichonlineCombatTurnPlan prepare_richonline_boss_combat_turn(const RichonlineCombatSessionView& before,
     const RichonlineCombatWorld& world,std::uint8_t boss,const RichonlineBossAttackRandomness& randomness,
     const RichonlineBossCombatPolicy& policy) {
@@ -358,8 +424,9 @@ RichonlineCombatTurnPlan prepare_richonline_combat_human_card(const RichonlineCo
     finish(plan,true);return plan;
 }
 RichonlineCombatTurnPlan prepare_richonline_combat_stepped_mine(const RichonlineCombatSessionView& before,
-    const RichonlineCombatWorld& world,std::int16_t root) {
+    const RichonlineCombatWorld& world,std::int16_t root,bool notify_client) {
     auto plan=initial(before,world);
+    if(notify_client) plan.packets.push_back(encode_richonline_mine_explosion4017(before.game_id,root));
     chain(plan,world,root);
     finish(plan,true);
     return plan;

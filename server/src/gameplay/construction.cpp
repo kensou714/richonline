@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <bit>
+#include <limits>
 #include <utility>
 
 namespace richnet {
@@ -15,6 +16,38 @@ void RichonlineBossProperty::configure_construction(std::array<std::int8_t,10> h
 std::optional<RichonlineBossProperty::Building> RichonlineBossProperty::building(std::int16_t ref) const noexcept {
     const auto found=properties_.find(ref);
     return found==properties_.end() ? std::nullopt : std::optional{found->second.building};
+}
+RichonlineBossProperty::PreparedStreetEffect RichonlineBossProperty::prepare_street_card(
+    std::int16_t ref,StreetEffect effect) const {
+    const auto source=properties_.find(ref);
+    if(source==properties_.end() || pending_property_)
+        throw CodecError("richonline_street_card_property_invalid");
+    if(effect!=StreetEffect::seal && effect!=StreetEffect::price_rise)
+        throw CodecError("richonline_street_card_effect_invalid");
+    const auto kind=source->second.building.kind;
+    if(effect==StreetEffect::price_rise && (kind==8 || kind==9 || kind==10))
+        throw CodecError("richonline_price_rise_card_property_protected");
+    if(property_revision_==std::numeric_limits<std::uint64_t>::max())
+        throw CodecError("richonline_street_card_revision_exhausted");
+    PreparedStreetEffect plan;plan.owner_=this;plan.revision_=property_revision_;plan.effect_=effect;
+    for(const auto& [target,property]:properties_)
+        if(property.street==source->second.street) plan.properties_.push_back(target);
+    return plan;
+}
+bool RichonlineBossProperty::street_effect_matches(const PreparedStreetEffect& plan) const noexcept {
+    return plan.owner_==this && plan.revision_==property_revision_ && !pending_property_;
+}
+bool RichonlineBossProperty::commit_street_effect(const PreparedStreetEffect& plan) noexcept {
+    if(!street_effect_matches(plan)) return false;
+    // NEW7E33A0/7E3510 write every property in the street, including unowned plots.
+    // NEW7C0C50/7C6640 only tick/use these fields in classic mode, not mode3.
+    for(const auto ref:plan.properties_) {
+        auto& property=properties_.find(ref)->second;
+        if(plan.effect_==StreetEffect::seal) property.sealed_days=5;
+        else property.price_rise_days=5;
+    }
+    ++property_revision_;
+    return true;
 }
 RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandingContext& ctx,Property& property) {
     // 多个道路格可指向同一地产；等级只保存在共享地产记录中，不按道路格各存一份。
@@ -47,7 +80,7 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
             auto upgraded=property.building;++upgraded.level;
             result=garden_result(ctx.actor_slot,upgraded,std::move(result.messages));
         }
-        if (empty) property.building.kind=construction_.default_kind;
+        if (empty) { property.building.kind=construction_.default_kind;property.missile_rounds=0; }
         ++property.building.level;
         ++property_revision_;
     } else {
@@ -82,6 +115,7 @@ RichonlineLandingResult RichonlineBossProperty::complete_construction(std::int8_
     RichonlineLandingResult result{{richonline_construction_response(game_id_,selection)},RichonlineLandingProgress::complete};
     if (selection!=10) {
         property.building={selection,1};
+        property.missile_rounds=0;
         ++property_revision_;
         if (cards_) cards_->commit_inventory(inventory);
     }

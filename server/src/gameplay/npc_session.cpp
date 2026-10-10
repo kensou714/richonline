@@ -55,20 +55,22 @@ RichonlineNpcSession::RichonlineNpcSession(std::uint16_t game,std::string map,
 }
 bool RichonlineNpcSession::supported_npc(std::int8_t npc) const noexcept {
     return npc==0 || npc==1 || npc==3 || (npc==2 && policy_.badluck.has_value()) ||
+        ((npc==4 || npc==6) && policy_.temple_aura_affix.has_value()) ||
         (npc==7 && policy_.sleep_deity.has_value());
 }
 std::uint8_t RichonlineNpcSession::affix_turns(std::int8_t npc) const {
     if(npc==0 || npc==1) return policy_.money_affix_turns[static_cast<std::size_t>(npc)];
     if(npc==2 && policy_.badluck) return policy_.badluck->resource_affix_turns;
     if(npc==3) return rules_.fortune_affix_turns;
+    if((npc==4 || npc==6) && policy_.temple_aura_affix)
+        return (*policy_.temple_aura_affix)[npc==4 ? 0 : 1];
     if(npc==7 && policy_.sleep_deity) return policy_.sleep_deity->resource_affix_turns;
     throw CodecError("richonline_npc_session_affix_unsupported");
 }
 void RichonlineNpcSession::check_actor(std::uint8_t actor,const RichonlineActorStatus& status) const {
     if(!initialized_ || actor>=clocks_.size()) throw CodecError("richonline_npc_session_actor_invalid");
     const auto& clock=clocks_[actor];
-    const bool temple_aura=clock.npc && policy_.temple_aura_affix && (*clock.npc==4 || *clock.npc==6);
-    if(clock.npc!=status.possession || (clock.npc && !supported_npc(*clock.npc) && !temple_aura) ||
+    if(clock.npc!=status.possession || (clock.npc && !supported_npc(*clock.npc)) ||
         (!clock.npc && clock.turns)) throw CodecError("richonline_npc_session_status_desynchronized");
 }
 void RichonlineNpcSession::admit_clock_change(std::uint8_t actor) const {
@@ -146,7 +148,8 @@ RichonlineNpcSessionResult RichonlineNpcSession::temple_summon(const RichonlineL
     std::optional<RichonlineDeityMoneyPlan> money;
     if(npc==3) {
         auto fortune=plan_richonline_fortune({game_,context.actor_slot,context.position,context.synthetic_actor,
-            RichonlineNpcOrigin::temple,{}},rules_,*resources_,*events_,map_,policy_.fortune_cards,
+            RichonlineNpcOrigin::temple,{}},rules_,*resources_,*events_,map_,
+            !context.synthetic_actor && policy_.fortune_selection ? policy_.fortune_selection(next_inventory) : policy_.fortune_cards,
             next_inventory,next_status,ledger_->snapshot(context.actor_slot));
         result.messages=std::move(fortune.messages);next_inventory=fortune.inventory_after;
     } else if(npc==2) {
@@ -217,14 +220,18 @@ std::optional<RichonlineNpcSessionResult> RichonlineNpcSession::landing(const Ri
     next_clock.turns=affix_turns(npc);
     auto staged_ground=*ground_;auto staged_spawner=spawner_;
     if(!staged_ground.consume(context.position,found->second)) throw CodecError("richonline_npc_session_ground_stale");
-    auto next_status=status;next_status.possession=npc;
+    auto next_status=status;
+    // NEW7C3220 queues6050 before6051 when replacing an attached god.
+    if(next_status.possession) richonline_detach_possession(next_status);
+    next_status.possession=npc;
     auto next_inventory=cards_->inventory();
     std::optional<RichonlineDeityMoneyPlan> immediate_money;
     RichonlineNpcSessionResult result{{},RichonlineNpcContinuation::landing_phase1,RichonlineNpcWait::none,true,{}};
     if(npc==3) {
         const auto plan=plan_richonline_fortune({game_,context.actor_slot,context.position,context.synthetic_actor,
-            RichonlineNpcOrigin::ground,{}},rules_,*resources_,*events_,map_,policy_.fortune_cards,
-            cards_->inventory(),status,ledger_->snapshot(context.actor_slot));
+            RichonlineNpcOrigin::ground,{}},rules_,*resources_,*events_,map_,
+            !context.synthetic_actor && policy_.fortune_selection ? policy_.fortune_selection(next_inventory) : policy_.fortune_cards,
+            cards_->inventory(),next_status,ledger_->snapshot(context.actor_slot));
         result.messages=plan.messages;next_inventory=plan.inventory_after;next_status=plan.status_after;
     } else if(npc==2) {
         const auto slots=context.synthetic_actor ? std::array<std::int8_t,4>{-1,-1,-1,-1} :
@@ -233,6 +240,9 @@ std::optional<RichonlineNpcSessionResult> RichonlineNpcSession::landing(const Ri
             slots,*resources_,next_inventory,next_status,*events_);
         result.messages.push_back(stop(game_,context.position));append(result.messages,plan.messages);
         next_inventory=plan.inventory_after;
+    } else if(npc==4 || npc==6) {
+        // NEW7C3220 returns1 after6051: continue the landing without roulette.
+        result.messages.push_back(stop(game_,context.position));
     } else if(npc==7) {
         const auto own_inventory=context.synthetic_actor ? RichonlineChanceInventory{} : next_inventory;
         const auto protection=policy_.sleep_deity->protection(context.actor_slot,own_inventory,next_status);
@@ -326,8 +336,11 @@ RichonlineNpcSessionResult RichonlineNpcSession::fortune_card(View request,const
     if(pending_ || context.game_mode!=3 || context.synthetic_actor || context.actor_status!=status)
         throw CodecError("richonline_npc_session_card_out_of_phase");
     admit_clock_change(context.actor_slot);
+    const auto consumption=cards_->prepare_consumption(decoded.slot,1070);
+    if(!consumption) throw CodecError("richonline_fortune_card_missing");
+    const auto chosen=policy_.fortune_selection ? policy_.fortune_selection(consumption->remaining_inventory) : policy_.fortune_cards;
     const auto plan=plan_richonline_fortune({game_,context.actor_slot,context.position,false,
-        RichonlineNpcOrigin::fortune_card1070,decoded},rules_,*resources_,*events_,map_,policy_.fortune_cards,
+        RichonlineNpcOrigin::fortune_card1070,decoded},rules_,*resources_,*events_,map_,chosen,
         cards_->inventory(),status,ledger_->snapshot(context.actor_slot));
     RichonlineNpcSessionResult result{plan.messages,plan.continuation,RichonlineNpcWait::none,false,{}};
     auto next_clock=clocks_[context.actor_slot];next_clock.npc=3;next_clock.turns=plan.possession_turns;
@@ -394,7 +407,9 @@ RichonlineNpcSessionResult RichonlineNpcSession::deity_card(View request,const R
     if(selected && target==source.actor_slot) {
         if(selected->id==3) {
             const auto fortune=plan_richonline_fortune({game_,target,source.position,false,RichonlineNpcOrigin::temple,{}},
-                rules_,*resources_,*events_,map_,policy_.fortune_cards,next_inventory,next_status,ledger_->snapshot(target));
+                rules_,*resources_,*events_,map_,
+                policy_.fortune_selection ? policy_.fortune_selection(next_inventory) : policy_.fortune_cards,
+                next_inventory,next_status,ledger_->snapshot(target));
             append(result.messages,fortune.messages);next_inventory=fortune.inventory_after;next_status=fortune.status_after;
         } else if(selected->id==2) {
             const auto badluck=plan_richonline_badluck(game_,RichonlineDeityMoneyOrigin::summoned_card,false,

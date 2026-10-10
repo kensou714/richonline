@@ -42,6 +42,17 @@ struct RichonlineCombatSessionView {
     std::vector<RichonlineCombatBuildingView> buildings;
     std::vector<RichonlineCombatDynamicView> dynamic_npcs;
 };
+enum class RichonlineMissileBaseTarget : std::uint8_t { road, mine, enemy, npc };
+struct RichonlineMissileBaseSalvo {
+    std::uint32_t property;
+    std::uint8_t owner,level,shots;
+    RichonlineMissileBaseTarget target;
+};
+struct RichonlineMissileBaseVolley {
+    RichonlineMissileBaseSalvo salvo;
+    std::vector<std::int16_t> targets;
+    bool controlled=false;
+};
 struct RichonlineCombatWorld {
     std::uint16_t width=0,height=0;
     RichonlineCombatResources resources{};
@@ -73,6 +84,7 @@ struct RichonlineCombatWorld {
     // buffs. Re-evaluated before each attack/chain using the current snapshot.
     std::function<ResolvedTerms(const RichonlineCombatActorView&,
         const RichonlineCombatSessionView&)> resolve_terms;
+    std::vector<std::int16_t> missile_base_roads;
 };
 struct RichonlineBossAttackRandomness {
     // Independent categorical draws: 0..79 none,80..89 mine,90..99 projectile.
@@ -104,7 +116,11 @@ struct RichonlineCombatTurnPlan {
     std::vector<std::uint8_t> bankrupt_actors;
     std::vector<Bytes> packets;
     bool committed=false;
+    std::vector<RichonlineMissileBaseVolley> base_volleys;
 };
+RichonlineCombatTurnPlan prepare_richonline_missile_base_round(const RichonlineCombatSessionView&,
+    const RichonlineCombatWorld&,std::span<const RichonlineMissileBaseSalvo>,
+    const std::function<std::size_t(std::size_t)>& random);
 RichonlineCombatTurnPlan prepare_richonline_boss_combat_turn(const RichonlineCombatSessionView&,
     const RichonlineCombatWorld&,std::uint8_t boss,const RichonlineBossAttackRandomness&,
     const RichonlineBossCombatPolicy& = {});
@@ -115,10 +131,10 @@ RichonlineCombatTurnPlan prepare_richonline_combat_mine_day(const RichonlineComb
     const RichonlineCombatWorld&,std::uint64_t day,bool round_anchor);
 RichonlineCombatTurnPlan prepare_richonline_combat_detonate(const RichonlineCombatSessionView&,
     const RichonlineCombatWorld&,std::uint8_t actor,const RichonlineBossCards::PreparedConsumption&);
-// Called only when the landing consumer will run the client's dynamic-NPC mine
-// animation. It mirrors state and produces no duplicate 4017.
+// Ordinary landings already run the client's mine animation. Relocation callers
+// request4017 explicitly because their position update skips the landing phase.
 RichonlineCombatTurnPlan prepare_richonline_combat_stepped_mine(const RichonlineCombatSessionView&,
-    const RichonlineCombatWorld&,std::int16_t root);
+    const RichonlineCombatWorld&,std::int16_t root,bool notify_client=false);
 // NEW7CC970: one landing victim, shared7CE420 modifiers, no helmet or mine immunity,
 // no removal of NPC26 and no additional wire effect.
 RichonlineCombatTurnPlan prepare_richonline_combat_fire_landing(const RichonlineCombatSessionView&,

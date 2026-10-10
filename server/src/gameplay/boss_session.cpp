@@ -250,24 +250,16 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     rules.ledger=ledger;
     const auto feast=load_original_kpd(resources/"Data/Feast.kpd",806);
     if(feast.size()!=806) throw CodecError("richonline_feast_calendar_invalid");
-    for(std::size_t year=0;year<rules.chongyang_dates.size();++year) {
-        const auto offset=year*26+22;
-        const auto month=feast[offset],day=feast[offset+1];
-        if(!std::chrono::year_month_day{std::chrono::year{static_cast<int>(year)+2004},
-            std::chrono::month{month},std::chrono::day{day}}.ok())
-            throw CodecError("richonline_feast_chongyang_date_invalid");
-        // NEW7D8DE0 returns the first matching slot, even if its mode gate
-        // later rejects it. A coincident earlier festival hides Chongyang.
-        bool shadowed=false;
-        for(std::size_t slot=0;slot<11;++slot) {
-            const auto earlier=year*26+slot*2;
-            if(feast[earlier]==month && feast[earlier+1]==day) {
-                shadowed=true;
-                break;
-            }
+    for(std::size_t year=0;year<rules.feast_dates.size();++year)
+        for(std::size_t slot=0;slot<rules.feast_dates[year].size();++slot) {
+            const auto offset=year*26+slot*2;
+            const auto month=feast[offset],day=feast[offset+1];
+            if((month!=0 || day!=0) && !std::chrono::year_month_day{
+                std::chrono::year{static_cast<int>(year)+2004},
+                std::chrono::month{month},std::chrono::day{day}}.ok())
+                throw CodecError("richonline_feast_date_invalid");
+            rules.feast_dates[year][slot]={month,day};
         }
-        if(!shadowed) rules.chongyang_dates[year]={month,day};
-    }
     if (policy.terminal) {
         rules.month_limit_days=static_cast<std::uint8_t>(stage.game_months*30U);
         rules.terminal=[terminal=policy.terminal](const RichonlineTurnTerminalContext& context) {
@@ -335,6 +327,14 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         const auto maximum=load_original_game_values(resources/"Data/GValue.kpd").require(37);
         if(maximum<1 || maximum>127) throw CodecError("richonline_temple_maximum_invalid");
         auto npc_policy=*policy.npcs;
+        npc_policy.fortune_selection=[cards,log,key=startup.room.key](const RichonlineChanceInventory& inventory) {
+            const auto first=cards->prepare_random_reward(inventory);
+            const auto second=cards->prepare_random_reward(first.inventory);
+            const std::array chosen{first.card,second.card};
+            if(log) log("richonline_fortune_reward_selected",{{"room",key},{"cards",chosen},
+                {"policy","uniform-playable-sequential-two-cards-v1"},{"level","info"}});
+            return chosen;
+        };
         const bool aura=rules.terminal && policy.hibernate_raw_actor;
         if(aura) {
             rules.npc_aura=RichonlineNpcAuraRules::load(resources);

@@ -1,0 +1,321 @@
+{
+  "stage": "作者完整主体静态审阅；独审另记",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "functions": [
+    {
+      "va": "0x8fc6a0",
+      "status": "完整函数静态审阅",
+      "conclusion": "模式低BYTE控制局部行，顺序边界分支后以宽度delta续接水平；正常末尾写354h",
+      "unknown": "V=0、非法行索引、溢出及互递归终止无统一保证",
+      "evidence": "证据/formal_functions.json#/functions/0",
+      "document": "02_光标更新与递归边界.txt",
+      "coverage_origin": "本批新增完整主体"
+    },
+    {
+      "va": "0x8fc830",
+      "status": "完整函数静态审阅",
+      "conclusion": "DWORD水平宽度更新；负值可跨上一行，宽度边界吸附，最终delta校正后写354h",
+      "unknown": "空文本/非法mode/=-1不写戳；最终X不保证位于[0,H]",
+      "evidence": "证据/formal_functions.json#/functions/1",
+      "document": "02_光标更新与递归边界.txt",
+      "coverage_origin": "本批新增完整主体"
+    },
+    {
+      "va": "0x8fccd0",
+      "status": "完整函数静态审阅",
+      "conclusion": "先清四选区，再删行；A>C严格门修正，C=0有条件创建续接",
+      "unknown": "负索引未在后端拒绝；等于C不修正，补空行与返回成功不保证",
+      "evidence": "证据/formal_functions.json#/functions/2",
+      "document": "03_选区清理与插入续接.txt",
+      "coverage_origin": "本批新增完整主体"
+    },
+    {
+      "va": "0x90ce80",
+      "status": "完整函数静态审阅",
+      "conclusion": "普通/分段宽度到单元位置，delta输出及前缀递归；原子等宽flag0返回段起点",
+      "unknown": "缓存/链合法性与溢出未知；不是通用合法索引或双向逆映射",
+      "evidence": "证据/formal_functions.json#/functions/3",
+      "document": "01_行记录与位置量度.txt",
+      "coverage_origin": "指定旧主体完整静态复核；不计新增"
+    },
+    {
+      "va": "0x90d120",
+      "status": "完整函数静态审阅",
+      "conclusion": "单元位置到宽度；完整节点用整宽，原子内部返回此前宽度",
+      "unknown": "普通pos无缓存长度钳制；链单位总数与wcslen一致性未知",
+      "evidence": "证据/formal_functions.json#/functions/4",
+      "document": "01_行记录与位置量度.txt",
+      "coverage_origin": "指定旧主体完整静态复核；不计新增"
+    },
+    {
+      "va": "0x90d310",
+      "status": "完整函数静态审阅",
+      "conclusion": "后续单元边界；普通两flag均可跳零宽，分段原子返回段尾",
+      "unknown": "NULL/负位置/循环链未设门；非Unicode字素接口",
+      "evidence": "证据/formal_functions.json#/functions/5",
+      "document": "01_行记录与位置量度.txt",
+      "coverage_origin": "指定旧主体完整静态复核；不计新增"
+    },
+    {
+      "va": "0x8fae70",
+      "status": "完整函数静态审阅",
+      "conclusion": "选区处理后WORD插入/文本替换，以90D120宽度续接8FC830并同步关联位置与范围",
+      "unknown": "5000h字节总容量/NUL空间未检查，外部回调及失败原子性未知",
+      "evidence": "证据/formal_functions.json#/functions/6",
+      "document": "03_选区清理与插入续接.txt",
+      "coverage_origin": "指定旧主体完整静态复核；不计新增"
+    },
+    {
+      "va": "0x611e76",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8f4ba0",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/0",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x6034cf",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x90ce80",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/1",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x606d46",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8fc830",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/2",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x601742",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8eb410",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/3",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x6069db",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8fc6a0",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/4",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x60aa13",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8f4b10",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/5",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x60bb61",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x90d310",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/6",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x60257f",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x90d120",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/7",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x60aea0",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8f4c20",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/8",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x611fbb",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8f39d0",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/9",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x610283",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x924fc0",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/10",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x6049e7",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x9295f0",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/11",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x60d088",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8fdec0",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/12",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x601012",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8e0aa0",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/13",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x601d1e",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8e1800",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/14",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x60262e",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8fbf70",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/15",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x6013f5",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x901190",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/16",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x60516c",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8fccd0",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/17",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    },
+    {
+      "va": "0x607a3e",
+      "status": "直接桥静态核验",
+      "conclusion": "E9到0x8fae70",
+      "unknown": "仅当前静态相对目标；不证明动态可达或后端全部语义",
+      "evidence": "证据/bounded_raw.json#/verified_direct_bridges/18",
+      "document": "04_证据分层与未决项.txt",
+      "coverage_origin": "直接桥；不计业务主体"
+    }
+  ],
+  "windows": [
+    {
+      "owner_va": "0x8fae70",
+      "window_status": "仅有限窗口导航",
+      "window_conclusion": "固定调用点前后五条指令；不据窗口计owner完整审阅",
+      "evidence": [
+        "证据/bounded_raw.json#/explicit_owner_windows/0"
+      ],
+      "document": "04_证据分层与未决项.txt",
+      "unknown": "外部owner完整参数生产与行为不在窗口",
+      "coverage_origin": "导航；8FAE70完整级别另由指定复用主体记录承担"
+    },
+    {
+      "owner_va": "0x8fb350",
+      "window_status": "仅有限窗口导航",
+      "window_conclusion": "固定调用点前后五条指令；不据窗口计owner完整审阅",
+      "evidence": [
+        "证据/bounded_raw.json#/explicit_owner_windows/1",
+        "证据/bounded_raw.json#/explicit_owner_windows/2"
+      ],
+      "document": "04_证据分层与未决项.txt",
+      "unknown": "外部owner完整参数生产与行为不在窗口",
+      "coverage_origin": "导航；8FAE70完整级别另由指定复用主体记录承担"
+    },
+    {
+      "owner_va": "0x8fdec0",
+      "window_status": "仅有限窗口导航",
+      "window_conclusion": "固定调用点前后五条指令；不据窗口计owner完整审阅",
+      "evidence": [
+        "证据/bounded_raw.json#/explicit_owner_windows/3",
+        "证据/bounded_raw.json#/explicit_owner_windows/4"
+      ],
+      "document": "04_证据分层与未决项.txt",
+      "unknown": "外部owner完整参数生产与行为不在窗口",
+      "coverage_origin": "导航；8FAE70完整级别另由指定复用主体记录承担"
+    },
+    {
+      "owner_va": "0x901190",
+      "window_status": "仅有限窗口导航",
+      "window_conclusion": "固定调用点前后五条指令；不据窗口计owner完整审阅",
+      "evidence": [
+        "证据/bounded_raw.json#/explicit_owner_windows/5"
+      ],
+      "document": "04_证据分层与未决项.txt",
+      "unknown": "外部owner完整参数生产与行为不在窗口",
+      "coverage_origin": "导航；8FAE70完整级别另由指定复用主体记录承担"
+    }
+  ],
+  "dependency_contracts": [
+    {
+      "va": "0x8f4b10",
+      "contract": "可见宽度带关联对象扣减；有符号结果无非负钳制",
+      "evidence": "证据/formal_functions.json#/dependencies/0",
+      "scope": "仅指定旧依赖调用契约；不计本批完整主体或新增成果"
+    },
+    {
+      "va": "0x8f4ba0",
+      "contract": "可见行容量有符号除法；零分母与溢出未设门",
+      "evidence": "证据/formal_functions.json#/dependencies/1",
+      "scope": "仅指定旧依赖调用契约；不计本批完整主体或新增成果"
+    },
+    {
+      "va": "0x8f4c20",
+      "contract": "仅index<C门，回收描述及A0h行搬移，负index未拒绝",
+      "evidence": "证据/formal_functions.json#/dependencies/2",
+      "scope": "仅指定旧依赖调用契约；不计本批完整主体或新增成果"
+    },
+    {
+      "va": "0x8f39d0",
+      "contract": "行创建/移位受配置和数量上限限制，可能不创建",
+      "evidence": "证据/formal_functions.json#/dependencies/3",
+      "scope": "仅指定旧依赖调用契约；不计本批完整主体或新增成果"
+    },
+    {
+      "va": "0x8eb410",
+      "contract": "范围约束位置后同步虚表通知；动态目标与重入未知",
+      "evidence": "证据/formal_functions.json#/dependencies/4",
+      "scope": "仅指定旧依赖调用契约；不计本批完整主体或新增成果"
+    }
+  ],
+  "scope": "七唯一主体加十九直接桥；四owner六固定窗口纯导航；五旧短依赖不增加完整计数"
+}

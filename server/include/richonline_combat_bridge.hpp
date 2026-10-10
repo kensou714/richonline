@@ -36,10 +36,13 @@ public:
         const RichonlineTargetCardRequest&,std::uint16_t expected_calendar,bool recover_refusal=false,
         const std::function<void(const std::string&)>& log={});
     RichonlineCombatBridgeResult finish_round(std::span<const RichonlineCombatActorRef>,std::uint64_t day);
+    RichonlineCombatBridgeResult missile_base_round(std::span<const RichonlineCombatActorRef>,std::uint64_t round,
+        const std::function<std::size_t(std::size_t)>& random,const std::function<void(const std::string&)>& log);
     RichonlineCombatBridgeResult detonate_card(std::span<const RichonlineCombatActorRef>,std::uint8_t slot,
         const std::function<void(const std::string&)>& log);
     bool has_mine(std::int16_t position) const;
-    RichonlineCombatBridgeResult stepped_mine(std::span<const RichonlineCombatActorRef>,std::int16_t root);
+    RichonlineCombatBridgeResult stepped_mine(std::span<const RichonlineCombatActorRef>,std::int16_t root,
+        bool notify_client=false);
     // Calls the pure continuation preflight only for a surviving victim, before
     // the shared ledger commit. Fatal landings proceed directly to settlement.
     RichonlineCombatBridgeResult fire_landing(std::span<const RichonlineCombatActorRef>,
@@ -48,7 +51,8 @@ public:
     RichonlineCombatBridgeResult poison_card(std::span<const RichonlineCombatActorRef>,
         const RichonlineResearchCardRequest&,const RichonlineResearchCardContext&,std::uint32_t& use_count,
         const RichonlinePoisonRules&,std::span<const RichonlinePoisonCell>,std::span<const RichonlineRawActorState>,
-        std::span<std::array<std::uint8_t,8>> relations);
+        std::span<std::array<std::uint8_t,8>> relations,bool recover_refusal=false,
+        const std::function<void(const std::string&)>& log = {});
     RichonlineCombatBridgeResult timed_bomb_card(std::span<const RichonlineCombatActorRef>,
         std::uint8_t action_actor,const RichonlineTimedBombRequest110&,std::uint16_t expected_calendar,
         const RichonlineTimedBombRules&,const RichonlineTimedBombEligibility&,std::uint8_t envelope_opaque7,
@@ -92,6 +96,6 @@ private:
     };
     Snapshot snapshot(std::span<const RichonlineCombatActorRef>) const;
     RichonlineCombatBridgeResult apply(std::span<const RichonlineCombatActorRef>,
-        const Snapshot&,RichonlineCombatTurnPlan);
+        const Snapshot&,RichonlineCombatTurnPlan,const RichonlineBossProperty::PreparedMissileRound* missile_round=nullptr);
 };
 }

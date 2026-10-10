@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <charconv>
 #include <limits>
+#include <sstream>
 #include <utility>
 
 namespace richnet {
@@ -53,6 +54,22 @@ RichonlineBossProperty::RichonlineBossProperty(const std::filesystem::path& root
     for (const auto& property:initial_properties(root,stage.map_name,topology_).properties)
         properties_.emplace(property.id,Property{property.price,property.owner,{property.kind,property.level},property.district,property.sprite_type});
     const auto research=load_original_research_resources(root/"Data"/"BwbValue.kpd");
+    const auto missile=research.sections.find("PAO");
+    if(missile==research.sections.end()) throw CodecError("richonline_missile_base_resource_missing");
+    for(std::size_t level=0;level<missile_rules_.size();++level) {
+        const auto entry=missile->second.find("level_"+std::to_string(level+1));
+        if(entry==missile->second.end()) throw CodecError("richonline_missile_base_level_missing");
+        auto text=entry->second;std::ranges::replace(text,',',' ');
+        std::istringstream fields{text};
+        int rounds=0,card=0,shots=0,target=-1;
+        if(!(fields>>rounds>>card>>shots>>target) || rounds<1 || rounds>127 || card!=1046 ||
+            shots<1 || shots>127 || target<0 || target>3)
+            throw CodecError("richonline_missile_base_rule_invalid");
+        fields>>std::ws;
+        if(!fields.eof()) throw CodecError("richonline_missile_base_rule_invalid");
+        missile_rules_[level]={static_cast<std::uint8_t>(rounds),static_cast<std::uint8_t>(shots),
+            static_cast<RichonlineMissileBaseTarget>(target)};
+    }
     garden_cash_caps_={stage.human.cash,stage.boss.base_cash};
     const auto garden=research.sections.find("KONG");
     if(garden==research.sections.end()) throw CodecError("richonline_garden_resource_missing");
@@ -310,7 +327,8 @@ RichonlineCombatBuildingView RichonlineBossProperty::combat_building_effect(
     return after;
 }
 RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_combat(
-    const CombatSnapshot& before,std::span<const RichonlineCombatBuildingView> after) const {
+    const CombatSnapshot& before,std::span<const RichonlineCombatBuildingView> after,
+    const PreparedMissileRound* missile_round) const {
     const auto current=combat_snapshot();
     if (before.revision!=current.revision || before.decision_pending || current.decision_pending ||
         before.buildings!=current.buildings || after.size()!=before.buildings.size())
@@ -320,14 +338,44 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_combat(
     PreparedCombat result;
     result.expected_=before;
     result.after_.assign(after.begin(),after.end());
+    if(missile_round) {
+        if(missile_round->revision_!=current.revision ||
+            (last_missile_round_ && missile_round->round_!=*last_missile_round_+1))
+            throw CodecError("richonline_missile_base_clock_stale");
+        result.missile_round_=*missile_round;
+    }
     for (std::size_t i=0;i<after.size();++i) {
         const auto& old=before.buildings[i];
         const auto& next=after[i];
+        // NEW6823A0 can preserve a converted kind at level0 when ability is0.
+        // Only destruction from a positive level clears kind to-1 (NEW7E4020).
+        const auto expected_kind=old.level>0 && next.level==0 ? std::int8_t{-1} : old.kind;
         if (next.property!=old.property || next.footprint!=old.footprint ||
             next.ownership_protected!=old.ownership_protected || next.level>old.level ||
             (next.owner && next.owner!=old.owner) ||
-            (next.level>0 && next.kind!=old.kind) || (next.level==0 && next.kind!=-1))
+            next.kind!=expected_kind)
             throw CodecError("richonline_property_combat_transition_invalid");
+    }
+    return result;
+}
+std::optional<RichonlineBossProperty::PreparedMissileRound>
+RichonlineBossProperty::prepare_missile_round(std::uint64_t round) const {
+    if(deadline_) throw CodecError("richonline_missile_base_decision_pending");
+    if(last_missile_round_ && round==*last_missile_round_) return {};
+    if(last_missile_round_ && (*last_missile_round_==std::numeric_limits<std::uint64_t>::max() ||
+        round!=*last_missile_round_+1)) throw CodecError("richonline_missile_base_round_invalid");
+    PreparedMissileRound result;result.revision_=property_revision_;result.round_=round;
+    for(const auto& [ref,property]:properties_) {
+        auto remaining=property.missile_rounds;
+        if(!property.owner || property.building.kind!=12 || !property.building.level) remaining=0;
+        else {
+            const auto& rule=missile_rules_.at(property.building.level-1);
+            const bool due=remaining>0 && --remaining==0;
+            if(!remaining) remaining=rule.rounds;
+            if(due) result.salvos_.push_back({static_cast<std::uint32_t>(ref),*property.owner,
+                property.building.level,rule.shots,rule.target});
+        }
+        result.clocks_.emplace_back(ref,remaining);
     }
     return result;
 }
@@ -476,8 +524,18 @@ bool RichonlineBossProperty::commit_combat(const PreparedCombat& prepared) noexc
         auto& property=properties_.find(static_cast<std::int16_t>(entry.property))->second;
         changed=changed || property.owner!=entry.owner || property.building.kind!=entry.kind ||
             property.building.level!=entry.level;
+        if(!property.owner || !entry.owner || property.building.kind!=12 ||
+            entry.kind!=12 || !property.building.level || !entry.level) property.missile_rounds=0;
         property.owner=entry.owner;
         property.building={entry.kind,entry.level};
+    }
+    if(prepared.missile_round_) {
+        for(const auto& [ref,remaining]:prepared.missile_round_->clocks_) {
+            auto& property=properties_.find(ref)->second;
+            property.missile_rounds=property.owner && property.building.kind==12 && property.building.level ? remaining : 0;
+        }
+        last_missile_round_=prepared.missile_round_->round_;
+        changed=true;
     }
     if (changed) ++property_revision_;
     return true;

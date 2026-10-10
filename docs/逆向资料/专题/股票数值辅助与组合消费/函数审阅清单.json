@@ -1,0 +1,574 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "scope": "第二十五批；完整指七本体局部指令契约，不认运行值、字段producer或完整游戏业务闭合。",
+  "functions": [
+    {
+      "va": "0x6c1c80",
+      "status": "完整分析",
+      "conclusion": "无符号输入DIV100，商先round到float32，乘+33C经922798取低DWORD后与+340作unsigned max，ret4。",
+      "unknown": "系数/下界生产者、数值单位、特殊浮点和运行时FPU状态未闭；无NULL或错误码门。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/0"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x6c1c80",
+          "end_va": "0x6c1cfb",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 38,
+      "semantic_anchors": [
+        {
+          "va": "0x6c1ca3",
+          "tokens": [
+            "xor",
+            "edx"
+          ]
+        },
+        {
+          "va": "0x6c1caa",
+          "tokens": [
+            "div",
+            "ecx"
+          ]
+        },
+        {
+          "va": "0x6c1cb6",
+          "tokens": [
+            "fild",
+            "qword"
+          ]
+        },
+        {
+          "va": "0x6c1cb9",
+          "tokens": [
+            "fstp",
+            "dword"
+          ]
+        },
+        {
+          "va": "0x6c1cc2",
+          "tokens": [
+            "fmul",
+            "0x33c"
+          ]
+        },
+        {
+          "va": "0x6c1cc8",
+          "tokens": [
+            "call",
+            "0x60c4c6"
+          ]
+        },
+        {
+          "va": "0x6c1cdc",
+          "tokens": [
+            "jbe"
+          ]
+        },
+        {
+          "va": "0x6c1cf8",
+          "tokens": [
+            "ret",
+            "4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6c1d00",
+      "status": "完整分析",
+      "conclusion": "与6C1C80同ABI和运算次序，系数用+344、unsigned下界用+348，ret4。",
+      "unknown": "字段生产者、数值单位、特殊浮点和运行时FPU状态未闭；不宣称32位饱和或错误哨兵。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/1"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x6c1d00",
+          "end_va": "0x6c1d7b",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 38,
+      "semantic_anchors": [
+        {
+          "va": "0x6c1d2a",
+          "tokens": [
+            "div",
+            "ecx"
+          ]
+        },
+        {
+          "va": "0x6c1d36",
+          "tokens": [
+            "fild",
+            "qword"
+          ]
+        },
+        {
+          "va": "0x6c1d39",
+          "tokens": [
+            "fstp",
+            "dword"
+          ]
+        },
+        {
+          "va": "0x6c1d42",
+          "tokens": [
+            "fmul",
+            "0x344"
+          ]
+        },
+        {
+          "va": "0x6c1d56",
+          "tokens": [
+            "cmp",
+            "0x348"
+          ]
+        },
+        {
+          "va": "0x6c1d5c",
+          "tokens": [
+            "jbe"
+          ]
+        },
+        {
+          "va": "0x6c1d78",
+          "tokens": [
+            "ret",
+            "4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6c1d80",
+      "status": "完整分析",
+      "conclusion": "返回this+34C字段DWORD；不读取栈参数但ret4由callee清一个DWORD槽。",
+      "unknown": "字段生产者/单位/所有权未闭；本体不检查this指针。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/2"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x6c1d80",
+          "end_va": "0x6c1d9d",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 10,
+      "semantic_anchors": [
+        {
+          "va": "0x6c1d91",
+          "tokens": [
+            "mov",
+            "0x34c"
+          ]
+        },
+        {
+          "va": "0x6c1d9a",
+          "tokens": [
+            "ret",
+            "4"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6c08b0",
+      "status": "完整分析",
+      "conclusion": "两个记录各以+1C乘+10低DWORD输入三helper，三项回绕相加后产生unsigned score(a)<score(b)的0/1。",
+      "unknown": "记录字段生产和回调实际消费未闭；返回诊断异常路径另限；不是qsort三态。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/3"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x6c08b0",
+          "end_va": "0x6c095f",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 61,
+      "semantic_anchors": [
+        {
+          "va": "0x6c08db",
+          "tokens": [
+            "0x1c"
+          ]
+        },
+        {
+          "va": "0x6c08de",
+          "tokens": [
+            "imul",
+            "0x10"
+          ]
+        },
+        {
+          "va": "0x6c0918",
+          "tokens": [
+            "call",
+            "0x605ce3"
+          ]
+        },
+        {
+          "va": "0x6c0949",
+          "tokens": [
+            "cmp",
+            "esi, edi"
+          ]
+        },
+        {
+          "va": "0x6c094b",
+          "tokens": [
+            "sbb",
+            "eax, eax"
+          ]
+        },
+        {
+          "va": "0x6c094d",
+          "tokens": [
+            "neg",
+            "eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6c0960",
+      "status": "完整分析",
+      "conclusion": "与6C08B0同取值与三项组合，但产生unsigned score(a)>score(b)的0/1。",
+      "unknown": "记录类型和真实回调执行未知；相等产生0，不提供三态排序契约。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/4"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x6c0960",
+          "end_va": "0x6c0a0f",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 61,
+      "semantic_anchors": [
+        {
+          "va": "0x6c098e",
+          "tokens": [
+            "imul",
+            "0x10"
+          ]
+        },
+        {
+          "va": "0x6c09c8",
+          "tokens": [
+            "call",
+            "0x605ce3"
+          ]
+        },
+        {
+          "va": "0x6c09f9",
+          "tokens": [
+            "cmp",
+            "edi, esi"
+          ]
+        },
+        {
+          "va": "0x6c09fd",
+          "tokens": [
+            "neg",
+            "eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6c0bf0",
+      "status": "完整分析",
+      "conclusion": "两个记录各以+C乘+8低DWORD输入前两helper；各自+4为1或2时加常量第三项，产生unsigned strict <。",
+      "unknown": "类型标签1/2业务含义、字段生产和回调消费未闭；32位乘/加均回绕。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/5"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x6c0bf0",
+          "end_va": "0x6c0cd2",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 79,
+      "semantic_anchors": [
+        {
+          "va": "0x6c0c1c",
+          "tokens": [
+            "imul",
+            "8"
+          ]
+        },
+        {
+          "va": "0x6c0c74",
+          "tokens": [
+            "cmp",
+            "4",
+            "1"
+          ]
+        },
+        {
+          "va": "0x6c0c7d",
+          "tokens": [
+            "cmp",
+            "4",
+            "2"
+          ]
+        },
+        {
+          "va": "0x6c0c8a",
+          "tokens": [
+            "call",
+            "0x605ce3"
+          ]
+        },
+        {
+          "va": "0x6c0cbc",
+          "tokens": [
+            "cmp"
+          ]
+        },
+        {
+          "va": "0x6c0cc1",
+          "tokens": [
+            "neg",
+            "eax"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x6c0ce0",
+      "status": "完整分析",
+      "conclusion": "与6C0BF0同字段、各自条件及组合，但产生unsigned strict >；相等产生0。",
+      "unknown": "标签和记录类型未命名；运行期字段修改、NULL失败及诊断异常影响不由静态本体验证。",
+      "evidence_refs": [
+        {
+          "file": "formal_functions.json",
+          "pointer": "/functions/6"
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x6c0ce0",
+          "end_va": "0x6c0dc2",
+          "is_main": true
+        }
+      ],
+      "instruction_count": 79,
+      "semantic_anchors": [
+        {
+          "va": "0x6c0d0c",
+          "tokens": [
+            "imul",
+            "8"
+          ]
+        },
+        {
+          "va": "0x6c0d64",
+          "tokens": [
+            "cmp",
+            "4",
+            "1"
+          ]
+        },
+        {
+          "va": "0x6c0d6d",
+          "tokens": [
+            "cmp",
+            "4",
+            "2"
+          ]
+        },
+        {
+          "va": "0x6c0d9e",
+          "tokens": [
+            "call",
+            "0x605ce3"
+          ]
+        },
+        {
+          "va": "0x6c0dac",
+          "tokens": [
+            "cmp"
+          ]
+        },
+        {
+          "va": "0x6c0db1",
+          "tokens": [
+            "neg",
+            "eax"
+          ]
+        }
+      ]
+    }
+  ],
+  "historical_contracts": [
+    {
+      "va": "0x6283e0",
+      "status": "既有局部契约复用",
+      "source_path": "专题/股票与交易流程/证据/stock_core.json",
+      "source_pointer": "/functions/2",
+      "source_sha256": "c19112d144dbdc944a430c73f75eb647b52aaeaa5513b7e527fe4fa3f41a363f",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/0"
+      },
+      "instruction_count": 39,
+      "semantic_anchors": [
+        {
+          "va": "0x628410",
+          "tokens": [
+            "0xa76744"
+          ]
+        },
+        {
+          "va": "0x628419",
+          "tokens": [
+            "0xca0"
+          ]
+        },
+        {
+          "va": "0x628460",
+          "tokens": [
+            "0xa76744"
+          ]
+        }
+      ]
+    },
+    {
+      "va": "0x922798",
+      "status": "既有局部契约复用",
+      "source_path": "专题/高扇入界面操作辅助/证据/dependency_raw.json",
+      "source_pointer": "/functions/2",
+      "source_sha256": "a35ab6b4e2422a64db4c6e37984704790da18fdfc5829ac366e0230ddbdee93f",
+      "evidence_ref": {
+        "file": "reused_functions.json",
+        "pointer": "/functions/1"
+      },
+      "instruction_count": 37,
+      "semantic_anchors": [
+        {
+          "va": "0x9227a7",
+          "tokens": [
+            "fistp",
+            "qword"
+          ]
+        },
+        {
+          "va": "0x9227ab",
+          "tokens": [
+            "fild",
+            "qword"
+          ]
+        },
+        {
+          "va": "0x9227d3",
+          "tokens": [
+            "adc",
+            "eax"
+          ]
+        },
+        {
+          "va": "0x9227da",
+          "tokens": [
+            "adc",
+            "edx"
+          ]
+        },
+        {
+          "va": "0x9227eb",
+          "tokens": [
+            "sbb",
+            "eax"
+          ]
+        },
+        {
+          "va": "0x9227f2",
+          "tokens": [
+            "sbb",
+            "edx"
+          ]
+        }
+      ]
+    }
+  ],
+  "owner_windows": [
+    {
+      "owner_va": "0x77ee40",
+      "site_va": "0x77ef93",
+      "start_va": "0x77ef83",
+      "end_va": "0x77efa9",
+      "status": "局部窗口分析",
+      "conclusion": "仅77EE40相邻参数和数值辅助组合。",
+      "unknown": "槽-10完整生产、6070F7桥与候选6C1A20及owner整业务未闭。",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/0"
+      }
+    },
+    {
+      "owner_va": "0x77ee40",
+      "site_va": "0x77efd3",
+      "start_va": "0x77efbf",
+      "end_va": "0x77efe9",
+      "status": "局部窗口分析",
+      "conclusion": "仅77EE40相邻参数和数值辅助组合。",
+      "unknown": "槽-10完整生产、6070F7桥与候选6C1A20及owner整业务未闭。",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/1"
+      }
+    },
+    {
+      "owner_va": "0x77ee40",
+      "site_va": "0x77efe4",
+      "start_va": "0x77efd3",
+      "end_va": "0x77effa",
+      "status": "局部窗口分析",
+      "conclusion": "仅77EE40相邻参数和数值辅助组合。",
+      "unknown": "槽-10完整生产、6070F7桥与候选6C1A20及owner整业务未闭。",
+      "evidence_ref": {
+        "file": "bounded_raw.json",
+        "pointer": "/explicit_owner_windows/2"
+      }
+    }
+  ],
+  "summary": {
+    "reviewed_functions": 7,
+    "complete": 7,
+    "partial": 0,
+    "new_seed_bodies": 7,
+    "reviewed_instructions": 366,
+    "historical_contracts": 2,
+    "historical_contract_instructions": 76,
+    "owner_windows": 3,
+    "direct_bridges": 10
+  }
+}

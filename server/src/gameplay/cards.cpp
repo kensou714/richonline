@@ -60,23 +60,9 @@ std::optional<RichonlineLandingResult> RichonlineBossCards::land(const Richonlin
     if(fixed_tile_reward(context.static_type) && !resources_->automatic_card_eligible(award_.map(),card))
         throw CodecError("richonline_card_tile_reward_not_eligible");
     if(context.static_type==8) {
-        if(!tile_random_||tile_reward_cards_.empty()) throw CodecError("richonline_card_tile_policy_required");
-        struct Candidate {std::int16_t card;RichonlineChanceInventory inventory;};
-        std::vector<Candidate> candidates;
-        for(const auto candidate:tile_reward_cards_) {
-            const auto resulting=prepare_add(candidate);
-            const auto safe=std::all_of(resulting.begin(),resulting.end(),[&](const auto& slot) {
-                if(slot.card_id==-1 || std::find(tile_reward_cards_.begin(),tile_reward_cards_.end(),slot.card_id)!=tile_reward_cards_.end()) return true;
-                const auto count=[&](const auto& inventory){int total=0;for(const auto& old:inventory)if(old.card_id==slot.card_id)total+=old.count;return total;};
-                return count(resulting)<=count(inventory_);
-            });
-            if(safe) candidates.push_back({candidate,resulting});
-        }
-        if(candidates.empty()) throw CodecError("richonline_card_tile_no_safe_reward");
-        const auto selected=tile_random_(candidates.size());
-        if(selected>=candidates.size()) throw CodecError("richonline_card_tile_random_invalid");
-        card=candidates[selected].card;
-        next=candidates[selected].inventory;
+        const auto reward=prepare_random_reward();
+        card=reward.card;
+        next=reward.inventory;
     }
     try { if(context.static_type!=8) next = context.static_type == 68 ? resources_->insert(award_,inventory_) : prepare_add(card); }
     catch (const CodecError& error) {
@@ -100,6 +86,31 @@ RichonlineChanceInventory RichonlineBossCards::prepare_reward() const {
 }
 RichonlineChanceInventory RichonlineBossCards::prepare_add(std::int16_t card_id,std::int16_t count) const {
     return resources_->add(award_.map(),card_id,count,inventory_);
+}
+RichonlineBossCards::PreparedReward RichonlineBossCards::prepare_random_reward() const {
+    return prepare_random_reward(inventory_);
+}
+RichonlineBossCards::PreparedReward RichonlineBossCards::prepare_random_reward(const RichonlineChanceInventory& source) const {
+    if(!tile_random_||tile_reward_cards_.empty()) throw CodecError("richonline_card_tile_policy_required");
+    std::vector<PreparedReward> candidates;
+    for(const auto card:tile_reward_cards_) {
+        auto resulting=source;
+        try { resulting=resources_->add(award_.map(),card,1,source); }
+        catch(const CodecError& error) {
+            // NEW7F8780 leaves a full hand unchanged and still continues the event.
+            if(std::string_view(error.what())!="richonline_chance_inventory_full") throw;
+        }
+        const auto safe=std::all_of(resulting.begin(),resulting.end(),[&](const auto& slot) {
+            if(slot.card_id==-1 || std::find(tile_reward_cards_.begin(),tile_reward_cards_.end(),slot.card_id)!=tile_reward_cards_.end()) return true;
+            const auto count=[&](const auto& inventory){int total=0;for(const auto& old:inventory)if(old.card_id==slot.card_id)total+=old.count;return total;};
+            return count(resulting)<=count(source);
+        });
+        if(safe) candidates.push_back({card,resulting});
+    }
+    if(candidates.empty()) throw CodecError("richonline_card_tile_no_safe_reward");
+    const auto selected=tile_random_(candidates.size());
+    if(selected>=candidates.size()) throw CodecError("richonline_card_tile_random_invalid");
+    return candidates[selected];
 }
 RichonlineBossCards::PreparedDiscard RichonlineBossCards::prepare_discard(
     const RichonlineCardDiscardRequest50& request,std::int8_t actor) const {
