@@ -2,6 +2,7 @@
 #include "richonline_actor_status.hpp"
 #include <map>
 #include <random>
+#include <span>
 
 namespace richnet {
 struct RichonlineGroundObject {
@@ -66,7 +67,7 @@ struct RichonlineNpcSpawnResult {
 class RichonlineNpcSpawner {
 public:
     RichonlineNpcSpawner(std::uint16_t game,RichonlineNpcSpawnPolicy,std::uint32_t seed);
-    RichonlineNpcSpawnResult initialize(RichonlineGroundObjects&);
+    RichonlineNpcSpawnResult initialize(RichonlineGroundObjects&,std::span<const std::int16_t> reserved = {});
     // Invoke after a pickup/removal to maintain the minimum immediately.
     RichonlineNpcSpawnResult replenish_minimum(RichonlineGroundObjects&);
     // Identity counts COMPLETE rounds, starts at1, and must have no gaps.

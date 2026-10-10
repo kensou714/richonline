@@ -65,6 +65,11 @@ public:
     PreparedCombat prepare_combat(const CombatSnapshot&,
         std::span<const RichonlineCombatBuildingView> after) const;
     PreparedCombat prepare_house_card(std::int16_t position,std::uint8_t actor) const;
+    PreparedCombat prepare_purchase_card(std::int16_t property_ref,std::uint8_t actor) const;
+    PreparedCombat prepare_destruction_card(std::int16_t property_ref,std::uint8_t levels) const;
+    PreparedCombat prepare_conversion_card(std::int16_t property_ref,std::int8_t kind,std::uint8_t actor) const;
+    PreparedCombat prepare_swap_card(std::int16_t source,std::int16_t target,bool buildings) const;
+    PreparedCombat prepare_growth_card(std::int16_t source,std::optional<std::uint8_t> owner,int levels) const;
     bool combat_matches(const PreparedCombat&) const noexcept;
     // Prevalidated scalar-only apply. Invoke inside the session/ledger atomic
     // callback; false makes no mutation. Does not emit client-side damage again.
@@ -77,6 +82,8 @@ private:
         std::uint32_t price;
         std::optional<std::uint8_t> owner;
         Building building;
+        std::int16_t street;
+        std::int8_t sprite_type;
     };
     std::map<std::int16_t,Property> properties_;
     std::uint64_t property_revision_=0;

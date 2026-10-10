@@ -1,0 +1,320 @@
+{
+  "scope": "TeachBoard记录与消费；26新增入口，9复用入口；完成指函数体有限契约已审，不等于外部后端全部闭合",
+  "functions": [
+    {
+      "va": "0x6dfd80",
+      "status": "完成",
+      "conclusion": "资源零返回AL=0；mode2/preprocess0逐行读取，四扫描区按strlen!=1转图像ID并追加每行列表，正常AL=1。",
+      "unknown": "资源打开解包、scanf内部、深层分配/释放与启动失败处置。",
+      "evidence": [
+        "证据/functions_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0100",
+      "status": "完成",
+      "conclusion": "count<capacity时构造一条记录更新end，否则经end迭代器插入。",
+      "unknown": "实际记录复制/分配叶层；不承诺所有权正确。",
+      "evidence": [
+        "证据/functions_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e01b0",
+      "status": "完成",
+      "conclusion": "begin为零返回0，否则(cap_end-begin)算术右移4。",
+      "unknown": "损坏指针输入行为。",
+      "evidence": [
+        "证据/functions_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0210",
+      "status": "完成",
+      "conclusion": "以outer+8构造end迭代器并返回输出地址。",
+      "unknown": "外层生命周期。",
+      "evidence": [
+        "证据/functions_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0250",
+      "status": "完成",
+      "conclusion": "begin为零返回0，否则(end-begin)算术右移4。",
+      "unknown": "损坏指针输入行为。",
+      "evidence": [
+        "证据/functions_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e02b0",
+      "status": "完成",
+      "conclusion": "保存插入位置距begin索引，调用6E0490插入一个记录，再以新begin恢复输出迭代器。",
+      "unknown": "6E0490深层移动与分配。",
+      "evidence": [
+        "证据/functions_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e03b0",
+      "status": "完成",
+      "conclusion": "调用6E0DC0并返回目标起点+数量*16。",
+      "unknown": "叶层记录构造和异常行为。",
+      "evidence": [
+        "证据/functions_raw.json"
+      ]
+    },
+    {
+      "va": "0x768470",
+      "status": "完成",
+      "conclusion": "记录/page字段+48/+4C消费，+54记时；图片控件1、11/12/13虚槽、控件14=-1、控件16页码字符串调用已核。",
+      "unknown": "索引写入者、控件真实虚槽、图像更新后端、极大索引可达性。",
+      "evidence": [
+        "证据/consumers_raw.json"
+      ]
+    },
+    {
+      "va": "0x798ce0",
+      "status": "完成",
+      "conclusion": "全局记录检索后调用63F870返回内层DWORD数量。",
+      "unknown": "record边界来源与全局生命周期。",
+      "evidence": [
+        "证据/consumers_raw.json"
+      ]
+    },
+    {
+      "va": "0x798d80",
+      "status": "完成",
+      "conclusion": "检索记录后调用63F8D0定位页，解引用DWORD作为ID。",
+      "unknown": "内层叶链边界及record/page上游约束。",
+      "evidence": [
+        "证据/consumers_raw.json"
+      ]
+    },
+    {
+      "va": "0x799f70",
+      "status": "完成",
+      "conclusion": "由begin迭代器推进index*16，解引用得到记录地址，本链不检查边界。",
+      "unknown": "合法索引来源。",
+      "evidence": [
+        "证据/consumers_raw.json"
+      ]
+    },
+    {
+      "va": "0x6466c0",
+      "status": "完成",
+      "conclusion": "构造包装调用646B50、646B10与646960(0)，后者清零+4/+8/+C。",
+      "unknown": "前两叶功能、+0字段与分配器类型。",
+      "evidence": [
+        "证据/helpers_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0370",
+      "status": "完成",
+      "conclusion": "以outer+4构造begin迭代器并返回输出地址。",
+      "unknown": "对象生命周期。",
+      "evidence": [
+        "证据/helpers_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0400",
+      "status": "完成",
+      "conclusion": "局部复制迭代器指针，以6E0AC0加index*16，写回输出迭代器。",
+      "unknown": "合法索引和溢出约束。",
+      "evidence": [
+        "证据/helpers_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0490",
+      "status": "局部完成",
+      "conclusion": "容量候选旧容量+旧容量/2，至少新size；16跨度及+4/+8/+C新指针写回闭合。",
+      "unknown": "深层分配、复制、移动、释放、异常回滚；本批不扩全容器库。",
+      "evidence": [
+        "证据/helpers_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0a80",
+      "status": "完成",
+      "conclusion": "包装6E0CE0的指针值赋入[this]。",
+      "unknown": "调用者指针有效性。",
+      "evidence": [
+        "证据/helpers_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0af0",
+      "status": "完成",
+      "conclusion": "局部复制指针迭代器并调用6E0D10返回记录差值。",
+      "unknown": "两个指针同一容器前提。",
+      "evidence": [
+        "证据/helpers_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0dc0",
+      "status": "完成",
+      "conclusion": "包装类型分派后经611E6C调用6E1290，参数顺序按汇编。",
+      "unknown": "类型分派叶含义、6E1520记录构造后端。",
+      "evidence": [
+        "证据/helpers_raw.json"
+      ]
+    },
+    {
+      "va": "0x79b020",
+      "status": "完成",
+      "conclusion": "调用79C850读取迭代器内指针并返回。",
+      "unknown": "指针有效性。",
+      "evidence": [
+        "证据/helpers_raw.json"
+      ]
+    },
+    {
+      "va": "0x646960",
+      "status": "完成",
+      "conclusion": "先清零+4/+8/+C；参数0业务AL=0，其余经最大容量和分配包装设置DWORD容量。",
+      "unknown": "allocator/错误叶、非零分配失败与异常处置。",
+      "evidence": [
+        "证据/closure_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0ac0",
+      "status": "完成",
+      "conclusion": "[this]加参数左移4并返回this；无范围检查。",
+      "unknown": "有效索引约束。",
+      "evidence": [
+        "证据/closure_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0ce0",
+      "status": "完成",
+      "conclusion": "[this]赋参数并返回this。",
+      "unknown": "指针目标类型由调用者定义。",
+      "evidence": [
+        "证据/closure_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e0d10",
+      "status": "完成",
+      "conclusion": "返回(*this-*other)算术右移4。",
+      "unknown": "同一容器及损坏输入行为。",
+      "evidence": [
+        "证据/closure_raw.json"
+      ]
+    },
+    {
+      "va": "0x79c850",
+      "status": "完成",
+      "conclusion": "返回[this] DWORD指针值，不作边界检查。",
+      "unknown": "指针有效性。",
+      "evidence": [
+        "证据/closure_raw.json"
+      ]
+    },
+    {
+      "va": "0x6e1290",
+      "status": "局部完成",
+      "conclusion": "逐记录调用6E1520，地址每轮+16；异常清理分支调6E1560。",
+      "unknown": "记录构造/销毁叶与完整SEH语义，不据本体宣称深拷贝。",
+      "evidence": [
+        "证据/closure_raw.json"
+      ]
+    },
+    {
+      "va": "0x81a2e0",
+      "status": "完成",
+      "conclusion": "逐字节复制直至LF，写NUL，+94跳过LF，+9C加1；无输入末尾与容量判断。",
+      "unknown": "调用方输入完整性；异常资源未动态测试。",
+      "evidence": [
+        "证据/closure_raw.json"
+      ]
+    },
+    {
+      "va": "0x623cb0",
+      "status": "复用局部完成",
+      "conclusion": "623E85调用609E29加载Data/TeachBoard.kpd，后续不测试该业务返回。",
+      "unknown": "启动其他资源链本批不重审。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    },
+    {
+      "va": "0x646750",
+      "status": "复用局部完成",
+      "conclusion": "DWORD追加包装按数量/容量分支，容量可用时构造元素并更新+8。",
+      "unknown": "扩容/复制/释放叶层未在本批闭合。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    },
+    {
+      "va": "0x6fa7f0",
+      "status": "复用局部完成",
+      "conclusion": "图像ID包装将this+A4、0及ID交8E1C70。",
+      "unknown": "绘制/纹理后端；不能据包装声称显示成功。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    },
+    {
+      "va": "0x646720",
+      "status": "复用局部完成",
+      "conclusion": "析构包装转交60E1CC。",
+      "unknown": "深层释放及所有权。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    },
+    {
+      "va": "0x6daa10",
+      "status": "复用局部完成",
+      "conclusion": "图像名称转换入口，loader明确将返回-1视为跳过。",
+      "unknown": "图像管理与加载后端本批不重审。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    },
+    {
+      "va": "0x63f870",
+      "status": "复用完成",
+      "conclusion": "begin为零返回0，否则(end-begin)算术右移2，DWORD容器size访问。",
+      "unknown": "损坏输入行为；不是因为来源目录便命名为动画业务。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    },
+    {
+      "va": "0x63f8d0",
+      "status": "复用局部完成",
+      "conclusion": "页索引通过begin/advance/deref桥取元素地址，包装无显式边界检查。",
+      "unknown": "605EE6/609C71/60FDC9叶链未随本批复用。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    },
+    {
+      "va": "0x6c5510",
+      "status": "复用完成",
+      "conclusion": "signed(+94游标-+4基址)>=+88长度时setnl AL。",
+      "unknown": "损坏游标与调用方输入条件。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    },
+    {
+      "va": "0x819250",
+      "status": "复用完成",
+      "conclusion": "mode2/preprocess0按长度复制并初始化游标，不附NUL不删CR。",
+      "unknown": "其余模式与运行库后端以源专题为准。",
+      "evidence": [
+        "证据/reused_raw.json"
+      ]
+    }
+  ]
+}

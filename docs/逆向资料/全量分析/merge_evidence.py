@@ -9,6 +9,8 @@ def main():
     records={}
     instruction_observations={}
     navigation_windows={}
+    functions=json.loads((ROOT/'functions.json').read_text(encoding='utf-8'))
+    known={r['va'] for r in functions}
     segments=json.loads((ROOT/'segments.json').read_text(encoding='utf-8'))
     code_ranges=[(int(s['start_va'],16),int(s['end_va'],16))
                  for s in segments if s['permission'] & 1]
@@ -18,36 +20,86 @@ def main():
             if isinstance(node,list):
                 for child in node: walk(child)
             elif isinstance(node,dict):
+                # 有些未声明代码的完整字节放在父节点 block 内；只接纳明确
+                # 标为未声明、跨度正确且 IDA/磁盘一致的范围，绝不推造函数入口。
+                block=node.get('block')
+                scope=node.get('scope', '')
+                if (isinstance(scope,str) and ('未声明' in scope or '未定义' in scope)
+                        and isinstance(block,dict)):
+                    try:
+                        start=int(block['va'],16)
+                        end=int(block.get('end_va',block.get('end')),16)
+                        raw=bytes.fromhex(block['ida_hex'])
+                        matched=(block.get('equal',block.get('matching')) is True
+                                 and raw == bytes.fromhex(block['disk_hex']))
+                        if (matched and start < end and end-start == block['size'] == len(raw)
+                                and any(a <= start < end <= b for a,b in code_ranges)
+                                and hex(start) not in known):
+                            record=records.setdefault(hex(start),dict(
+                                va=hex(start),evidence=[],
+                                status='未声明人工范围原证；不代表完整函数边界'))
+                            record['evidence'].append(path.relative_to(ROOT.parent).as_posix())
+                    except (KeyError,TypeError,ValueError):
+                        pass
                 # 人工窗口可能包含相邻函数、尾指令或数据；不能把start_va当函数入口。
                 # 保存独立导航，按完整字节长度与代码段边界筛选，不提升语义状态。
                 # 新窗口原证用va/end_va，完整字节放在byte_range；兼容旧的扁平格式。
                 window_start=node.get('start_va')
                 window_bytes=node
+                window_scope=node.get('scope', node.get('kind', node.get('status', '')))
+                item_window=(isinstance(node.get('raw_range'),dict)
+                             and isinstance(node.get('items'),list)
+                             and isinstance(window_scope,str)
+                             and ('未声明' in window_scope or '未定义' in window_scope))
                 nested_window=(isinstance(node.get('byte_range'),dict)
                                and isinstance(node.get('kind'),str)
                                and ('未定义' in node['kind'] or '未声明' in node['kind']))
+                if item_window:
+                    window_bytes=node['raw_range']
                 if window_start is None and nested_window:
                     window_start=node.get('va')
                     window_bytes=node['byte_range']
+                window_candidate=(window_start is not None and 'end_va' in node
+                                  and (isinstance(node.get('assembly'),list) or item_window))
                 if (window_start is not None and 'end_va' in node
-                        and isinstance(node.get('assembly'), list) and 'idb_hex' in window_bytes):
+                        and (isinstance(node.get('assembly'), list) or item_window)
+                        and 'idb_hex' in window_bytes):
                     try:
                         start=int(window_start,16)
                         end=int(node['end_va'],16)
-                        nested_valid=(not nested_window or (
+                        nested_valid=(not (nested_window or item_window) or (
                             int(window_bytes['va'],16) == start and window_bytes['size'] == end-start
                             and window_bytes.get('matching') is True
                             and window_bytes['idb_hex'] == window_bytes['disk_hex']))
-                        if (nested_valid and end > start
-                                and len(bytes.fromhex(window_bytes['idb_hex'])) == end-start
+                        raw=bytes.fromhex(window_bytes['idb_hex'])
+                        has_disk='disk_hex' in window_bytes
+                        same_bytes=(has_disk and raw == bytes.fromhex(window_bytes['disk_hex']))
+                        # 旧导航允许缺少磁盘副本，但明确不一致的记录不能接纳。
+                        navigation_valid=(window_bytes.get('matching') is not False
+                                          and (not has_disk or same_bytes))
+                        range_valid=(same_bytes and window_bytes.get('matching') is True
+                                     and window_bytes.get('size',end-start) == end-start)
+                        if (nested_valid and navigation_valid and end > start
+                                and len(raw) == end-start
                                 and any(a <= start < end <= b for a,b in code_ranges)):
                             item=navigation_windows.setdefault((start,end),dict(
                                 start_va=hex(start),end_va=hex(end),size=end-start,evidence=[],
                                 scope='人工代码导航窗口；不确认函数入口、边界或完整语义',
                                 source_scopes=[]))
                             item['evidence'].append(path.relative_to(ROOT.parent).as_posix())
-                            if isinstance(node.get('scope'),str):
-                                item['source_scopes'].append(node['scope'])
+                            if isinstance(window_scope,str):
+                                item['source_scopes'].append(window_scope)
+                            # 明确注明未声明的人工范围仍保留在范围台账；
+                            # 起点不在函数清单才接纳，绝不由窗口推造函数入口。
+                            scope=window_scope
+                            if (isinstance(scope,str)
+                                    and ('未声明' in scope or '未定义' in scope)
+                                    and range_valid
+                                    and hex(start) not in known):
+                                record=records.setdefault(hex(start),dict(
+                                    va=hex(start),evidence=[],
+                                    status='未声明人工范围原证；不代表完整函数边界'))
+                                record['evidence'].append(path.relative_to(ROOT.parent).as_posix())
                     except (KeyError,ValueError,TypeError):
                         pass
                 va=node.get("va") or node.get("address") or node.get("ea") or address_key
@@ -67,12 +119,16 @@ def main():
                         range_va = va if isinstance(va, int) else int(va, 16)
                         raw_code_range = (len(bytes.fromhex(node['idb_hex'])) == node['size']
                                           and len(bytes.fromhex(node['disk_hex'])) == node['size']
-                                          and node['size'] > 0 and 'matching' in node
-                                          and any(start <= range_va < end
+                                          and node['size'] > 0 and node.get('matching') is True
+                                          and bytes.fromhex(node['idb_hex']) == bytes.fromhex(node['disk_hex'])
+                                          and any(start <= range_va < range_va+node['size'] <= end
                                                   for start, end in code_ranges))
                     except (KeyError, TypeError, ValueError):
                         pass
-                if va is not None and (any(body is not None for body in bodies) or raw_code_range):
+                # 窗口即使被完整性校验拒绝，也不能借通用正文分支重新入账；
+                # 起点碰巧等于函数头同样不代表导出了该声明函数的正文。
+                if (not window_candidate and va is not None
+                        and (any(body is not None for body in bodies) or raw_code_range)):
                     if isinstance(va,int): va=hex(va)
                     try: va=hex(int(str(va),16))
                     except ValueError: return
@@ -97,8 +153,6 @@ def main():
     for record in navigation_windows.values():
         record['evidence']=sorted(set(record['evidence']))
         record['source_scopes']=sorted(set(record['source_scopes']))
-    functions=json.loads((ROOT/"functions.json").read_text(encoding="utf-8"))
-    known={r["va"] for r in functions}
     unidentified=sorted(set(records)-known)
     result=dict(unique_exported_functions=len(set(records)&known),total_identified_functions=len(functions),
                 outside_inventory=unidentified,

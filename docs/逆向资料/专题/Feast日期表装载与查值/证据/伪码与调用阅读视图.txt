@@ -1,0 +1,411 @@
+//
+// 0x6288b0  伪码只作辅助，signed字段以汇编为准。
+// int sub_6288B0()
+// {
+//   if ( dword_A766D4 == 0 )
+//     dword_A766D4 = (int)operator new(Size: 0x340u);
+//   return dword_A766D4;
+// }
+// 调用 0x6288c9 -> 0x601274 -> 0x91bd30
+// 调用 0x6288e6 -> 0x60b576 -> 0x91f6d0
+//
+// 0x63e210  伪码只作辅助，signed字段以汇编为准。
+// char *__thiscall sub_63E210(char *this)
+// {
+//   return this + 1628;
+// }
+//
+// 0x63e590  伪码只作辅助，signed字段以汇编为准。
+// char *__thiscall sub_63E590(char *this)
+// {
+//   return this + 3140;
+// }
+//
+// 0x63eca0  伪码只作辅助，signed字段以汇编为准。
+// bool sub_63ECA0()
+// {
+//   return (unsigned __int8)sub_5FFBE0() != 0 || (unsigned __int8)sub_6011CA() != 0;
+// }
+// 调用 0x63ecba -> 0x5ffbe0 -> 0x63ed10
+// 调用 0x63ecc9 -> 0x6011ca -> 0x63ed50
+// 调用 0x63eced -> 0x60b576 -> 0x91f6d0
+//
+// 0x63edf0  伪码只作辅助，signed字段以汇编为准。
+// bool sub_63EDF0()
+// {
+//   return (unsigned __int8)sub_608628() != 0
+//       || (unsigned __int8)sub_604375() != 0
+//       || (unsigned __int8)sub_610C06() != 0
+//       || (unsigned __int8)sub_604703() != 0;
+// }
+// 调用 0x63ee0a -> 0x608628 -> 0x63ee90
+// 调用 0x63ee19 -> 0x604375 -> 0x63eed0
+// 调用 0x63ee28 -> 0x610c06 -> 0x63e160
+// 调用 0x63ee37 -> 0x604703 -> 0x63e990
+// 调用 0x63ee5b -> 0x60b576 -> 0x91f6d0
+//
+// 0x63f420  伪码只作辅助，signed字段以汇编为准。
+// int __thiscall sub_63F420(_DWORD *this)
+// {
+//   return *(this + 20951);
+// }
+//
+// 0x662dc0  伪码只作辅助，signed字段以汇编为准。
+// int __stdcall sub_662DC0(int a1)
+// {
+//   int result; // eax
+// 
+//   result = (unsigned __int8)sub_607A2F(a1: *(_WORD *)(a1 + 2));
+//   if ( (_BYTE)result != 0 )
+//     return sub_604CBC(a1: *(_WORD *)(a1 + 4), a2: *(_BYTE *)(a1 + 6), a3: *(_BYTE *)(a1 + 7));
+//   return result;
+// }
+// 调用 0x662de8 -> 0x607a2f -> 0x64f710
+// 调用 0x662e17 -> 0x604cbc -> 0x694320
+// 调用 0x662e21 -> 0x60b576 -> 0x91f6d0
+//
+// 0x694320  伪码只作辅助，signed字段以汇编为准。
+// char __thiscall sub_694320(int this, __int16 a2, char a3, char a4)
+// {
+//   *(_WORD *)(this + 8) = a2;
+//   *(_BYTE *)(this + 10) = a3;
+//   *(_BYTE *)(this + 11) = a4;
+//   return a3;
+// }
+//
+// 0x7080d0  伪码只作辅助，signed字段以汇编为准。
+// int __thiscall sub_7080D0(void *this)
+// {
+//   int v1; // eax
+//   int v2; // eax
+//   int v3; // eax
+//   int result; // eax
+//   int v5; // [esp-8h] [ebp-B4h]
+//   int v6; // [esp-8h] [ebp-B4h]
+//   int v7; // [esp-8h] [ebp-B4h]
+//   int v8; // [esp-4h] [ebp-B0h]
+//   int v9; // [esp-4h] [ebp-B0h]
+//   int v10; // [esp-4h] [ebp-B0h]
+//   int v11; // [esp-4h] [ebp-B0h]
+//   char Buffer[132]; // [esp+8h] [ebp-A4h] BYREF
+//   int v13; // [esp+8Ch] [ebp-20h]
+//   int v14; // [esp+90h] [ebp-1Ch]
+//   int v15; // [esp+94h] [ebp-18h]
+//   int v16; // [esp+98h] [ebp-14h]
+//   int v17; // [esp+9Ch] [ebp-10h]
+//   int v18; // [esp+A0h] [ebp-Ch]
+//   void *v19; // [esp+A4h] [ebp-8h]
+// 
+//   v19 = this;
+//   v18 = sub_60B841();
+//   v13 = 5;
+//   v8 = sub_60F7DE();
+//   sub_60AA90();
+//   if ( (unsigned __int8)sub_603D17(a1: v8) != 0 )
+//     v13 = 65;
+//   sub_60F7DE();
+//   v1 = sub_5FFA6E();
+//   j__sprintf(Buffer, Format: "%02d", v1);
+//   v17 = 0;
+//   v16 = 81;
+//   while ( v17 < 2 )
+//   {
+//     v15 = Buffer[v17] - 48;
+//     v5 = v15 + v13;
+//     sub_60554A();
+//     v14 = sub_60F3B5(a1: 10, a2: 0, a3: v5, a4: -1);
+//     v9 = v14;
+//     sub_610297(a1: v16, a2: 0);
+//     sub_60BB48(a1: v9);
+//     ++v17;
+//     ++v16;
+//   }
+//   sub_60F7DE();
+//   v2 = sub_608D35();
+//   j__sprintf(Buffer, Format: "%02d", v2);
+//   v17 = 0;
+//   v16 = 83;
+//   while ( v17 < 2 )
+//   {
+//     v15 = Buffer[v17] - 48;
+//     v6 = v15 + v13;
+//     sub_60554A();
+//     v14 = sub_60F3B5(a1: 10, a2: 0, a3: v6, a4: -1);
+//     v10 = v14;
+//     sub_610297(a1: v16, a2: 0);
+//     sub_60BB48(a1: v10);
+//     ++v17;
+//     ++v16;
+//   }
+//   v3 = sub_6034E8();
+//   result = j__sprintf(Buffer, Format: "%02d", v3);
+//   v17 = 0;
+//   v16 = 85;
+//   while ( v17 < 2 )
+//   {
+//     v15 = Buffer[v17] - 48;
+//     v7 = v15 + v13;
+//     sub_60554A();
+//     v14 = sub_60F3B5(a1: 10, a2: 0, a3: v7, a4: -1);
+//     v11 = v14;
+//     sub_610297(a1: v16, a2: 0);
+//     sub_60BB48(a1: v11);
+//     ++v17;
+//     result = ++v16;
+//   }
+//   return result;
+// }
+// 调用 0x7080f9 -> 0x60b841 -> 0x629c90
+// 调用 0x70810b -> 0x60f7de -> 0x63e590
+// 调用 0x708111 -> 0x60aa90 -> 0x6288b0
+// 调用 0x708118 -> 0x603d17 -> 0x7d8e60
+// 调用 0x70812e -> 0x60f7de -> 0x63e590
+// 调用 0x708135 -> 0x5ffa6e -> 0x727a70
+// 调用 0x708147 -> 0x60361e -> 0x9206d0
+// 调用 0x708195 -> 0x60554a -> 0x627760
+// 调用 0x70819c -> 0x60f3b5 -> 0x6dba40
+// 调用 0x7081b4 -> 0x610297 -> 0x8e2c10
+// 调用 0x7081bb -> 0x60bb48 -> 0x6fa7f0
+// 调用 0x7081c5 -> 0x60f7de -> 0x63e590
+// 调用 0x7081cc -> 0x608d35 -> 0x727a90
+// 调用 0x7081de -> 0x60361e -> 0x9206d0
+// 调用 0x70822c -> 0x60554a -> 0x627760
+// 调用 0x708233 -> 0x60f3b5 -> 0x6dba40
+// 调用 0x70824b -> 0x610297 -> 0x8e2c10
+// 调用 0x708252 -> 0x60bb48 -> 0x6fa7f0
+// 调用 0x70825c -> 0x6034e8 -> 0x63f420
+// 调用 0x70826e -> 0x60361e -> 0x9206d0
+// 调用 0x7082bc -> 0x60554a -> 0x627760
+// 调用 0x7082c3 -> 0x60f3b5 -> 0x6dba40
+// 调用 0x7082db -> 0x610297 -> 0x8e2c10
+// 调用 0x7082e2 -> 0x60bb48 -> 0x6fa7f0
+// 调用 0x7082f3 -> 0x6127bd -> 0x91f700
+// 调用 0x7082fd -> 0x60849d -> 0x91fbb0
+// 调用 0x70830b -> 0x60b576 -> 0x91f6d0
+//
+// 0x727a70  伪码只作辅助，signed字段以汇编为准。
+// int __thiscall sub_727A70(char *this)
+// {
+//   return *(this + 10);
+// }
+//
+// 0x727a90  伪码只作辅助，signed字段以汇编为准。
+// int __thiscall sub_727A90(char *this)
+// {
+//   return *(this + 11);
+// }
+//
+// 0x7d89d0  伪码只作辅助，signed字段以汇编为准。
+// int __thiscall sub_7D89D0(int this, int a2, int a3, int a4)
+// {
+//   int result; // eax
+//   int v5; // [esp-Ch] [ebp-14h]
+//   int v6; // [esp-8h] [ebp-10h]
+//   int v7; // [esp-8h] [ebp-10h]
+//   int v8; // [esp-4h] [ebp-Ch]
+//   int v9; // [esp-4h] [ebp-Ch]
+// 
+//   v8 = *(char *)(this + 11);
+//   v6 = *(char *)(this + 10);
+//   v5 = *(__int16 *)(this + 8);
+//   sub_60AA90();
+//   *(_DWORD *)(this + 16) = sub_612817(a1: v5, a2: v6, a3: v8);
+//   if ( *(_DWORD *)(this + 16) == -1 )
+//     return 1;
+//   v9 = *(_DWORD *)(this + 16);
+//   v7 = sub_6037AE();
+//   sub_60AA90();
+//   if ( (unsigned __int8)sub_6042E9(a1: v7, a2: v9) == 0 )
+//     return 1;
+//   switch ( *(_DWORD *)(this + 16) )
+//   {
+//     case 0:
+//       result = sub_600586(a1: a3, a2: a4);
+//       break;
+//     case 1:
+//       result = sub_603F1F(a1: a3, a2: a4);
+//       break;
+//     case 2:
+//       result = sub_60538D(a1: a3, a2: a4);
+//       break;
+//     case 3:
+//       result = sub_60BFD5(a1: a3, a2: a4);
+//       break;
+//     case 4:
+//       result = sub_609CD5(a1: a3, a2: a4);
+//       break;
+//     case 5:
+//       result = sub_60A3F1(a1: a3, a2: a4);
+//       break;
+//     case 6:
+//       result = sub_6001E4(a1: a3, a2: a4);
+//       break;
+//     case 7:
+//       result = sub_60C3A4(a1: a3, a2: a4);
+//       break;
+//     case 8:
+//       result = sub_60838A(a1: a3, a2: a4);
+//       break;
+//     case 9:
+//       result = sub_60B107(a1: a3, a2: a4);
+//       break;
+//     case 0xA:
+//       result = sub_612452(a1: a3, a2: a4);
+//       break;
+//     case 0xB:
+//       result = sub_605A86(a1: a3, a2: a4);
+//       break;
+//     case 0xC:
+//       result = sub_600419(a1: a3, a2: a4);
+//       break;
+//     default:
+//       result = 1;
+//       break;
+//   }
+//   return result;
+// }
+// 调用 0x7d89ff -> 0x60aa90 -> 0x6288b0
+// 调用 0x7d8a06 -> 0x612817 -> 0x7d8de0
+// 调用 0x7d8a24 -> 0x6037ae -> 0x63e210
+// 调用 0x7d8a2a -> 0x60aa90 -> 0x6288b0
+// 调用 0x7d8a31 -> 0x6042e9 -> 0x7d8eb0
+// 调用 0x7d8a6f -> 0x600586 -> 0x7bc6d0
+// 调用 0x7d8a84 -> 0x6001e4 -> 0x7bc9b0
+// 调用 0x7d8a99 -> 0x60c3a4 -> 0x7bcd90
+// 调用 0x7d8aae -> 0x603f1f -> 0x7bd060
+// 调用 0x7d8ac3 -> 0x60538d -> 0x7bd140
+// 调用 0x7d8ad8 -> 0x60bfd5 -> 0x7bd220
+// 调用 0x7d8aed -> 0x609cd5 -> 0x7bd300
+// 调用 0x7d8aff -> 0x60838a -> 0x7bd3e0
+// 调用 0x7d8b11 -> 0x60b107 -> 0x7bd6c0
+// 调用 0x7d8b23 -> 0x612452 -> 0x7bd7a0
+// 调用 0x7d8b35 -> 0x605a86 -> 0x7bda70
+// 调用 0x7d8b47 -> 0x600419 -> 0x7bdd50
+// 调用 0x7d8b59 -> 0x60a3f1 -> 0x7be080
+// 调用 0x7d8b6a -> 0x60b576 -> 0x91f6d0
+//
+// 0x7d8be0  伪码只作辅助，signed字段以汇编为准。
+// int __thiscall sub_7D8BE0(void *this, char *FileName)
+// {
+//   const void *v3; // eax
+//   enum ATL::COleDateTime::DateTimeStatus v4; // [esp-4h] [ebp-3Ch]
+//   _BYTE v5[24]; // [esp+10h] [ebp-28h] BYREF
+//   void *v6; // [esp+28h] [ebp-10h]
+//   int v7; // [esp+34h] [ebp-4h]
+// 
+//   v6 = this;
+//   j_unknown_libname_665(this: (CRect *)v5);
+//   v7 = 0;
+//   if ( sub_60FD9C(FileName) != 0 )
+//   {
+//     sub_60518A(this: v5);
+//     v4 = j_unknown_libname_290(this: (ATL::COleDateTime *)v5);
+//     v3 = (const void *)j_unknown_libname_291(this: v5);
+//     j__memcpy(a1: v6, Src: v3, Size: v4);
+//     *((_BYTE *)v6 + 806) = 1;
+//     *((_BYTE *)v6 + 812) = 1;
+//     *((_BYTE *)v6 + 813) = 1;
+//     *((_BYTE *)v6 + 807) = 1;
+//     *((_BYTE *)v6 + 808) = 1;
+//     *((_BYTE *)v6 + 809) = 1;
+//     *((_BYTE *)v6 + 810) = 1;
+//     *((_BYTE *)v6 + 814) = 1;
+//     *((_BYTE *)v6 + 815) = 1;
+//     *((_BYTE *)v6 + 816) = 1;
+//     *((_BYTE *)v6 + 817) = 1;
+//     *((_BYTE *)v6 + 818) = 1;
+//     *((_BYTE *)v6 + 811) = 1;
+//     *((_BYTE *)v6 + 819) = 1;
+//     *((_BYTE *)v6 + 825) = 1;
+//     *((_BYTE *)v6 + 826) = 0;
+//     *((_BYTE *)v6 + 820) = 1;
+//     *((_BYTE *)v6 + 821) = 1;
+//     *((_BYTE *)v6 + 822) = 1;
+//     *((_BYTE *)v6 + 823) = 1;
+//     *((_BYTE *)v6 + 827) = 1;
+//     *((_BYTE *)v6 + 828) = 1;
+//     *((_BYTE *)v6 + 829) = 0;
+//     *((_BYTE *)v6 + 830) = 1;
+//     *((_BYTE *)v6 + 831) = 1;
+//     *((_BYTE *)v6 + 824) = 1;
+//     v7 = -1;
+//     sub_602575(this: v5);
+//     return 1;
+//   }
+//   else
+//   {
+//     v7 = -1;
+//     sub_602575(this: v5);
+//     return 0;
+//   }
+// }
+// 调用 0x7d8c13 -> 0x5ff9ab -> 0x81ad10
+// 调用 0x7d8c26 -> 0x60fd9c -> 0x81b4c0
+// 调用 0x7d8c40 -> 0x602575 -> 0x81ad50
+// 调用 0x7d8c50 -> 0x60518a -> 0x81b7f0
+// 调用 0x7d8c58 -> 0x610dfa -> 0x627120
+// 调用 0x7d8c61 -> 0x610440 -> 0x627140
+// 调用 0x7d8c6b -> 0x60e3e8 -> 0x9213a0
+// 调用 0x7d8d88 -> 0x602575 -> 0x81ad50
+// 调用 0x7d8d9a -> 0x6127bd -> 0x91f700
+// 调用 0x7d8db1 -> 0x60b576 -> 0x91f6d0
+//
+// 0x7d8de0  伪码只作辅助，signed字段以汇编为准。
+// int __thiscall sub_7D8DE0(char *this, int a2, int a3, int a4)
+// {
+//   int i; // [esp+0h] [ebp-8h]
+//   int v6; // [esp+10h] [ebp+8h]
+// 
+//   v6 = a2 - 2004;
+//   for ( i = 0; i < 13; ++i )
+//   {
+//     if ( *(this + 26 * v6 + 2 * i) == a3 && *(this + 26 * v6 + 2 * i + 1) == a4 )
+//       return i;
+//   }
+//   return -1;
+// }
+//
+// 0x7d8e60  伪码只作辅助，signed字段以汇编为准。
+// bool __stdcall sub_7D8E60(int a1)
+// {
+//   int v1; // eax
+//   int v3; // [esp-8h] [ebp-Ch]
+//   int v4; // [esp-4h] [ebp-8h]
+// 
+//   v4 = sub_608D35();
+//   v3 = sub_5FFA6E();
+//   v1 = sub_609CA8();
+//   return sub_612817(a1: v1, a2: v3, a3: v4) != -1;
+// }
+// 调用 0x7d8e71 -> 0x608d35 -> 0x727a90
+// 调用 0x7d8e7a -> 0x5ffa6e -> 0x727a70
+// 调用 0x7d8e83 -> 0x609ca8 -> 0x7d90e0
+// 调用 0x7d8e8c -> 0x612817 -> 0x7d8de0
+// 调用 0x7d8ea0 -> 0x60b576 -> 0x91f6d0
+//
+// 0x7d8eb0  伪码只作辅助，signed字段以汇编为准。
+// char __thiscall sub_7D8EB0(_BYTE *this, int a2, int a3)
+// {
+//   if ( (unsigned __int8)sub_602DBD() != 0 )
+//     return *(this + a3 + 806);
+//   if ( (unsigned __int8)sub_606797() != 0 )
+//     return *(this + a3 + 819);
+//   return 0;
+// }
+// 调用 0x7d8ec1 -> 0x602dbd -> 0x63eca0
+// 调用 0x7d8ede -> 0x606797 -> 0x63edf0
+// 调用 0x7d8eff -> 0x60b576 -> 0x91f6d0
+//
+// 0x7d90e0  伪码只作辅助，signed字段以汇编为准。
+// int __thiscall sub_7D90E0(__int16 *this)
+// {
+//   return *(this + 4);
+// }
+//
+// 0x7eff90  伪码只作辅助，signed字段以汇编为准。
+// int __cdecl sub_7EFF90(int a1, int a2)
+// {
+//   return sub_611151(a1: a2);
+// }
+// 调用 0x7eff9a -> 0x611151 -> 0x662dc0
+// 调用 0x7effa1 -> 0x60b576 -> 0x91f6d0

@@ -95,6 +95,17 @@ RichonlineTerminalStep RichonlineTerminalCoordinator::bankrupt(std::span<const s
         context_.roster=decision.after;
         return {RichonlineTerminalAction::continue_play,std::move(messages),{}};
     }
+    return deliver_result(decision);
+}
+RichonlineTerminalStep RichonlineTerminalCoordinator::month_limit() {
+    if(phase_==RichonlineTerminalPhase::delivering)return {RichonlineTerminalAction::deliver,{}, {}};
+    if(phase_==RichonlineTerminalPhase::finished)return {RichonlineTerminalAction::finished,{}, {}};
+    if(phase_==RichonlineTerminalPhase::recovery_required)
+        return {RichonlineTerminalAction::abort_live_game,{},"richonline_terminal_recovery_required"};
+    if(phase_!=RichonlineTerminalPhase::playing)throw CodecError("richonline_terminal_month_limit_before_start");
+    return deliver_result(plan_richonline_month_limit_terminal(context_.roster,context_.rules));
+}
+RichonlineTerminalStep RichonlineTerminalCoordinator::deliver_result(const RichonlineTerminalDecision& decision) {
     // Settlement must have a bounded outcome even when an NPC is waiting for it.
     // Return an explicit teardown action instead of an unfinishable wait phase.
     if(context_.result_byte18_evidence.empty()) {

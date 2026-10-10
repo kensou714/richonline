@@ -26,15 +26,16 @@ RichonlineMapStaticRule richonline_map_static_rule(const RichonlineRoadCell& cel
     switch(cell.static_type) {
     case -1: return {RichonlineMapStaticEffect::none,false,false,property};
     case 5: case 6: case 7: return {RichonlineMapStaticEffect::tickets,false,false,property};
-    case 8: case 41: case 42: case 43:
+    case 8: case 41: case 42: case 43: case 51: case 53: case 54:
         return {RichonlineMapStaticEffect::card_reward,true,false,property};
-    case 51: case 52: case 53: case 54:
+    case 52:
         return {RichonlineMapStaticEffect::pending_server_reward,true,false,property};
-    case 1: case 55: case 56: case 58: case 59: case 60: case 62: case 68: case 69: case 70:
+    case 1: case 55: case 56: case 59: case 60: case 62: case 68: case 69: case 70:
         return {RichonlineMapStaticEffect::chance_event,true,true,property};
     case 10: return {RichonlineMapStaticEffect::shop,true,true,property};
     case 28: case 61: return {RichonlineMapStaticEffect::paired_portal,false,false,property};
     case 57: return {RichonlineMapStaticEffect::local_vendor,false,false,property};
+    case 58: return {RichonlineMapStaticEffect::random_teleport,true,true,property};
     // 7C54B0 has no active static branch for these plot-road sprite families.
     // 7C6640 then queries road.property_ref via612B69/692260.
     case 33: case 34: case 35: case 36: case 37: case 38: case 39: case 40:
@@ -48,7 +49,8 @@ std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_conservative_spawns
     return choose_richonline_map_spawns(topology,RichonlineMapSpawnPolicy::all_candidates_connected);
 }
 std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_spawns(
-    const RichonlineRoadTopology& topology,RichonlineMapSpawnPolicy policy) {
+    const RichonlineRoadTopology& topology,RichonlineMapSpawnPolicy policy,
+    const std::function<std::size_t(std::size_t)>& random) {
     if(policy!=RichonlineMapSpawnPolicy::all_candidates_connected &&
         policy!=RichonlineMapSpawnPolicy::largest_adjacent_component)
         throw CodecError("richonline_map_rules_spawn_policy_invalid");
@@ -98,6 +100,13 @@ std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_spawns(
             throw CodecError("richonline_map_rules_spawn_graph_disconnected");
         if(distances[static_cast<std::size_t>(candidate.position)]>distances[static_cast<std::size_t>(farthest.position)])
             farthest=candidate;
+    }
+    if(random) {
+        const auto first=random(candidates.size());
+        const auto second=random(candidates.size()-1);
+        if(first>=candidates.size() || second>=candidates.size()-1)
+            throw CodecError("richonline_map_rules_spawn_random_invalid");
+        return {candidates[first],candidates[second+(second>=first ? 1U : 0U)]};
     }
     return {candidates.front(),farthest};
 }

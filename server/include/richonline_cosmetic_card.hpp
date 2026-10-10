@@ -2,7 +2,7 @@
 #include "richonline_boss_cards.hpp"
 
 namespace richnet {
-enum class RichonlineCosmeticCard : std::uint16_t { love1127=154,starlight1131=168 };
+enum class RichonlineCosmeticCard : std::uint16_t { cracker1117=144,fireworks1118=145,love1127=154,starlight1131=168 };
 struct RichonlineCosmeticCardRequest {
     RichonlineCosmeticCard kind;
     std::uint16_t calendar;

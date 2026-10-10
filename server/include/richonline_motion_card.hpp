@@ -3,7 +3,9 @@
 #include "richonline_boss_cards.hpp"
 
 namespace richnet {
-enum class RichonlineMotionCard : std::uint16_t { turtle1039=104, reverse1040=105, stay1041=106 };
+enum class RichonlineMotionCard : std::uint16_t {
+    turtle1039=104, reverse1040=105, stay1041=106, sleep1042=107, one_step1079=136, six_steps1084=141
+};
 struct RichonlineMotionCardRequest {
     RichonlineMotionCard kind;
     std::uint16_t calendar_counter;
@@ -12,6 +14,8 @@ struct RichonlineMotionCardRequest {
 };
 struct RichonlineMotionCardRules {
     std::uint8_t stay_turns,turtle_turns;
+    std::uint8_t fixed_step_turns=0;
+    std::uint8_t sleep_turns=0,alliance_turns=0;
     static RichonlineMotionCardRules load(const std::filesystem::path& root);
 };
 struct RichonlineMotionCardTarget {
@@ -30,8 +34,9 @@ struct RichonlineMotionCardPlan {
     RichonlineMotionCardTarget before,after;
     RichonlineMotionCardContinuation continuation;
     bool blocked_by_protection;
-    // Protected self-stay has no automatic 17 or6006 in40BA; explicit400B recovers controls.
+    // Protected self-targets need explicit400B to recover controls.
     std::optional<Bytes> recovery;
+    std::optional<std::uint8_t> movement_steps{};
 };
 RichonlineMotionCardRequest parse_richonline_motion_card(View);
 RichonlineMotionCardPlan plan_richonline_motion_card(std::uint16_t game_id,

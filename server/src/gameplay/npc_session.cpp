@@ -181,9 +181,9 @@ void RichonlineNpcSession::detach(std::uint8_t actor,RichonlineActorStatus& stat
     auto after=status;richonline_detach_possession(after);auto plan=prepare_status_change(actor,status,after);
     if(!commit_status_change(plan,status)) throw CodecError("richonline_npc_session_status_change_stale");
 }
-RichonlineNpcSpawnResult RichonlineNpcSession::initial() {
+RichonlineNpcSpawnResult RichonlineNpcSession::initial(std::span<const std::int16_t> reserved) {
     if(initialized_) throw CodecError("richonline_npc_session_duplicate_initial");
-    auto result=spawner_.initialize(*ground_); initialized_=true; return result;
+    auto result=spawner_.initialize(*ground_,reserved); initialized_=true; return result;
 }
 RichonlineNpcSpawnResult RichonlineNpcSession::finish_round(std::uint64_t round) {
     if(!initialized_ || pending_) throw CodecError("richonline_npc_session_round_out_of_phase");

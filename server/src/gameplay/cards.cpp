@@ -9,11 +9,27 @@
 
 namespace richnet {
 namespace {
+std::optional<std::int16_t> fixed_tile_reward(std::int8_t type) noexcept {
+    // Texture names identify these item families. The exact original server
+    // lottery is unknown; native policy awards one matching usable card.
+    switch(type) {
+    case 41: return 1044;
+    case 42: return 1046;
+    case 43: return 1045;
+    case 51: return 1182;
+    case 53: return 1183;
+    case 54: return 1038;
+    default: return {};
+    }
+}
 RichonlineChanceSingleCard checked_award(const std::shared_ptr<const RichonlineChanceResources>& resources,
     const RichonlineBossCardPolicy& policy) {
     if (!resources) throw CodecError("richonline_boss_card_resources_required");
     return resources->single_card(policy.map_name,policy.event_id,policy.card_id);
 }
+}
+bool richonline_boss_card_reward_tile(std::int8_t static_type) noexcept {
+    return static_type==8 || fixed_tile_reward(static_type).has_value();
 }
 RichonlineBossCards::RichonlineBossCards(std::shared_ptr<const RichonlineChanceResources> resources,
     std::uint16_t game_id,const RichonlineBossCardPolicy& policy)
@@ -36,12 +52,13 @@ void RichonlineBossCards::configure_tile_rewards(std::vector<std::int16_t> playa
 
 std::optional<RichonlineLandingResult> RichonlineBossCards::land(const RichonlineLandingContext& context) {
     if (context.actor_slot != 0 || context.game_mode != 3 || context.synthetic_actor ||
-        (context.static_type != 68 && context.static_type != 8 && context.static_type != 41 && context.static_type != 42) ||
+        (context.static_type != 68 && !richonline_boss_card_reward_tile(context.static_type)) ||
         context.property_ref != -1 || context.road_degree == 0 || context.road_degree > 4 ||
         (context.occupied_by_other_actor && !context.collision_resolved) || context.position < 0) return {};
     auto next = inventory_;
-    auto card = static_cast<std::int16_t>(context.static_type == 41 ? 1044 :
-        context.static_type == 42 ? 1046 : award_.card_id());
+    auto card = fixed_tile_reward(context.static_type).value_or(award_.card_id());
+    if(fixed_tile_reward(context.static_type) && !resources_->automatic_card_eligible(award_.map(),card))
+        throw CodecError("richonline_card_tile_reward_not_eligible");
     if(context.static_type==8) {
         if(!tile_random_||tile_reward_cards_.empty()) throw CodecError("richonline_card_tile_policy_required");
         struct Candidate {std::int16_t card;RichonlineChanceInventory inventory;};
@@ -120,6 +137,37 @@ std::optional<RichonlineBossCards::PreparedConsumption> RichonlineBossCards::pre
 void RichonlineBossCards::commit_consumption(const PreparedConsumption& prepared) {
     if(inventory_!=prepared.source_inventory) throw CodecError("richonline_card_consumption_inventory_changed");
     inventory_=prepared.remaining_inventory;
+}
+RichonlineBossCards::PreparedShuffle RichonlineBossCards::prepare_shuffle(
+    std::int8_t slot,std::uint8_t actor,const RichonlineRouteChooser& random) const {
+    if(actor!=0 || !random) throw CodecError("richonline_shuffle_card_context_invalid");
+    const auto consumed=prepare_consumption(slot,1125);
+    if(!consumed) throw CodecError("richonline_shuffle_card_not_owned");
+    std::vector<RichonlineChanceCardSlot> deck;
+    for(const auto& entry:consumed->remaining_inventory) {
+        if(entry.card_id==-1 && entry.count==0) continue;
+        if(!resources_->contains_card(entry.card_id) || entry.count<=0 || entry.count>127)
+            throw CodecError("richonline_shuffle_card_inventory_invalid");
+        deck.push_back(entry);
+    }
+    // Native policy shuffles the existing stacks without generating replacements.
+    for(auto size=deck.size();size>1;--size) {
+        const auto selected=random(size);
+        if(selected>=size) throw CodecError("richonline_shuffle_card_random_invalid");
+        std::swap(deck[size-1],deck[selected]);
+    }
+    PreparedShuffle result{consumed->source_inventory,{}, {}};
+    auto& packet=result.confirmation40e8;
+    append_le(packet,0x40e8,2);append_le(packet,game_id_,2);
+    packet.push_back(static_cast<std::uint8_t>(slot));packet.push_back(0);
+    packet.push_back(static_cast<std::uint8_t>(deck.size()));packet.push_back(0);
+    for(const auto& entry:deck) {
+        append_le(packet,static_cast<std::uint16_t>(entry.card_id),2);
+        packet.push_back(static_cast<std::uint8_t>(entry.count));packet.push_back(actor);
+        // NEW607B inserts each wire entry through7F8780/800FD0, including combinations.
+        result.remaining_inventory=resources_->add(award_.map(),entry.card_id,entry.count,result.remaining_inventory);
+    }
+    return result;
 }
 void RichonlineBossCards::commit_inventory(const RichonlineChanceInventory& inventory) noexcept {
     inventory_ = inventory;
@@ -215,16 +263,20 @@ RichonlineCosmeticCardRequest parse_richonline_cosmetic_card(View bytes) {
     RichonlineCosmeticCardRequest r{static_cast<RichonlineCosmeticCard>(read_le(bytes.first(2))),
         static_cast<std::uint16_t>(read_le(bytes.subspan(2,2))),static_cast<std::int8_t>(bytes[4]),
         static_cast<std::int8_t>(bytes[5])};
-    if((r.kind!=RichonlineCosmeticCard::love1127 && r.kind!=RichonlineCosmeticCard::starlight1131) ||
+    if((r.kind!=RichonlineCosmeticCard::cracker1117 && r.kind!=RichonlineCosmeticCard::fireworks1118 &&
+        r.kind!=RichonlineCosmeticCard::love1127 && r.kind!=RichonlineCosmeticCard::starlight1131) ||
         r.slot<0 || r.slot>=8 || r.bank!=0) throw CodecError("richonline_cosmetic_card_fields_invalid");
     return r;
 }
 RichonlineCosmeticCardPlan plan_richonline_cosmetic_card(std::uint16_t game,
     const RichonlineCosmeticCardRequest& r,std::uint16_t calendar,const RichonlineBossCards& cards) {
-    if((r.kind!=RichonlineCosmeticCard::love1127 && r.kind!=RichonlineCosmeticCard::starlight1131) ||
+    if((r.kind!=RichonlineCosmeticCard::cracker1117 && r.kind!=RichonlineCosmeticCard::fireworks1118 &&
+        r.kind!=RichonlineCosmeticCard::love1127 && r.kind!=RichonlineCosmeticCard::starlight1131) ||
         r.slot<0 || r.slot>=8 || r.bank!=0) throw CodecError("richonline_cosmetic_card_fields_invalid");
     if(r.calendar!=calendar) throw CodecError("richonline_cosmetic_card_calendar_mismatch");
-    const auto consumption=cards.prepare_consumption(r.slot,r.kind==RichonlineCosmeticCard::love1127 ? 1127 : 1131);
+    const auto id=r.kind==RichonlineCosmeticCard::love1127 ? 1127 : r.kind==RichonlineCosmeticCard::starlight1131 ?
+        1131 : static_cast<std::int16_t>(static_cast<std::uint16_t>(r.kind)+973);
+    const auto consumption=cards.prepare_consumption(r.slot,static_cast<std::int16_t>(id));
     if(!consumption) throw CodecError("richonline_cosmetic_card_not_owned");
     Bytes response;append_le(response,static_cast<std::uint16_t>(r.kind)+0x4050,2);append_le(response,game,2);
     response.push_back(static_cast<std::uint8_t>(r.slot));response.push_back(static_cast<std::uint8_t>(r.bank));

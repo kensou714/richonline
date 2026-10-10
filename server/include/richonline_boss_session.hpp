@@ -31,11 +31,12 @@ struct RichonlineBossSessionPolicy {
     std::optional<RichonlineCombatWorldPolicy> combat = {};
     std::optional<RichonlineMapLoadPolicy> map_loading = {};
     std::shared_ptr<const RichonlineTimedBombTurnPolicy> timed_bombs = {};
-    // Required on maps with static 28/61. Read the room's current signed
-    // game+83830 value: -1 is normal; 0, 1 and 2 bypass the portal effect.
+    // Required on maps with static 28/58/61 or merchant57. Read the room's signed
+    // game+83830 value: -1 is normal; 0, 1 and 2 bypass those static effects.
     std::function<std::int32_t()> portal_scripted_state = {};
     std::function<bool(std::uint8_t,std::int16_t,std::int16_t)> ground_card_visible = {};
     std::function<RichonlineRawActorState(std::uint8_t)> hibernate_raw_actor = {};
+    std::shared_ptr<RichonlineRawAuthority> raw_authority = {};
 };
 
 // Shared gameplay assembly. Map packages supply resources and policy; they do

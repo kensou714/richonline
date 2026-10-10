@@ -180,6 +180,30 @@ RichonlineWealthCardPlan plan_richonline_wealth_card(std::uint16_t game,const Ri
     auto after_status=status; after_status.possession=0;
     return {std::move(response),inventory,after,status,after_status,affix,34,RichonlineDeityMoneyOrigin::summoned_card};
 }
+std::array<std::int8_t,4> select_richonline_badluck_half(RichonlineChanceInventory inventory,
+    std::uint8_t limit,const std::function<std::size_t(std::size_t)>& choose) {
+    if(limit>4 || !choose) throw CodecError("richonline_badluck_selection_invalid");
+    std::size_t units=0;
+    for(const auto& slot:inventory) {
+        if((slot.card_id==-1 && slot.count!=0) || (slot.card_id!=-1 && (slot.card_id<0 || slot.count<=0)))
+            throw CodecError("richonline_badluck_inventory_invalid");
+        units+=static_cast<std::size_t>(slot.count);
+    }
+    const auto losses=std::min(units/2,static_cast<std::size_t>(limit));
+    std::array<std::int8_t,4> selected{-1,-1,-1,-1};
+    for(std::size_t trial=0;trial<losses;++trial) {
+        auto draw=choose(units);
+        if(draw>=units) throw CodecError("richonline_badluck_random_out_of_range");
+        for(std::size_t index=0;index<inventory.size();++index) {
+            const auto count=static_cast<std::size_t>(inventory[index].count);
+            if(draw>=count) {draw-=count;continue;}
+            selected[trial]=static_cast<std::int8_t>(index);
+            if(--inventory[index].count==0) inventory[index]={};
+            --units;break;
+        }
+    }
+    return selected;
+}
 RichonlineBadluckPlan plan_richonline_badluck(std::uint16_t game,RichonlineDeityMoneyOrigin origin,
     bool synthetic,std::array<std::int8_t,4> slots,const RichonlineChanceResources& resources,
     const RichonlineChanceInventory& inventory,const RichonlineActorStatus& status,const RichonlineChanceEventTable& names) {

@@ -16,6 +16,8 @@ struct RichonlineBossCardPolicy {
     std::int32_t event_id, card_id;
     std::array<std::uint8_t,2> opaque6_7;
 };
+// Static rewards whose 4029 continuation is implemented by this BOSS owner.
+bool richonline_boss_card_reward_tile(std::int8_t static_type) noexcept;
 class RichonlineBossCards final {
 public:
     struct PreparedUse {
@@ -36,6 +38,10 @@ public:
         std::int8_t slot;
         std::int16_t card_id;
     };
+    struct PreparedShuffle {
+        RichonlineChanceInventory source_inventory, remaining_inventory;
+        Bytes confirmation40e8;
+    };
     RichonlineBossCards(std::shared_ptr<const RichonlineChanceResources> resources,
         std::uint16_t game_id, const RichonlineBossCardPolicy& policy);
     void configure_tile_rewards(std::vector<std::int16_t> playable_cards,RichonlineRouteChooser random);
@@ -47,6 +53,8 @@ public:
     PreparedDiscard prepare_discard(const RichonlineCardDiscardRequest50& request,std::int8_t actor) const;
     std::optional<PendingTargetEffect> prepare_target_effect(const RichonlineTargetCardRequest& request) const;
     std::optional<PreparedConsumption> prepare_consumption(std::int8_t slot,std::int16_t card_id) const;
+    // Current session has one human hand and an empty synthetic BOSS hand.
+    PreparedShuffle prepare_shuffle(std::int8_t slot,std::uint8_t actor,const RichonlineRouteChooser& random) const;
     void commit_consumption(const PreparedConsumption& prepared);
     // Resolve map/visibility/status/damage rules before committing and encoding its confirmation.
     void commit_target_effect(const PendingTargetEffect& pending);

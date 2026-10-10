@@ -1,0 +1,425 @@
+{
+  "scope": "审阅范围以每项scope为准；完整函数导出不代表所有外部业务契约已恢复",
+  "functions": [
+    {
+      "va": "0x8e0aa0",
+      "status": "主体已审阅",
+      "scope": "完整短计量循环",
+      "conclusion": "16位字符按(character&0xFF80)判为1或2，不是UTF-8字节数",
+      "unknown": "字符编码与引擎全局计量模式的配置来源未展开",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8e1620",
+      "status": "局部已审阅",
+      "scope": "字符串宽度缓存分配、P+12累加、UseCtlText两分支",
+      "conclusion": "分配wcslen+1字节缓存，经引擎回调填字形宽或控制文本宽",
+      "unknown": "未展开字体与控制文本引擎回调；Hex-Rays可变参数原型不能直接作为ABI",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8e1800",
+      "status": "主体已审阅",
+      "scope": "文本相等短路、释放旧资源、新文本分配复制和度量调用",
+      "conclusion": "非空文本按2*wcslen+2分配；节点回收到ACC3C4，文本深复制",
+      "unknown": "传入字符串可读性与长度/分配失败约束由外层保证",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8e2260",
+      "status": "主体已审阅",
+      "scope": "完整字体高度短setter",
+      "conclusion": "只有非零输入才更新P+32",
+      "unknown": "调用方是否允许负高度未恢复",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f3020",
+      "status": "局部已审阅",
+      "scope": "背景资源名参数的路由和父调用",
+      "conclusion": "a2>=4按176字节步长及a2%4路由8E1DB0，再调用父8EA8A0",
+      "unknown": "背景对象布局、索引上限和资源载入完整路径未展开",
+      "evidence": [
+        "证据/list_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x8f30a0",
+      "status": "主体已审阅",
+      "scope": "父构造调用、虚表、默认容量与列表字段初始化",
+      "conclusion": "虚表A307D4，初始256槽，MaxCount=-1，AutoChangeLine=1",
+      "unknown": "父构造90B800的全部公共字段未展开",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f32c0",
+      "status": "主体已审阅",
+      "scope": "背景资源与行数组释放、滚动条虚调用和父析构",
+      "conclusion": "遍历全部capacity槽两个对象，delete行数组并置空",
+      "unknown": "背景/滚动条内部释放和父析构90B8F0未展开",
+      "evidence": [
+        "证据/list_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x8f35d0",
+      "status": "主体已审阅",
+      "scope": "容量分配、全槽初始化、min容量深复制与旧全槽回收",
+      "conclusion": "32位160*a2先分配，无下界/溢出检查；保留槽数按capacity",
+      "unknown": "operator new失败模式、外层MaxRow约束未展开",
+      "evidence": [
+        "证据/list_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x8f39d0",
+      "status": "主体已审阅",
+      "scope": "两个插入路径、记录复制、模板与字符计数更新",
+      "conclusion": "index>=capacity走滚动；普通插入count++；满容量中插首目标table[count]",
+      "unknown": "外层负索引/满容量限制、分配失败与实机可达性未恢复",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f3e20",
+      "status": "局部已审阅",
+      "scope": "鼠标纵向范围与按行高度累计命中",
+      "conclusion": "负/超过可用高返回-1；末端可能返回count哨兵",
+      "unknown": "engine+5198坐标来源、边缘命中和完整事件流程未展开",
+      "evidence": [
+        "证据/list_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x8f3f10",
+      "status": "主体已审阅",
+      "scope": "单选扫描与多选pow累加",
+      "conclusion": "状态1或4为选中；单选无选中=-1，多选累加2^index到int",
+      "unknown": "高索引浮点转换和32位表示边界未完整恢复",
+      "evidence": [
+        "证据/list_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x8f3fd0",
+      "status": "主体已审阅",
+      "scope": "单选清状态与显式正负索引检查",
+      "conclusion": "明确检查0<=index<count后置状态1",
+      "unknown": "多选的完整选择交互不由本函数提供",
+      "evidence": [
+        "证据/list_lifecycle.json"
+      ]
+    },
+    {
+      "va": "0x8f4050",
+      "status": "主体已审阅",
+      "scope": "完整文本指针getter",
+      "conclusion": "只判index<capacity，不判非负或count，返回R+8",
+      "unknown": "有效输入必须由调用方保证",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f40d0",
+      "status": "主体已审阅",
+      "scope": "按来源条对象与ASCII命令路由",
+      "conclusion": "水平/垂直条的+/-/=更新对应setter",
+      "unknown": "底层滚动条事件参数与完整鼠标事件流程未展开",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f41b0",
+      "status": "主体已审阅",
+      "scope": "LF/字面反斜杠n拆行、暂改输入与虚调用",
+      "conclusion": "临时写0，虚+244追加当前count，再恢复输入",
+      "unknown": "输入内存可写性和回调是否留存指针需调用方保证",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f42d0",
+      "status": "主体已审阅",
+      "scope": "索引上界、补空行、双计量配额、栈截断与刷新调用",
+      "conclusion": "加权比较但宽字符截取；0x5000栈缓冲无显式容量检查；虚+252入口",
+      "unknown": "外层配额约束、超长实机可达性和控制文本引擎内部未展开",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4690",
+      "status": "主体已审阅",
+      "scope": "补行、index==capacity回退与虚+252",
+      "conclusion": "只拒index>capacity；最终虚槽解析为8F42D0",
+      "unknown": "负索引和容量0的外层约束未恢复",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4710",
+      "status": "主体已审阅",
+      "scope": "模板高度setter、已有行高度同步与度量调用",
+      "conclusion": "模板非零才改，当前行R+40却无条件写值，0时可能不一致",
+      "unknown": "零/负高度的实际显示与外层过滤未恢复",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4790",
+      "status": "主体已审阅",
+      "scope": "完整颜色短setter",
+      "conclusion": "写L+148并同步count行R+68前景色",
+      "unknown": "四状态的鼠标状态时序未展开",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f47e0",
+      "status": "主体已审阅",
+      "scope": "完整颜色短setter",
+      "conclusion": "写L+152并同步count行R+72前景色",
+      "unknown": "四状态的鼠标状态时序未展开",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4830",
+      "status": "主体已审阅",
+      "scope": "完整颜色短setter",
+      "conclusion": "写L+156并同步count行R+76前景色",
+      "unknown": "四状态的鼠标状态时序未展开",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4880",
+      "status": "主体已审阅",
+      "scope": "完整颜色短setter",
+      "conclusion": "写L+160并同步count行R+80前景色",
+      "unknown": "四状态的鼠标状态时序未展开",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f48d0",
+      "status": "主体已审阅",
+      "scope": "完整颜色短setter",
+      "conclusion": "写L+132并同步count行R+52背景色",
+      "unknown": "提示子对象不在此同步范围",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4920",
+      "status": "主体已审阅",
+      "scope": "完整颜色短setter",
+      "conclusion": "写L+136并同步count行R+56背景色",
+      "unknown": "提示子对象不在此同步范围",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4970",
+      "status": "主体已审阅",
+      "scope": "完整颜色短setter",
+      "conclusion": "写L+140并同步count行R+60背景色",
+      "unknown": "提示子对象不在此同步范围",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f49c0",
+      "status": "主体已审阅",
+      "scope": "完整颜色短setter",
+      "conclusion": "写L+144并同步count行R+64背景色",
+      "unknown": "提示子对象不在此同步范围",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4a10",
+      "status": "主体已审阅",
+      "scope": "UseCtlText同步与度量重建调用",
+      "conclusion": "写L+128/当前行R+48的BYTE，重建主文本度量",
+      "unknown": "控制文本引擎回调未展开",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4a90",
+      "status": "主体已审阅",
+      "scope": "字体类型同步与度量重建调用",
+      "conclusion": "写L+124/当前行R+44的DWORD，重建主文本度量",
+      "unknown": "字体类型取值域与字库回调未展开",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4b10",
+      "status": "主体已审阅",
+      "scope": "完整可用宽公式",
+      "conclusion": "字体高度0返回0，否则宽-4-可见垂直条宽；不钳负值",
+      "unknown": "滚动条+387状态完整定义未恢复",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4b60",
+      "status": "主体已审阅",
+      "scope": "完整可用高公式",
+      "conclusion": "控件高减可见水平条高；不检查字体或负值",
+      "unknown": "滚动条+387状态完整定义未恢复",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4ba0",
+      "status": "主体已审阅",
+      "scope": "完整可见行数分支与signed idiv",
+      "conclusion": "仅检查Height=0，实际除数Height+Space，无除数0防护",
+      "unknown": "配置合法性与除零输入的实机可达性未证",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4c20",
+      "status": "主体已审阅",
+      "scope": "删除上界、主文本清理、两对象前移与尾槽释放",
+      "conclusion": "仅index<count；count先减；按8F6C10深复制前移，不转移指针",
+      "unknown": "外层负索引与累计高度完整更新契约未恢复",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f4ea0",
+      "status": "主体已审阅",
+      "scope": "当前行清理与计数/偏移重置",
+      "conclusion": "清count行两个对象，保留数组capacity",
+      "unknown": "全部背景风格生命周期属于析构入口",
+      "evidence": [
+        "证据/list_functions.json"
+      ]
+    },
+    {
+      "va": "0x8f5080",
+      "status": "主体已审阅",
+      "scope": "最大宽扫描和水平条范围更新",
+      "conclusion": "扫描count行R+20求最大值，更新L+788",
+      "unknown": "滚动条底层更新与异常负宽的显示结果未展开",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f5260",
+      "status": "主体已审阅",
+      "scope": "全行字符数重算两种计量分支",
+      "conclusion": "wcslen或8E0AA0计量，行间加1",
+      "unknown": "全局计量模式的设置来源未展开",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f5300",
+      "status": "局部已审阅",
+      "scope": "自动折行入口、双栈缓冲复制、标记与虚调用",
+      "conclusion": "两缓冲各0x5000字节，切点来自90CE80，R+4置1，虚+244插尾",
+      "unknown": "切点90CE80的范围保证与递归折行终止性未展开",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f5de0",
+      "status": "主体已审阅",
+      "scope": "完整垂直起始行setter",
+      "conclusion": "负值钳0，只有count-visibleRows>0时才钳过大的起始行",
+      "unknown": "外层对不足一页时正起始行的约束未恢复",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f5e60",
+      "status": "主体已审阅",
+      "scope": "完整水平偏移setter",
+      "conclusion": "立即读table[startRow]+20，超界只减一次可用宽，再负值钳0",
+      "unknown": "startRow合法性与可用宽正值需外层保证",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f6b00",
+      "status": "主体已审阅",
+      "scope": "完整76字节文本对象初始化",
+      "conclusion": "拥有指针清零；高度12，背景0，前景FF000000",
+      "unknown": "未命名填充字节不作为稳定序列化格式",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f6b50",
+      "status": "主体已审阅",
+      "scope": "字符串/缓存释放、节点池回收与对象重置",
+      "conclusion": "控制节点通过+12链回收ACC3C4，不逐节点delete",
+      "unknown": "节点池最终释放时机未展开",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f6c10",
+      "status": "主体已审阅",
+      "scope": "样式复制与mode分支",
+      "conclusion": "mode0仅复制样式；非零经8E1800深复制文字",
+      "unknown": "不会证明可对任意未经初始化目标调用；引擎回调未展开",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    },
+    {
+      "va": "0x8f8080",
+      "status": "局部已审阅",
+      "scope": "父解析、现有行样式复制、字体颜色与列表属性键、CapText路径",
+      "conclusion": "FontBColor存在性检查却取FontColor；MaxRow/MaxCount/自动折行与多选偏移已证",
+      "unknown": "其余背景纹理、资源名、声音与特殊显示路径未逐项审阅；后续刷新时序未穷尽",
+      "evidence": [
+        "证据/list_dependencies.json"
+      ]
+    }
+  ]
+}

@@ -36,6 +36,8 @@ public:
         const RichonlineTargetCardRequest&,std::uint16_t expected_calendar,bool recover_refusal=false,
         const std::function<void(const std::string&)>& log={});
     RichonlineCombatBridgeResult finish_round(std::span<const RichonlineCombatActorRef>,std::uint64_t day);
+    RichonlineCombatBridgeResult detonate_card(std::span<const RichonlineCombatActorRef>,std::uint8_t slot,
+        const std::function<void(const std::string&)>& log);
     bool has_mine(std::int16_t position) const;
     RichonlineCombatBridgeResult stepped_mine(std::span<const RichonlineCombatActorRef>,std::int16_t root);
     // Calls the pure continuation preflight only for a surviving victim, before
@@ -49,7 +51,8 @@ public:
         std::span<std::array<std::uint8_t,8>> relations);
     RichonlineCombatBridgeResult timed_bomb_card(std::span<const RichonlineCombatActorRef>,
         std::uint8_t action_actor,const RichonlineTimedBombRequest110&,std::uint16_t expected_calendar,
-        const RichonlineTimedBombRules&,const RichonlineTimedBombEligibility&,std::uint8_t envelope_opaque7);
+        const RichonlineTimedBombRules&,const RichonlineTimedBombEligibility&,std::uint8_t envelope_opaque7,
+        const std::function<void(const std::string&)>& log={});
     // Explosion requires the actual0012 acknowledgement. Non-exploding route
     // steps must have no acknowledgement. The serialized room owns route progress.
     RichonlineCombatBridgeResult timed_bomb_step(std::span<const RichonlineCombatActorRef>,

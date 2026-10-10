@@ -1,0 +1,312 @@
+// ============================================================================
+// 逐函数审阅 / 自动生成；等级不等于整函数完成率
+// ============================================================================
+//
+// 00697780 / 仅桥接核对
+//   异常尾块调用的空包装清理。
+//   原证：证据/lifecycle.json
+//
+// 008BA830 / 局部语义审阅
+//   当前游标仅相加，无长度比较。
+//   原证：证据/reader_and_cleanup.json
+//
+// 008BA950 / 局部语义审阅
+//   仅type0 ACBD94 count存储/复制边界及100槽越界。
+//   原证：证据/callers_and_node.json
+//
+// 008BAF70 / 仅桥接核对
+//   返回reader+4当前指针。
+//   原证：证据/reader_and_cleanup.json
+//
+// 008BB180 / 局部语义审阅
+//   只闭合ACBD94 clear调用边界，其余连接清理另审。
+//   原证：证据/lifecycle.json
+//
+// 008BB700 / 仅导出
+//   上下文原证；未新增语义覆盖。
+//   原证：证据/callers_and_node.json
+//
+// 008BBFA0 / 局部语义审阅
+//   ACBD94 缺键返回0，已有键返回借用 mapped。
+//   原证：证据/callers_and_node.json
+//
+// 008BC040 / 局部语义审阅
+//   ACBD94 缺键0，已有键取 mapped+3600 count。
+//   原证：证据/callers_and_node.json
+//
+// 008BC3A0 / 局部语义审阅
+//   缺键默认插入，已有键保留原值，返回 mapped 地址。
+//   原证：证据/entries.json
+//
+// 008BC4E0 / 局部语义审阅
+//   100 次36字节默认构造并 count=0。
+//   原证：证据/direct_dependencies.json
+//
+// 008BC550 / 局部语义审阅
+//   单条36字节清零。
+//   原证：证据/tree_helpers.json
+//
+// 008BC5B0 / 仅桥接核对
+//   end 输出迭代器包装。
+//   原证：证据/direct_dependencies.json
+//
+// 008BC610 / 局部语义审阅
+//   删除真实子树，重置head三link和size，保留head。
+//   原证：证据/head_and_clear.json
+//
+// 008BC6C0 / 局部语义审阅
+//   lower_bound 后严格等价检查，缺键返回 end，不新增。
+//   原证：证据/entries.json
+//
+// 008BCD30 / 仅导出
+//   上下文原证；未新增语义覆盖。
+//   原证：证据/lifecycle.json
+//
+// 008BD380 / 仅桥接核对
+//   迭代器首DWORD节点相等。
+//   原证：证据/direct_dependencies.json
+//
+// 008BD580 / 仅桥接核对
+//   键字段 N+12 桥接。
+//   原证：证据/direct_dependencies.json
+//
+// 008BD5E0 / 局部语义审阅
+//   hint 区间检查与回退，仅局部插入契约。
+//   原证：证据/direct_dependencies.json
+//
+// 008BDDA0 / 仅桥接核对
+//   lower_bound 输出迭代器包装。
+//   原证：证据/direct_dependencies.json
+//
+// 008BDE10 / 局部语义审阅
+//   isNil停止；右递归、左循环，值析构后delete。
+//   原证：证据/head_and_clear.json
+//
+// 008BDEE0 / 仅桥接核对
+//   head.left字段地址。
+//   原证：证据/tree_helpers.json
+//
+// 008BDF40 / 仅桥接核对
+//   head.right字段地址。
+//   原证：证据/tree_helpers.json
+//
+// 008BDFA0 / 仅桥接核对
+//   head.parent字段地址。
+//   原证：证据/tree_helpers.json
+//
+// 008BE000 / 局部语义审阅
+//   cmp/sbb/neg 核为无符号 DWORD 严格小于。
+//   原证：证据/entries.json
+//
+// 008BFFD0 / 仅桥接核对
+//   迭代器构造桥。
+//   原证：证据/tree_helpers.json
+//
+// 008C0030 / 仅桥接核对
+//   迭代器解引用至pair N+12。
+//   原证：证据/direct_dependencies.json
+//
+// 008C0080 / 仅桥接核对
+//   取迭代器首DWORD。
+//   原证：证据/direct_dependencies.json
+//
+// 008C0390 / 局部语义审阅
+//   复制4字节键和3604字节值。
+//   原证：证据/direct_dependencies.json
+//
+// 008C0510 / 仅桥接核对
+//   N+3621 isNil 字段地址。
+//   原证：证据/direct_dependencies.json
+//
+// 008C0550 / 仅桥接核对
+//   N+0 left字段地址。
+//   原证：证据/direct_dependencies.json
+//
+// 008C0590 / 仅桥接核对
+//   N+4 parent字段地址。
+//   原证：证据/tree_helpers.json
+//
+// 008C05D0 / 仅桥接核对
+//   N+8 right字段地址。
+//   原证：证据/direct_dependencies.json
+//
+// 008C0610 / 仅桥接核对
+//   N+12 pair字段地址。
+//   原证：证据/tree_helpers.json
+//
+// 008C06C0 / 仅桥接核对
+//   T+8 节点数。
+//   原证：证据/tree_helpers.json
+//
+// 008C0700 / 局部语义审阅
+//   机器码唯一键路径，等价返回旧节点不替换。
+//   原证：证据/tree_helpers.json
+//
+// 008C09C0 / 局部语义审阅
+//   容量检查、分配后链入和红黑插入修复，异常非全闭合。
+//   原证：证据/tree_helpers.json
+//
+// 008C0F70 / 局部语义审阅
+//   首个 >= key 节点，未命中返回 head，不分配。
+//   原证：证据/entries.json；证据/tree_helpers.json
+//
+// 008C1050 / 仅桥接核对
+//   输入身份转换。
+//   原证：证据/tree_helpers.json
+//
+// 008C1090 / 局部语义审阅
+//   释放传入指针，数量参数不参与 delete。
+//   原证：证据/lifecycle.json
+//
+// 008C10F0 / 仅桥接核对
+//   值析构桥。
+//   原证：证据/reader_and_cleanup.json
+//
+// 008C3610 / 仅桥接核对
+//   单DWORD零包装，不是完整树clear。
+//   原证：证据/tree_helpers.json
+//
+// 008C3730 / 仅桥接核对
+//   迭代器首DWORD赋节点。
+//   原证：证据/tree_helpers.json
+//
+// 008C3780 / 仅桥接核对
+//   N+12 pair字段地址。
+//   原证：证据/tree_helpers.json
+//
+// 008C3D50 / 仅桥接核对
+//   N+3620 color字段地址。
+//   原证：证据/tree_helpers.json
+//
+// 008C3D90 / 仅桥接核对
+//   max_size包装。
+//   原证：证据/tree_helpers.json
+//
+// 008C3DF0 / 局部语义审阅
+//   左旋更新根与父子连接，过滤 isNil 子节点。
+//   原证：证据/tree_helpers.json
+//
+// 008C3FA0 / 仅桥接核对
+//   head.parent字段地址。
+//   原证：证据/direct_dependencies.json
+//
+// 008C4000 / 局部语义审阅
+//   右旋更新根与父子连接，过滤 isNil 子节点。
+//   原证：证据/tree_helpers.json
+//
+// 008C41B0 / 局部语义审阅
+//   单节点分配/构造，catch delete 后重抛。
+//   原证：证据/tree_helpers.json
+//
+// 008C5410 / 仅桥接核对
+//   单DWORD零初始化。
+//   原证：证据/tree_helpers.json
+//
+// 008C59D0 / 局部语义审阅
+//   常量1190401等于UINT_MAX/3608，与节点尺寸有差异。
+//   原证：证据/callers_and_node.json
+//
+// 008C5A40 / 仅导出
+//   上下文原证；未新增语义覆盖。
+//   原证：证据/callers_and_node.json
+//
+// 008C6AD0 / 局部语义审阅
+//   三个link及3608字节pair，两次独立BYTE写color参数和isNil=0。
+//   原证：证据/callers_and_node.json
+//
+// 008C6D10 / 仅桥接核对
+//   空值析构。
+//   原证：证据/reader_and_cleanup.json
+//
+// 008C6DD0 / 局部语义审阅
+//   operator new(3624*count)，本函数无乘法检查。
+//   原证：证据/callers_and_node.json
+//
+// 008C6F50 / 仅桥接核对
+//   树构造包装。
+//   原证：证据/lifecycle.json
+//
+// 008C6FC0 / 仅桥接核对
+//   构造包装至head初始化。
+//   原证：证据/head_and_clear.json
+//
+// 008C7040 / 仅桥接核对
+//   this身份转换。
+//   原证：证据/head_and_clear.json
+//
+// 008C7080 / 局部语义审阅
+//   存head，isNil=1，三link自指，size=0。
+//   原证：证据/head_and_clear.json
+//
+// 008C7140 / 仅桥接核对
+//   类型包装构造，未命名字段。
+//   原证：证据/head_and_clear.json
+//
+// 008C71C0 / 仅桥接核对
+//   this身份转换。
+//   原证：证据/head_and_clear.json
+//
+// 008C7200 / 局部语义审阅
+//   分配head，三link零初始化，color=1/isNil=0。
+//   原证：证据/head_and_clear.json
+//
+// 008C7420 / 仅桥接核对
+//   link析构包装。
+//   原证：证据/head_and_clear.json
+//
+// 008C7480 / 仅桥接核对
+//   类型包装构造，未命名字段。
+//   原证：证据/head_and_clear.json
+//
+// 008C7500 / 仅桥接核对
+//   类型包装构造局部转发，字段语义未定。
+//   原证：证据/reader_and_cleanup.json
+//
+// 008C7570 / 仅桥接核对
+//   link placement构造包装。
+//   原证：证据/head_and_clear.json
+//
+// 008C7610 / 仅桥接核对
+//   空link析构。
+//   原证：证据/head_and_clear.json
+//
+// 008C7640 / 仅桥接核对
+//   this身份转换。
+//   原证：证据/reader_and_cleanup.json
+//
+// 008C76C0 / 局部语义审阅
+//   placement构造单个DWORD link。
+//   原证：证据/head_and_clear.json
+//
+// 008C8F90 / 仅桥接核对
+//   析构包装。
+//   原证：证据/lifecycle.json
+//
+// 008C8FE0 / 仅桥接核对
+//   析构包装。
+//   原证：证据/head_and_clear.json
+//
+// 008C9030 / 局部语义审阅
+//   完整范围erase后head link清理和delete，T+4/T+8=0。
+//   原证：证据/head_and_clear.json
+//
+// 008C9150 / 局部语义审阅
+//   完整范围选择clear；任意erase修复未闭合。
+//   原证：证据/head_and_clear.json
+//
+// 008CC740 / 局部语义审阅
+//   当前游标直接DWORD读取后+4，无剩余检查。
+//   原证：证据/reader_and_cleanup.json
+//
+// 0091F6D0 / 仅导出
+//   上下文原证；未新增语义覆盖。
+//   原证：证据/direct_dependencies.json
+//
+// 0091F700 / 仅导出
+//   上下文原证；未新增语义覆盖。
+//   原证：证据/direct_dependencies.json
+//
+// 009295F0 / 仅导出
+//   上下文原证；未新增语义覆盖。
+//   原证：证据/direct_dependencies.json
+//

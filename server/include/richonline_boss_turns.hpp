@@ -77,7 +77,7 @@ struct RichonlineLandingResult {
     std::optional<RichonlineLandingStatusChange> status_change{};
     std::optional<RichonlineTemplePossessionChange> temple_change{};
 };
-enum class RichonlineTerminalReason { npc_money, boss_attack, human_attack, mine_day, stepped_mine, timed_bomb, npc_aura, fire_trap, poison_card };
+enum class RichonlineTerminalReason { npc_money, boss_attack, human_attack, mine_day, stepped_mine, timed_bomb, npc_aura, fire_trap, poison_card, month_limit };
 struct RichonlineTurnTerminalContext {
     std::vector<std::uint8_t> bankrupt_actors;
     RichonlineTerminalReason reason;
@@ -109,7 +109,7 @@ struct RichonlineBossTurnRules {
     std::string payment_operation_prefix{};
     RichonlinePaidDiceEquipment payment_equipment{false,false};
     std::function<std::optional<RichonlineLandingResult>(const RichonlineLandingContext&)> chance_landing{};
-    // The room supplies the actual map pair and scripted-event authority.
+    // The room supplies map pairs or random-road candidates and scripted state.
     // A portal tile without this capability cannot be silently treated as an
     // ordinary landing or as an unconditional teleport.
     std::function<std::optional<RichonlinePortalLandingPlan>(const RichonlineLandingContext&)> portal_landing{};
@@ -149,6 +149,12 @@ struct RichonlineBossTurnRules {
     std::shared_ptr<const RichonlinePoisonRules> poison{};
     std::function<RichonlineRawActorState(std::uint8_t)> poison_raw_actor{};
     std::shared_ptr<RichonlineBossProperty> property{};
+    std::shared_ptr<RichonlineRawAuthority> raw_authority{};
+    std::uint8_t jail_days=3,alliance_days=6;
+    // NEW64F2A0 stores room months*30 in a BYTE; zero disables expiry.
+    std::uint8_t month_limit_days=0;
+    // NEW actor+152 comes from profile equipment slot2; absence is unknown.
+    std::optional<bool> human_purchase_half_price{};
 };
 // 双角色移动，支持显式配置的移动卡状态；动态物件与其他控制状态另行接入。
 // 每个落点都必须显式处理；未知事件不得直接推进回合。

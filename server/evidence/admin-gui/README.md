@@ -46,3 +46,12 @@
 - 最新完整回归`build/temple-high-final-tests.log`：205/205通过、247.90秒。
 - GUI所用服务端现为`F36926A48D0999CE78F925C0BD47D8846CAF4276AA09C91ADBED5951FD9771B3`；GUI本身哈希保持不变。安装和备份清单为`build-migration-backup/temple-high-candidate.json`，最初迁移时的`candidate.json`保留为历史记录。
 - 安装后两个入口再次通过：`build/gui-temple-high-server/gui-result.json`及`build/gui-temple-high-root/gui-result.json`均`ok:true`，26账号、当前数据目录、六类监听、启停/重启/关闭清理验证成功。证据使用实际WinForms消息循环与按钮，不是游戏客户端UI验收。
+
+## 路障与衰神修复候选
+
+- GUI使用的服务端已更新为`B2D767A7A8A66A0A5F316590AAA3B4D3B4CA35D14DE38C17F06BB67B9A4A6DDC`，GUI程序未变更。安装时无服务进程，备份清单见`build-migration-backup/roadblock-half-candidate.json`。
+- 本候选编译成功；依用户新指令不运行GUI自测或全套测试，游戏内验收交给用户。上述GUI验收是历史结果。
+
+最新候选增加拆屋卡及怪兽卡，服务端SHA256为`B1EDDA64AC9D57A1E47806A5FF85EF4D6126D4C86D820C6E23F7A47D455999FE`，GUI程序未变更。编译成功，未运行测试；安装时无服务进程，备份见`build-migration-backup/destruction-cards-candidate.json`。
+
+当前候选已补齐一步/六步卡并修正人类地面卡额外半径限制，服务端SHA256为`3E91AE20DAECF930DF0C0152327017C41FB0C02E073941DABC006EFBEC130F43`。编译成功，用户停止服务后安装，GUI程序未变更；未启动服务或运行测试。备份清单见`build-migration-backup/one-six-step-candidate.json`，游戏内验收由用户完成。

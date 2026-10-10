@@ -1,0 +1,85 @@
+{
+  "scope": "8个函数以逐项scope为准；另8个UI owner仅审调用点，不列为新完整函数",
+  "functions": [
+    {
+      "va": "0x8e0450",
+      "status": "主体已审阅",
+      "scope": "完整NULL/空判定、首部判定、hex循环、十进制调用与EAX结果",
+      "conclusion": "短hex左对齐；非法字节跳过但占位；先pow再ftol再32位乘加",
+      "unknown": "完整pow误差、极长输入、内存可读性及完整atof语法未闭合",
+      "evidence": [
+        "证据/color_functions.json"
+      ]
+    },
+    {
+      "va": "0x8e1c40",
+      "status": "主体已审阅",
+      "scope": "完整四态颜色DWORD setter",
+      "conclusion": "写style+40*state+32，无索引边界检查，retn12",
+      "unknown": "style其它字段与外部非法state可达性未展开",
+      "evidence": [
+        "证据/color_narrow.json"
+      ]
+    },
+    {
+      "va": "0x924720",
+      "status": "局部已审阅",
+      "scope": "前导isspace循环、strlen、fltin2调用与+16 double返回",
+      "conclusion": "atof是调用938370转换器的包装；颜色十进制随后经ftol",
+      "unknown": "fltin2/locale/字符分类全表/NaN与溢出未展开",
+      "evidence": [
+        "证据/color_functions.json"
+      ]
+    },
+    {
+      "va": "0x92be08",
+      "status": "主体已审阅",
+      "scope": "完整x87控制字保存、RC置向零、fistp64、恢复与EDX:EAX返回",
+      "conclusion": "有限可表示值向零截断；入口只保留低32位",
+      "unknown": "非有限、64位越界与未屏蔽异常不套用Python结果",
+      "evidence": [
+        "证据/color_functions.json"
+      ]
+    },
+    {
+      "va": "0x92be80",
+      "status": "主体已审阅",
+      "scope": "完整CRT pow分派及参数落栈",
+      "conclusion": "AD0E80与MXCSR/x87控制字决定优化路径或默认92BEDD",
+      "unknown": "开关运行时初始化与两个数学实现的完整误差/异常契约未闭合",
+      "evidence": [
+        "证据/color_functions.json"
+      ]
+    },
+    {
+      "va": "0x92bedd",
+      "status": "局部已审阅",
+      "scope": "控制字保存/恢复、普通正底数fyl2x路由、特殊底数/指数分派和两尾块",
+      "conclusion": "默认pow调用多个CRT数学/错误辅助；控制字恢复尾块完整保存",
+      "unknown": "反编译失败；数学辅助、误差界与特殊数值支持未闭合",
+      "evidence": [
+        "证据/color_narrow.json"
+      ]
+    },
+    {
+      "va": "0x93ebc0",
+      "status": "主体已审阅",
+      "scope": "完整16字节栈对齐与x87参数桥",
+      "conclusion": "fxch后落两个double，调用93EBD9再leave返回",
+      "unknown": "桥接不等于数学核心全闭合",
+      "evidence": [
+        "证据/color_functions.json"
+      ]
+    },
+    {
+      "va": "0x93ebd9",
+      "status": "局部已审阅",
+      "scope": "入口double拆位、普通SSE查表路径结构与错误支持出口",
+      "conclusion": "Pentium4桥目标，数学核心存在查表/多项式及特殊值分派",
+      "unknown": "查表常量/多项式证明、反规格化、NaN/Inf和libm错误支持未闭合",
+      "evidence": [
+        "证据/color_narrow.json"
+      ]
+    }
+  ]
+}

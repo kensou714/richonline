@@ -1,0 +1,71 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "functions": [
+    {
+      "va": "0x6daa10",
+      "status": "既有专题审阅复核",
+      "conclusion": "名称字段交atoi解析，复用已审字符串消费；不新增完整业务函数完成量。",
+      "unknown": "仅复用已审原证及当前调用边界；不新增主审完成量。",
+      "evidence": [
+        "../图像运行时接口/证据/draw_mapping_dependencies.json#/functions/0"
+      ],
+      "reused_review": "../图像运行时接口/证据/draw_mapping_dependencies.json"
+    },
+    {
+      "va": "0x91f800",
+      "status": "静态契约已审阅",
+      "conclusion": "按locale跳开头空白，一个ASCII符号、连续ASCII数字，低32位累积和最终neg；无数字0。",
+      "unknown": "线程/locale内部依赖未全部闭环；没有安全输入或全文合法保证。",
+      "evidence": [
+        "证据/seeds.json#/functions/0"
+      ]
+    },
+    {
+      "va": "0x91f950",
+      "status": "静态契约已审阅",
+      "conclusion": "17字节包装，参数原样转91F800并返回32位EAX。",
+      "unknown": "不扩大为所有CRT版本的atoi契约。",
+      "evidence": [
+        "证据/seeds.json#/functions/1"
+      ]
+    },
+    {
+      "va": "0x92de70",
+      "status": "局部消费契约已审阅",
+      "conclusion": "lock(12)、内部locale更新、正常路径unlock(12)，返回保存的更新结果。",
+      "unknown": "SEH作用域表、内部更新及锁算法未展开，不保证所有异常路径。",
+      "evidence": [
+        "证据/locale_update.json#/functions/0"
+      ]
+    },
+    {
+      "va": "0x9305c0",
+      "status": "静态契约已审阅",
+      "conclusion": "范围调试检查后读取locale+72分类表WORD并与mask相与；非法值可能继续访问。",
+      "unknown": "调试报告内部及终止策略未展开；表对象必须有效。",
+      "evidence": [
+        "证据/classification_helpers.json#/functions/0"
+      ]
+    },
+    {
+      "va": "0x930660",
+      "status": "局部消费契约已审阅",
+      "conclusion": "c=-1或0..255查表；其他值按高BYTE标记经外部API做1/2BYTE分类。",
+      "unknown": "外部字符串分类/码页API未闭环；atoi仅使用0..255直接表路径。",
+      "evidence": [
+        "证据/classification_helpers.json#/functions/1"
+      ]
+    },
+    {
+      "va": "0x930960",
+      "status": "既有专题审阅复核",
+      "conclusion": "返回/创建8Ch线程对象，正常路径保存恢复LastError；复用线程对象原证。",
+      "unknown": "仅复用已审原证及当前调用边界；不新增主审完成量。",
+      "evidence": [
+        "../随机数状态与取样边界/证据/functions_raw.json#/functions/20"
+      ],
+      "reused_review": "../随机数状态与取样边界/证据/functions_raw.json"
+    }
+  ],
+  "scope": "数字转换、分类及locale外层；代表消费者为既有专题复用"
+}

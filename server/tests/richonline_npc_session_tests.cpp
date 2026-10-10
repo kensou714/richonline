@@ -238,6 +238,34 @@ void summon_rejection_preserves_state(const std::filesystem::path& root) {
         "invalid_summon_consumed_card_or_ground");
 }
 void badluck_ground_and_summon(const std::filesystem::path& root) {
+    for(const auto origin:{RichonlineDeityMoneyOrigin::ground,RichonlineDeityMoneyOrigin::temple,
+        RichonlineDeityMoneyOrigin::summoned_card}) {
+        Fixture f(root);
+        f.policy.badluck=RichonlineNpcBadluckPolicy{load_richonline_npc_affix(root,2),"fixture-half-units",
+            [](const auto& inventory) {return select_richonline_badluck_half(inventory,4,
+                [](std::size_t n){return n-1;});}};
+        f.reset();RichonlineChanceInventory hand{};hand[2]={1038,1};hand[7]={1039,1};
+        if(origin==RichonlineDeityMoneyOrigin::summoned_card) hand[0]={1047,1};
+        f.cards->commit_inventory(hand);
+        const Bytes loss{0x24,0x40,0x34,0x12,7,0xff,0xff,0xff};
+        if(origin==RichonlineDeityMoneyOrigin::ground) {
+            f.ground->place(114,{2,7,8});
+            const auto result=f.session->landing(f.context(),7,f.statuses[0]);
+            check(result && result->messages==std::vector<Bytes>{{0x13,0x40,0x34,0x12,114,0},loss},
+                "half_badluck_ground_wire_wrong");
+        } else if(origin==RichonlineDeityMoneyOrigin::temple) {
+            check(f.session->temple_summon(f.context(),7,2,f.statuses[0]).messages==std::vector<Bytes>{loss},
+                "half_badluck_temple_wire_wrong");
+        } else {
+            f.ground->place(114,{2,7,8});const std::array<std::int16_t,1> allowed{114};
+            const auto result=f.session->deity_card(Bytes{112,0,7,0,0,0,0,0},f.context(),7,
+                f.statuses[0],true,allowed,[](std::size_t){return std::size_t{0};});
+            check(result.messages==std::vector<Bytes>{{0xc0,0x40,0x34,0x12,0,0,114,0,0},loss},
+                "half_badluck_summon_wire_wrong");
+        }
+        check(f.cards->inventory()[2]==RichonlineChanceCardSlot{1038,1} &&
+            f.cards->inventory()[7]==RichonlineChanceCardSlot{},"half_badluck_session_lost_both_cards");
+    }
     const auto enable=[&](Fixture& f) {
         f.policy.badluck=RichonlineNpcBadluckPolicy{load_richonline_npc_affix(root,2),"fixture-first-slot",
             [](const auto& inventory) {

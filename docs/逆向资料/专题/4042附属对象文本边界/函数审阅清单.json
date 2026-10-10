@@ -1,0 +1,33 @@
+{
+  "scope": "4042 附属对象构造及文本写入；共享处理器只作交叉引用",
+  "functions": [
+    {
+      "va": "0x7fd7f0",
+      "status": "静态局部语义已审阅",
+      "conclusion": "由 0x5C 分配路径调用，在对象 +0x54 上初始化周期器；0x1E 是传入周期器的参数，不解释为缓冲写入长度。",
+      "evidence": "证据/4042_child_raw.json#/functions/0",
+      "unknown": "周期器内部布局和所有调用场景沿用共享专题；不计 Q 的全部构造语义。"
+    },
+    {
+      "va": "0x640c90",
+      "status": "静态函数语义已审阅",
+      "conclusion": "写 Q+0/+4/+24，清 Q+8 首字节，写 8 个资源 DWORD 到 Q+28..+59，置 Q+80 标志并调用外部助手。",
+      "evidence": "证据/4042_child_raw.json#/functions/1",
+      "unknown": "参数 a2/a3/a4 业务身份及资源 ID 解释未全部恢复；外部助手行为不算本体结论。"
+    },
+    {
+      "va": "0x640d60",
+      "status": "静态函数语义已审阅",
+      "conclusion": "将 Source 通过 strcpy 复制到 Q+8，没有目标容量或长度参数。",
+      "evidence": "证据/4042_child_raw.json#/functions/2",
+      "unknown": "上游文本最大长度、缓冲区终止和实机触发未验证。"
+    },
+    {
+      "va": "0x6629d0",
+      "status": "复用既有审阅",
+      "conclusion": "4042 处理器调用 640D60，布局及门控沿用诊断消息专题；此项不计新增函数。",
+      "evidence": "证据/4042_child_raw.json#/functions/3",
+      "unknown": "本篇未重新审阅分派、传输层长度及槽号上游校验。"
+    }
+  ]
+}

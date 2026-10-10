@@ -1,0 +1,171 @@
+{
+  "topic": "随机显示输入对话框生命周期",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "scope": "16 个本专题新导出入口与 4 个历史复用入口的局部静态审阅；函数声明块核验不代替未审依赖或实机验证。",
+  "functions": [
+    {
+      "va": "0x911ab0",
+      "status": "历史复用并深化主体与尾块控制流",
+      "reviewed_scope": "外层消息、对象分配、尺寸与随机位置、提交取消和销毁分支",
+      "conclusion": "0x401/lParam=1 将键盘 +400 真实串复制至全局并 EndDialog(100)，取消返回 200；销毁调用键盘虚表首槽。",
+      "unknown": "分配失败和零定位余量仅静态风险；全局字符串容量、实际窗口几何和重复销毁可达性未证。",
+      "reuse_reference": "../随机数状态与取样边界/证据/functions_raw.json#0x911ab0",
+      "evidence": ["证据/seed_navigation.json#reused_functions", "03_提交返回与清理边界.txt"]
+    },
+    {
+      "va": "0x911e40",
+      "status": "主体控制流已审，外部调用者未闭合",
+      "reviewed_scope": "DLL 加载、模态资源、返回值分类、输出复制和模块释放",
+      "conclusion": "加载 idguardlibr.dll 并调用 KeyboardDlg；100 对应复制真实串后返回 1，其它正值返回 0，失败返回 -1。",
+      "unknown": "调用者 72B180 的输出容量契约和业务语义未审；DLL 内资源未解析。",
+      "evidence": ["证据/closure_raw.json#0x911e40", "证据/closure_navigation.json", "03_提交返回与清理边界.txt"]
+    },
+    {
+      "va": "0x912ed0",
+      "status": "完整叶函数已审",
+      "reviewed_scope": "全部两条指令",
+      "conclusion": "返回入口 ECX+400；IDA 的 MFC 名字不作为本处结构体语义。",
+      "unknown": "返回字符串的物理容量未由该叶函数给出。",
+      "evidence": ["证据/functions_raw.json#0x912ed0", "02_输入路径与随机显示.txt"]
+    },
+    {
+      "va": "0x913de0",
+      "status": "主体控制流已审，子控件显示虚调未闭合",
+      "reviewed_scope": "模式参数 0、1、其它值与两层显隐调用",
+      "conclusion": "参数 0 选择 Upper，1 选择 Lower；其它值仍写入 +388，但不能承诺稳定返回值。",
+      "unknown": "层容器显隐虚调的具体实现和实机效果未审。",
+      "evidence": ["证据/functions_raw.json#0x913de0", "02_输入路径与随机显示.txt"]
+    },
+    {
+      "va": "0x913e90",
+      "status": "历史复用并深化主体控制流",
+      "reviewed_scope": "焦点通知、控件查找、操作字节分支、真实串修改和随机显示刷新",
+      "conclusion": "操作字节来自按键控件 +656；普通字符查 strlen<64，F9/FD 无此检查，但当前八行不含两键。",
+      "unknown": "外部 HWND 映射内部、容量与异常输入可达性未闭合；未复现溢出。",
+      "reuse_reference": "../随机数状态与取样边界/证据/functions_raw.json#0x913e90",
+      "evidence": ["证据/seed_navigation.json#reused_functions", "证据/seed_navigation.json#windows", "02_输入路径与随机显示.txt"]
+    },
+    {
+      "va": "0x914220",
+      "status": "历史复用并深化主体控制流",
+      "reviewed_scope": "物理字母数字、退格提交取消、CAPSLOCK 和显示刷新",
+      "conclusion": "字母大写条件为 SHIFT 或 CAPSLOCK；数字及字母追加查 strlen<64；物理空格、TAB 和标点无已证追加路径。",
+      "unknown": "更外围消息转换和实机焦点行为未审；无 WM_CHAR 登记不等于全程序没有 WM_CHAR。",
+      "reuse_reference": "../随机数状态与取样边界/证据/functions_raw.json#0x914220",
+      "evidence": ["证据/seed_navigation.json#reused_functions", "02_输入路径与随机显示.txt"]
+    },
+    {
+      "va": "0x9154f0",
+      "status": "主体清理控制流已审，递归所有权未闭合",
+      "reviewed_scope": "EDIT 销毁、两组指针序列销毁、数组释放、树哨兵清理和基础析构调用",
+      "conclusion": "逐项调用子对象虚表首槽 flags=1，释放序列，调用树清理并删除哨兵，最后进入基础析构。",
+      "unknown": "子对象析构、915180 和 91A2A0 未审；不能据本体无 DeleteObject/UnregisterClass 声称泄漏。",
+      "evidence": ["证据/leaf_raw.json#0x9154f0", "03_提交返回与清理边界.txt"]
+    },
+    {
+      "va": "0x9156e0",
+      "status": "主体调度控制流已审，消息树查找内部未闭合",
+      "reviewed_scope": "查找结果与哨兵比较、节点回调选择、间接调用和缺省处理",
+      "conclusion": "节点 +16 回调保存至键盘 +704 后以 this/wParam/lParam 调用；哨兵走 DefWindowProcA 回退。",
+      "unknown": "9157B0 内部查找和两个未审登记回调未闭合。",
+      "evidence": ["证据/closure_raw.json#0x9156e0", "证据/closure_navigation.json#vtable_entries", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x915750",
+      "status": "外围主体已审，查找辅助函数未閉合",
+      "reviewed_scope": "9157B0 调用后的哨兵与键比较、返回路径",
+      "conclusion": "本体消费辅助查找结果并核对哨兵与键；不能据本体声称完整精确查找实现已恢复。",
+      "unknown": "9157B0 主体及任意树状态下的完整行为未审。",
+      "evidence": ["证据/leaf_raw.json#0x915750", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x9157f0",
+      "status": "历史复用并深化主体与尾块控制流",
+      "reviewed_scope": "八行表、按键布局、操作字节标签、EDIT 创建和初始层选择",
+      "conclusion": "Lower/Upper 各四行，数字行共用；当前表不含 F9/FD/F7；布局宽度使用局部随机值。",
+      "unknown": "字符按钮和层容器全部构造、虚调、基础尺寸生产及资源外观未闭合。",
+      "reuse_reference": "../随机数状态与取样边界/证据/functions_raw.json#0x9157f0",
+      "evidence": ["证据/seed_navigation.json#reused_functions", "证据/seed_navigation.json#windows", "02_输入路径与随机显示.txt"]
+    },
+    {
+      "va": "0x9169b0",
+      "status": "登记主体已审，消息回调仅部分闭合",
+      "reviewed_scope": "this+692 容器和五组消息回调写入",
+      "conclusion": "登记 0x87、0x100、0x1、0xF、0x111；三个目标闭合到输入和建窗函数。",
+      "unknown": "0x87 的 608632 与 0xF 的 6054B9 回调本体未审。",
+      "evidence": ["证据/closure_raw.json#0x9169b0", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x916aa0",
+      "status": "插入外围主体已审，树内部维护未闭合",
+      "reviewed_scope": "无符号键比较、插入位置选择、已有键返回和缺键辅助调用",
+      "conclusion": "已有键返回原节点且 inserted=0，缺键才进入 916C10。",
+      "unknown": "916B90 前驱与 916C10 分配、再平衡和异常路径未审。",
+      "evidence": ["证据/leaf_raw.json#0x916aa0", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x916e80",
+      "status": "构造主体已审，基础构造和全部子容器未闭合",
+      "reviewed_scope": "虚表、局部字段初始化、刷子、消息树及建窗调用",
+      "conclusion": "写 A31690 虚表、真实串首字节和模式 1；调用 91A5C0(this,1) 但忽略结果，返回 this。",
+      "unknown": "919A60 基础初始化、完整容器构造和失败传播未闭合。",
+      "evidence": ["证据/functions_raw.json#0x916e80", "证据/closure_navigation.json#vtable_entries", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x917040",
+      "status": "完整删除包装控制流已审，实际析构依赖局部闭合",
+      "reviewed_scope": "9154F0 调用与 flags 低位控制的 operator delete",
+      "conclusion": "先执行实际析构，再在 flags&1 时释放对象内存；返回旧地址数值。",
+      "unknown": "9154F0 下游子对象和基础析构未知，不由包装宣称完整资源清理。",
+      "evidence": ["证据/closure_raw.json#0x917040", "03_提交返回与清理边界.txt"]
+    },
+    {
+      "va": "0x917130",
+      "status": "完整叶函数已审",
+      "reviewed_scope": "地址计算和返回指令",
+      "conclusion": "返回按键控件入口 this+656，输入处理读取该处首 BYTE；不是键盘 +656。",
+      "unknown": "按键控件完整结构体与分配容量未审。",
+      "evidence": ["证据/functions_raw.json#0x917130", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x918e90",
+      "status": "完整叶函数已审",
+      "reviewed_scope": "字段读取与返回",
+      "conclusion": "返回窗口对象 +272 的 HWND 消费字段。",
+      "unknown": "基础字段的全部生产路径仍未闭合。",
+      "evidence": ["证据/closure_raw.json#0x918e90", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x918ef0",
+      "status": "完整叶函数已审",
+      "reviewed_scope": "两个 DWORD 复制和输出地址返回",
+      "conclusion": "将 this+380/+384 复制到两 DWORD 输出并返回输出地址；被外层尺寸虚调用到。",
+      "unknown": "两个尺寸字段的完整生产和几何有效性未审。",
+      "evidence": ["证据/closure_raw.json#0x918ef0", "证据/closure_navigation.json#vtable_entries", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x918fb0",
+      "status": "完整缺省消息包装已审",
+      "reviewed_scope": "HWND 字段消费和 Win32 缺省过程调用",
+      "conclusion": "对 this+272 调 DefWindowProcA，构成消息树未命中的回退。",
+      "unknown": "基础 WNDPROC 对象关联未审，不能称已恢复全部入口链。",
+      "evidence": ["证据/leaf_raw.json#0x918fb0", "01_对象字段与初始化.txt"]
+    },
+    {
+      "va": "0x919960",
+      "status": "映射外围主体已审，查找内部未闭合",
+      "reviewed_scope": "外部映射调用、全局哨兵比较与节点 +16 返回",
+      "conclusion": "通过 60270A -> 9192D0 查 HWND 映射，比 ACD728 后返回节点 +16 对象指针。",
+      "unknown": "9192D0 内部树与对象有效性未审，不能声称任意 lParam 都经过安全验证。",
+      "evidence": ["证据/functions_raw.json#0x919960", "02_输入路径与随机显示.txt"]
+    },
+    {
+      "va": "0x91a5c0",
+      "status": "建窗主体已审，对象登记和基础过程未闭合",
+      "reviewed_scope": "共享等待、消息登记虚调、类查询注册、建窗和返回路径",
+      "conclusion": "无限等待且未检查等待结果，容忍注册错误 1410 或 0；尝试 CreateWindowExA 并返回 1/0。",
+      "unknown": "91A4F0、基础 WNDPROC、窗口对象注册与刷子完整所有权未审；无实机建窗证据。",
+      "evidence": ["证据/leaf_raw.json#0x91a5c0", "证据/closure_navigation.json#vtable_entries", "01_对象字段与初始化.txt"]
+    }
+  ]
+}

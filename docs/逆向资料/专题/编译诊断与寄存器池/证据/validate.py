@@ -95,8 +95,8 @@ for va, tokens in {
     0x994DE3: ['100h', '[ebp+var_1]', '[esi+34h], 1', 'sub_60CDD1'],
     0x98E8C1: ['1000h', '0FFEh', '[esi+1]', '[ecx+8]', 'sub_60A333'],
     0x995011: ['30000001h', '30000002h', '25000001h', '24000001h', '80004005h', '8007000Eh', 'retn    18h'],
-    0xA0B1AA: ['dword_A75FE4', 'sub_6092FD'],
-    0x9916F1: ['dword_A6DF58', 'sub_60CDD1'],
+    0xA0B1AA: ['off_A75FE4', 'sub_6092FD'],
+    0x9916F1: ['off_A6DF58', 'sub_60CDD1'],
 }.items():
     for token in tokens:
         assert token in asm[va], (hex(va), token)
@@ -106,7 +106,7 @@ written = set()
 import re
 for ins in init['assembly']:
     text = ins['text']
-    match = re.search(r'(?:mov|fstp)\s+(?:qword ptr )?\[ecx(?:\+([0-9A-F]+)h)?\],', text)
+    match = re.search(r'(?:mov|fstp)\s+(?:qword ptr )?\[ecx(?:\+([0-9A-F]+)h?)?\](?:,|$)', text)
     if match:
         offset = int(match.group(1) or '0', 16)
         written.add(offset)

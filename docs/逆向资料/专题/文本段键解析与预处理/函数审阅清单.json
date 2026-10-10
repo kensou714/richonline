@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "scope": "七本体的完整伪码与汇编已审；复用历史文本群并复核当前PE，不提升CRT依赖或全部消费者",
+  "functions": [
+    {
+      "va": "0x8191d0",
+      "status": "静态主体契约已审阅",
+      "conclusion": "构造仅清流槽、缓冲及三游标，不初始化长度/模式/行计数",
+      "unknown": "原类名、精确sizeof及调用者构造前后状态未恢复",
+      "evidence": ["证据/functions_raw.json", "证据/bridges_constants_raw.json"]
+    },
+    {
+      "va": "0x819220",
+      "status": "静态主体契约已审阅",
+      "conclusion": "恢复ECX后调清理包装；不承诺伪码返回寄存器是业务成功值",
+      "unknown": "所有析构路径和写流生命周期未穷尽",
+      "evidence": ["证据/functions_raw.json", "证据/bridges_constants_raw.json"]
+    },
+    {
+      "va": "0x819250",
+      "status": "静态主体契约已审阅",
+      "conclusion": "破坏性重载；mode1读取、mode2复制且均无额外NUL；preprocess只测试实参低BYTE，无效mode且该BYTE零仍return1",
+      "unknown": "外部CRT失败传播、全部mode/a5实参、source别名可达性及实机表现未穷尽",
+      "evidence": ["证据/functions_raw.json", "证据/bridges_constants_raw.json"]
+    },
+    {
+      "va": "0x8193f0",
+      "status": "静态主体契约已审阅",
+      "conclusion": "清流槽和三游标后delete缓冲；不fclose，不清长度/模式/行计数",
+      "unknown": "活写流直接清理的调用者可达性和分配器内部未审",
+      "evidence": ["证据/functions_raw.json", "证据/bridges_constants_raw.json"]
+    },
+    {
+      "va": "0x819470",
+      "status": "静态主体契约已审阅",
+      "conclusion": "前进查段，signed外层边界，内层找LF/右括号无长度保护；失败保留键游标",
+      "unknown": "CRT字符分类、全部段名/容量和共享暂存外部同步未闭合",
+      "evidence": ["证据/functions_raw.json", "证据/bridges_constants_raw.json"]
+    },
+    {
+      "va": "0x819660",
+      "status": "静态主体契约已审阅",
+      "conclusion": "从段首重查键，外层length/NUL保护；匹配键后的等号搜索可越过LF",
+      "unknown": "所有键和值消费者容量、畸形输入实际结果及CRT内部未审",
+      "evidence": ["证据/functions_raw.json", "证据/bridges_constants_raw.json"]
+    },
+    {
+      "va": "0x819fb0",
+      "status": "静态主体契约已审阅",
+      "conclusion": "按旧长度重建缓冲，删除所有CR并更新有效长度，不重设三个游标",
+      "unknown": "加载外独立预处理调用可达性、异常传播和实机结果未审",
+      "evidence": ["证据/functions_raw.json", "证据/bridges_constants_raw.json"]
+    }
+  ]
+}

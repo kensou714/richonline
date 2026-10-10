@@ -1,0 +1,15 @@
+{
+  "sources": ["证据/highfanout_raw.json", "证据/highfanout_aliases.json", "证据/85bb_group_raw.json"],
+  "functions": [
+    {"va":"0x91f7e0","status":"局部语义已审阅","conclusion":"17字节包装，转调标量operator delete；直接入口经0x601CD3 E9跳板被调用。","unknown":"分配端与完整释放契约未闭合；不能凭既有delete[]命名推断故障。","evidence":"证据/highfanout_raw.json","full_dependency_closure":false},
+    {"va":"0x9ca953","status":"局部语义已审阅","conclusion":"ECX=this，先析构调用，参数bit0决定是否标量delete(this)，返回this并retn 4。","unknown":"0x9CB0D5的析构对象和具体类型未闭合。","evidence":"证据/highfanout_raw.json","full_dependency_closure":false},
+    {"va":"0x9db4b6","status":"局部语义已审阅","conclusion":"256字节格式化缓冲，末字节显式置零，以%s转入0x98E8C1诊断节点入口，并置对象+0x40为1。","unknown":"调用者错误来源、输出生命周期与实机截断行为未闭合。","evidence":"证据/highfanout_raw.json","full_dependency_closure":false},
+    {"va":"0x85bb10","status":"局部语义已审阅","conclusion":"调试栈填充与RTC_CheckEsp包装；保留ECX并经E9跳板调0x85C710，返回对象首DWORD。","unknown":"具体容器类型与各调用实例业务含义未知。","evidence":"证据/highfanout_raw.json","full_dependency_closure":false},
+    {"va":"0x85c710","status":"局部语义已审阅","conclusion":"取ECX指向对象+0的DWORD返回，无入口空指针检查。","unknown":"首字段仅局部识别，不赋业务类型名。","evidence":"证据/85bb_group_raw.json","full_dependency_closure":false},
+    {"va":"0x85ea60","status":"部分分析","conclusion":"完整原证已保存；仅审16次对象首字段读取及比较/移动形态。","unknown":"排序算法、稳定性和上游容器未闭合。","evidence":"证据/85bb_group_raw.json","full_dependency_closure":false},
+    {"va":"0x85fea0","status":"部分分析","conclusion":"完整原证已保存；仅审6次首字段读取与三轮条件比较/移动。","unknown":"操作的确切算法目的和调用前提未知。","evidence":"证据/85bb_group_raw.json","full_dependency_closure":false},
+    {"va":"0x860000","status":"部分分析","conclusion":"完整原证已保存；仅审6次首字段读取和索引2*i+2推进的局部形态。","unknown":"完整堆调整契约、容量边界和上游容器未知。","evidence":"证据/85bb_group_raw.json","full_dependency_closure":false},
+    {"va":"0x85f190","status":"部分分析","conclusion":"完整原证已保存；仅审4次首字段读取和区间比较/移动形态。","unknown":"遍历边界、元素所有权及完整控制流未知。","evidence":"证据/85bb_group_raw.json","full_dependency_closure":false},
+    {"va":"0x860370","status":"部分分析","conclusion":"完整原证已保存；仅审4次首字段读取和索引(i-1)/2回退形态。","unknown":"完整堆调整契约、容量边界和上游容器未知。","evidence":"证据/85bb_group_raw.json","full_dependency_closure":false}
+  ]
+}

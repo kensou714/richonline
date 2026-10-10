@@ -1,0 +1,203 @@
+{
+  "schema": 1,
+  "scope": "状态串字符地址来源；当前序号写入未闭合；显式偏移扫描仅候选",
+  "functions": [
+    {
+      "va": "0x628270",
+      "status": "完整函数静态审阅",
+      "conclusion": "A76728首次分配0xABC并构造，返回单例。",
+      "unknown": "单例的完整析构责任及H其它成员语义未知。",
+      "evidence": "证据/closure_raw.json#/functions/0",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x6ac390",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "恢复原ECX并刷新604；其余通知与UI链未知。",
+      "unknown": "其余通知/UI助手与实际刷新可达时序未知。",
+      "evidence": "证据/closure_raw.json#/functions/1",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x6afa40",
+      "status": "完整函数静态审阅",
+      "conclusion": "恢复ECX后刷新604，返回清4字节实参。",
+      "unknown": "外层调用方语义及刷新可达时序未知。",
+      "evidence": "证据/closure_raw.json#/functions/2",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x82b090",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "只核case47的对象/字符指针访问链。",
+      "unknown": "只审case47，其余分派分支未提升为完整审阅。",
+      "evidence": "证据/closure_raw.json#/functions/3",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x69df50",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "构造明确清this+604；其它成员不整体提升。",
+      "unknown": "只核H+604清零，其余成员构造及清理未整体审阅。",
+      "evidence": "证据/producers_raw.json#/functions/0",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x6a11e0",
+      "status": "完整函数静态审阅",
+      "conclusion": "分派47返回值直接覆盖this+604，无本地复制/释放。",
+      "unknown": "返回字符地址的有效寿命、刷新时序及状态内容生产未知。",
+      "evidence": "证据/producers_raw.json#/functions/1",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x6a1660",
+      "status": "完整函数静态审阅",
+      "conclusion": "按64F200返回地址首DWORD是否为2选175或5基数，检查状态串指针/长度/字节2。",
+      "unknown": "64F200返回地址的空值保障、条件对象来源、业务语义及参数范围未知。",
+      "evidence": "证据/producers_raw.json#/functions/2",
+      "document": "02_复合状态与序号未闭合项.txt"
+    },
+    {
+      "va": "0x6a18b0",
+      "status": "完整函数静态审阅",
+      "conclusion": "110+7*参数起扫描最多7字节，遇1停止，默认4。",
+      "unknown": "底层容量与参数范围未知，静态边界不足以宣布实机越界。",
+      "evidence": "证据/producers_raw.json#/functions/3",
+      "document": "02_复合状态与序号未闭合项.txt"
+    },
+    {
+      "va": "0x6a21a0",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "源对象+104复制到this+1064，排除当前P+104写入。",
+      "unknown": "源+104的类型和业务语义未知，未证明属于P。",
+      "evidence": "证据/producers_raw.json#/functions/4",
+      "document": "02_复合状态与序号未闭合项.txt"
+    },
+    {
+      "va": "0x728c10",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "+104是频道数量来源及36*N分配路径；未提升全部UI逻辑。",
+      "unknown": "仅审频道数量与分配路径，其余UI分支和管理器类型未审。",
+      "evidence": "证据/producers_raw.json#/functions/5",
+      "document": "02_复合状态与序号未闭合项.txt"
+    },
+    {
+      "va": "0x72c050",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "+104保存GetTickCount，排除序号字段。",
+      "unknown": "仅审+104计时写入，宿主完整状态与调用时序未审。",
+      "evidence": "证据/producers_raw.json#/functions/6",
+      "document": "02_复合状态与序号未闭合项.txt"
+    },
+    {
+      "va": "0x72c2d0",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "标志0x20分支更新+104计时，排除序号字段。",
+      "unknown": "仅审0x20标志下计时更新，其余分支未整体审阅。",
+      "evidence": "证据/producers_raw.json#/functions/7",
+      "document": "02_复合状态与序号未闭合项.txt"
+    },
+    {
+      "va": "0x63e210",
+      "status": "完整函数静态审阅",
+      "conclusion": "返回this+1628；不代表所有同偏移对象相同。",
+      "unknown": "根对象G的构造、反序列化及P整体复制尚未闭合。",
+      "evidence": "证据/seed_raw.json#/functions/0",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x6a14b0",
+      "status": "既有完整审阅复用",
+      "conclusion": "非空、长度足够及字节2谓词，复用既有完整审阅。",
+      "unknown": "字节2的完整枚举、索引合法范围及状态内容生产未知。",
+      "evidence": "证据/seed_raw.json#/functions/1",
+      "document": "02_复合状态与序号未闭合项.txt"
+    },
+    {
+      "va": "0x7284b0",
+      "status": "既有完整审阅复用",
+      "conclusion": "返回this+104的DWORD，复用既有完整审阅。",
+      "unknown": "P+104的写入者、初始化、有效范围及网络来源未知。",
+      "evidence": "证据/seed_raw.json#/functions/2",
+      "document": "02_复合状态与序号未闭合项.txt"
+    },
+    {
+      "va": "0x62bb80",
+      "status": "完整函数静态审阅",
+      "conclusion": "按无符号+24<16选择内嵌+4或堆指针。",
+      "unknown": "只按汇编认定内嵌/堆选择，精确ABI及缓冲寿命未知。",
+      "evidence": "证据/state_leaf_raw.json#/functions/0",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x8974f0",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "循环对条目+28对象调用虚表首槽(1)；完整类型/容器未闭合。",
+      "unknown": "条目/容器类型及外部清理助手未完整恢复。",
+      "evidence": "证据/state_leaf_raw.json#/functions/1",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x62b8e0",
+      "status": "完整函数静态审阅",
+      "conclusion": "保存恢复ECX并调用62BB80。",
+      "unknown": "该包装器的外部调用语义与返回地址寿命未知。",
+      "evidence": "证据/state_lifecycle_raw.json#/functions/0",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x897440",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "构造中清+32；其它子对象助手未展开。",
+      "unknown": "仅核M+32清零，外部构造助手未展开。",
+      "evidence": "证据/state_lifecycle_raw.json#/functions/1",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0xa205f0",
+      "status": "完整函数静态审阅",
+      "conclusion": "退出回调以静态this调用8974F0。",
+      "unknown": "仅闭合静态this到退出本体，容器与条目精确类型未知。",
+      "evidence": "证据/state_lifecycle_raw.json#/functions/2",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x82a900",
+      "status": "完整函数静态审阅",
+      "conclusion": "返回DWORD[this+80]。",
+      "unknown": "A对象的建立、替换和析构责任未知。",
+      "evidence": "证据/state_source_raw.json#/functions/0",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x82ab80",
+      "status": "完整函数静态审阅",
+      "conclusion": "返回DWORD[this+32]。",
+      "unknown": "U对象的建立、替换和析构责任未知。",
+      "evidence": "证据/state_source_raw.json#/functions/1",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x82bc80",
+      "status": "完整函数静态审阅",
+      "conclusion": "保留this并以this+104调用字符串包装访问器。",
+      "unknown": "S内容写入、重分配及精确字符串ABI未知。",
+      "evidence": "证据/state_source_raw.json#/functions/2",
+      "document": "01_状态串来源与对象边界.txt"
+    },
+    {
+      "va": "0x8976e0",
+      "status": "完整函数静态审阅",
+      "conclusion": "低位门控构造静态单例并登记atexit回调。",
+      "unknown": "M内部业务、线程同步性质及管理对象填充来源未知。",
+      "evidence": "证据/state_source_raw.json#/functions/3",
+      "document": "01_状态串来源与对象边界.txt"
+    }
+  ],
+  "status_counts": {
+    "完整函数静态审阅": 13,
+    "字段或调用路径局部审阅": 9,
+    "既有完整审阅复用": 2
+  }
+}

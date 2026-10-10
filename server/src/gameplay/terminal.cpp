@@ -59,11 +59,24 @@ RichonlineTerminalDecision plan_richonline_terminal(const RichonlineTerminalSnap
     else if(bosses_dead)result.outcome=GameOutcome::win;
     return result;
 }
+RichonlineTerminalDecision plan_richonline_month_limit_terminal(
+    const RichonlineTerminalSnapshot& snapshot,const RichonlineTerminalRules& rules) {
+    auto result=plan_richonline_terminal(snapshot,{},rules);
+    if(result.outcome) throw CodecError("richonline_month_limit_roster_already_terminal");
+    result.outcome=GameOutcome::loss;
+    result.cause=RichonlineTerminalCause::month_limit;
+    return result;
+}
 GameSettlementResult commit_richonline_terminal(Storage& storage,const std::string& username,std::int64_t role,
     GameSettlementRequest request,std::uint16_t game_id,std::uint32_t room_id,
     const RichonlineTerminalDecision& decision,const RichonlineTerminalRules& rules) {
     rules_valid(rules);
-    const auto verified=plan_richonline_terminal(decision.after,{},rules);
+    if(decision.cause!=RichonlineTerminalCause::bankruptcy && decision.cause!=RichonlineTerminalCause::month_limit)
+        throw CodecError("richonline_terminal_cause_invalid");
+    if(decision.cause==RichonlineTerminalCause::month_limit && !decision.newly_eliminated.empty())
+        throw CodecError("richonline_month_limit_elimination_invalid");
+    const auto verified=decision.cause==RichonlineTerminalCause::month_limit ?
+        plan_richonline_month_limit_terminal(decision.after,rules) : plan_richonline_terminal(decision.after,{},rules);
     if(!decision.outcome || decision.outcome!=verified.outcome)throw CodecError("richonline_terminal_not_complete");
     for(const auto slot:decision.newly_eliminated)
         if(std::find(decision.after.eliminated_slots.begin(),decision.after.eliminated_slots.end(),slot)==decision.after.eliminated_slots.end())
@@ -73,6 +86,8 @@ GameSettlementResult commit_richonline_terminal(Storage& storage,const std::stri
     request.delivery=GameSettlementDelivery{game_id,room_id,decision.after.human_slot,rank,rules.result_opaque_18,
         rules.show_text_270,decision.newly_eliminated};
     request.policy.provenance+="; terminal "+rules.provenance;
+    if(decision.cause==RichonlineTerminalCause::month_limit)
+        request.policy.provenance+="; native-unfinished-boss-month-limit-loss-v1";
     return storage.settle_game(username,role,request);
 }
 std::vector<RichonlineSettlementTransmission> recover_richonline_terminal_messages(

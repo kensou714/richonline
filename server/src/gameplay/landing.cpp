@@ -1,4 +1,5 @@
 #include "richonline_boss_landing.hpp"
+#include "richonline_boss_cards.hpp"
 #include <utility>
 #include <limits>
 
@@ -78,8 +79,8 @@ RichonlineLandingResult resolve_richonline_empty_boss_landing(std::uint16_t game
         context.position < 0 || context.property_ref != -1 || (context.occupied_by_other_actor && !context.collision_resolved) ||
         context.road_degree == 0 || context.road_degree > 4)
         throw CodecError("richonline_boss_landing_unsupported");
-    switch (context.static_type) {
-    case -1: case 5: case 6: case 7: case 8: case 10: case 41: case 42: break;
+    if(!richonline_boss_card_reward_tile(context.static_type)) switch (context.static_type) {
+    case -1: case 5: case 6: case 7: case 10: break;
     default: throw CodecError("richonline_boss_landing_unsupported");
     }
     Bytes packet;

@@ -49,6 +49,7 @@ public:
     RichonlineTerminalAbandonResult abandon(const std::string& reason);
     // Combat/NPC cash has already committed. This method never debits it again.
     RichonlineTerminalStep bankrupt(std::span<const std::int8_t> actors);
+    RichonlineTerminalStep month_limit();
     const RichonlineSettlementTransmission* next_transmission() const noexcept;
     // Read-only planner snapshot; no outbox checkpoint before actual sends.
     std::vector<Bytes> pending_game_messages() const;
@@ -59,6 +60,7 @@ public:
     const RichonlineTerminalSnapshot& roster() const noexcept { return context_.roster; }
 private:
     void freeze_achievement();
+    RichonlineTerminalStep deliver_result(const RichonlineTerminalDecision& decision);
     Storage& storage_;
     RichonlineTerminalContext context_;
     RichonlineTerminalPhase phase_{RichonlineTerminalPhase::prepared};

@@ -18,9 +18,12 @@ public:
     std::mt19937 random;
     RichonlineNpcSpawnResult result;
     SpawnBatch(const RichonlineGroundObjects& ground,const RichonlineGroundSnapshot& before,
-        const std::mt19937& source,std::uint16_t game,const RichonlineNpcSpawnPolicy& policy)
+        const std::mt19937& source,std::uint16_t game,const RichonlineNpcSpawnPolicy& policy,
+        std::span<const std::int16_t> reserved = {})
         :after(before.objects),random(source),game_(game),policy_(policy) {
-        for(const auto position:ground.positions()) if(!after.contains(position)) free_.push_back(position);
+        for(const auto position:ground.positions())
+            if(!after.contains(position) && std::find(reserved.begin(),reserved.end(),position)==reserved.end())
+                free_.push_back(position);
     }
     bool spawn(bool chest) {
         if(free_.empty() || count(after)>=policy_.maximum_objects) return false;
@@ -118,11 +121,12 @@ RichonlineNpcSpawner::RichonlineNpcSpawner(std::uint16_t game,RichonlineNpcSpawn
         *unique.begin()<0 || *unique.rbegin()>7 || policy_.initial_gods>unique.size())
         throw CodecError("richonline_npc_spawn_policy_invalid");
 }
-RichonlineNpcSpawnResult RichonlineNpcSpawner::initialize(RichonlineGroundObjects& ground) {
+RichonlineNpcSpawnResult RichonlineNpcSpawner::initialize(RichonlineGroundObjects& ground,
+    std::span<const std::int16_t> reserved) {
     if(initialized_) throw CodecError("richonline_npc_spawn_already_initialized");
     const auto before=ground.snapshot();
     if(count(before.objects)!=0) throw CodecError("richonline_npc_spawn_initial_population_present");
-    SpawnBatch batch(ground,before,random_,game_,policy_);
+    SpawnBatch batch(ground,before,random_,game_,policy_,reserved);
     for(std::size_t i=0;i<policy_.initial_gods;++i) if(!batch.spawn(false)) ++batch.result.unmet_target;
     for(std::size_t i=0;i<policy_.initial_chests;++i) if(!batch.spawn(true)) ++batch.result.unmet_target;
     if(!ground.commit(before,batch.after)) throw CodecError("richonline_ground_stale");

@@ -1,0 +1,53 @@
+// ============================================================================
+// 布局与查询 / 无符号 DWORD 键 / 3604 字节值区
+// ============================================================================
+//
+// [容器 T：当前 ACBD94 实例]
+// T+0      包装/分配器相关首字段；完整类型及用途未定。
+// T+4      head 指针；8C7080 初始化，8C9030 析构后清零。
+// T+8      节点数；8C06C0 返回，8C09C0 插入递增，8BC610 清空归零。
+//
+// [节点 N：分配 0xE28 = 3624 字节]
+// N+0      left，N+4 parent，N+8 right。
+// N+12     无符号 DWORD key。
+// N+16     mapped，3604 字节：100 * 36 字节记录 + DWORD count。
+// N+3620   color 字节；插入修复与 head 初始化使用 0 红、1 黑。
+// N+3621   isNil 字节；真实节点 0，head 1。
+// N+3622   两个尾部字节用途未定，不能当可用容量。
+// 8C6AD0 复制键值对 3608 字节，8C6B23 以 BYTE 写 N+3620=color 参数，
+// 8C6B2C 再独立以 BYTE 写 N+3621=0；伪码合并成 WORD，不代表机器写宽。
+// head 走不同构造，不读取 head 的键值区作业务值。
+//
+// [head 特例]
+// head.left = 最小节点；head.parent = 根；head.right = 最大节点。
+// 空树三个字段都指向 head，count = 0。
+// 8BDEE0 返回 head.left 字段地址；8BDFA0 返回 head.parent 字段地址；
+// 8BDF40 返回 head.right 字段地址。不要按函数地址顺序猜字段顺序。
+// 8C3FA0 同样返回 head.parent 地址。
+//
+// [排序证据]
+// 8BE000 读取两个 DWORD；8BE029..8BE02F 为 cmp / sbb eax,eax / neg eax。
+// 依赖 CF，返回 unsigned(lhs) < unsigned(rhs)，不是有符号整数比较。
+// 0xFFFFFFFF 的键排在 0 之后；参数伪码中的 char 不能据此缩成一字节。
+//
+// [lower_bound / find]
+// 8C0F70 从 head.parent 搜索：node.key < key 走右，否则记候选并走左。
+// 遇 isNil 结束；返回首个 >= key 的节点，找不到返回 head，不分配。
+// 8BDDA0 将该节点写入输出迭代器；8BFFD0 -> 8C3730 写迭代器首 DWORD。
+// 8BC6C0 先 lower_bound，再检查 end 或 key < candidate.key；满足则 end，
+// 否则返回 candidate。8BD380 比较节点身份，查找本身不会新增缓存项。
+// 8C0080 取迭代器节点；8C0030 -> 8C3780 返回 N+12 键值对地址。
+//
+// [operator[] / 默认值]
+// 8BC3A0 缺键时构造默认 mapped、组成 pair，再带 hint 插入；最终返回 N+16。
+// 已有键时直接返回原 mapped，不清零、不替换旧 count。
+// 8BC4E0 对 100 项调用 8BC550，每项 memset 36 字节零，最后 count=0。
+// 8C0390 复制 key DWORD 和 mapped 3604 字节。它不是按 count 变长分配。
+//
+// [公共取值接口]
+// 8BBFA0 / 8BC040 的 ECX 在汇编中明确写为 ACBD94。
+// 两者把栈参数地址传给 find；比较器最终读取完整 DWORD，伪码 char a1 不可信。
+// 缺键返回 0；有键后才 operator[]，此路径不会因正常查找而创建缺键。
+// 8BBFA0 返回 mapped 指针；8BC040 返回 DWORD[mapped+3600]。
+// 因而 count=0 与缺键都返回零；需要区分时应先取指针。
+// 返回指针是缓存节点内的借用地址，clear / 析构后失效，调用者不能独立释放。

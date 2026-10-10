@@ -218,6 +218,15 @@ BootstrapBlobs load_bootstrap_blobs(const std::filesystem::path& path) {
             blobs.room_unknown_prefix = prefix.get<std::uint32_t>();
         }
         blobs.grant_test_rp_certificate=config.value("grant_test_rp_certificate",false);
+        if(config.value("unlock_all_boss_maps_for_testing",false)) {
+            // NEW6A1660 indexes ordinary stages10..21 and special Zhao stage180.
+            // Preserve a nonzero C string prefix; this changes only the lobby UI.
+            blobs.stage_progress.resize(std::max<std::size_t>(blobs.stage_progress.size(),182),1);
+            std::replace(blobs.stage_progress.begin(),blobs.stage_progress.end()-1,std::uint8_t{0},std::uint8_t{1});
+            for(std::size_t index=10;index<=21;++index) blobs.stage_progress[index]=2;
+            blobs.stage_progress[180]=2;
+            blobs.stage_progress.back()=0;
+        }
         if (config.contains("social_server_id")) blobs.social_server_id=integer(config.at("social_server_id"));
         if(config.contains("richonline_mail_policy")) {
             const auto& policy=config.at("richonline_mail_policy");

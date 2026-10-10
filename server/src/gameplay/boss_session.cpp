@@ -9,9 +9,11 @@
 #include "richonline_opening_hand.hpp"
 #include "richonline_mine_landing_policy.hpp"
 #include "richonline_portal_landing.hpp"
+#include "richonline_special_session.hpp"
 #include "original_game_values.hpp"
 #include "richonline_research_cards.hpp"
 #include <algorithm>
+#include <bit>
 
 namespace richnet {
 RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& resources,
@@ -39,6 +41,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     std::function<std::optional<RichonlinePortalLandingPlan>(const RichonlineLandingContext&)> portal_landing;
     const auto& static_types=package.resource_rules.expected_static_types;
     if (std::find(static_types.begin(),static_types.end(),28)!=static_types.end() ||
+        std::find(static_types.begin(),static_types.end(),58)!=static_types.end() ||
         std::find(static_types.begin(),static_types.end(),61)!=static_types.end()) {
         const auto map_rules=load_richonline_map_rule_resources(resources,package,category);
         if (!policy.portal_scripted_state)
@@ -46,9 +49,10 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         portal_landing=[topology,pairs=map_rules.portals,read_state=policy.portal_scripted_state,
             game=startup.init.game_server_id](const RichonlineLandingContext& context)
             ->std::optional<RichonlinePortalLandingPlan> {
-            if (context.static_type!=28 && context.static_type!=61) return {};
+            if (context.static_type!=28 && context.static_type!=58 && context.static_type!=61) return {};
             const auto raw=read_state();
             if (raw<-1 || raw>2) throw CodecError("richonline_boss_portal_scripted_state_invalid");
+            if(context.static_type==58) return plan_richonline_random_teleport_landing(game,topology,context,raw!=-1);
             return plan_richonline_portal_landing(game,topology,
                 pairs[context.static_type==28 ? 0U : 1U],context,raw!=-1);
         };
@@ -65,6 +69,18 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     auto payment=policy.payment ? std::make_shared<RichonlineGamePayment>(ledger,startup.init.local_slot,
         charges,policy.payment->debit) : nullptr;
     auto balances=std::make_shared<RichonlineBossLandingState>(startup.init.game_server_id,ledger);
+    std::shared_ptr<RichonlineMerchantSession> merchant;
+    if(std::find(static_types.begin(),static_types.end(),57)!=static_types.end()) {
+        if(!policy.portal_scripted_state)
+            throw CodecError("richonline_boss_merchant_scripted_state_required");
+        merchant=std::make_shared<RichonlineMerchantSession>(topology,ledger,startup.init.game_server_id,
+            startup.room.key,std::string(package.id),log,
+            [read_state=policy.portal_scripted_state](const RichonlineLandingContext&)->std::optional<std::int8_t> {
+                const auto raw=read_state();
+                if(raw<-1 || raw>2) throw CodecError("richonline_boss_merchant_scripted_state_invalid");
+                return static_cast<std::int8_t>(raw);
+            });
+    }
     auto cards=policy.cards ? std::make_shared<RichonlineBossCards>(chance,
         startup.init.game_server_id,package.configure(*policy.cards)) : nullptr;
     if(cards) {
@@ -102,15 +118,16 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         [] { return RichonlineBossProperty::Clock::now(); });
     const auto package_id=std::string(package.id);
     RichonlineBossTurnRules rules{policy.opaque_turn7,policy.inactive_ui_dice,policy.route_wire,policy.random,
-        [log,property,balances,shop,package_id,key=startup.room.key,game=startup.init.game_server_id](const RichonlineLandingContext& landing) {
+        [log,property,balances,merchant,shop,cards,package_id,key=startup.room.key,game=startup.init.game_server_id](const RichonlineLandingContext& landing) {
             try {
                 if (auto controlled=resolve_richonline_controlled_static_landing(game,landing))
                     return std::move(*controlled);
-                if ((landing.static_type==28 || landing.static_type==61) && landing.property_ref==-1) {
+                if ((landing.static_type==28 || landing.static_type==58 || landing.static_type==61) && landing.property_ref==-1) {
                     Bytes stop;append_le(stop,0x4013,2);append_le(stop,game,2);
                     append_le(stop,static_cast<std::uint16_t>(landing.position),2);
                     return RichonlineLandingResult{{std::move(stop)},RichonlineLandingProgress::complete};
                 }
+                if(merchant) if(auto result=merchant->land(landing)) return std::move(*result);
                 if (auto result=property->land(landing)) {
                     const auto building=property->building(landing.property_ref);
                     if (log) log("richonline_property_landed",{{"room",key},{"actor_slot",landing.actor_slot},
@@ -119,7 +136,18 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
                         {"pending_opcode",result->pending_opcode.value_or(0)},{"package",package_id},{"level","info"}});
                     return std::move(*result);
                 }
-                if (shop) if (auto result=shop->land(landing)) return std::move(*result);
+                if (shop) if (auto result=shop->land(landing)) {
+                    if (log && shop->active()) {
+                        auto offers=nlohmann::json::array();
+                        for (const auto& offer:shop->offers()) offers.push_back({{"card",offer.card_id},
+                            {"count",offer.count},{"price",offer.card_id==-1 ? 0U : shop->card_price(offer.card_id)}});
+                        auto inventory=nlohmann::json::array();
+                        for (const auto& slot:cards->inventory()) inventory.push_back({{"card",slot.card_id},{"count",slot.count}});
+                        log("richonline_shop_opened",{{"room",key},{"package",package_id},{"position",landing.position},
+                            {"tickets",shop->points()},{"offers",offers},{"inventory",inventory},{"duration_ms",10000},{"level","info"}});
+                    }
+                    return std::move(*result);
+                }
                 return balances->land(landing);
             } catch (const CodecError& error) {
                 if (log) log("richonline_boss_landing_rejected",{{"room",key},{"actor_slot",landing.actor_slot},
@@ -128,11 +156,29 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
                     {"package",package_id},{"runtime_client_verified",false},{"level","warning"}});
                 throw;
             }
-        },[property,shop,log,package_id,key=startup.room.key](View plain) {
+        },[property,shop,cards,log,package_id,key=startup.room.key](View plain) {
             const auto opcode=read_le(plain.first(2));
             if (opcode==0x20 || opcode==0x37 || opcode==0x38 || opcode==0x39) return property->decide(plain);
             if (shop && shop->active()) {
-                return shop->handle(plain);
+                const auto before=shop->points();
+                const auto index=plain.size()>=5 ? static_cast<int>(std::bit_cast<std::int8_t>(plain[4])) : -1;
+                std::int16_t card=-1,count=0;
+                if (opcode==0x30 && index>=0 && index<12) {
+                    const auto& offer=shop->offers()[static_cast<std::size_t>(index)];
+                    card=offer.card_id; count=offer.count;
+                } else if (opcode==0x31 && index>=0 && index<8) {
+                    const auto& slot=cards->inventory()[static_cast<std::size_t>(index)];
+                    card=slot.card_id; count=slot.count;
+                }
+                const auto price=card==-1 ? 0U : shop->card_price(card);
+                const auto empty=std::count_if(cards->inventory().begin(),cards->inventory().end(),
+                    [](const auto& slot) { return slot.card_id==-1; });
+                auto result=shop->handle(plain);
+                if (log) log("richonline_shop_request",{{"room",key},{"package",package_id},{"opcode",opcode},
+                    {"index",index},{"card",card},{"count",count},{"price",price},{"sale_refund",opcode==0x31 ? price/2 : 0U},
+                    {"tickets_before",before},{"tickets_after",shop->points()},{"empty_slots_before",empty},
+                    {"decision",shop->last_decision()},{"active",shop->active()},{"level","info"}});
+                return result;
             }
             if (log) log("richonline_boss_event_unimplemented",{{"room",key},{"opcode",opcode},
                 {"plain_bytes",plain.size()},{"package",package_id},{"runtime_client_verified",false},{"level","warning"}});
@@ -142,6 +188,17 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     rules.research_turn_started=[property](std::uint8_t actor){property->advance_research(actor);};
     rules.cards=std::move(cards);
     rules.property=property;
+    if(startup.human_profile_slots) {
+        const auto equipment=(*startup.human_profile_slots)[2];
+        rules.human_purchase_half_price=equipment>0 && equipment<=0x7fffffffU;
+    }
+    rules.raw_authority=policy.raw_authority;
+    const auto card_values=load_original_game_values(resources/"Data"/"GValue.kpd");
+    const auto jail_days=card_values.require(10),alliance_days=card_values.require(11);
+    if(jail_days<1 || jail_days>127 || alliance_days<1 || alliance_days>127)
+        throw CodecError("richonline_auxiliary_card_duration_invalid");
+    rules.jail_days=static_cast<std::uint8_t>(jail_days);
+    rules.alliance_days=static_cast<std::uint8_t>(alliance_days);
     if (rules.cards && policy.hibernate_raw_actor)
         rules.hibernate=std::make_shared<const RichonlineHibernateTurnPolicy>(
             RichonlineHibernateTurnPolicy{chance,RichonlineHibernateRules::load(resources),policy.hibernate_raw_actor});
@@ -190,10 +247,12 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     }
     rules.ledger=ledger;
     if (policy.terminal) {
+        rules.month_limit_days=static_cast<std::uint8_t>(stage.game_months*30U);
         rules.terminal=[terminal=policy.terminal](const RichonlineTurnTerminalContext& context) {
             std::vector<std::int8_t> actors;
             for (const auto actor:context.bankrupt_actors) actors.push_back(static_cast<std::int8_t>(actor));
-            const auto step=terminal->bankrupt(actors);
+            const auto step=context.reason==RichonlineTerminalReason::month_limit ?
+                terminal->month_limit() : terminal->bankrupt(actors);
             if (step.action==RichonlineTerminalAction::abort_live_game)
                 throw CodecError(step.diagnostic);
             if (step.action!=RichonlineTerminalAction::deliver)
@@ -222,7 +281,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         // Validate the continuation before an NPC changes ground occupancy,
         // cards, possession or funds. This is a capability check, not a
         // cross-module transaction or a substitute for collision handling.
-        rules.npc_landing_preflight=[topology,property,shop,balances,portal_landing,game=startup.init.game_server_id,
+        rules.npc_landing_preflight=[topology,property,shop,balances,merchant,portal_landing,game=startup.init.game_server_id,
             has_bank=policy.bank.has_value()](const RichonlineLandingContext& context) {
             if (context.occupied_by_other_actor && !context.collision_resolved)
                 throw CodecError("richonline_boss_npc_collision_continuation_unimplemented");
@@ -232,17 +291,18 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             const auto& cell=topology.cell(context.position);
             if (!cell.walkable || cell.static_type!=context.static_type || cell.property_ref!=context.property_ref)
                 throw CodecError("richonline_boss_npc_landing_context_invalid");
-            if (cell.static_type==28 || cell.static_type==61) {
+            if (cell.static_type==28 || cell.static_type==58 || cell.static_type==61) {
                 if (!portal_landing || !portal_landing(context))
                     throw CodecError("richonline_boss_portal_plan_missing");
                 if (context.property_ref==-1) return;
             }
             if (resolve_richonline_controlled_static_landing(game,context)) return;
+            if (merchant && merchant->validate_landing(context)) return;
             if (cell.static_type==9 && has_bank && cell.property_ref==-1) return;
             if (property->validate_landing(context)) return;
             if (shop && shop->validate_landing(context)) return;
             if (context.property_ref==-1 &&
-                ((!context.synthetic_actor && (cell.static_type==8 || cell.static_type==41 || cell.static_type==42)) ||
+                ((!context.synthetic_actor && richonline_boss_card_reward_tile(cell.static_type)) ||
                  ((cell.static_type==68 || cell.static_type==69 || cell.static_type==70) &&
                   context.actor_status.possession!=7 && !context.actor_status.sleepwalking && !context.actor_status.frozen)))
                 return;
@@ -323,7 +383,8 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         if (shop && shop->active()) {
             auto result=shop->poll();
             if (result) {
-                if (log) log("richonline_shop_timeout",{{"room",key},{"package",package_id},{"decision","exit"},{"level","info"}});
+                if (log) log("richonline_shop_timeout",{{"room",key},{"package",package_id},
+                    {"decision",shop->last_decision()},{"tickets",shop->points()},{"level","info"}});
             }
             return result;
         }

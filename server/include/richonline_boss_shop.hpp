@@ -35,6 +35,8 @@ public:
     bool active() const noexcept { return deadline_.has_value(); }
     std::uint32_t points() const { return ledger_ ? ledger_->snapshot(0).funds.tickets : points_; }
     std::uint32_t price() const { return catalog_.price(1038); }
+    std::uint32_t card_price(std::int16_t card) const { return catalog_.price(card); }
+    const char* last_decision() const noexcept { return last_decision_; }
     std::optional<std::uint32_t> refresh_cost() const noexcept { return refresh_cost_; }
     const RichonlineShopStock& offers() const noexcept { return offers_; }
 private:
@@ -51,8 +53,9 @@ private:
     std::shared_ptr<RichonlineGameLedger> ledger_;
     unsigned refreshes_ = 0;
     std::optional<Clock::time_point> deadline_;
+    const char* last_decision_ = "not_open";
     Bytes response(std::uint16_t opcode,std::int8_t index) const;
     Bytes stock(const RichonlineShopStock& offers,bool refreshed) const;
-    RichonlineLandingResult close();
+    RichonlineLandingResult close(const char* reason);
 };
 }

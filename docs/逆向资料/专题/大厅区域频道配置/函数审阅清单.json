@@ -1,0 +1,30 @@
+{
+  "scope": "大厅区域/频道配置解析候选；只计目标函数的静态局部语义",
+  "functions": [
+    {
+      "va": "0x69eee0",
+      "status": "静态函数语义已审阅（邻接对照）",
+      "conclusion": "从 0x601369 返回对象+256取得 URL，a4=0；按 areasum/channelsum 展平 308 字节频道记录，结果写 this+80/+84。",
+      "evidence": "证据/lobby_regions_ida_raw.json#/functions/0",
+      "unknown": "上游调用条件、下载函数内部行为、记录+0初值和运行时配置内容未确认。"
+    },
+    {
+      "va": "0x69f750",
+      "status": "静态函数语义已审阅",
+      "conclusion": "从 0x601369 返回对象+516取得 URL，a4=1；先执行五次初始化调用，再按区域和频道数量填 308 字节记录，包括可选 LobbyType；结果写 this+92/+96。",
+      "evidence": "证据/lobby_regions_ida_raw.json#/functions/1",
+      "unknown": "初始化辅助函数的职责、LobbyType文本映射、上游调用时机和实际连接效果未确认。"
+    },
+    {
+      "va": "0x6a0130",
+      "status": "静态函数语义已审阅",
+      "conclusion": "从 0x601369 返回对象+516取得 URL，a4=1；五次初始化调用位于 area 查找成功之后，其余频道字段与 69F750 同形；结果写 this+92/+96。",
+      "evidence": "证据/lobby_regions_ida_raw.json#/functions/2",
+      "unknown": "五次初始化调用移动的业务原因、上游选择条件及辅助函数副作用未确认。"
+    }
+  ],
+  "not_counted": [
+    "0x623030、0x82c470、0x87dfe0 只导出上下文伪代码，未全字节审阅",
+    "0x60abda、0x5ffe60、0x60617f 是已核 E9 跳板，不作为业务函数覆盖"
+  ]
+}

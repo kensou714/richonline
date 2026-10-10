@@ -1,0 +1,51 @@
+// ============================================================================
+// TeachMode 元数据：启动调用、双遍扫描与记录布局
+// ============================================================================
+// 原证：证据/boss_metadata_raw.json#/functions/1；启动调用见 00 入口。
+// 以下偏移均为十进制字节；R=DWORD[this+4]，N=DWORD[this+0]。
+//
+// [事实] 0x623EE0 启动链 0x623FFF 调 0x609992，E9 相对跳板到 0x8103B0，
+//         FileName="Data\\TeachMode.kpd"。该函数自身接受文件名参数，
+//         不内嵌 BossWar 路径。它先调用 60FD9C，返回 0 时收尾并返回 0；
+//         非 0 时初始化解析上下文。60FD9C 的完整错误语义未在本篇审阅。
+// [事实] 两处 0xA2E874、0xA2E878 的 PE 字节均为 "MAP\0"；函数先循环
+//         608335("MAP") 并对 N 逐次加一，然后调 60D524(0,0)；若 N>0，
+//         分配 368*N 字节、按步长 0x170=368 构造 N 个元素，R 指向该数组。
+//         第二遍循环 608335("MAP")，按每段的 indx 写字段。
+// [事实] 函数入口内没有将 N 置零的指令；首次调用前的 N 初值依赖外部对象
+//         初始化。本篇只确认“递增 N”，不把当前资源六段等同于任意运行时 N。
+//
+// 第二遍每段的 R+368*atoi(indx) 字段（偏移/容量/输入键）：
+// +0       DWORD       indx 的 atoi 结果
+// +4       128 字节    mapName，调用 60FDE2(...,128)
+// +132     128 字节    bossName，调用 60FDE2(...,128)
+// +260     DWORD       bossRole
+// +264     DWORD       bossMood
+// +268..315 12 DWORD  bossPet, bossVehicle, bossLand, bossDeng, bossDice,
+//                      bossMove, bossSuit, bossGlass, bossCover, bossMask,
+//                      bossKitbag, bossGowith（按此顺序）
+// +316     DWORD       firstExp
+// +320     DWORD       firstGold
+// +324     DWORD       againExp
+// +328     DWORD       againGold
+// +332     DWORD       firstPropNum
+// +336..367 8 DWORD   firstProp 列表可容纳的记录尾部空间
+//
+// [事实] 12 个装备键只有 609528(key) 非零时才执行提取和写入；其它列出的
+//         数字键在此函数里没有同样的 if 门控。数字路径为 60FDE2 向栈上的
+//         字符缓冲读取最多传参 128，再经 j__atoi 写 DWORD。该调用形态
+//         不证明助手必然检查字段存在、溢出或整数范围。
+// [事实] firstPropNum 的有符号比较 >0 才查询 firstProp；循环 i 从 0
+//         到 <firstPropNum，逐次调用 612C1D(i, String, 128, 44)，经 atoi
+//         写 R+368*indx+336+4*i。44 是逗号的 ASCII 值；612C1D 的完整
+//         分隔、缺项行为需单独审阅。
+// [事实] 当前 Data/TeachMode.kpd 解包后有六个 [MAP]，indx=0..5，
+//         mapName 分别为 TC_CM_1.emp、TC_CM_2.emp、TC_CM_3.emp、
+//         TC_PK_1.emp、TC_PK_2.emp、TC_PK_3.emp；前五项 firstPropNum=0，
+//         最后一项为 1，firstProp 文本为 2027。这是当前资源样本，不是
+//         对解析器可接受输入的枚举。其余数值见离线验证 JSON。
+//
+// [事实] 0x810D20 对 i=0..N-1 比较传入字符串与 R+368*i+4 处 mapName，
+//         相等返回 i，否则返回 -1。返回的是数组序号，不是记录的 indx 值；
+//         当前样本中两者碰巧相同。0x810360 在 this+4 非空时 delete[] 并
+//         清空指针；它自身未将 N 清零。

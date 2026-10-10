@@ -1,0 +1,63 @@
+{
+  "scope": "A2F720 相邻对象表与 A2F730 工厂桥的局部静态审阅；窗口导出不等于运行时动态分派",
+  "pe_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "declared_functions": 6,
+  "complete_function_exports": 3,
+  "alias_thunks": 3,
+  "functions": [
+    {
+      "va": "0x856090",
+      "status": "完整块导出且写表局部链已审阅",
+      "conclusion": "1 块、33 条指令；8560BE 将 A2F720 写入 this 首 DWORD，随后写 this+8 和 this+0Ch 两参数。",
+      "evidence": ["证据/a2f720_raw.json/function", "证据/validation.json", "01_相邻表与构造归属.txt"],
+      "boundary": "未解释 606652 内部、对象分配来源和运行时表项调用。"
+    },
+    {
+      "va": "0x856180",
+      "status": "完整块导出且写表局部链已审阅",
+      "conclusion": "1 块、27 条指令；经 60810F 调 8563C0 先写 A2F738，随后 8561AE 将 A2F72C 覆写到同一 this 首 DWORD。",
+      "evidence": ["证据/a2f720_raw.json/adjacent_function", "证据/constructor_chain.json", "证据/validation.json", "01_相邻表与构造归属.txt"],
+      "boundary": "未证明与 856090 的继承关系或运行时动态调用。"
+    },
+    {
+      "va": "0x8563c0",
+      "status": "完整块导出且写表局部链已审阅",
+      "conclusion": "1 块、22 条指令；8563E6 将 A2F738 写入 this 首 DWORD；可由 856180 经 60810F 到达。",
+      "evidence": ["证据/constructor_chain.json/function", "证据/validation.json", "01_相邻表与构造归属.txt"],
+      "boundary": "不证明 C++ 继承关系或中间表值在运行时被消费。"
+    },
+    {
+      "va": "0x60ecc6",
+      "status": "直接跳板目标已核",
+      "conclusion": "A2F730 的数据项指向此五字节 E9 桥；其目标精确为 8553F0。",
+      "evidence": ["证据/a2f720_raw.json/alias", "证据/validation.json"],
+      "boundary": "不把桥计为独立业务实现；不证明表项被运行时调用。"
+    },
+    {
+      "va": "0x60efb4",
+      "status": "直接跳板目标已核",
+      "conclusion": "五字节 E9 桥精确跳至 856090。",
+      "evidence": ["证据/a2f720_raw.json/factory_alias", "证据/validation.json"],
+      "boundary": "不把桥计为独立业务实现；上游调用者未作语义审阅。"
+    },
+    {
+      "va": "0x60810f",
+      "status": "直接跳板目标已核",
+      "conclusion": "856180 于 8561A6 调此五字节 E9 桥，精确跳至 8563C0。",
+      "evidence": ["证据/constructor_chain.json/alias", "证据/validation.json"],
+      "boundary": "不把桥计为独立业务实现；不证明 C++ 继承关系。"
+    }
+  ],
+  "reused_dependencies": [
+    {
+      "va": "0x8553f0",
+      "evidence": "../82BBE0高频数据入口/证据/table_provenance.json/functions/1",
+      "boundary": "既有完整函数导出和局部分配链结论；本专题不重复计数。"
+    },
+    {
+      "va": "0x82cad0",
+      "evidence": "../82BBE0高频数据入口/证据/table_provenance.json/functions/0",
+      "boundary": "既有完整函数导出和局部构造链结论；本专题不重复计数。"
+    }
+  ]
+}

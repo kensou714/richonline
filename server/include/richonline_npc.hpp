@@ -96,6 +96,10 @@ struct RichonlineBadluckPlan {
     RichonlineNpcContinuation continuation;
     bool expects_ack=false;
 };
+// Explicit server policy: lose floor(total card units / 2), capped by4024's
+// four entries and the map limit. Sampling is weighted without replacement.
+std::array<std::int8_t,4> select_richonline_badluck_half(RichonlineChanceInventory,
+    std::uint8_t limit,const std::function<std::size_t(std::size_t)>& choose);
 // Completes an already attached NPC2. 4024 carries four main-inventory slot
 // indices, each consuming one card; unused entries are the protocol sentinel -1.
 RichonlineBadluckPlan plan_richonline_badluck(std::uint16_t game,RichonlineDeityMoneyOrigin,

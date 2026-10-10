@@ -1,0 +1,56 @@
+// ==========================================================================
+// 固定 NPC 记录与读取器 806A30
+// ==========================================================================
+// [事实] 8054E0 在 Ko 全局对象 +0x2E0 构造 30 条记录，步长 0x238。
+// 8054E0 将对象 +0x4584 的 NPC 计数置 0；30*0x238+0x2E0=0x4570。
+// MAP 的 +0x457C/+0x4580 与 NPC 计数并非同一个字段。
+// 806A30 遍历 [NPC]，所有写入使用 +0x2E0+计数*0x238，读完节后计数++。
+// 这里的计数是节的顺序，不是 indx；当前资源 indx=0..7 恰好顺序排列。
+//
+// [事实] 以下偏移均相对于一条 NPC 记录起点，不是玩家/消息/全局对象：
+//   +0x000 int32 indx       atoi 写入；配置编号。
+//   +0x004 int32 day        atoi 写入；键原字节在 A2E650 为 64 61 79 00。
+//   +0x008 int32 newRatio   atoi 写入；8074F0 复制到游戏对象 +0x1478C。
+//   +0x00C char name[128]   读取上限参数128。
+//   +0x08C char speak[128]  同上。
+//   +0x10C int32 speakRatio atoi 写入；消费者做 rand()%ratio+1==ratio。
+//   +0x110 char startSpeak[128]
+//   +0x190 char endSpeak[128]
+//   +0x210 int32 cash       atoi 写入；7C08D0 经字段应用访问器复制。
+//   +0x214 int32 dice       atoi 写入；7C08D0 经字段应用访问器复制。
+//   +0x218 int32 suit       atoi 写入，本专题未闭合外观消费者。
+//   +0x21C uint8 harm_bomb
+//   +0x21D uint8 harm_missile
+//   +0x21E uint8 harm_fire
+//   +0x21F uint8 harm_frost
+//   +0x220 uint8 random     仅当 atoi(random)==1 时写1，否则写0。
+//   +0x221..+0x223          保留；本专题不赋予语义。
+//   +0x224 int32 num        atoi 写入；键原字节在 A2E688 为 6E 75 6D 00。
+//   +0x228 uint8 benefit_blood
+//   +0x229 uint8 benefit_recovery
+//   +0x22A uint8 benefit_attack
+//   +0x22B                 保留；本专题不赋予语义。
+//   +0x22C pointer effects  分配 4*tile 字节，存 effect0..effect(tile-1)。
+//   +0x230 int32 benefitArg recovery/attack 第二个逗号项，经atoi。
+//   +0x234 int32 tile       效果数组条数；消费时亦为距离上界。
+//
+// [事实] harm 逐个逗号项比较 bomb/missile/fire/frost，命中相应 byte=1。
+// benefit 只比较第0项 blood/recovery/attack；不是多个 benefit 的列表。
+// recovery 或 attack flag 为真才读第1项并写 +0x230。
+// A2E5F8 是直接 C 字符串 NPC；汇编是 push offset，IDA off_名称不是解引用。
+//
+// [事实] 60D295 -> 808A50构造每条记录：indx/day/cash/dice/suit/num/
+// benefitArg置-1；四个harm及三个benefit flag、random、effects指针置0；
+// 四个文本数组仅首byte置0；speakRatio置0、tile置3。
+// newRatio(+8)在该构造器未见初始化，缺键时不能声称默认0。
+// 缺tile时记录仍为tile=3、effects=0；blood消费不能据此获得有效默认数组。
+//
+// [事实] 打开文件失败返回0；打开成功后循环完成返回1，不按字段完整性返回失败。
+// 记录写入循环未见计数<30 的检查，indx/name 等可选键缺失不显式拒绝。
+// tile 直接参与 4*tile 分配和循环；未见上限、分配失败或非负数校验。
+// effect%d 查键结果未检测便读取并 atoi，不能承诺缺项会稳定填0。
+// 重复调用806A30之前本函数未重置计数，也未释放已有 effects。
+// 805550 根据计数遍历记录 +0x22C 并释放非零指针；计数污染会影响释放范围。
+//
+// [未知] 文本读取器对128上限的精确终止/截断规则不在本专题完整复核范围；
+// 不将读取器的参数128自动解释为必定有NUL或任意输入安全。

@@ -62,7 +62,8 @@ Policy policy(const Json& config, const std::filesystem::path& bootstrap) {
     fields(config,{"version","provenance","client_root","advertised_ipv4","port","manager","admission_ttl_ms",
         "spawn_policy","token_policy","filler_policy","wire"});
     if (number(config.at("version"),1,1) != 1 || number(config.at("manager"),0,65535) != 0 ||
-        config.at("spawn_policy") != "resource-straight-road-farthest-v1" ||
+        (config.at("spawn_policy") != "resource-straight-road-farthest-v1" &&
+         config.at("spawn_policy") != "resource-straight-road-random-v1") ||
         config.at("token_policy") != "system-random-echo" || config.at("filler_policy") != "system-random-unconsumed")
         throw CodecError("richonline_boss_host_policy_unsupported");
     const auto root = config.at("client_root").get<std::string>();
@@ -100,6 +101,15 @@ Bytes random_bytes(std::size_t size) {
     if (!BCRYPT_SUCCESS(BCryptGenRandom(nullptr,result.data(),static_cast<ULONG>(size),BCRYPT_USE_SYSTEM_PREFERRED_RNG)))
         throw CodecError("richonline_boss_host_random_failed");
     return result;
+}
+std::size_t random_spawn(std::size_t upper_bound) {
+    if(upper_bound==0 || upper_bound>std::numeric_limits<std::uint32_t>::max())
+        throw CodecError("richonline_boss_host_spawn_bound_invalid");
+    const auto bound=static_cast<std::uint32_t>(upper_bound);
+    const auto threshold=(std::uint32_t{0}-bound)%bound;
+    std::uint32_t value;
+    do { const auto bytes=random_bytes(4); value=read_le(bytes); } while(value<threshold);
+    return value%bound;
 }
 void validate_strategy(const RichonlineStartupPlan& strategy, const RichonlineBossStartup& startup) {
     try {
@@ -156,7 +166,7 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_host(Storage& storage,
                     std::chrono::system_clock::now().time_since_epoch()).count();
                 const auto inventory=storage.lobby_inventory_for_role(room.owner,now);
                 const auto startup = build_richonline_boss_startup(selected.resources,room,
-                    {static_cast<std::int16_t>(room.owner),inventory.equipment,skills,selected.wire});
+                    {static_cast<std::int16_t>(room.owner),inventory.equipment,skills,selected.wire,random_spawn});
                 const auto map=selected_map_identity(startup.room.description.extension);
                 const auto entropy = random_bytes(12);
                 RichonlineGameRedirect redirect{selected.address,bound_port,read_le(View(entropy).first(4)),{}};
@@ -176,7 +186,9 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_host(Storage& storage,
                 if (!callbacks.authorize_admission(admission)) throw CodecError("richonline_boss_host_plan_authorization_failed");
                 if (log) log("richonline_boss_plan_prepared",{{"channel",room.channel},{"room",room.key},{"actor",room.owner},
                     {"settings_revision",settings.at("revision")},{"map",map.name},{"category",map.category},{"game_server_id",selected.wire.game_server_id},
-                    {"calendar_counter",selected.wire.calendar_counter},{"runtime_client_verified",false}});
+                    {"calendar_counter",selected.wire.calendar_counter},
+                    {"human_start",startup.init.participants[0].position},{"boss_start",startup.init.participants[1].position},
+                    {"runtime_client_verified",false}});
                 return std::vector<RichonlineGamePlan>{{room.participants.front().connection,room.owner,redirect,
                     [callbacks,admission] { return callbacks.admitted(admission); },
                     [callbacks,admission](const Envelope299& envelope,View plain) { return callbacks.message(admission,envelope,plain); },

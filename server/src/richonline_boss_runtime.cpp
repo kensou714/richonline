@@ -151,16 +151,28 @@ std::optional<TerminalPolicy> terminal_policy(const Json& config) {
 std::optional<RichonlineCombatWorldPolicy> combat_policy(const Json& config) {
     if (!config.contains("richonline_combat_policy")) return {};
     const auto& value=config.at("richonline_combat_policy");
-    fields(value,{"provenance","range_name","manhattan_radius","projectile_candidates","mine_landing_policy",
-        "neutral_human_equipment"},"richonline_combat_policy_fields_invalid");
+    const bool viewport=value.value("range_name",std::string{})=="server_boss_centered_viewport";
+    if(viewport)
+        fields(value,{"provenance","range_name","viewport_width","viewport_height","projectile_candidates",
+            "mine_landing_policy","neutral_human_equipment"},"richonline_combat_policy_fields_invalid");
+    else
+        fields(value,{"provenance","range_name","manhattan_radius","projectile_candidates","mine_landing_policy",
+            "neutral_human_equipment"},"richonline_combat_policy_fields_invalid");
     (void)source(value.at("provenance"),"richonline_combat_policy_provenance_required");
-    if (value.at("range_name")!="server_manhattan_tile_radius" || value.at("mine_landing_policy")!="closed-static-road-v1" ||
+    if ((!viewport && value.at("range_name")!="server_manhattan_tile_radius") ||
+        value.at("mine_landing_policy")!="closed-static-road-v1" ||
         (value.at("projectile_candidates")!="road_tiles" && value.at("projectile_candidates")!="all_map_tiles"))
         throw CodecError("richonline_combat_policy_scope_invalid");
-    RichonlineCombatWorldPolicy result{{"server_manhattan_tile_radius",
-        static_cast<std::uint16_t>(number(value.at("manhattan_radius"),1,64)),
+    RichonlineCombatWorldPolicy result{{value.at("range_name").get<std::string>(),
+        viewport ? std::uint16_t{0} : static_cast<std::uint16_t>(number(value.at("manhattan_radius"),1,64)),
         value.at("projectile_candidates")=="road_tiles" ? RichonlineProjectileCandidates::road_tiles : RichonlineProjectileCandidates::all_map_tiles},
         {},{},{},{},{}};
+    if(viewport) {
+        if(result.range.projectile_candidates!=RichonlineProjectileCandidates::road_tiles)
+            throw CodecError("richonline_combat_policy_viewport_requires_roads");
+        result.range.viewport_width=static_cast<std::uint16_t>(number(value.at("viewport_width"),64,4096));
+        result.range.viewport_height=static_cast<std::uint16_t>(number(value.at("viewport_height"),48,4096));
+    }
     const auto& neutral=value.at("neutral_human_equipment");
     if (!neutral.is_array() || neutral.size()>32) throw CodecError("richonline_combat_policy_equipment_invalid");
     for (const auto& id:neutral) result.neutral_human_equipment.push_back(static_cast<std::uint16_t>(number(id,1,4095)));
@@ -207,26 +219,7 @@ std::size_t uniform_choice(std::size_t upper_bound) {
     return random%bound;
 }
 std::array<std::int8_t,4> uniform_lost_cards(RichonlineChanceInventory inventory,std::uint8_t limit) {
-    if (limit>4) throw CodecError("richonline_map_badluck_limit_invalid");
-    std::array<std::int8_t,4> selected{-1,-1,-1,-1};
-    for (std::size_t trial=0;trial<limit;++trial) {
-        std::size_t units=0;
-        for (const auto& slot:inventory) {
-            if (slot.count<0 || (slot.card_id==-1 && slot.count!=0))
-                throw CodecError("richonline_badluck_inventory_invalid");
-            units+=static_cast<std::size_t>(slot.count);
-        }
-        if (!units) break;
-        auto draw=uniform_choice(units);
-        for (std::size_t slot=0;slot<inventory.size();++slot) {
-            const auto count=static_cast<std::size_t>(inventory[slot].count);
-            if (draw>=count) { draw-=count;continue; }
-            selected[trial]=static_cast<std::int8_t>(slot);
-            if (--inventory[slot].count==0) inventory[slot]={};
-            break;
-        }
-    }
-    return selected;
+    return select_richonline_badluck_half(inventory,limit,uniform_choice);
 }
 std::string payment_identity() {
     std::array<std::uint8_t,16> bytes;
@@ -286,6 +279,7 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_runtime(
             RichonlineStartupPlan raw_plan{startup.init,startup.snapshot,startup.envelope,{},{},{}};
             auto raw_authority=attach_richonline_raw_authority(raw_plan);
             const bool closed_raw=package.raw_status_policy==RichonlineMapRawStatusPolicy::closed_boss_initial_status;
+            if(closed_raw) session_policy.raw_authority=raw_authority;
             if (closed_raw) session_policy.hibernate_raw_actor=[raw_authority](std::uint8_t actor) {
                 return raw_authority->actor(actor);
             };
@@ -322,10 +316,8 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_runtime(
             }
             if (selected_combat) {
                 session_policy.combat=*selected_combat;
-                // closed_initial_status_policy uses constructor-proven raw
-                // fields. Existing mode3 effects never enter hotel/jail/etc.;
-                // NPC9 does not emit scripted420C. Unknown transitions remain
-                // explicit failures in the room's authority projection.
+                // Constructor state and card-driven jail clocks share this raw
+                // authority. Unknown transitions still fail before mutation.
                 if (closed_raw) {
                     const auto stage=package.load_stage(resources,read_le(View(extension).subspan(68,4)));
                     const auto topology=load_richonline_road_topology(resources/"Map"/stage.map_name);
@@ -378,7 +370,7 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_runtime(
                     if (map.badluck->selection!=RichonlineMapBadluckSelection::uniform_inventory_units_without_replacement)
                         throw CodecError("richonline_map_badluck_selection_invalid");
                     session_policy.npcs->badluck=RichonlineNpcBadluckPolicy{load_richonline_npc_affix(resources,2),
-                        "native-uniform-inventory-units-without-replacement-v1",
+                        "native-half-floor-uniform-inventory-units-without-replacement-v2",
                         [limit=map.badluck->lost_card_limit](const RichonlineChanceInventory& inventory) {
                             return uniform_lost_cards(inventory,limit);
                         }};

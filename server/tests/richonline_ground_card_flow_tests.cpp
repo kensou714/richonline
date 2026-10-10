@@ -147,6 +147,26 @@ void roadblock_placement_stop_and_recovery(const std::filesystem::path& root) {
     check(op(done[0])==0x4013 && op(done[1])==0x4010 && f.ground->snapshot().objects.empty(),
         "roadblock_not_removed_or_next_turn_missing");
 }
+void roadblock_stops_before_remaining_steps_and_bank(const std::filesystem::path& root) {
+    for(const bool bank:{false,true}) {
+        Flow f(root,false,bank);f.human_turn();auto hand=f.cards->inventory();
+        hand[2]={1043,2};hand[3]={1038,1};f.cards->commit_inventory(hand);
+        f.send({108,0,0x69,0x45,2,0,1,0});f.send({108,0,0x69,0x45,2,0,2,0});
+        const auto move=f.send({103,0,0x69,0x45,3,0,6,0,0,0,0,0});
+        check(move.size()==2 && op(move[1])==0x4011 && move[1][8]==6,
+            "roadblock_changed_selected_die");
+        const auto done=f.send(request(0x11,0x4569,1));
+        check(op(done[0])==0x4013 && !f.ground->snapshot().objects.contains(1) &&
+            f.ground->snapshot().objects.contains(2),"roadblock_early_stop_consumed_unvisited_ground");
+        if(bank) {
+            check(op(done[1])==0x4018,"roadblock_bank_not_endpoint_visit");
+            auto close=request(0x27,0x4569,2);close.insert(close.end(),{0,0,0,0,0,0});
+            const auto next=f.send(close);
+            check(next.size()>=2 && op(next[0])==0x402a && op(next[1])==0x4010,
+                "roadblock_bank_did_not_advance");
+        } else check(op(done[1])==0x4010,"roadblock_early_stop_missing_next_turn");
+    }
+}
 }
 int main(int argc,char** argv) {
     try {
@@ -155,6 +175,7 @@ int main(int argc,char** argv) {
         synthetic_actor_consumes_banana_once_on_return(root);
         extension_turns_endpoint_bank_into_intermediate_pause(root);malformed_ground_card_never_consumes_inventory(root);
         roadblock_placement_stop_and_recovery(root);
+        roadblock_stops_before_remaining_steps_and_bank(root);
         std::cout<<"PASS encrypted NEW165/160 shared ground and human/BOSS banana movement\n";
     } catch(const std::exception& error) {std::cerr<<"FAIL "<<error.what()<<'\n';return 1;}
 }

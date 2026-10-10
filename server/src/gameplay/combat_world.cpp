@@ -34,6 +34,23 @@ std::uint32_t distance(std::int16_t first,std::int16_t second,std::uint32_t widt
     const auto by=static_cast<std::int32_t>(second)/static_cast<std::int32_t>(width);
     return static_cast<std::uint32_t>(std::abs(ax-bx)+std::abs(ay-by));
 }
+bool within_range(std::int16_t origin,std::int16_t target,const RichonlineRoadTopology& topology,
+    const RichonlineCombatRangePolicy& range) {
+    if(range.name=="server_manhattan_tile_radius")
+        return distance(origin,target,topology.width())<=range.manhattan_radius;
+    // NEW7E6DA0 intersects64x48 tile bounds with a pixel rectangle. Camera
+    // coordinates are not uploaded; this server rectangle follows the BOSS.
+    const auto map_width=static_cast<std::int32_t>(topology.width())*64;
+    const auto map_height=static_cast<std::int32_t>(topology.height())*48;
+    const auto width=std::min<std::int32_t>(range.viewport_width,map_width);
+    const auto height=std::min<std::int32_t>(range.viewport_height,map_height);
+    const auto columns=static_cast<std::int32_t>(topology.width());
+    const auto left=std::clamp((origin%columns)*64+32-width/2,0,map_width-width);
+    const auto top=std::clamp((origin/columns)*48+24-height/2,0,map_height-height);
+    const auto x=(target%columns)*64;
+    const auto y=(target/columns)*48;
+    return x<left+width && x+64>left && y<top+height && y+48>top;
+}
 }
 RichonlineCombatWorld::ResolvedTerms richonline_possession_combat_terms(
     const RichonlineCombatActorView& actor,const RichonlineCombatSessionView&) {
@@ -75,8 +92,13 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         !map.targets_within_visibility || !map.allow_self_target || !map.attacks_require_actionable_status ||
         map.consume_boss_inventory || map.uniform_projectiles.empty())
         throw CodecError("richonline_combat_world_map_policy_unimplemented");
-    if(policy.range.name!="server_manhattan_tile_radius" || policy.range.manhattan_radius==0 ||
-        policy.range.manhattan_radius>64 || !policy.mine_landing_supported)
+    const bool radial=policy.range.name=="server_manhattan_tile_radius" &&
+        policy.range.manhattan_radius>0 && policy.range.manhattan_radius<=64;
+    const bool viewport=policy.range.name=="server_boss_centered_viewport" &&
+        policy.range.viewport_width>=64 && policy.range.viewport_width<=4096 &&
+        policy.range.viewport_height>=48 && policy.range.viewport_height<=4096 &&
+        policy.range.projectile_candidates==RichonlineProjectileCandidates::road_tiles;
+    if((!radial && !viewport) || !policy.mine_landing_supported)
         throw CodecError("richonline_combat_world_range_policy_invalid");
     if(policy.range.projectile_candidates!=RichonlineProjectileCandidates::road_tiles &&
         policy.range.projectile_candidates!=RichonlineProjectileCandidates::all_map_tiles)
@@ -123,7 +145,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         if(!topology.cell(origin).walkable) throw CodecError("richonline_combat_world_origin_invalid");
         std::vector<std::int16_t> targets;
         for(const auto& cell:topology.cells()) {
-            if(distance(origin,cell.position,topology.width())>range.manhattan_radius) continue;
+            if(!within_range(origin,cell.position,topology,range)) continue;
             if(effect==RichonlineCombatEffect::mine) {
                 if(!cell.walkable || !mine_supported(cell.position,state)) continue;
             } else if(effect!=RichonlineCombatEffect::missile && effect!=RichonlineCombatEffect::nuclear &&
@@ -150,6 +172,15 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
             targets.push_back(cell.position);
         }
         return targets;
+    };
+    result.world.detonation_roots=[topology,range=policy.range]
+        (std::uint8_t actor,const RichonlineCombatSessionView& state) {
+        if(actor>=state.actors.size() || !state.actors[actor])
+            throw CodecError("richonline_detonation_actor_invalid");
+        std::vector<std::int16_t> roots;
+        for(const auto& mine:state.mines.mines)
+            if(within_range(state.actors[actor]->position,mine.position,topology,range)) roots.push_back(mine.position);
+        return roots;
     };
     result.world.building=[property=std::move(property)](const RichonlineCombatBuildingView& before,
         RichonlineBossBlastBuildingEffect effect) { return property->combat_building_effect(before,effect); };

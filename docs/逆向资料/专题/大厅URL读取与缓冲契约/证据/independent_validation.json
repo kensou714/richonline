@@ -1,0 +1,108 @@
+{
+  "status": "PASS",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "instruction_checks": [
+    {
+      "va": "0x81e10b",
+      "disk_hex": "894dfc8b4dfc",
+      "meaning": "保存ECX并在调用清理前恢复ECX"
+    },
+    {
+      "va": "0x81e111",
+      "disk_hex": "e86ccddeff",
+      "target": "0x60ae82",
+      "meaning": "清理包装器的直接call"
+    },
+    {
+      "va": "0x60ae82",
+      "disk_hex": "e939332100",
+      "target": "0x81e1c0",
+      "meaning": "清理包装器的E9终点"
+    },
+    {
+      "va": "0x81e2c2",
+      "disk_hex": "837d10007415",
+      "meaning": "比较文件名指针本身是否为NULL，未读指向字节"
+    },
+    {
+      "va": "0x81e3f0",
+      "disk_hex": "3b910c0100007670",
+      "meaning": "容量比较与无符号jbe"
+    },
+    {
+      "va": "0x81e48e",
+      "disk_hex": "ff150c40ad00",
+      "meaning": "唯一直接InternetReadFile导入调用"
+    },
+    {
+      "va": "0x81e4d9",
+      "disk_hex": "6a01",
+      "meaning": "写盘助手的ElementCount实参为1"
+    },
+    {
+      "va": "0x81e4ef",
+      "disk_hex": "e8bb19dfff",
+      "target": "0x60feaf",
+      "meaning": "四参数写盘助手，内部另审"
+    },
+    {
+      "va": "0x60feaf",
+      "disk_hex": "e92c453100",
+      "target": "0x9243e0",
+      "meaning": "写盘助手的E9终点"
+    },
+    {
+      "va": "0x8198fd",
+      "disk_hex": "8b8890000000",
+      "meaning": "取parser+144输入指针"
+    },
+    {
+      "va": "0x819988",
+      "disk_hex": "c60200eb64",
+      "meaning": "写终止NUL后直接跳往事后检查"
+    },
+    {
+      "va": "0x8199f4",
+      "disk_hex": "3b550c7e17",
+      "meaning": "计数与容量做有符号比较，jle跳过assert"
+    },
+    {
+      "va": "0x62312f",
+      "disk_hex": "682c20a200",
+      "meaning": "push立即地址，不是解引用：num"
+    },
+    {
+      "va": "0x6232ff",
+      "disk_hex": "685820a200",
+      "meaning": "push立即地址，不是解引用：reg"
+    },
+    {
+      "va": "0x623447",
+      "disk_hex": "687420a200",
+      "meaning": "push立即地址，不是解引用：win"
+    }
+  ],
+  "import_names": {
+    "0xad4004": {
+      "dll": "WININET.dll",
+      "name": "InternetOpenUrlA"
+    },
+    "0xad4008": {
+      "dll": "WININET.dll",
+      "name": "HttpQueryInfoA"
+    },
+    "0xad400c": {
+      "dll": "WININET.dll",
+      "name": "InternetReadFile"
+    },
+    "0xad4010": {
+      "dll": "WININET.dll",
+      "name": "InternetCloseHandle"
+    },
+    "0xad4014": {
+      "dll": "WININET.dll",
+      "name": "InternetOpenA"
+    }
+  },
+  "scope": "独立磁盘指令、导入名称及主原证声明块；未运行客户端或补认领下游语义"
+}

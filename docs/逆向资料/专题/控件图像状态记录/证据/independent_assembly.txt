@@ -1,0 +1,865 @@
+// 独审阅读副本：20入口完整声明块及一个调用者窗口。
+//
+// 0x8e1c40 sub_8E1C40
+// 0x8e1c40 mov     eax, [esp+arg_4]
+// 0x8e1c44 mov     edx, [esp+arg_0]
+// 0x8e1c48 mov     ecx, [esp+arg_8]
+// 0x8e1c4c lea     eax, [eax+eax*4]
+// 0x8e1c4f mov     [edx+eax*8+20h], ecx
+// 0x8e1c53 retn    0Ch
+//
+// 0x8e1c70 sub_8E1C70
+// 0x8e1c70 push    ebx
+// 0x8e1c71 push    ebp
+// 0x8e1c72 push    esi
+// 0x8e1c73 mov     esi, [esp+0Ch+arg_4]
+// 0x8e1c77 push    edi
+// 0x8e1c78 mov     edi, ecx
+// 0x8e1c7a mov     ecx, [esp+10h+arg_0]
+// 0x8e1c7e mov     ebp, [esp+10h+arg_8]
+// 0x8e1c82 lea     eax, [esi+esi*4]
+// 0x8e1c85 lea     ebx, [ecx+eax*8+18h]
+// 0x8e1c89 mov     eax, [ecx+eax*8+18h]
+// 0x8e1c8d cmp     ebp, eax
+// 0x8e1c8f jz      short loc_8E1CAA
+// 0x8e1c91 cmp     eax, 0FFFFFFFFh
+// 0x8e1c94 jz      short loc_8E1CAA
+// 0x8e1c96 mov     edx, dword_ACC3C8
+// 0x8e1c9c mov     eax, [edx+2Ch]
+// 0x8e1c9f test    eax, eax
+// 0x8e1ca1 jz      short loc_8E1CAA
+// 0x8e1ca3 push    esi
+// 0x8e1ca4 push    edi
+// 0x8e1ca5 call    eax
+// 0x8e1ca7 add     esp, 8
+// 0x8e1caa mov     [ebx], ebp
+// 0x8e1cac mov     al, [edi+181h]
+// 0x8e1cb2 test    al, al
+// 0x8e1cb4 jz      short loc_8E1CDA
+// 0x8e1cb6 mov     al, [edi+180h]
+// 0x8e1cbc test    al, al
+// 0x8e1cbe jz      short loc_8E1CC8
+// 0x8e1cc0 test    esi, esi
+// 0x8e1cc2 jz      short loc_8E1CCD
+// 0x8e1cc4 test    al, al
+// 0x8e1cc6 jnz     short loc_8E1CDA
+// 0x8e1cc8 cmp     esi, 3
+// 0x8e1ccb jnz     short loc_8E1CDA
+// 0x8e1ccd mov     eax, [esp+10h+arg_0]
+// 0x8e1cd1 push    esi
+// 0x8e1cd2 push    eax
+// 0x8e1cd3 mov     ecx, edi
+// 0x8e1cd5 call    sub_6033EE
+// 0x8e1cda pop     edi
+// 0x8e1cdb pop     esi
+// 0x8e1cdc pop     ebp
+// 0x8e1cdd pop     ebx
+// 0x8e1cde retn    0Ch
+//
+// 0x8e1d10 sub_8E1D10
+// 0x8e1d10 push    ebx
+// 0x8e1d11 mov     ebx, ecx
+// 0x8e1d13 mov     ecx, [esp+4+arg_0]
+// 0x8e1d17 push    esi
+// 0x8e1d18 cmp     dword ptr [ecx], 5
+// 0x8e1d1b jnz     short loc_8E1D81
+// 0x8e1d1d mov     esi, [esp+8+arg_4]
+// 0x8e1d21 push    ebp
+// 0x8e1d22 mov     ebp, [esp+0Ch+arg_8]
+// 0x8e1d26 push    edi
+// 0x8e1d27 lea     eax, [esi+esi*4]
+// 0x8e1d2a lea     edi, [ecx+eax*8+1Ch]
+// 0x8e1d2e mov     eax, [ecx+eax*8+1Ch]
+// 0x8e1d32 cmp     ebp, eax
+// 0x8e1d34 jz      short loc_8E1D53
+// 0x8e1d36 cmp     eax, 0FFFFFFFFh
+// 0x8e1d39 jz      short loc_8E1D53
+// 0x8e1d3b mov     edx, dword_ACC3C8
+// 0x8e1d41 mov     eax, [edx+2Ch]
+// 0x8e1d44 test    eax, eax
+// 0x8e1d46 jz      short loc_8E1D53
+// 0x8e1d48 push    esi
+// 0x8e1d49 push    ebx
+// 0x8e1d4a call    eax
+// 0x8e1d4c mov     ecx, [esp+18h+arg_0]
+// 0x8e1d50 add     esp, 8
+// 0x8e1d53 mov     [edi], ebp
+// 0x8e1d55 mov     al, [ebx+181h]
+// 0x8e1d5b pop     edi
+// 0x8e1d5c pop     ebp
+// 0x8e1d5d test    al, al
+// 0x8e1d5f jz      short loc_8E1D81
+// 0x8e1d61 mov     al, [ebx+180h]
+// 0x8e1d67 test    al, al
+// 0x8e1d69 jz      short loc_8E1D73
+// 0x8e1d6b test    esi, esi
+// 0x8e1d6d jz      short loc_8E1D78
+// 0x8e1d6f test    al, al
+// 0x8e1d71 jnz     short loc_8E1D81
+// 0x8e1d73 cmp     esi, 3
+// 0x8e1d76 jnz     short loc_8E1D81
+// 0x8e1d78 push    esi
+// 0x8e1d79 push    ecx
+// 0x8e1d7a mov     ecx, ebx
+// 0x8e1d7c call    sub_6033EE
+// 0x8e1d81 pop     esi
+// 0x8e1d82 pop     ebx
+// 0x8e1d83 retn    0Ch
+//
+// 0x8e1db0 sub_8E1DB0
+// 0x8e1db0 push    ecx
+// 0x8e1db1 push    ebx
+// 0x8e1db2 push    ebp
+// 0x8e1db3 mov     ebp, [esp+0Ch+arg_4]
+// 0x8e1db7 push    esi
+// 0x8e1db8 push    edi
+// 0x8e1db9 mov     edi, ecx
+// 0x8e1dbb mov     ecx, [esp+14h+arg_0]
+// 0x8e1dbf lea     eax, [ebp+ebp*4+0]
+// 0x8e1dc3 mov     esi, [esp+14h+lpString]
+// 0x8e1dc7 mov     [esp+14h+var_4], edi
+// 0x8e1dcb lea     ebx, [ecx+eax*8+24h]
+// 0x8e1dcf mov     eax, [ecx+eax*8+24h]
+// 0x8e1dd3 test    eax, eax
+// 0x8e1dd5 jz      short loc_8E1DED
+// 0x8e1dd7 test    esi, esi
+// 0x8e1dd9 jz      short loc_8E1DED
+// 0x8e1ddb push    esi; String2
+// 0x8e1ddc push    eax; String1
+// 0x8e1ddd call    j___stricmp
+// 0x8e1de2 add     esp, 8
+// 0x8e1de5 test    eax, eax
+// 0x8e1de7 jz      loc_8E1EA5
+// 0x8e1ded cmp     dword ptr [ebx], 0
+// 0x8e1df0 jz      short loc_8E1E17
+// 0x8e1df2 mov     edx, dword_ACC3C8
+// 0x8e1df8 mov     eax, [edx+2Ch]
+// 0x8e1dfb test    eax, eax
+// 0x8e1dfd jz      short loc_8E1E06
+// 0x8e1dff push    ebp
+// 0x8e1e00 push    edi
+// 0x8e1e01 call    eax
+// 0x8e1e03 add     esp, 8
+// 0x8e1e06 mov     eax, [ebx]
+// 0x8e1e08 push    eax; void *
+// 0x8e1e09 call    operator delete(void *)
+// 0x8e1e0e add     esp, 4
+// 0x8e1e11 mov     dword ptr [ebx], 0
+// 0x8e1e17 test    esi, esi
+// 0x8e1e19 jz      short loc_8E1E71
+// 0x8e1e1b cmp     byte ptr [esi], 0
+// 0x8e1e1e jz      short loc_8E1E71
+// 0x8e1e20 mov     edi, ds:lstrlenA; KERNEL32
+// 0x8e1e26 push    esi; lpString
+// 0x8e1e27 call    edi ; lstrlenA; KERNEL32
+// 0x8e1e29 inc     eax
+// 0x8e1e2a push    eax; Size
+// 0x8e1e2b call    operator new(uint)
+// 0x8e1e30 add     esp, 4
+// 0x8e1e33 mov     [ebx], eax
+// 0x8e1e35 push    esi; lpString
+// 0x8e1e36 call    edi ; lstrlenA; KERNEL32
+// 0x8e1e38 mov     edi, [ebx]
+// 0x8e1e3a mov     ecx, eax
+// 0x8e1e3c mov     edx, ecx
+// 0x8e1e3e xor     eax, eax
+// 0x8e1e40 shr     ecx, 2
+// 0x8e1e43 rep stosd
+// 0x8e1e45 mov     ecx, edx
+// 0x8e1e47 and     ecx, 3
+// 0x8e1e4a rep stosb
+// 0x8e1e4c mov     edi, esi
+// 0x8e1e4e or      ecx, 0FFFFFFFFh
+// 0x8e1e51 xor     eax, eax
+// 0x8e1e53 repne scasb
+// 0x8e1e55 not     ecx
+// 0x8e1e57 sub     edi, ecx
+// 0x8e1e59 mov     eax, ecx
+// 0x8e1e5b mov     esi, edi
+// 0x8e1e5d mov     edi, [ebx]
+// 0x8e1e5f shr     ecx, 2
+// 0x8e1e62 rep movsd
+// 0x8e1e64 mov     ecx, eax
+// 0x8e1e66 and     ecx, 3
+// 0x8e1e69 rep movsb
+// 0x8e1e6b mov     edi, [esp+14h+var_4]
+// 0x8e1e6f jmp     short loc_8E1E77
+// 0x8e1e71 mov     dword ptr [ebx], 0
+// 0x8e1e77 mov     al, [edi+181h]
+// 0x8e1e7d test    al, al
+// 0x8e1e7f jz      short loc_8E1EA5
+// 0x8e1e81 mov     al, [edi+180h]
+// 0x8e1e87 test    al, al
+// 0x8e1e89 jz      short loc_8E1E93
+// 0x8e1e8b test    ebp, ebp
+// 0x8e1e8d jz      short loc_8E1E98
+// 0x8e1e8f test    al, al
+// 0x8e1e91 jnz     short loc_8E1EA5
+// 0x8e1e93 cmp     ebp, 3
+// 0x8e1e96 jnz     short loc_8E1EA5
+// 0x8e1e98 mov     ecx, [esp+14h+arg_0]
+// 0x8e1e9c push    ebp
+// 0x8e1e9d push    ecx
+// 0x8e1e9e mov     ecx, edi
+// 0x8e1ea0 call    sub_6033EE
+// 0x8e1ea5 pop     edi
+// 0x8e1ea6 pop     esi
+// 0x8e1ea7 pop     ebp
+// 0x8e1ea8 pop     ebx
+// 0x8e1ea9 pop     ecx
+// 0x8e1eaa retn    0Ch
+//
+// 0x8e1ef0 sub_8E1EF0
+// 0x8e1ef0 mov     eax, [esp+arg_4]
+// 0x8e1ef4 mov     ecx, [esp+arg_0]
+// 0x8e1ef8 fld     [esp+arg_8]
+// 0x8e1efc lea     eax, [eax+eax*4+5]
+// 0x8e1f00 fstp    dword ptr [ecx+eax*8]
+// 0x8e1f03 retn    0Ch
+//
+// 0x8e1f20 sub_8E1F20
+// 0x8e1f20 mov     eax, [esp+arg_4]
+// 0x8e1f24 mov     ecx, [esp+arg_0]
+// 0x8e1f28 fld     [esp+arg_8]
+// 0x8e1f2c lea     eax, [eax+eax*4]
+// 0x8e1f2f fstp    dword ptr [ecx+eax*8+2Ch]
+// 0x8e1f33 retn    0Ch
+//
+// 0x8e1f50 sub_8E1F50
+// 0x8e1f50 mov     eax, [esp+arg_4]
+// 0x8e1f54 mov     ecx, [esp+arg_0]
+// 0x8e1f58 fld     [esp+arg_8]
+// 0x8e1f5c lea     eax, [eax+eax*4]
+// 0x8e1f5f fstp    dword ptr [ecx+eax*8+30h]
+// 0x8e1f63 retn    0Ch
+//
+// 0x8e1f80 sub_8E1F80
+// 0x8e1f80 mov     eax, [esp+arg_4]
+// 0x8e1f84 mov     ecx, [esp+arg_0]
+// 0x8e1f88 fld     [esp+arg_8]
+// 0x8e1f8c lea     eax, [eax+eax*4]
+// 0x8e1f8f fstp    dword ptr [ecx+eax*8+34h]
+// 0x8e1f93 retn    0Ch
+//
+// 0x8e1fb0 sub_8E1FB0
+// 0x8e1fb0 push    ebx
+// 0x8e1fb1 push    ebp
+// 0x8e1fb2 push    esi
+// 0x8e1fb3 mov     esi, [esp+0Ch+arg_0]
+// 0x8e1fb7 push    edi
+// 0x8e1fb8 mov     edi, ecx
+// 0x8e1fba cmp     dword ptr [esi], 5
+// 0x8e1fbd jnz     loc_8E214C
+// 0x8e1fc3 mov     eax, [esp+10h+arg_4]
+// 0x8e1fc7 dec     eax
+// 0x8e1fc8 jnz     loc_8E214C
+// 0x8e1fce mov     ecx, [esi+0Ch]
+// 0x8e1fd1 lea     eax, [ecx+ecx*4]
+// 0x8e1fd4 mov     ebp, [esi+eax*8+18h]
+// 0x8e1fd8 lea     eax, [esi+eax*8]
+// 0x8e1fdb test    ebp, ebp
+// 0x8e1fdd jl      loc_8E2064
+// 0x8e1fe3 mov     ebx, [eax+10h]
+// 0x8e1fe6 lea     edx, [eax+10h]
+// 0x8e1fe9 test    ebx, ebx
+// 0x8e1feb mov     [esp+10h+arg_0], ebx
+// 0x8e1fef jnz     short loc_8E2051
+// 0x8e1ff1 mov     ebx, [eax+14h]
+// 0x8e1ff4 test    ebx, ebx
+// 0x8e1ff6 jnz     short loc_8E204D
+// 0x8e1ff8 mov     ebx, dword_ACC3C8
+// 0x8e1ffe mov     ebx, [ebx+10h]
+// 0x8e2001 test    ebx, ebx
+// 0x8e2003 mov     [esp+10h+arg_0], ebx
+// 0x8e2007 jz      short loc_8E2034
+// 0x8e2009 lea     ebx, [eax+14h]
+// 0x8e200c push    edi
+// 0x8e200d push    ebx
+// 0x8e200e push    edx
+// 0x8e200f mov     edx, [eax+34h]
+// 0x8e2012 lea     ecx, [ecx+ecx*4+5]
+// 0x8e2016 push    edx
+// 0x8e2017 mov     edx, [eax+30h]
+// 0x8e201a push    edx
+// 0x8e201b mov     edx, [eax+2Ch]
+// 0x8e201e mov     eax, [eax+1Ch]
+// 0x8e2021 push    edx
+// 0x8e2022 mov     edx, [esi+ecx*8]
+// 0x8e2025 push    edx
+// 0x8e2026 push    eax
+// 0x8e2027 push    ebp
+// 0x8e2028 call    [esp+34h+arg_0]
+// 0x8e202c add     esp, 24h
+// 0x8e202f jmp     loc_8E20C4
+// 0x8e2034 push    offset OutputString; lpOutputString
+// 0x8e2039 call    ds:OutputDebugStringA; KERNEL32
+// 0x8e203f mov     eax, [esp+10h+arg_4]
+// 0x8e2043 pop     edi
+// 0x8e2044 mov     [esi+4], eax
+// 0x8e2047 pop     esi
+// 0x8e2048 pop     ebp
+// 0x8e2049 pop     ebx
+// 0x8e204a retn    8
+// 0x8e204d mov     ebx, [esp+10h+arg_0]
+// 0x8e2051 lea     eax, [edi+0A4h]
+// 0x8e2057 cmp     esi, eax
+// 0x8e2059 jnz     loc_8E214C
+// 0x8e205f jmp     loc_8E2136
+// 0x8e2064 mov     edx, [eax+24h]
+// 0x8e2067 test    edx, edx
+// 0x8e2069 mov     [esp+10h+arg_0], edx
+// 0x8e206d jz      loc_8E214C
+// 0x8e2073 cmp     byte ptr [edx], 0
+// 0x8e2076 jz      loc_8E214C
+// 0x8e207c mov     ebx, [eax+10h]
+// 0x8e207f lea     edx, [eax+10h]
+// 0x8e2082 test    ebx, ebx
+// 0x8e2084 jnz     loc_8E212C
+// 0x8e208a cmp     [eax+14h], ebx
+// 0x8e208d lea     ebp, [eax+14h]
+// 0x8e2090 jnz     loc_8E212C
+// 0x8e2096 mov     ebx, dword_ACC3C8
+// 0x8e209c mov     ebx, [ebx+14h]
+// 0x8e209f test    ebx, ebx
+// 0x8e20a1 jz      short loc_8E2113
+// 0x8e20a3 push    edi
+// 0x8e20a4 push    ebp
+// 0x8e20a5 push    edx
+// 0x8e20a6 mov     edx, [eax+34h]
+// 0x8e20a9 push    edx
+// 0x8e20aa mov     edx, [eax+30h]
+// 0x8e20ad mov     eax, [eax+2Ch]
+// 0x8e20b0 lea     ecx, [ecx+ecx*4+5]
+// 0x8e20b4 push    edx
+// 0x8e20b5 push    eax
+// 0x8e20b6 mov     edx, [esi+ecx*8]
+// 0x8e20b9 mov     eax, [esp+28h+arg_0]
+// 0x8e20bd push    edx
+// 0x8e20be push    eax
+// 0x8e20bf call    ebx
+// 0x8e20c1 add     esp, 20h
+// 0x8e20c4 test    al, al
+// 0x8e20c6 jz      short loc_8E20E4
+// 0x8e20c8 lea     ecx, [edi+0A4h]
+// 0x8e20ce cmp     esi, ecx
+// 0x8e20d0 jnz     short loc_8E214C
+// 0x8e20d2 mov     eax, [esi+0Ch]
+// 0x8e20d5 lea     edx, [eax+eax*4]
+// 0x8e20d8 mov     eax, [esi+edx*8+10h]
+// 0x8e20dc mov     [edi+160h], eax
+// 0x8e20e2 jmp     short loc_8E213C
+// 0x8e20e4 mov     eax, [esi+0Ch]
+// 0x8e20e7 xor     ecx, ecx
+// 0x8e20e9 push    offset byte_A67AA0; lpOutputString
+// 0x8e20ee lea     eax, [eax+eax*4]
+// 0x8e20f1 mov     [esi+eax*8+10h], ecx
+// 0x8e20f5 mov     eax, [esi+0Ch]
+// 0x8e20f8 lea     edx, [eax+eax*4]
+// 0x8e20fb mov     [esi+edx*8+14h], ecx
+// 0x8e20ff call    ds:OutputDebugStringA; KERNEL32
+// 0x8e2105 mov     eax, [esp+10h+arg_4]
+// 0x8e2109 pop     edi
+// 0x8e210a mov     [esi+4], eax
+// 0x8e210d pop     esi
+// 0x8e210e pop     ebp
+// 0x8e210f pop     ebx
+// 0x8e2110 retn    8
+// 0x8e2113 push    offset OutputString; lpOutputString
+// 0x8e2118 call    ds:OutputDebugStringA; KERNEL32
+// 0x8e211e mov     eax, [esp+10h+arg_4]
+// 0x8e2122 pop     edi
+// 0x8e2123 mov     [esi+4], eax
+// 0x8e2126 pop     esi
+// 0x8e2127 pop     ebp
+// 0x8e2128 pop     ebx
+// 0x8e2129 retn    8
+// 0x8e212c lea     eax, [edi+0A4h]
+// 0x8e2132 cmp     esi, eax
+// 0x8e2134 jnz     short loc_8E214C
+// 0x8e2136 mov     [edi+160h], ebx
+// 0x8e213c mov     eax, [esi+0Ch]
+// 0x8e213f lea     ecx, [eax+eax*4]
+// 0x8e2142 mov     edx, [esi+ecx*8+14h]
+// 0x8e2146 mov     [edi+164h], edx
+// 0x8e214c mov     eax, [esp+10h+arg_4]
+// 0x8e2150 pop     edi
+// 0x8e2151 mov     [esi+4], eax
+// 0x8e2154 pop     esi
+// 0x8e2155 pop     ebp
+// 0x8e2156 pop     ebx
+// 0x8e2157 retn    8
+//
+// 0x8e21d0 sub_8E21D0
+// 0x8e21d0 mov     eax, [esp+arg_0]
+// 0x8e21d4 mov     ecx, [esp+arg_4]
+// 0x8e21d8 mov     [eax+8], ecx
+// 0x8e21db mov     ecx, [eax]
+// 0x8e21dd cmp     ecx, 5
+// 0x8e21e0 jz      short locret_8E21E9
+// 0x8e21e2 mov     dword ptr [eax+8], 0
+// 0x8e21e9 retn    8
+//
+// 0x8e2200 sub_8E2200
+// 0x8e2200 mov     eax, [esp+arg_0]
+// 0x8e2204 mov     edx, [esp+arg_4]
+// 0x8e2208 mov     [eax+0Ch], edx
+// 0x8e220b mov     edx, [eax+4]
+// 0x8e220e push    edx
+// 0x8e220f push    eax
+// 0x8e2210 call    sub_600ACC
+// 0x8e2215 retn    8
+//
+// 0x8e2230 sub_8E2230
+// 0x8e2230 mov     eax, [esp+arg_0]
+// 0x8e2234 mov     edx, [esp+arg_4]
+// 0x8e2238 mov     [eax], edx
+// 0x8e223a mov     edx, [eax+4]
+// 0x8e223d push    edx
+// 0x8e223e push    eax
+// 0x8e223f call    sub_600ACC
+// 0x8e2244 retn    8
+//
+// 0x6e2e60 sub_6E2E60
+// 0x6e2e60 push    ebp
+// 0x6e2e61 mov     ebp, esp
+// 0x6e2e63 push    ecx
+// 0x6e2e64 mov     [ebp+var_4], 0CCCCCCCCh
+// 0x6e2e6b mov     [ebp+var_4], ecx
+// 0x6e2e6e push    offset sub_60CF2A
+// 0x6e2e73 mov     ecx, dword_ACC3C8
+// 0x6e2e79 call    sub_6093C5
+// 0x6e2e7e push    offset sub_611A61
+// 0x6e2e83 mov     ecx, dword_ACC3C8
+// 0x6e2e89 call    sub_60743A
+// 0x6e2e8e push    offset sub_607E6C
+// 0x6e2e93 mov     ecx, dword_ACC3C8
+// 0x6e2e99 call    sub_60FF95
+// 0x6e2e9e push    offset sub_60BC74
+// 0x6e2ea3 mov     ecx, dword_ACC3C8
+// 0x6e2ea9 call    sub_60F02C
+// 0x6e2eae push    offset sub_60E1F9
+// 0x6e2eb3 mov     ecx, dword_ACC3C8
+// 0x6e2eb9 call    sub_6074CB
+// 0x6e2ebe push    offset sub_60DEA2
+// 0x6e2ec3 mov     ecx, dword_ACC3C8
+// 0x6e2ec9 call    sub_609F91
+// 0x6e2ece push    offset AfxCustomLogFont(uint,tagLOGFONTA *)
+// 0x6e2ed3 mov     ecx, dword_ACC3C8
+// 0x6e2ed9 call    sub_60026B
+// 0x6e2ede push    offset sub_611BB5
+// 0x6e2ee3 mov     ecx, dword_ACC3C8
+// 0x6e2ee9 call    sub_608844
+// 0x6e2eee push    offset sub_6089CF
+// 0x6e2ef3 mov     ecx, dword_ACC3C8
+// 0x6e2ef9 call    sub_6042FD
+// 0x6e2efe push    offset sub_6096EF
+// 0x6e2f03 mov     ecx, dword_ACC3C8
+// 0x6e2f09 call    sub_60378B
+// 0x6e2f0e push    offset sub_609537
+// 0x6e2f13 mov     ecx, dword_ACC3C8
+// 0x6e2f19 call    sub_610797
+// 0x6e2f1e push    offset sub_606206
+// 0x6e2f23 mov     ecx, dword_ACC3C8
+// 0x6e2f29 call    sub_61081E
+// 0x6e2f2e push    offset sub_6026F6
+// 0x6e2f33 mov     ecx, dword_ACC3C8
+// 0x6e2f39 call    sub_601E22
+// 0x6e2f3e push    offset sub_602679
+// 0x6e2f43 mov     ecx, dword_ACC3C8
+// 0x6e2f49 call    sub_60922B
+// 0x6e2f4e push    offset sub_6055B8
+// 0x6e2f53 mov     ecx, dword_ACC3C8
+// 0x6e2f59 call    sub_60A239
+// 0x6e2f5e add     esp, 4
+// 0x6e2f61 cmp     ebp, esp
+// 0x6e2f63 call    j___RTC_CheckEsp
+// 0x6e2f68 mov     esp, ebp
+// 0x6e2f6a pop     ebp
+// 0x6e2f6b retn
+//
+// 0x6e4d00 sub_6E4D00
+// 0x6e4d00 push    ebp
+// 0x6e4d01 mov     ebp, esp
+// 0x6e4d03 mov     eax, [ebp+arg_0]
+// 0x6e4d06 push    eax
+// 0x6e4d07 call    sub_60554A
+// 0x6e4d0c mov     ecx, eax
+// 0x6e4d0e call    sub_60C372
+// 0x6e4d13 mov     ecx, [ebp+arg_18]
+// 0x6e4d16 mov     [ecx], eax
+// 0x6e4d18 mov     edx, [ebp+arg_0]
+// 0x6e4d1b push    edx
+// 0x6e4d1c call    sub_60554A
+// 0x6e4d21 mov     ecx, eax
+// 0x6e4d23 call    sub_608623
+// 0x6e4d28 mov     ecx, [ebp+arg_1C]
+// 0x6e4d2b mov     [ecx], eax
+// 0x6e4d2d mov     al, 1
+// 0x6e4d2f cmp     ebp, esp
+// 0x6e4d31 call    j___RTC_CheckEsp
+// 0x6e4d36 pop     ebp
+// 0x6e4d37 retn
+//
+// 0x6e4d40 sub_6E4D40
+// 0x6e4d40 push    ebp
+// 0x6e4d41 mov     ebp, esp
+// 0x6e4d43 push    ecx
+// 0x6e4d44 mov     [ebp+var_4], 0CCCCCCCCh
+// 0x6e4d4b mov     eax, [ebp+arg_0]
+// 0x6e4d4e push    eax
+// 0x6e4d4f call    sub_60554A
+// 0x6e4d54 mov     ecx, eax
+// 0x6e4d56 call    CFile::GetFilePath(void)
+// 0x6e4d5b mov     [ebp+var_4], eax
+// 0x6e4d5e mov     ecx, [ebp+var_4]
+// 0x6e4d61 push    ecx
+// 0x6e4d62 call    sub_60554A
+// 0x6e4d67 mov     ecx, eax
+// 0x6e4d69 call    sub_60C372
+// 0x6e4d6e mov     edx, [ebp+arg_14]
+// 0x6e4d71 mov     [edx], eax
+// 0x6e4d73 mov     eax, [ebp+var_4]
+// 0x6e4d76 push    eax
+// 0x6e4d77 call    sub_60554A
+// 0x6e4d7c mov     ecx, eax
+// 0x6e4d7e call    sub_608623
+// 0x6e4d83 mov     ecx, [ebp+arg_18]
+// 0x6e4d86 mov     [ecx], eax
+// 0x6e4d88 mov     al, 1
+// 0x6e4d8a add     esp, 4
+// 0x6e4d8d cmp     ebp, esp
+// 0x6e4d8f call    j___RTC_CheckEsp
+// 0x6e4d94 mov     esp, ebp
+// 0x6e4d96 pop     ebp
+// 0x6e4d97 retn
+//
+// 0x6e51d0 sub_6E51D0
+// 0x6e51d0 push    ebp
+// 0x6e51d1 mov     ebp, esp
+// 0x6e51d3 sub     esp, 20h
+// 0x6e51d6 push    esi
+// 0x6e51d7 mov     eax, 0CCCCCCCCh
+// 0x6e51dc mov     [ebp+var_20], eax
+// 0x6e51df mov     [ebp+var_1C], eax
+// 0x6e51e2 mov     [ebp+var_18], eax
+// 0x6e51e5 mov     [ebp+var_14], eax
+// 0x6e51e8 mov     [ebp+var_10], eax
+// 0x6e51eb mov     [ebp+var_C], eax
+// 0x6e51ee mov     [ebp+var_8], eax
+// 0x6e51f1 mov     [ebp+var_4], eax
+// 0x6e51f4 mov     eax, [ebp+arg_0]
+// 0x6e51f7 push    eax
+// 0x6e51f8 call    sub_6125CE
+// 0x6e51fd add     esp, 4
+// 0x6e5200 mov     [ebp+var_4], eax
+// 0x6e5203 mov     ecx, [ebp+var_4]
+// 0x6e5206 call    sub_60A2FC
+// 0x6e520b movzx   ecx, al
+// 0x6e520e test    ecx, ecx
+// 0x6e5210 jz      short loc_6E5214
+// 0x6e5212 jmp     short loc_6E5275
+// 0x6e5214 mov     esi, esp
+// 0x6e5216 lea     edx, [ebp+var_18]
+// 0x6e5219 push    edx
+// 0x6e521a lea     eax, [ebp+var_C]
+// 0x6e521d push    eax
+// 0x6e521e mov     ecx, [ebp+arg_4]
+// 0x6e5221 push    ecx
+// 0x6e5222 mov     edx, [ebp+arg_0]
+// 0x6e5225 mov     eax, [edx]
+// 0x6e5227 mov     ecx, [ebp+arg_0]
+// 0x6e522a call    dword ptr [eax+84h]
+// 0x6e5230 cmp     esi, esp
+// 0x6e5232 call    j___RTC_CheckEsp
+// 0x6e5237 mov     [ebp+var_20], eax
+// 0x6e523a cmp     [ebp+var_20], 0
+// 0x6e523e jz      short loc_6E525F
+// 0x6e5240 mov     ecx, [ebp+var_20]
+// 0x6e5243 push    ecx
+// 0x6e5244 call    sub_60554A
+// 0x6e5249 mov     ecx, eax
+// 0x6e524b call    CFile::GetFilePath(void)
+// 0x6e5250 push    eax
+// 0x6e5251 call    sub_60554A
+// 0x6e5256 mov     ecx, eax
+// 0x6e5258 call    sub_60C3C7
+// 0x6e525d jmp     short loc_6E5275
+// 0x6e525f cmp     [ebp+var_C], 0FFFFFFFFh
+// 0x6e5263 jz      short loc_6E5275
+// 0x6e5265 mov     edx, [ebp+var_C]
+// 0x6e5268 push    edx
+// 0x6e5269 call    sub_60554A
+// 0x6e526e mov     ecx, eax
+// 0x6e5270 call    sub_60C3C7
+// 0x6e5275 push    edx
+// 0x6e5276 mov     ecx, ebp; Esp
+// 0x6e5278 push    eax
+// 0x6e5279 lea     edx, stru_6E5295; Fd
+// 0x6e527f call    _RTC_CheckStackVars(x,x)
+// 0x6e5284 pop     eax
+// 0x6e5285 pop     edx
+// 0x6e5286 pop     esi
+// 0x6e5287 add     esp, 20h
+// 0x6e528a cmp     ebp, esp
+// 0x6e528c call    j___RTC_CheckEsp
+// 0x6e5291 mov     esp, ebp
+// 0x6e5293 pop     ebp
+// 0x6e5294 retn
+//
+// 0x8e1930 sub_8E1930
+// 0x8e1930 push    ebx
+// 0x8e1931 mov     ebx, [esp+4+arg_0]
+// 0x8e1935 push    esi
+// 0x8e1936 push    edi
+// 0x8e1937 mov     edi, [esp+0Ch+arg_4]
+// 0x8e193b mov     esi, ecx
+// 0x8e193d mov     eax, [edi]
+// 0x8e193f push    eax
+// 0x8e1940 push    ebx
+// 0x8e1941 call    sub_60DE43
+// 0x8e1946 mov     ecx, [edi+20h]
+// 0x8e1949 push    ecx
+// 0x8e194a push    0
+// 0x8e194c push    ebx
+// 0x8e194d mov     ecx, esi
+// 0x8e194f call    sub_610B6B
+// 0x8e1954 mov     edx, [edi+70h]
+// 0x8e1957 mov     ecx, esi
+// 0x8e1959 push    edx
+// 0x8e195a push    2
+// 0x8e195c push    ebx
+// 0x8e195d call    sub_610B6B
+// 0x8e1962 mov     eax, [edi+48h]
+// 0x8e1965 mov     ecx, esi
+// 0x8e1967 push    eax
+// 0x8e1968 push    1
+// 0x8e196a push    ebx
+// 0x8e196b call    sub_610B6B
+// 0x8e1970 mov     ecx, [edi+98h]
+// 0x8e1976 push    ecx
+// 0x8e1977 push    3
+// 0x8e1979 push    ebx
+// 0x8e197a mov     ecx, esi
+// 0x8e197c call    sub_610B6B
+// 0x8e1981 mov     edx, [edi+18h]
+// 0x8e1984 mov     ecx, esi
+// 0x8e1986 push    edx
+// 0x8e1987 push    0
+// 0x8e1989 push    ebx
+// 0x8e198a call    sub_60DA8D
+// 0x8e198f mov     eax, [edi+68h]
+// 0x8e1992 mov     ecx, esi
+// 0x8e1994 push    eax
+// 0x8e1995 push    2
+// 0x8e1997 push    ebx
+// 0x8e1998 call    sub_60DA8D
+// 0x8e199d mov     ecx, [edi+40h]
+// 0x8e19a0 push    ecx
+// 0x8e19a1 push    1
+// 0x8e19a3 push    ebx
+// 0x8e19a4 mov     ecx, esi
+// 0x8e19a6 call    sub_60DA8D
+// 0x8e19ab mov     edx, [edi+90h]
+// 0x8e19b1 mov     ecx, esi
+// 0x8e19b3 push    edx
+// 0x8e19b4 push    3
+// 0x8e19b6 push    ebx
+// 0x8e19b7 call    sub_60DA8D
+// 0x8e19bc mov     eax, [edi+1Ch]
+// 0x8e19bf mov     ecx, esi
+// 0x8e19c1 push    eax
+// 0x8e19c2 push    0
+// 0x8e19c4 push    ebx
+// 0x8e19c5 call    sub_6071D3
+// 0x8e19ca mov     ecx, [edi+6Ch]
+// 0x8e19cd push    ecx
+// 0x8e19ce push    2
+// 0x8e19d0 push    ebx
+// 0x8e19d1 mov     ecx, esi
+// 0x8e19d3 call    sub_6071D3
+// 0x8e19d8 mov     edx, [edi+44h]
+// 0x8e19db mov     ecx, esi
+// 0x8e19dd push    edx
+// 0x8e19de push    1
+// 0x8e19e0 push    ebx
+// 0x8e19e1 call    sub_6071D3
+// 0x8e19e6 mov     eax, [edi+94h]
+// 0x8e19ec mov     ecx, esi
+// 0x8e19ee push    eax
+// 0x8e19ef push    3
+// 0x8e19f1 push    ebx
+// 0x8e19f2 call    sub_6071D3
+// 0x8e19f7 mov     ecx, [edi+24h]
+// 0x8e19fa push    ecx; lpString
+// 0x8e19fb push    0; int
+// 0x8e19fd push    ebx; int
+// 0x8e19fe mov     ecx, esi
+// 0x8e1a00 call    sub_5FFAFA
+// 0x8e1a05 mov     edx, [edi+74h]
+// 0x8e1a08 mov     ecx, esi
+// 0x8e1a0a push    edx; lpString
+// 0x8e1a0b push    2; int
+// 0x8e1a0d push    ebx; int
+// 0x8e1a0e call    sub_5FFAFA
+// 0x8e1a13 mov     eax, [edi+4Ch]
+// 0x8e1a16 mov     ecx, esi
+// 0x8e1a18 push    eax; lpString
+// 0x8e1a19 push    1; int
+// 0x8e1a1b push    ebx; int
+// 0x8e1a1c call    sub_5FFAFA
+// 0x8e1a21 mov     ecx, [edi+9Ch]
+// 0x8e1a27 push    ecx; lpString
+// 0x8e1a28 push    3; int
+// 0x8e1a2a push    ebx; int
+// 0x8e1a2b mov     ecx, esi
+// 0x8e1a2d call    sub_5FFAFA
+// 0x8e1a32 mov     edx, [edi+28h]
+// 0x8e1a35 mov     ecx, esi
+// 0x8e1a37 push    edx; float
+// 0x8e1a38 push    0; int
+// 0x8e1a3a push    ebx; int
+// 0x8e1a3b call    sub_612A51
+// 0x8e1a40 mov     eax, [edi+78h]
+// 0x8e1a43 mov     ecx, esi
+// 0x8e1a45 push    eax; float
+// 0x8e1a46 push    2; int
+// 0x8e1a48 push    ebx; int
+// 0x8e1a49 call    sub_612A51
+// 0x8e1a4e mov     ecx, [edi+50h]
+// 0x8e1a51 push    ecx; float
+// 0x8e1a52 push    1; int
+// 0x8e1a54 push    ebx; int
+// 0x8e1a55 mov     ecx, esi
+// 0x8e1a57 call    sub_612A51
+// 0x8e1a5c mov     edx, [edi+0A0h]
+// 0x8e1a62 mov     ecx, esi
+// 0x8e1a64 push    edx; float
+// 0x8e1a65 push    3; int
+// 0x8e1a67 push    ebx; int
+// 0x8e1a68 call    sub_612A51
+// 0x8e1a6d mov     eax, [edi+2Ch]
+// 0x8e1a70 mov     ecx, esi
+// 0x8e1a72 push    eax; float
+// 0x8e1a73 push    0; int
+// 0x8e1a75 push    ebx; int
+// 0x8e1a76 call    sub_60209D
+// 0x8e1a7b mov     ecx, [edi+7Ch]
+// 0x8e1a7e push    ecx; float
+// 0x8e1a7f push    2; int
+// 0x8e1a81 push    ebx; int
+// 0x8e1a82 mov     ecx, esi
+// 0x8e1a84 call    sub_60209D
+// 0x8e1a89 mov     edx, [edi+54h]
+// 0x8e1a8c mov     ecx, esi
+// 0x8e1a8e push    edx; float
+// 0x8e1a8f push    1; int
+// 0x8e1a91 push    ebx; int
+// 0x8e1a92 call    sub_60209D
+// 0x8e1a97 mov     eax, [edi+0A4h]
+// 0x8e1a9d mov     ecx, esi
+// 0x8e1a9f push    eax; float
+// 0x8e1aa0 push    3; int
+// 0x8e1aa2 push    ebx; int
+// 0x8e1aa3 call    sub_60209D
+// 0x8e1aa8 mov     ecx, [edi+30h]
+// 0x8e1aab push    ecx; float
+// 0x8e1aac push    0; int
+// 0x8e1aae push    ebx; int
+// 0x8e1aaf mov     ecx, esi
+// 0x8e1ab1 call    sub_610D1E
+// 0x8e1ab6 mov     edx, [edi+80h]
+// 0x8e1abc push    edx; float
+// 0x8e1abd push    2; int
+// 0x8e1abf push    ebx; int
+// 0x8e1ac0 mov     ecx, esi
+// 0x8e1ac2 call    sub_610D1E
+// 0x8e1ac7 mov     eax, [edi+58h]
+// 0x8e1aca mov     ecx, esi
+// 0x8e1acc push    eax; float
+// 0x8e1acd push    1; int
+// 0x8e1acf push    ebx; int
+// 0x8e1ad0 call    sub_610D1E
+// 0x8e1ad5 mov     ecx, [edi+0A8h]
+// 0x8e1adb push    ecx; float
+// 0x8e1adc push    3; int
+// 0x8e1ade push    ebx; int
+// 0x8e1adf mov     ecx, esi
+// 0x8e1ae1 call    sub_610D1E
+// 0x8e1ae6 mov     edx, [edi+34h]
+// 0x8e1ae9 mov     ecx, esi
+// 0x8e1aeb push    edx; float
+// 0x8e1aec push    0; int
+// 0x8e1aee push    ebx; int
+// 0x8e1aef call    sub_60EEC9
+// 0x8e1af4 mov     eax, [edi+84h]
+// 0x8e1afa mov     ecx, esi
+// 0x8e1afc push    eax; float
+// 0x8e1afd push    2; int
+// 0x8e1aff push    ebx; int
+// 0x8e1b00 call    sub_60EEC9
+// 0x8e1b05 mov     ecx, [edi+5Ch]
+// 0x8e1b08 push    ecx; float
+// 0x8e1b09 push    1; int
+// 0x8e1b0b push    ebx; int
+// 0x8e1b0c mov     ecx, esi
+// 0x8e1b0e call    sub_60EEC9
+// 0x8e1b13 mov     edx, [edi+0ACh]
+// 0x8e1b19 mov     ecx, esi
+// 0x8e1b1b push    edx; float
+// 0x8e1b1c push    3; int
+// 0x8e1b1e push    ebx; int
+// 0x8e1b1f call    sub_60EEC9
+// 0x8e1b24 mov     eax, [edi+8]
+// 0x8e1b27 mov     ecx, esi
+// 0x8e1b29 push    eax
+// 0x8e1b2a push    ebx
+// 0x8e1b2b call    sub_604726
+// 0x8e1b30 mov     ecx, [edi+0Ch]
+// 0x8e1b33 push    ecx
+// 0x8e1b34 push    ebx
+// 0x8e1b35 mov     ecx, esi
+// 0x8e1b37 call    sub_6033EE
+// 0x8e1b3c mov     edx, [edi+4]
+// 0x8e1b3f mov     ecx, esi
+// 0x8e1b41 push    edx
+// 0x8e1b42 push    ebx
+// 0x8e1b43 call    sub_600ACC
+// 0x8e1b48 pop     edi
+// 0x8e1b49 pop     esi
+// 0x8e1b4a pop     ebx
+// 0x8e1b4b retn    8
+//
+// 0x8e8620 sub_8E8620
+// 0x8e8620 mov     eax, [esp+arg_0]
+// 0x8e8624 test    eax, eax
+// 0x8e8626 jz      short locret_8E862B
+// 0x8e8628 mov     [ecx+2Ch], eax
+// 0x8e862b retn    4
+//
+// 0x8e86a0 sub_8E86A0
+// 0x8e86a0 mov     eax, [esp+arg_0]
+// 0x8e86a4 test    eax, eax
+// 0x8e86a6 jz      short locret_8E86AB
+// 0x8e86a8 mov     [ecx+10h], eax
+// 0x8e86ab retn    4
+//
+// 0x8e86c0 sub_8E86C0
+// 0x8e86c0 mov     eax, [esp+arg_0]
+// 0x8e86c4 test    eax, eax
+// 0x8e86c6 jz      short locret_8E86CB
+// 0x8e86c8 mov     [ecx+14h], eax
+// 0x8e86cb retn    4
+//
+// 窗口 0x8f8b5a..0x8f8b7f
+// 0x8f8b5a mov     eax, dword_ACC3C8
+// 0x8f8b5f push    offset aPictype; "PicType"
+// 0x8f8b64 push    edi; String2
+// 0x8f8b65 mov     ecx, [eax+68h]
+// 0x8f8b68 call    sub_60B2C9
+// 0x8f8b6d push    eax
+// 0x8f8b6e jmp     short loc_8F8B77
+// 0x8f8b70 mov     ecx, [esi+0A8h]
+// 0x8f8b76 push    ecx
+// 0x8f8b77 push    ebx
+// 0x8f8b78 mov     ecx, esi
+// 0x8f8b7a call    sub_600ACC

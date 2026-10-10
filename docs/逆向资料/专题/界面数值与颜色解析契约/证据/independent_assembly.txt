@@ -1,0 +1,2074 @@
+// 0x8e0450 sub_8E0450
+// ----------------------------------------------------------------------------
+// 0x8e0450 push    ebp
+// 0x8e0451 mov     ebp, [esp+4+lpString]
+// 0x8e0455 test    ebp, ebp
+// 0x8e0457 push    esi
+// 0x8e0458 jz      loc_8E0547
+// 0x8e045e mov     esi, ds:lstrlenA; KERNEL32
+// 0x8e0464 push    ebp; lpString
+// 0x8e0465 call    esi ; lstrlenA; KERNEL32
+// 0x8e0467 test    eax, eax
+// 0x8e0469 jz      loc_8E0547
+// 0x8e046f cmp     byte ptr [ebp+0], 30h ; '0'
+// 0x8e0473 jnz     loc_8E0536
+// 0x8e0479 cmp     byte ptr [ebp+1], 78h ; 'x'
+// 0x8e047d jnz     loc_8E0536
+// 0x8e0483 push    edi
+// 0x8e0484 push    ebp; lpString
+// 0x8e0485 xor     edi, edi
+// 0x8e0487 call    esi ; lstrlenA; KERNEL32
+// 0x8e0489 mov     esi, eax
+// 0x8e048b dec     esi
+// 0x8e048c cmp     esi, 1
+// 0x8e048f jle     loc_8E0530
+// 0x8e0495 mov     eax, 9
+// 0x8e049a push    ebx
+// 0x8e049b sub     eax, esi
+// 0x8e049d mov     [esp+10h+lpString], eax
+// 0x8e04a1 mov     bl, [esi+ebp]
+// 0x8e04a4 cmp     bl, 30h ; '0'
+// 0x8e04a7 jl      short loc_8E04CA
+// 0x8e04a9 cmp     bl, 39h ; '9'
+// 0x8e04ac jg      short loc_8E04CA
+// 0x8e04ae fld     ds:dbl_A305A0
+// 0x8e04b4 fild    [esp+10h+lpString]
+// 0x8e04b8 call    j___CIpow
+// 0x8e04bd call    j___ftol
+// 0x8e04c2 movsx   ecx, bl
+// 0x8e04c5 sub     ecx, 30h ; '0'
+// 0x8e04c8 jmp     short loc_8E0517
+// 0x8e04ca cmp     bl, 41h ; 'A'
+// 0x8e04cd jl      short loc_8E04F3
+// 0x8e04cf cmp     bl, 46h ; 'F'
+// 0x8e04d2 jg      short loc_8E04F3
+// 0x8e04d4 fld     ds:dbl_A305A0
+// 0x8e04da fild    [esp+10h+lpString]
+// 0x8e04de call    j___CIpow
+// 0x8e04e3 call    j___ftol
+// 0x8e04e8 movsx   edx, bl
+// 0x8e04eb sub     edx, 37h ; '7'
+// 0x8e04ee imul    eax, edx
+// 0x8e04f1 jmp     short loc_8E051A
+// 0x8e04f3 cmp     bl, 61h ; 'a'
+// 0x8e04f6 jl      short loc_8E051C
+// 0x8e04f8 cmp     bl, 66h ; 'f'
+// 0x8e04fb jg      short loc_8E051C
+// 0x8e04fd fld     ds:dbl_A305A0
+// 0x8e0503 fild    [esp+10h+lpString]
+// 0x8e0507 call    j___CIpow
+// 0x8e050c call    j___ftol
+// 0x8e0511 movsx   ecx, bl
+// 0x8e0514 sub     ecx, 57h ; 'W'
+// 0x8e0517 imul    eax, ecx
+// 0x8e051a add     edi, eax
+// 0x8e051c mov     ecx, [esp+10h+lpString]
+// 0x8e0520 dec     esi
+// 0x8e0521 inc     ecx
+// 0x8e0522 cmp     esi, 1
+// 0x8e0525 mov     [esp+10h+lpString], ecx
+// 0x8e0529 jg      loc_8E04A1
+// 0x8e052f pop     ebx
+// 0x8e0530 mov     eax, edi
+// 0x8e0532 pop     edi
+// 0x8e0533 pop     esi
+// 0x8e0534 pop     ebp
+// 0x8e0535 retn
+// 0x8e0536 push    ebp; String
+// 0x8e0537 call    j__atof
+// 0x8e053c add     esp, 4
+// 0x8e053f call    j___ftol
+// 0x8e0544 pop     esi
+// 0x8e0545 pop     ebp
+// 0x8e0546 retn
+// 0x8e0547 pop     esi
+// 0x8e0548 xor     eax, eax
+// 0x8e054a pop     ebp
+// 0x8e054b retn
+// 0x924720 _atof
+// ----------------------------------------------------------------------------
+// 0x924720 push    ebp
+// 0x924721 mov     ebp, esp
+// 0x924723 sub     esp, 18h
+// 0x924726 mov     eax, [ebp+Str]
+// 0x924729 movzx   ecx, byte ptr [eax]
+// 0x92472c push    ecx; C
+// 0x92472d call    j__isspace
+// 0x924732 add     esp, 4
+// 0x924735 test    eax, eax
+// 0x924737 jz      short loc_924744
+// 0x924739 mov     edx, [ebp+Str]
+// 0x92473c add     edx, 1
+// 0x92473f mov     [ebp+Str], edx
+// 0x924742 jmp     short loc_924726
+// 0x924744 push    0
+// 0x924746 push    0
+// 0x924748 mov     eax, [ebp+Str]
+// 0x92474b push    eax; Str
+// 0x92474c call    j__strlen
+// 0x924751 add     esp, 4
+// 0x924754 push    eax
+// 0x924755 mov     ecx, [ebp+Str]
+// 0x924758 push    ecx
+// 0x924759 lea     edx, [ebp+var_18]
+// 0x92475c push    edx
+// 0x92475d call    j___fltin2
+// 0x924762 add     esp, 14h
+// 0x924765 fld     qword ptr [eax+10h]
+// 0x924768 mov     esp, ebp
+// 0x92476a pop     ebp
+// 0x92476b retn
+// 0x92be08 __ftol
+// ----------------------------------------------------------------------------
+// 0x92be08 push    ebp
+// 0x92be09 mov     ebp, esp
+// 0x92be0b add     esp, 0FFFFFFF4h
+// 0x92be0e fstcw   [ebp+var_2]
+// 0x92be12 wait
+// 0x92be13 mov     ax, [ebp+var_2]
+// 0x92be17 or      ah, 0Ch
+// 0x92be1a mov     [ebp+var_4], ax
+// 0x92be1e fldcw   [ebp+var_4]
+// 0x92be21 fistp   [ebp+var_C]
+// 0x92be24 fldcw   [ebp+var_2]
+// 0x92be27 mov     eax, dword ptr [ebp+var_C]
+// 0x92be2a mov     edx, dword ptr [ebp+var_C+4]
+// 0x92be2d leave
+// 0x92be2e retn
+// 0x92be80 __CIpow
+// ----------------------------------------------------------------------------
+// 0x92be80 cmp     dword_AD0E80, 0
+// 0x92be87 jz      short __CIpow_default
+// 0x92be89 sub     esp, 8
+// 0x92be8c stmxcsr [esp+8+var_4]
+// 0x92be91 mov     eax, [esp+8+var_4]
+// 0x92be95 and     eax, 1F80h
+// 0x92be9a cmp     eax, 1F80h
+// 0x92be9f jnz     short jnedef
+// 0x92bea1 fnstcw  word ptr [esp+8+var_8]
+// 0x92bea4 mov     ax, word ptr [esp+8+var_8]
+// 0x92bea8 and     ax, 7Fh
+// 0x92beac cmp     ax, 7Fh
+// 0x92beb0 lea     esp, [esp+8]
+// 0x92beb4 jnz     short __CIpow_default
+// 0x92beb6 jmp     j___CIpow_pentium4
+// 0x92bebb sub     esp, 14h
+// 0x92bebe fxch    st(1)
+// 0x92bec0 fstp    [esp+14h+var_14]
+// 0x92bec3 fst     qword ptr [esp+8]
+// 0x92bec7 mov     eax, [esp+14h+var_8]
+// 0x92becb call    start_0
+// 0x92bed0 add     esp, 14h
+// 0x92bed3 retn
+// 0x93ebc0 __CIpow_pentium4
+// ----------------------------------------------------------------------------
+// 0x93ebc0 push    ebp
+// 0x93ebc1 mov     ebp, esp
+// 0x93ebc3 sub     esp, 10h
+// 0x93ebc6 and     esp, 0FFFFFFF0h
+// 0x93ebc9 fxch    st(1)
+// 0x93ebcb fstp    [esp+10h+var_10]
+// 0x93ebce fstp    [esp+10h+var_8]
+// 0x93ebd2 call    __pow_pentium4
+// 0x93ebd7 leave
+// 0x93ebd8 retn
+// 0x8e1c40 sub_8E1C40
+// ----------------------------------------------------------------------------
+// 0x8e1c40 mov     eax, [esp+arg_4]
+// 0x8e1c44 mov     edx, [esp+arg_0]
+// 0x8e1c48 mov     ecx, [esp+arg_8]
+// 0x8e1c4c lea     eax, [eax+eax*4]
+// 0x8e1c4f mov     [edx+eax*8+20h], ecx
+// 0x8e1c53 retn    0Ch
+// 0x92bedd start_0
+// ----------------------------------------------------------------------------
+// 0x60e9e2 jmp     __fast_exit
+// 0x92bedd mov     ecx, eax
+// 0x92bedf push    eax
+// 0x92bee0 fstcw   [esp+4+var_4]
+// 0x92bee4 cmp     [esp+4+var_4], 27Fh
+// 0x92beea jz      short CW_is_set_to_default
+// 0x92beec call    j___load_CW
+// 0x92bef1 and     ecx, 7FF00000h
+// 0x92bef7 lea     edx, [esp+4+arg_0]
+// 0x92befb cmp     ecx, 7FF00000h
+// 0x92bf01 jz      special_exponent
+// 0x92bf07 call    j___fload_withFB
+// 0x92bf0c jz      special_base
+// 0x92bf12 test    eax, 7FF00000h
+// 0x92bf17 jz      test_if_we_have_zero_base
+// 0x92bf1d mov     cl, byte ptr [esp+4+arg_4+3]
+// 0x92bf21 and     cl, 80h
+// 0x92bf24 jnz     test_if_exp_is_int
+// 0x92bf2a fyl2x
+// 0x92bf2c call    j___twoToTOS
+// 0x92bf31 cmp     cl, 1
+// 0x92bf34 jnz     short exit
+// 0x92bf36 fchs
+// 0x92bf38 cmp     dword_ACD8B8, 0
+// 0x92bf3f jnz     loc_60E9E2
+// 0x92bf45 lea     ecx, unk_A699C8
+// 0x92bf4b mov     edx, 1Dh
+// 0x92bf50 jmp     j___check_range_exit
+// 0x92bf55 cmp     dword_ACD8B8, 0
+// 0x92bf5c jnz     loc_60E9E2
+// 0x92bf62 lea     ecx, unk_A699C8
+// 0x92bf68 mov     edx, 1Dh
+// 0x92bf6d call    j___startTwoArgErrorHandling
+// 0x92bf72 pop     edx
+// 0x92bf73 retn
+// 0x92bf74 lea     edx, [esp+4+arg_0]
+// 0x92bf78 call    j___fload_withFB
+// 0x92bf7d test    byte ptr [esp+4+arg_C+2], 8
+// 0x92bf82 jnz     short SNaN_detected
+// 0x92bf84 inc     ecx
+// 0x92bf85 jmp     short test_base
+// 0x92bf87 faddp   st(1), st
+// 0x92bf89 mov     eax, 1
+// 0x92bf8e jmp     short _ErrorHandling
+// 0x92bf90 test    byte ptr [esp+4+arg_4+2], 8
+// 0x92bf95 jnz     short SNaN_detected
+// 0x92bf97 faddp   st(1), st
+// 0x92bf99 mov     eax, 7
+// 0x92bf9e jmp     short _ErrorHandling
+// 0x92bfa0 xor     ecx, ecx
+// 0x92bfa2 jmp     short test_base
+// 0x92bfa4 xor     ecx, ecx
+// 0x92bfa6 and     eax, 0FFFFFh
+// 0x92bfab or      eax, [esp+4+arg_8]
+// 0x92bfaf jnz     short exponent_is_NAN
+// 0x92bfb1 lea     edx, [esp+4+arg_0]
+// 0x92bfb5 call    j___fload_withFB
+// 0x92bfba mov     eax, [esp+4+arg_4]
+// 0x92bfbe mov     edx, eax
+// 0x92bfc0 and     eax, 7FF00000h
+// 0x92bfc5 and     edx, 0FFFFFh
+// 0x92bfcb cmp     eax, 7FF00000h
+// 0x92bfd0 jnz     short end_of_tests
+// 0x92bfd2 or      edx, [esp+4+arg_0]
+// 0x92bfd6 jnz     short base_is_NAN
+// 0x92bfd8 test    ecx, ecx
+// 0x92bfda jnz     short one_of_args_is_QNaN
+// 0x92bfdc sub     esp, 74h
+// 0x92bfdf mov     ecx, esp
+// 0x92bfe1 push    ecx; int
+// 0x92bfe2 sub     esp, 10h
+// 0x92bfe5 fstp    [esp+8Ch+var_8C]; double
+// 0x92bfe8 fstp    [esp+8Ch+var_84]; double
+// 0x92bfec fsave   byte ptr [ecx+8]
+// 0x92bff0 call    j___powhlp
+// 0x92bff5 add     esp, 10h
+// 0x92bff8 pop     ecx
+// 0x92bff9 frstor  byte ptr [ecx+8]
+// 0x92bffc fld     qword ptr [ecx]
+// 0x92bffe add     esp, 74h
+// 0x92c001 test    eax, eax
+// 0x92c003 jz      loc_60E9E2
+// 0x92c009 mov     eax, 1
+// 0x92c00e jmp     _ErrorHandling
+// 0x92c013 mov     eax, [esp+4+arg_4]
+// 0x92c017 and     eax, 0FFFFFh
+// 0x92c01c or      eax, [esp+4+arg_0]
+// 0x92c020 jnz     base_is_not_zero
+// 0x92c026 fstp    st
+// 0x92c028 mov     eax, [esp+4+arg_C]
+// 0x92c02c and     eax, 7FFFFFFFh
+// 0x92c031 or      eax, [esp+4+arg_8]
+// 0x92c035 jz      short zero_to_zero
+// 0x92c037 call    _test_whether_TOS_is_int
+// 0x92c03c mov     ch, byte ptr [esp+4+arg_4+3]
+// 0x92c040 shr     ch, 7
+// 0x92c043 test    [esp+4+arg_C+3], 80h
+// 0x92c04b jz      short exp_is_positive
+// 0x92c04d fld     tbyte_A6A0C0
+// 0x92c053 test    ch, cl
+// 0x92c055 jz      short ret_inf
+// 0x92c057 fchs
+// 0x92c059 mov     eax, 2
+// 0x92c05e jmp     _ErrorHandling
+// 0x92c063 fldz
+// 0x92c065 test    ch, cl
+// 0x92c067 jz      loc_60E9E2
+// 0x92c06d fchs
+// 0x92c06f jmp     loc_60E9E2
+// 0x92c074 fstp    st
+// 0x92c076 fld1
+// 0x92c078 jmp     loc_60E9E2
+// 0x92c07d fld     st(1)
+// 0x92c07f call    _test_whether_TOS_is_int
+// 0x92c084 fchs
+// 0x92c086 test    cl, cl
+// 0x92c088 jnz     normal
+// 0x92c08e fstp    st
+// 0x92c090 fstp    st
+// 0x92c092 fld     tbyte_A6A130
+// 0x92c098 mov     eax, 1
+// 0x92c09d jmp     _ErrorHandling
+// 0x93ffce cmp     [esp+4+var_4], 27Fh
+// 0x93ffd4 jz      short fast_exit_CW_is_restored
+// 0x93ffd6 fldcw   [esp+4+var_4]
+// 0x93ffd9 pop     edx
+// 0x93ffda retn
+// 0x93ebd9 __pow_pentium4
+// ----------------------------------------------------------------------------
+// 0x93ebd9 movlpd  xmm0, [esp+arg_0]
+// 0x93ebdf movlpd  xmm7, qword ptr ds:xmmword_A382B0
+// 0x93ebe7 movlpd  xmm2, qword ptr ds:xmmword_A382C0
+// 0x93ebef andpd   xmm7, xmm0
+// 0x93ebf3 movsd   xmm4, xmm0
+// 0x93ebf7 psrlq   xmm0, 2Ch ; ','
+// 0x93ebfc pextrw  eax, xmm0, 0
+// 0x93ec01 orpd    xmm7, xmm2
+// 0x93ec05 pextrw  ecx, xmm4, 3
+// 0x93ec0a and     eax, 0FFh
+// 0x93ec0f add     eax, 1
+// 0x93ec12 and     eax, 1FEh
+// 0x93ec17 mulsd   xmm7, ds:qword_A34A20[eax*4]
+// 0x93ec20 movlpd  xmm5, ds:qword_A34A20[eax*4]
+// 0x93ec29 add     eax, eax
+// 0x93ec2b movapd  xmm6, ds:xmmword_A34E30[eax*4]
+// 0x93ec34 mov     edx, 7FEFh
+// 0x93ec39 sub     edx, ecx
+// 0x93ec3b sub     ecx, 10h
+// 0x93ec3e or      ecx, edx
+// 0x93ec40 cmp     ecx, 80000000h
+// 0x93ec46 jnb     SPECIAL_X
+// 0x93ec4c mov     ecx, 0
+// 0x93ec51 mov     edx, 3FE7Fh
+// 0x93ec56 movd    xmm1, edx
+// 0x93ec5a psubq   xmm0, xmm1
+// 0x93ec5e psrlq   xmm0, 8
+// 0x93ec63 cvtdq2pd xmm0, xmm0
+// 0x93ec67 movlpd  xmm1, ds:qword_A38308
+// 0x93ec6f movsd   xmm3, xmm7
+// 0x93ec73 psrlq   xmm7, 26h ; '&'
+// 0x93ec78 pextrw  eax, xmm7, 0
+// 0x93ec7d andpd   xmm4, ds:xmmword_A382B0
+// 0x93ec85 and     eax, 0FFh
+// 0x93ec8a add     eax, 1
+// 0x93ec8d and     eax, 1FEh
+// 0x93ec92 mulsd   xmm3, ds:qword_A35640[eax*4]
+// 0x93ec9b mulsd   xmm5, ds:qword_A35640[eax*4]
+// 0x93eca4 add     eax, eax
+// 0x93eca6 addpd   xmm6, ds:xmmword_A35A50[eax*4]
+// 0x93ecaf orpd    xmm4, ds:xmmword_A382C0
+// 0x93ecb7 addsd   xmm6, xmm0
+// 0x93ecbb andpd   xmm1, xmm4
+// 0x93ecbf movsd   xmm2, xmm3
+// 0x93ecc3 psrlq   xmm3, 1Fh
+// 0x93ecc8 pextrw  eax, xmm3, 0
+// 0x93eccd movlpd  xmm0, ds:qword_A38308
+// 0x93ecd5 subsd   xmm4, xmm1
+// 0x93ecd9 movlpd  xmm7, ds:qword_A38310
+// 0x93ece1 and     eax, 1FFh
+// 0x93ece6 add     eax, 1
+// 0x93ece9 and     eax, 3FEh
+// 0x93ecee mulsd   xmm5, ds:qword_A36260[eax*4]
+// 0x93ecf7 mulsd   xmm2, ds:qword_A36260[eax*4]
+// 0x93ed00 addpd   xmm6, ds:xmmword_A36A70[eax*8]
+// 0x93ed09 andpd   xmm0, xmm5
+// 0x93ed0d subsd   xmm5, xmm0
+// 0x93ed11 addsd   xmm7, xmm2
+// 0x93ed15 movsd   xmm3, xmm0
+// 0x93ed19 mulsd   xmm0, xmm1
+// 0x93ed1d mulsd   xmm1, xmm5
+// 0x93ed21 mulsd   xmm3, xmm4
+// 0x93ed25 subsd   xmm2, xmm0
+// 0x93ed29 mulsd   xmm4, xmm5
+// 0x93ed2d movsd   xmm0, xmm6
+// 0x93ed31 subsd   xmm2, xmm1
+// 0x93ed35 addsd   xmm6, xmm7
+// 0x93ed39 movlpd  xmm1, [esp+arg_8]
+// 0x93ed3f pextrw  eax, xmm1, 3
+// 0x93ed44 subsd   xmm2, xmm3
+// 0x93ed48 subsd   xmm0, xmm6
+// 0x93ed4c movlpd  xmm3, ds:qword_A38308
+// 0x93ed54 pextrw  edx, xmm6, 3
+// 0x93ed59 subsd   xmm2, xmm4
+// 0x93ed5d movsd   xmm4, xmm6
+// 0x93ed61 addsd   xmm0, xmm7
+// 0x93ed65 subsd   xmm7, xmm2
+// 0x93ed69 subsd   xmm6, xmm2
+// 0x93ed6d unpcklpd xmm7, xmm7
+// 0x93ed71 and     eax, 7FF0h
+// 0x93ed76 cmp     eax, 7FF0h
+// 0x93ed7b jnb     SPECIAL_Y
+// 0x93ed81 and     edx, 7FF0h
+// 0x93ed87 sub     eax, 3FF0h
+// 0x93ed8c add     eax, edx
+// 0x93ed8e mov     edx, 40A0h
+// 0x93ed93 sub     edx, eax
+// 0x93ed95 sub     eax, 3C70h
+// 0x93ed9a or      edx, eax
+// 0x93ed9c cmp     edx, 80000000h
+// 0x93eda2 jnb     RETURN_ONE
+// 0x93eda8 subsd   xmm4, xmm6
+// 0x93edac subsd   xmm2, xmm4
+// 0x93edb0 movlpd  xmm4, ds:qword_A38308
+// 0x93edb8 andpd   xmm3, xmm1
+// 0x93edbc andpd   xmm4, xmm6
+// 0x93edc0 subsd   xmm0, xmm2
+// 0x93edc4 xorpd   xmm2, xmm2
+// 0x93edc8 mov     edx, 4060h
+// 0x93edcd pinsrw  xmm2, edx, 3
+// 0x93edd2 movsd   xmm5, xmm3
+// 0x93edd6 mulsd   xmm3, xmm4
+// 0x93edda subsd   xmm6, xmm4
+// 0x93edde subsd   xmm1, xmm5
+// 0x93ede2 mulsd   xmm3, xmm2
+// 0x93ede6 mulsd   xmm5, xmm6
+// 0x93edea movapd  xmm2, ds:xmmword_A37A80
+// 0x93edf2 mulsd   xmm4, xmm1
+// 0x93edf6 cvtsd2si eax, xmm3
+// 0x93edfa mulsd   xmm6, xmm1
+// 0x93edfe movapd  xmm1, ds:xmmword_A37A90
+// 0x93ee06 addsd   xmm5, xmm4
+// 0x93ee0a pshufd  xmm4, xmm6, 0EEh
+// 0x93ee0f addsd   xmm5, xmm6
+// 0x93ee13 mov     edx, 1FF7Fh
+// 0x93ee18 sub     edx, eax
+// 0x93ee1a add     eax, 1E1FFh
+// 0x93ee1f or      edx, eax
+// 0x93ee21 sub     eax, 1E1FFh
+// 0x93ee26 cmp     edx, 0
+// 0x93ee29 jle     UF_OF_CASES
+// 0x93ee2f add     ecx, eax
+// 0x93ee31 and     eax, 7Fh
+// 0x93ee34 and     ecx, 0FFFFFF80h
+// 0x93ee37 add     ecx, 1FF80h
+// 0x93ee3d addsd   xmm4, xmm0
+// 0x93ee41 movsd   xmm0, xmm3
+// 0x93ee45 addsd   xmm3, ds:qword_A382A0
+// 0x93ee4d mulpd   xmm2, xmm7
+// 0x93ee51 subsd   xmm3, ds:qword_A382A0
+// 0x93ee59 mulpd   xmm7, xmm7
+// 0x93ee5d subsd   xmm0, xmm3
+// 0x93ee61 add     eax, eax
+// 0x93ee63 add     eax, eax
+// 0x93ee65 add     eax, eax
+// 0x93ee67 add     eax, eax
+// 0x93ee69 movapd  xmm3, xmmword ptr [eax+0A37AA0h]
+// 0x93ee71 movapd  xmm6, ds:xmmword_A382E0
+// 0x93ee79 mulpd   xmm1, xmm7
+// 0x93ee7d addpd   xmm2, xmm1
+// 0x93ee81 pshufd  xmm1, xmm2, 0EEh
+// 0x93ee86 mulsd   xmm2, xmm7
+// 0x93ee8a xorpd   xmm7, xmm7
+// 0x93ee8e mov     edx, 3F80h
+// 0x93ee93 addsd   xmm2, xmm1
+// 0x93ee97 pinsrw  xmm7, edx, 3
+// 0x93ee9c addsd   xmm2, xmm4
+// 0x93eea0 movlpd  xmm4, ds:qword_A38300
+// 0x93eea8 movd    xmm1, ecx
+// 0x93eeac mulsd   xmm2, [esp+arg_8]
+// 0x93eeb2 mulsd   xmm0, xmm7
+// 0x93eeb6 psllq   xmm1, 2Dh ; '-'
+// 0x93eebb pshufd  xmm1, xmm1, 44h ; 'D'
+// 0x93eec0 movapd  xmm7, ds:xmmword_A382F0
+// 0x93eec8 addsd   xmm5, xmm2
+// 0x93eecc mulpd   xmm3, xmm1
+// 0x93eed0 addsd   xmm0, xmm5
+// 0x93eed4 unpcklpd xmm0, xmm0
+// 0x93eed8 mulpd   xmm6, xmm0
+// 0x93eedc mulsd   xmm4, xmm0
+// 0x93eee0 mulpd   xmm0, xmm0
+// 0x93eee4 addpd   xmm7, xmm6
+// 0x93eee8 mulpd   xmm7, xmm0
+// 0x93eeec mulsd   xmm0, xmm3
+// 0x93eef0 pshufd  xmm6, xmm7, 0EEh
+// 0x93eef5 mulsd   xmm0, xmm7
+// 0x93eef9 pshufd  xmm5, xmm3, 0EEh
+// 0x93eefe mulsd   xmm6, xmm3
+// 0x93ef02 mulsd   xmm4, xmm3
+// 0x93ef06 addsd   xmm0, xmm5
+// 0x93ef0a sub     esp, 10h
+// 0x93ef0d addsd   xmm0, xmm6
+// 0x93ef11 addsd   xmm0, xmm4
+// 0x93ef15 addsd   xmm0, xmm3
+// 0x93ef19 movlpd  [esp+10h+var_C], xmm0
+// 0x93ef1f fld     [esp+10h+var_C]
+// 0x93ef23 add     esp, 10h
+// 0x93ef26 retn
+// 0x93ef27 movlpd  xmm1, [esp+arg_8]
+// 0x93ef2d movlpd  xmm3, qword ptr ds:xmmword_A382D0
+// 0x93ef35 movd    eax, xmm1
+// 0x93ef39 movsd   xmm2, xmm1
+// 0x93ef3d andpd   xmm1, xmm3
+// 0x93ef41 psrlq   xmm1, 20h ; ' '
+// 0x93ef46 movd    ecx, xmm1
+// 0x93ef4a cmp     ecx, 7FF00000h
+// 0x93ef50 jnb     Y_INF_NAN_CHECK_X
+// 0x93ef56 or      eax, ecx
+// 0x93ef58 cmp     eax, 0
+// 0x93ef5b jz      Y_ZERO
+// 0x93ef61 cmp     edx, 0
+// 0x93ef64 jge     DENORMAL_POS_X
+// 0x93ef6a neg     edx
+// 0x93ef6c add     edx, 7FEFh
+// 0x93ef72 psllq   xmm3, 34h ; '4'
+// 0x93ef77 orpd    xmm2, xmm3
+// 0x93ef7b mov     ecx, 3F3h
+// 0x93ef80 movd    xmm3, ecx
+// 0x93ef84 psrlq   xmm1, 14h
+// 0x93ef89 psubd   xmm1, xmm3
+// 0x93ef8d pxor    xmm3, xmm3
+// 0x93ef91 pmaxsw  xmm1, xmm3
+// 0x93ef95 psllq   xmm2, xmm1
+// 0x93ef99 pcmpeqd xmm2, xmm3
+// 0x93ef9d pmovmskb eax, xmm2
+// 0x93efa1 mov     ecx, edx
+// 0x93efa3 and     edx, 7FFFh
+// 0x93efa9 cmp     edx, 7FF0h
+// 0x93efaf jnb     INF_NAN_X
+// 0x93efb5 and     eax, 0FFh
+// 0x93efba cmp     eax, 0FFh
+// 0x93efbf jnz     RET_INVALID
+// 0x93efc5 movlpd  xmm1, [esp+arg_8]
+// 0x93efcb movlpd  xmm2, [esp+arg_8]
+// 0x93efd1 mov     ecx, 3F4h
+// 0x93efd6 movd    xmm3, ecx
+// 0x93efda andpd   xmm1, ds:xmmword_A382D0
+// 0x93efe2 psrlq   xmm1, 34h ; '4'
+// 0x93efe7 psubd   xmm1, xmm3
+// 0x93efeb movlpd  xmm3, ds:qword_A38330
+// 0x93eff3 psllq   xmm2, xmm1
+// 0x93eff7 pcmpeqd xmm2, xmm3
+// 0x93effb pmovmskb eax, xmm2
+// 0x93efff and     eax, 0FFh
+// 0x93f004 mov     ecx, 3FF01h
+// 0x93f009 add     ecx, eax
+// 0x93f00b and     ecx, 40000h
+// 0x93f011 cmp     edx, 10h
+// 0x93f014 jb      short DENORMAL_X
+// 0x93f016 mov     edx, 0BFE7Fh
+// 0x93f01b movlpd  xmm3, qword ptr ds:xmmword_A382B0
+// 0x93f023 movlpd  xmm2, qword ptr ds:xmmword_A382C0
+// 0x93f02b jmp     BACK_MAIN
+// 0x93f030 movlpd  xmm7, [esp+arg_0]
+// 0x93f036 movlpd  xmm4, [esp+arg_0]
+// 0x93f03c movd    edx, xmm7
+// 0x93f040 psrlq   xmm7, 20h ; ' '
+// 0x93f045 movd    eax, xmm7
+// 0x93f049 mov     ecx, eax
+// 0x93f04b and     eax, 7FFFFFFFh
+// 0x93f050 cmp     eax, 7FF00000h
+// 0x93f055 jb      Y_INF_NAN
+// 0x93f05b ja      X_NAN
+// 0x93f061 cmp     edx, 0
+// 0x93f064 ja      X_NAN
+// 0x93f06a jmp     Y_INF_NAN
+// 0x93f06f mov     ecx, 0
+// 0x93f074 xorpd   xmm0, xmm0
+// 0x93f078 mov     eax, 43F0h
+// 0x93f07d pinsrw  xmm0, eax, 3
+// 0x93f082 movlpd  xmm7, qword ptr ds:xmmword_A382B0
+// 0x93f08a movlpd  xmm2, qword ptr ds:xmmword_A382C0
+// 0x93f092 mulsd   xmm0, xmm4
+// 0x93f096 movd    edx, xmm4
+// 0x93f09a psrlq   xmm4, 20h ; ' '
+// 0x93f09f movd    eax, xmm4
+// 0x93f0a3 cmp     edx, 0
+// 0x93f0a6 jz      short ZERO_X
+// 0x93f0a8 andpd   xmm7, xmm0
+// 0x93f0ac movsd   xmm4, xmm0
+// 0x93f0b0 andpd   xmm0, ds:xmmword_A382D0
+// 0x93f0b8 psrlq   xmm0, 2Ch ; ','
+// 0x93f0bd pextrw  eax, xmm0, 0
+// 0x93f0c2 orpd    xmm7, xmm2
+// 0x93f0c6 and     eax, 0FFh
+// 0x93f0cb add     eax, 1
+// 0x93f0ce and     eax, 1FEh
+// 0x93f0d3 mulsd   xmm7, ds:qword_A34A20[eax*4]
+// 0x93f0dc movlpd  xmm5, ds:qword_A34A20[eax*4]
+// 0x93f0e5 add     eax, eax
+// 0x93f0e7 movapd  xmm6, ds:xmmword_A34E30[eax*4]
+// 0x93f0f0 mov     edx, 43E7Fh
+// 0x93f0f5 jmp     BACK_MAIN
+// 0x93f0fa mov     edx, eax
+// 0x93f0fc and     edx, 7FFFFFFFh
+// 0x93f102 cmp     edx, 0
+// 0x93f105 jnz     short BACK_DEN
+// 0x93f107 mov     edx, dword ptr [esp+arg_8+4]
+// 0x93f10b and     edx, 80000000h
+// 0x93f111 cmp     edx, 0
+// 0x93f114 jz      short ZERO_X_POS_Y
+// 0x93f116 shl     ecx, 0Dh
+// 0x93f119 and     eax, ecx
+// 0x93f11b mov     edx, 7FF00000h
+// 0x93f120 or      edx, eax
+// 0x93f122 movd    xmm0, edx
+// 0x93f126 psllq   xmm0, 20h ; ' '
+// 0x93f12b movlpd  xmm1, qword ptr ds:xmmword_A382C0
+// 0x93f133 movlpd  xmm2, [esp+arg_0]
+// 0x93f139 divsd   xmm1, xmm2
+// 0x93f13d mov     edx, 1Bh
+// 0x93f142 jmp     CALL_LIBM_ERROR
+// 0x93f147 shl     ecx, 0Dh
+// 0x93f14a and     eax, ecx
+// 0x93f14c cmp     eax, 0
+// 0x93f14f jnz     RET_NEG_ZERO
+// 0x93f155 fldz
+// 0x93f157 retn
+// 0x93f158 movlpd  xmm3, qword ptr ds:xmmword_A382B0
+// 0x93f160 xorpd   xmm1, xmm1
+// 0x93f164 andpd   xmm3, xmm4
+// 0x93f168 pcmpeqd xmm1, xmm3
+// 0x93f16c pmovmskb ecx, xmm1
+// 0x93f170 and     ecx, 0FFh
+// 0x93f176 cmp     ecx, 0FFh
+// 0x93f17c jnz     X_NAN
+// 0x93f182 pextrw  ecx, xmm4, 3
+// 0x93f187 and     ecx, 8000h
+// 0x93f18d cmp     ecx, 0
+// 0x93f190 jz      X_INF
+// 0x93f196 and     eax, 0FFh
+// 0x93f19b cmp     eax, 0FFh
+// 0x93f1a0 jnz     short X_NINF
+// 0x93f1a2 movlpd  xmm1, [esp+arg_8]
+// 0x93f1a8 movlpd  xmm2, [esp+arg_8]
+// 0x93f1ae mov     ecx, 3F4h
+// 0x93f1b3 movd    xmm3, ecx
+// 0x93f1b7 andpd   xmm1, ds:xmmword_A382D0
+// 0x93f1bf psrlq   xmm1, 34h ; '4'
+// 0x93f1c4 psubd   xmm1, xmm3
+// 0x93f1c8 pxor    xmm3, xmm3
+// 0x93f1cc psllq   xmm2, xmm1
+// 0x93f1d0 pcmpeqd xmm2, xmm3
+// 0x93f1d4 pmovmskb eax, xmm2
+// 0x93f1d8 and     eax, 0FFh
+// 0x93f1dd cmp     eax, 0FFh
+// 0x93f1e2 jz      short X_NINF
+// 0x93f1e4 movlpd  xmm1, [esp+arg_8]
+// 0x93f1ea pextrw  eax, xmm1, 3
+// 0x93f1ef and     eax, 8000h
+// 0x93f1f4 cmp     eax, 0
+// 0x93f1f7 jz      short RET_NINF
+// 0x93f1f9 fld     ds:qword_A38330
+// 0x93f1ff retn
+// 0x93f200 fld     ds:dbl_A38328
+// 0x93f206 retn
+// 0x93f207 movlpd  xmm1, [esp+arg_8]
+// 0x93f20d pextrw  eax, xmm1, 3
+// 0x93f212 and     eax, 8000h
+// 0x93f217 cmp     eax, 0
+// 0x93f21a jz      RET_INF
+// 0x93f220 fldz
+// 0x93f222 retn
+// 0x93f223 movlpd  xmm1, [esp+arg_8]
+// 0x93f229 pextrw  eax, xmm1, 3
+// 0x93f22e and     eax, 8000h
+// 0x93f233 cmp     eax, 0
+// 0x93f236 jz      RET_INF
+// 0x93f23c fldz
+// 0x93f23e retn
+// 0x93f23f addsd   xmm4, xmm4
+// 0x93f243 movsd   xmm0, xmm4
+// 0x93f247 mov     edx, 3EEh
+// 0x93f24c jmp     CALL_LIBM_ERROR
+// 0x93f251 movlpd  xmm2, [esp+arg_0]
+// 0x93f257 movd    eax, xmm2
+// 0x93f25b psrlq   xmm2, 20h ; ' '
+// 0x93f260 movd    edx, xmm2
+// 0x93f264 and     edx, 7FFFFFFFh
+// 0x93f26a or      eax, edx
+// 0x93f26c mov     ecx, 0
+// 0x93f271 cmp     eax, 0
+// 0x93f274 jz      ZERO_X
+// 0x93f27a movlpd  xmm1, ds:qword_A38318
+// 0x93f282 movlpd  xmm0, ds:qword_A38340
+// 0x93f28a mulsd   xmm1, xmm1
+// 0x93f28e mov     edx, 1Ch
+// 0x93f293 jmp     CALL_LIBM_ERROR
+// 0x93f298 movlpd  xmm4, [esp+arg_0]
+// 0x93f29e movlpd  xmm2, [esp+arg_8]
+// 0x93f2a4 movd    eax, xmm4
+// 0x93f2a8 cmp     eax, 0
+// 0x93f2ab jnz     short Y_INF_NAN
+// 0x93f2ad psrlq   xmm4, 20h ; ' '
+// 0x93f2b2 movd    edx, xmm4
+// 0x93f2b6 cmp     edx, 3FF00000h
+// 0x93f2bc jz      RET_ONE
+// 0x93f2c2 cmp     edx, 0BFF00000h
+// 0x93f2c8 jnz     short Y_INF_NAN
+// 0x93f2ca movlpd  xmm3, qword ptr ds:xmmword_A382B0
+// 0x93f2d2 xorpd   xmm1, xmm1
+// 0x93f2d6 andpd   xmm3, xmm2
+// 0x93f2da pcmpeqd xmm1, xmm3
+// 0x93f2de pmovmskb eax, xmm1
+// 0x93f2e2 cmp     eax, 0FFh
+// 0x93f2e7 jnz     short RET_Y_NAN
+// 0x93f2e9 fld1
+// 0x93f2eb retn
+// 0x93f2ec movlpd  xmm3, qword ptr ds:xmmword_A382B0
+// 0x93f2f4 xorpd   xmm1, xmm1
+// 0x93f2f8 andpd   xmm3, xmm2
+// 0x93f2fc pcmpeqd xmm1, xmm3
+// 0x93f300 pmovmskb eax, xmm1
+// 0x93f304 and     eax, 0FFh
+// 0x93f309 cmp     eax, 0FFh
+// 0x93f30e jnz     short RET_Y_NAN
+// 0x93f310 pextrw  eax, xmm2, 3
+// 0x93f315 movlpd  xmm4, [esp+arg_0]
+// 0x93f31b and     eax, 8000h
+// 0x93f320 xor     ecx, 0BFF00000h
+// 0x93f326 or      edx, ecx
+// 0x93f328 cmp     edx, 0
+// 0x93f32b jz      RET_ONE
+// 0x93f331 cmp     eax, 0
+// 0x93f334 jz      short Y_INF
+// 0x93f336 pextrw  eax, xmm4, 3
+// 0x93f33b and     eax, 7FF0h
+// 0x93f340 cmp     eax, 3FF0h
+// 0x93f345 jb      short RET_INF
+// 0x93f347 fldz
+// 0x93f349 retn
+// 0x93f34a pextrw  eax, xmm4, 3
+// 0x93f34f and     eax, 7FF0h
+// 0x93f354 cmp     eax, 3FF0h
+// 0x93f359 jnb     short RET_INF
+// 0x93f35b fldz
+// 0x93f35d retn
+// 0x93f35e fld     ds:dbl_A38320
+// 0x93f364 retn
+// 0x93f365 addsd   xmm2, xmm2
+// 0x93f369 movsd   xmm0, xmm2
+// 0x93f36d mov     edx, 3EEh
+// 0x93f372 jmp     short CALL_LIBM_ERROR
+// 0x93f374 movd    eax, xmm4
+// 0x93f378 psrlq   xmm4, 20h ; ' '
+// 0x93f37d movd    edx, xmm4
+// 0x93f381 and     edx, 7FFFFFFFh
+// 0x93f387 mov     ecx, eax
+// 0x93f389 or      eax, edx
+// 0x93f38b movlpd  xmm0, qword ptr ds:xmmword_A382C0
+// 0x93f393 mov     edx, 1Ah
+// 0x93f398 cmp     eax, 0
+// 0x93f39b jz      short CALL_LIBM_ERROR
+// 0x93f39d movd    eax, xmm4
+// 0x93f3a1 mov     edx, 1Dh
+// 0x93f3a6 and     eax, 7FFFFFFFh
+// 0x93f3ab cmp     eax, 7FF00000h
+// 0x93f3b0 ja      short CALL_LIBM_ERROR
+// 0x93f3b2 jb      short Y_ZERO_RET
+// 0x93f3b4 cmp     ecx, 0
+// 0x93f3b7 ja      short CALL_LIBM_ERROR
+// 0x93f3b9 sub     esp, 10h
+// 0x93f3bc movlpd  [esp+10h+var_C], xmm0
+// 0x93f3c2 fld     [esp+10h+var_C]
+// 0x93f3c6 add     esp, 10h
+// 0x93f3c9 retn
+// 0x93f3ca movlpd  xmm1, ds:qword_A38340
+// 0x93f3d2 movlpd  xmm0, [esp+arg_8]
+// 0x93f3d8 addsd   xmm0, xmm1
+// 0x93f3dc mov     edx, 1Ch
+// 0x93f3e1 sub     esp, 1Ch
+// 0x93f3e4 movlpd  [esp+1Ch+var_C], xmm0
+// 0x93f3ea mov     [esp+1Ch+var_10], edx
+// 0x93f3ee mov     edx, esp
+// 0x93f3f0 add     edx, 10h
+// 0x93f3f3 mov     [esp+1Ch+var_14], edx
+// 0x93f3f7 add     edx, 18h
+// 0x93f3fa mov     [esp+1Ch+var_18], edx
+// 0x93f3fe sub     edx, 8
+// 0x93f401 mov     [esp+1Ch+var_1C], edx
+// 0x93f404 call    j____libm_error_support
+// 0x93f409 fld     [esp+1Ch+var_C]
+// 0x93f40d add     esp, 1Ch
+// 0x93f410 retn
+// 0x93f411 cmp     eax, 0
+// 0x93f414 jle     short UNDERFLOW_CASES
+// 0x93f416 cmp     eax, 40000h
+// 0x93f41b jnb     RET_INF_OF
+// 0x93f421 push    esi
+// 0x93f422 mov     edx, eax
+// 0x93f424 and     eax, 7Fh
+// 0x93f427 add     ecx, 3FF00h
+// 0x93f42d sub     edx, 80h
+// 0x93f433 and     edx, 0FFFFFF80h
+// 0x93f436 push    edi
+// 0x93f437 mov     edi, 3FF0h
+// 0x93f43c jmp     short OF_CONT
+// 0x93f43e cmp     eax, 0FFFC0200h
+// 0x93f443 jle     RET_ZERO_UF
+// 0x93f449 push    esi
+// 0x93f44a mov     edx, eax
+// 0x93f44c and     eax, 7Fh
+// 0x93f44f add     ecx, 80h
+// 0x93f455 and     edx, 0FFFFFF80h
+// 0x93f458 add     edx, 3FE80h
+// 0x93f45e push    edi
+// 0x93f45f mov     edi, 0
+// 0x93f464 addsd   xmm4, xmm0
+// 0x93f468 movsd   xmm0, xmm3
+// 0x93f46c addsd   xmm3, ds:qword_A382A0
+// 0x93f474 mov     esi, edx
+// 0x93f476 sub     esi, 1FF80h
+// 0x93f47c mulpd   xmm2, xmm7
+// 0x93f480 subsd   xmm3, ds:qword_A382A0
+// 0x93f488 mulpd   xmm7, xmm7
+// 0x93f48c subsd   xmm0, xmm3
+// 0x93f490 add     eax, eax
+// 0x93f492 add     eax, eax
+// 0x93f494 add     eax, eax
+// 0x93f496 add     eax, eax
+// 0x93f498 movapd  xmm3, xmmword ptr [eax+0A37AA0h]
+// 0x93f4a0 movapd  xmm6, ds:xmmword_A382E0
+// 0x93f4a8 mulpd   xmm1, xmm7
+// 0x93f4ac addpd   xmm2, xmm1
+// 0x93f4b0 pshufd  xmm1, xmm2, 0EEh
+// 0x93f4b5 mulsd   xmm2, xmm7
+// 0x93f4b9 addsd   xmm2, xmm1
+// 0x93f4bd addsd   xmm2, xmm4
+// 0x93f4c1 movlpd  xmm4, ds:qword_A38300
+// 0x93f4c9 movd    xmm1, edx
+// 0x93f4cd sub     edx, 1FF80h
+// 0x93f4d3 neg     edx
+// 0x93f4d5 sar     edx, 7
+// 0x93f4d8 add     edx, 2
+// 0x93f4db mov     eax, edx
+// 0x93f4dd and     eax, 20h
+// 0x93f4e0 add     edx, eax
+// 0x93f4e2 xorpd   xmm7, xmm7
+// 0x93f4e6 mov     eax, 3F80h
+// 0x93f4eb pinsrw  xmm7, eax, 3
+// 0x93f4f0 mulsd   xmm2, [esp+8+arg_8]
+// 0x93f4f6 mulsd   xmm0, xmm7
+// 0x93f4fa psllq   xmm1, 2Dh ; '-'
+// 0x93f4ff pshufd  xmm1, xmm1, 44h ; 'D'
+// 0x93f504 movapd  xmm7, ds:xmmword_A382F0
+// 0x93f50c addsd   xmm5, xmm2
+// 0x93f510 mulpd   xmm3, xmm1
+// 0x93f514 addsd   xmm0, xmm5
+// 0x93f518 unpcklpd xmm0, xmm0
+// 0x93f51c mulpd   xmm6, xmm0
+// 0x93f520 mulsd   xmm4, xmm0
+// 0x93f524 mulpd   xmm0, xmm0
+// 0x93f528 addpd   xmm7, xmm6
+// 0x93f52c mulpd   xmm7, xmm0
+// 0x93f530 mulsd   xmm0, xmm3
+// 0x93f534 pshufd  xmm6, xmm7, 0EEh
+// 0x93f539 mulsd   xmm0, xmm7
+// 0x93f53d pshufd  xmm5, xmm3, 0EEh
+// 0x93f542 mulsd   xmm6, xmm3
+// 0x93f546 mulsd   xmm4, xmm3
+// 0x93f54a movd    xmm7, ecx
+// 0x93f54e psllq   xmm7, 2Dh ; '-'
+// 0x93f553 movd    xmm2, edx
+// 0x93f557 pcmpeqd xmm1, xmm1
+// 0x93f55b psllq   xmm1, xmm2
+// 0x93f55f addsd   xmm0, xmm5
+// 0x93f563 addsd   xmm0, xmm6
+// 0x93f567 andpd   xmm1, xmm3
+// 0x93f56b addsd   xmm0, xmm4
+// 0x93f56f xorpd   xmm6, xmm6
+// 0x93f573 pcmpeqd xmm4, xmm4
+// 0x93f577 psllq   xmm4, xmm2
+// 0x93f57b subsd   xmm3, xmm1
+// 0x93f57f movsd   xmm2, xmm1
+// 0x93f583 addsd   xmm1, xmm0
+// 0x93f587 andpd   xmm1, xmm4
+// 0x93f58b pinsrw  xmm6, edi, 3
+// 0x93f590 pop     edi
+// 0x93f591 subsd   xmm2, xmm1
+// 0x93f595 addsd   xmm0, xmm2
+// 0x93f599 addsd   xmm0, xmm3
+// 0x93f59d cmp     esi, 0
+// 0x93f5a0 jg      short SCALE2
+// 0x93f5a2 pop     esi
+// 0x93f5a3 mulsd   xmm0, xmm7
+// 0x93f5a7 mulsd   xmm1, xmm7
+// 0x93f5ab addsd   xmm0, xmm1
+// 0x93f5af mulsd   xmm6, xmm0
+// 0x93f5b3 addsd   xmm0, xmm6
+// 0x93f5b7 pextrw  eax, xmm0, 3
+// 0x93f5bc and     eax, 7FF0h
+// 0x93f5c1 mov     edx, 18h
+// 0x93f5c6 cmp     eax, 7FF0h
+// 0x93f5cb jz      CALL_LIBM_ERROR
+// 0x93f5d1 mov     edx, 19h
+// 0x93f5d6 cmp     eax, 0
+// 0x93f5d9 jz      CALL_LIBM_ERROR
+// 0x93f5df sub     esp, 10h
+// 0x93f5e2 movlpd  [esp+10h+var_C], xmm0
+// 0x93f5e8 fld     [esp+10h+var_C]
+// 0x93f5ec add     esp, 10h
+// 0x93f5ef retn
+// 0x93f5f0 pop     esi
+// 0x93f5f1 addsd   xmm0, xmm1
+// 0x93f5f5 mulsd   xmm0, xmm7
+// 0x93f5f9 mulsd   xmm6, xmm0
+// 0x93f5fd addsd   xmm0, xmm6
+// 0x93f601 pextrw  eax, xmm0, 3
+// 0x93f606 and     eax, 7FF0h
+// 0x93f60b mov     edx, 18h
+// 0x93f610 cmp     eax, 7FF0h
+// 0x93f615 jz      CALL_LIBM_ERROR
+// 0x93f61b mov     edx, 19h
+// 0x93f620 cmp     eax, 0
+// 0x93f623 jz      CALL_LIBM_ERROR
+// 0x93f629 sub     esp, 10h
+// 0x93f62c movlpd  [esp+10h+var_C], xmm0
+// 0x93f632 fld     [esp+10h+var_C]
+// 0x93f636 add     esp, 10h
+// 0x93f639 retn
+// 0x93f63a movlpd  xmm0, ds:qword_A38338
+// 0x93f642 movd    xmm1, ecx
+// 0x93f646 mulsd   xmm0, xmm0
+// 0x93f64a psllq   xmm1, 2Dh ; '-'
+// 0x93f64f orpd    xmm0, xmm1
+// 0x93f653 mov     edx, 19h
+// 0x93f658 jmp     CALL_LIBM_ERROR
+// 0x93f65d mov     edx, 18h
+// 0x93f662 cmp     ecx, 0
+// 0x93f665 jz      short RET_INF_OF2
+// 0x93f667 movlpd  xmm0, ds:dbl_A38328
+// 0x93f66f jmp     CALL_LIBM_ERROR
+// 0x93f674 movlpd  xmm0, ds:dbl_A38320
+// 0x93f67c jmp     CALL_LIBM_ERROR
+// 0x93f681 pshufd  xmm4, xmm1, 44h ; 'D'
+// 0x93f686 mulpd   xmm4, xmm6
+// 0x93f68a pextrw  eax, xmm4, 3
+// 0x93f68f and     eax, 7FF0h
+// 0x93f694 mov     edx, 40A0h
+// 0x93f699 sub     edx, eax
+// 0x93f69b sub     eax, 3C70h
+// 0x93f6a0 or      edx, eax
+// 0x93f6a2 cmp     edx, 80000000h
+// 0x93f6a8 jb      BACK_XY_CHECK
+// 0x93f6ae cmp     eax, 80000000h
+// 0x93f6b3 jb      short OF_UF
+// 0x93f6b5 or      ecx, 1FF80h
+// 0x93f6bb movd    xmm0, ecx
+// 0x93f6bf psllq   xmm0, 2Dh ; '-'
+// 0x93f6c4 sub     esp, 10h
+// 0x93f6c7 movlpd  [esp+10h+var_C], xmm0
+// 0x93f6cd fld     [esp+10h+var_C]
+// 0x93f6d1 add     esp, 10h
+// 0x93f6d4 retn
+// 0x93f6d5 movlpd  xmm4, [esp+arg_0]
+// 0x93f6db pextrw  edx, xmm4, 3
+// 0x93f6e0 and     edx, 7FF0h
+// 0x93f6e6 sub     edx, 3FF0h
+// 0x93f6ec pextrw  eax, xmm1, 3
+// 0x93f6f1 xor     eax, edx
+// 0x93f6f3 and     eax, 8000h
+// 0x93f6f8 cmp     eax, 0
+// 0x93f6fb jnz     RET_ZERO_UF
+// 0x93f701 jmp     RET_INF_OF
+//
+// 全部颜色调用点上下文（按地址去重；不是完整owner）
+// 0x8e5127 push    offset aHintbcolor; "HintBColor"
+// 0x8e512c push    esi; String2
+// 0x8e512d mov     ecx, [ecx+68h]
+// 0x8e5130 call    sub_603817
+// 0x8e5135 mov     ecx, eax
+// 0x8e5137 call    sub_60559F
+// 0x8e513c test    eax, eax
+// 0x8e513e jz      short loc_8E51B0
+// 0x8e5140 mov     edx, dword_ACC3C8
+// 0x8e5146 push    offset aHintbcolor; "HintBColor"
+// 0x8e514b push    esi; String2
+// 0x8e514c mov     ecx, [edx+68h]
+// 0x8e514f call    sub_60C822
+// 0x8e5154 push    eax; lpString
+// 0x8e5155 call    sub_60C9A3
+// 0x8e515a add     esp, 4
+// 0x8e515d mov     [ebp+38h], eax
+// 0x8e5160 mov     eax, dword_ACC3C8
+// 0x8e5165 push    offset aHintbcolor; "HintBColor"
+// 0x8e516a push    esi; String2
+// 0x8e516b mov     ecx, [eax+68h]
+// 0x8e516e call    sub_60C822
+// 0x8e5173 push    eax; lpString
+// 0x8e5174 call    sub_60C9A3
+// 0x8e5179 add     esp, 4
+// 0x8e517c mov     [ebp+3Ch], eax
+// 0x8e517f mov     ecx, dword_ACC3C8
+// 0x8e5185 push    offset aHintbcolor; "HintBColor"
+// 0x8e518a push    esi; String2
+// 0x8e518b mov     ecx, [ecx+68h]
+// 0x8e518e call    sub_60C822
+// 0x8e5193 push    eax; lpString
+// 0x8e5194 call    sub_60C9A3
+// 0x8e5199 add     esp, 4
+// 0x8e519c mov     [ebp+40h], eax
+// 0x8e519f mov     edx, dword_ACC3C8
+// 0x8e51a5 push    offset aHintbcolor; "HintBColor"
+// 0x8e51aa push    esi
+// 0x8e51ab mov     ecx, [edx+68h]
+// 0x8e51ae jmp     short loc_8E521D
+// 0x8e51b0 mov     eax, dword_ACC3C8
+// 0x8e51b5 push    offset aHintnormalbcol; "HintNormalBColor"
+// 0x8e51ba push    esi; String2
+// 0x8e51bb mov     ecx, [eax+68h]
+// 0x8e51be call    sub_60C822
+// 0x8e51c3 push    eax; lpString
+// 0x8e51c4 call    sub_60C9A3
+// 0x8e51c9 add     esp, 4
+// 0x8e51cc mov     [ebp+38h], eax
+// 0x8e51cf mov     ecx, dword_ACC3C8
+// 0x8e51d5 push    offset aHintmouseinbco; "HintMouseInBColor"
+// 0x8e51da push    esi; String2
+// 0x8e51db mov     ecx, [ecx+68h]
+// 0x8e51de call    sub_60C822
+// 0x8e51e3 push    eax; lpString
+// 0x8e51e4 call    sub_60C9A3
+// 0x8e51e9 add     esp, 4
+// 0x8e51ec mov     [ebp+3Ch], eax
+// 0x8e51ef mov     edx, dword_ACC3C8
+// 0x8e51f5 push    offset aHintmousedownb; "HintMouseDownBColor"
+// 0x8e51fa push    esi; String2
+// 0x8e51fb mov     ecx, [edx+68h]
+// 0x8e51fe call    sub_60C822
+// 0x8e5203 push    eax; lpString
+// 0x8e5204 call    sub_60C9A3
+// 0x8e5209 add     esp, 4
+// 0x8e520c mov     [ebp+40h], eax
+// 0x8e520f mov     eax, dword_ACC3C8
+// 0x8e5214 push    offset aHintdisablebco; "HintDisableBColor"
+// 0x8e5219 push    esi; String2
+// 0x8e521a mov     ecx, [eax+68h]
+// 0x8e521d call    sub_60C822
+// 0x8e5222 push    eax; lpString
+// 0x8e5223 call    sub_60C9A3
+// 0x8e5228 add     esp, 4
+// 0x8e522b mov     [ebp+44h], eax
+// 0x8e522e mov     ecx, dword_ACC3C8
+// 0x8e5234 push    offset aHintfcolor; "HintFColor"
+// 0x8e5239 push    esi; String2
+// 0x8e523a mov     ecx, [ecx+68h]
+// 0x8e523d call    sub_603817
+// 0x8e5242 mov     ecx, eax
+// 0x8e5244 call    sub_60559F
+// 0x8e5249 test    eax, eax
+// 0x8e524b jz      short loc_8E52BD
+// 0x8e524d mov     edx, dword_ACC3C8
+// 0x8e5253 push    offset aHintfcolor; "HintFColor"
+// 0x8e5258 push    esi; String2
+// 0x8e5259 mov     ecx, [edx+68h]
+// 0x8e525c call    sub_60C822
+// 0x8e5261 push    eax; lpString
+// 0x8e5262 call    sub_60C9A3
+// 0x8e5267 add     esp, 4
+// 0x8e526a mov     [ebp+48h], eax
+// 0x8e526d mov     eax, dword_ACC3C8
+// 0x8e5272 push    offset aHintfcolor; "HintFColor"
+// 0x8e5277 push    esi; String2
+// 0x8e5278 mov     ecx, [eax+68h]
+// 0x8e527b call    sub_60C822
+// 0x8e5280 push    eax; lpString
+// 0x8e5281 call    sub_60C9A3
+// 0x8e5286 add     esp, 4
+// 0x8e5289 mov     [ebp+4Ch], eax
+// 0x8e528c mov     ecx, dword_ACC3C8
+// 0x8e5292 push    offset aHintfcolor; "HintFColor"
+// 0x8e5297 push    esi; String2
+// 0x8e5298 mov     ecx, [ecx+68h]
+// 0x8e529b call    sub_60C822
+// 0x8e52a0 push    eax; lpString
+// 0x8e52a1 call    sub_60C9A3
+// 0x8e52a6 add     esp, 4
+// 0x8e52a9 mov     [ebp+50h], eax
+// 0x8e52ac mov     edx, dword_ACC3C8
+// 0x8e52b2 push    offset aHintfcolor; "HintFColor"
+// 0x8e52b7 push    esi
+// 0x8e52b8 mov     ecx, [edx+68h]
+// 0x8e52bb jmp     short loc_8E532A
+// 0x8e52bd mov     eax, dword_ACC3C8
+// 0x8e52c2 push    offset aHintnormalfcol; "HintNormalFColor"
+// 0x8e52c7 push    esi; String2
+// 0x8e52c8 mov     ecx, [eax+68h]
+// 0x8e52cb call    sub_60C822
+// 0x8e52d0 push    eax; lpString
+// 0x8e52d1 call    sub_60C9A3
+// 0x8e52d6 add     esp, 4
+// 0x8e52d9 mov     [ebp+48h], eax
+// 0x8e52dc mov     ecx, dword_ACC3C8
+// 0x8e52e2 push    offset aHintmouseinfco; "HintMouseInFColor"
+// 0x8e52e7 push    esi; String2
+// 0x8e52e8 mov     ecx, [ecx+68h]
+// 0x8e52eb call    sub_60C822
+// 0x8e52f0 push    eax; lpString
+// 0x8e52f1 call    sub_60C9A3
+// 0x8e52f6 add     esp, 4
+// 0x8e52f9 mov     [ebp+4Ch], eax
+// 0x8e52fc mov     edx, dword_ACC3C8
+// 0x8e5302 push    offset aHintmousedownf; "HintMouseDownFColor"
+// 0x8e5307 push    esi; String2
+// 0x8e5308 mov     ecx, [edx+68h]
+// 0x8e530b call    sub_60C822
+// 0x8e5310 push    eax; lpString
+// 0x8e5311 call    sub_60C9A3
+// 0x8e5316 add     esp, 4
+// 0x8e5319 mov     [ebp+50h], eax
+// 0x8e531c mov     eax, dword_ACC3C8
+// 0x8e5321 push    offset aHintdisablefco; "HintDisableFColor"
+// 0x8e5326 push    esi; String2
+// 0x8e5327 mov     ecx, [eax+68h]
+// 0x8e532a call    sub_60C822
+// 0x8e532f push    eax; lpString
+// 0x8e5330 call    sub_60C9A3
+// 0x8e5335 add     esp, 4
+// 0x8e5338 mov     [ebp+54h], eax
+// 0x8e533b mov     ecx, dword_ACC3C8
+// 0x8e5341 push    offset aHintusectltext; "HintUseCtlText"
+// 0x8e5346 push    esi; String2
+// 0x8e5347 mov     ecx, [ecx+68h]
+// 0x8e534a call    sub_603817
+// 0x8e534f mov     ecx, eax
+// 0x8e5351 call    sub_60559F
+// 0x8e5356 test    eax, eax
+// 0x8e5358 jz      short loc_8E537F
+// 0x8e535a mov     edx, dword_ACC3C8
+// 0x8e5360 push    offset aHintusectltext; "HintUseCtlText"
+// 0x8e5365 push    esi; String2
+// 0x8e5366 mov     ecx, [edx+68h]
+// 0x8e5369 call    sub_60C822
+// 0x8e538a push    esi; String2
+// 0x8e538b mov     ecx, [ecx+68h]
+// 0x8e538e call    sub_603817
+// 0x8e5393 mov     ecx, eax
+// 0x8e5395 call    sub_60559F
+// 0x8e539a test    eax, eax
+// 0x8e539c jz      loc_8E5447
+// 0x8e53a2 mov     edx, dword_ACC3C8
+// 0x8e53a8 push    offset aBcolor; "BColor"
+// 0x8e53ad push    esi; String2
+// 0x8e53ae lea     edi, [ebp+0A4h]
+// 0x8e53b4 mov     ecx, [edx+68h]
+// 0x8e53b7 call    sub_60C822
+// 0x8e53bc push    eax; lpString
+// 0x8e53bd call    sub_60C9A3
+// 0x8e53c2 add     esp, 4
+// 0x8e53c5 mov     ecx, ebp
+// 0x8e53c7 push    eax
+// 0x8e53c8 push    0
+// 0x8e53ca push    edi
+// 0x8e53cb call    sub_610B6B
+// 0x8e53d0 mov     eax, dword_ACC3C8
+// 0x8e53d5 push    offset aBcolor; "BColor"
+// 0x8e53da push    esi; String2
+// 0x8e53db mov     ecx, [eax+68h]
+// 0x8e53de call    sub_60C822
+// 0x8e53e3 push    eax; lpString
+// 0x8e53e4 call    sub_60C9A3
+// 0x8e53e9 add     esp, 4
+// 0x8e53ec mov     ecx, ebp
+// 0x8e53ee push    eax
+// 0x8e53ef push    1
+// 0x8e53f1 push    edi
+// 0x8e53f2 call    sub_610B6B
+// 0x8e53f7 mov     ecx, dword_ACC3C8
+// 0x8e53fd push    offset aBcolor; "BColor"
+// 0x8e5402 push    esi; String2
+// 0x8e5403 mov     ecx, [ecx+68h]
+// 0x8e5406 call    sub_60C822
+// 0x8e540b push    eax; lpString
+// 0x8e540c call    sub_60C9A3
+// 0x8e5411 add     esp, 4
+// 0x8e5414 mov     ecx, ebp
+// 0x8e5416 push    eax
+// 0x8e5417 push    2
+// 0x8e5419 push    edi
+// 0x8e541a call    sub_610B6B
+// 0x8e541f mov     edx, dword_ACC3C8
+// 0x8e5425 push    offset aBcolor; "BColor"
+// 0x8e542a push    esi; String2
+// 0x8e542b mov     ecx, [edx+68h]
+// 0x8e542e call    sub_60C822
+// 0x8e5433 push    eax; lpString
+// 0x8e5434 call    sub_60C9A3
+// 0x8e5439 add     esp, 4
+// 0x8e543c mov     ecx, ebp
+// 0x8e543e push    eax
+// 0x8e543f push    3
+// 0x8e5441 push    edi
+// 0x8e5442 call    sub_610B6B
+// 0x8e5447 mov     eax, dword_ACC3C8
+// 0x8e544c push    offset aNormalbcolor; "NormalBColor"
+// 0x8e5451 push    esi; String2
+// 0x8e5452 mov     ecx, [eax+68h]
+// 0x8e5455 call    sub_603817
+// 0x8e545a mov     ecx, eax
+// 0x8e545c call    sub_60559F
+// 0x8e5461 test    eax, eax
+// 0x8e5463 jz      short loc_8E5493
+// 0x8e5465 mov     ecx, dword_ACC3C8
+// 0x8e546b push    offset aNormalbcolor; "NormalBColor"
+// 0x8e5470 push    esi; String2
+// 0x8e5471 mov     ecx, [ecx+68h]
+// 0x8e5474 call    sub_60C822
+// 0x8e5479 push    eax; lpString
+// 0x8e547a call    sub_60C9A3
+// 0x8e547f add     esp, 4
+// 0x8e5482 lea     edx, [ebp+0A4h]
+// 0x8e5488 mov     ecx, ebp
+// 0x8e548a push    eax
+// 0x8e548b push    0
+// 0x8e548d push    edx
+// 0x8e548e call    sub_610B6B
+// 0x8e5493 mov     eax, dword_ACC3C8
+// 0x8e5498 push    offset aMouseinbcolor; "MouseInBColor"
+// 0x8e549d push    esi; String2
+// 0x8e549e mov     ecx, [eax+68h]
+// 0x8e54a1 call    sub_603817
+// 0x8e54a6 mov     ecx, eax
+// 0x8e54a8 call    sub_60559F
+// 0x8e54ad test    eax, eax
+// 0x8e54af jz      short loc_8E54DF
+// 0x8e54b1 mov     ecx, dword_ACC3C8
+// 0x8e54b7 push    offset aMouseinbcolor; "MouseInBColor"
+// 0x8e54bc push    esi; String2
+// 0x8e54bd mov     ecx, [ecx+68h]
+// 0x8e54c0 call    sub_60C822
+// 0x8e54c5 push    eax; lpString
+// 0x8e54c6 call    sub_60C9A3
+// 0x8e54cb add     esp, 4
+// 0x8e54ce lea     edx, [ebp+0A4h]
+// 0x8e54d4 mov     ecx, ebp
+// 0x8e54d6 push    eax
+// 0x8e54d7 push    1
+// 0x8e54d9 push    edx
+// 0x8e54da call    sub_610B6B
+// 0x8e54df mov     eax, dword_ACC3C8
+// 0x8e54e4 push    offset aMousedownbcolo; "MouseDownBColor"
+// 0x8e54e9 push    esi; String2
+// 0x8e54ea mov     ecx, [eax+68h]
+// 0x8e54ed call    sub_603817
+// 0x8e54f2 mov     ecx, eax
+// 0x8e54f4 call    sub_60559F
+// 0x8e54f9 test    eax, eax
+// 0x8e54fb jz      short loc_8E552B
+// 0x8e54fd mov     ecx, dword_ACC3C8
+// 0x8e5503 push    offset aMousedownbcolo; "MouseDownBColor"
+// 0x8e5508 push    esi; String2
+// 0x8e5509 mov     ecx, [ecx+68h]
+// 0x8e550c call    sub_60C822
+// 0x8e5511 push    eax; lpString
+// 0x8e5512 call    sub_60C9A3
+// 0x8e5517 add     esp, 4
+// 0x8e551a lea     edx, [ebp+0A4h]
+// 0x8e5520 mov     ecx, ebp
+// 0x8e5522 push    eax
+// 0x8e5523 push    2
+// 0x8e5525 push    edx
+// 0x8e5526 call    sub_610B6B
+// 0x8e552b mov     eax, dword_ACC3C8
+// 0x8e5530 push    offset aDisablebcolor; "DisableBColor"
+// 0x8e5535 push    esi; String2
+// 0x8e5536 mov     ecx, [eax+68h]
+// 0x8e5539 call    sub_603817
+// 0x8e553e mov     ecx, eax
+// 0x8e5540 call    sub_60559F
+// 0x8e5545 test    eax, eax
+// 0x8e5547 jz      short loc_8E5577
+// 0x8e5549 mov     ecx, dword_ACC3C8
+// 0x8e554f push    offset aDisablebcolor; "DisableBColor"
+// 0x8e5554 push    esi; String2
+// 0x8e5555 mov     ecx, [ecx+68h]
+// 0x8e5558 call    sub_60C822
+// 0x8e555d push    eax; lpString
+// 0x8e555e call    sub_60C9A3
+// 0x8e5563 add     esp, 4
+// 0x8e5566 lea     edx, [ebp+0A4h]
+// 0x8e556c mov     ecx, ebp
+// 0x8e556e push    eax
+// 0x8e556f push    3
+// 0x8e5571 push    edx
+// 0x8e5572 call    sub_610B6B
+// 0x8e5577 mov     eax, dword_ACC3C8
+// 0x8e557c push    offset aBordertype; "BorderType"
+// 0x8e5581 push    esi; String2
+// 0x8e5582 mov     ecx, [eax+68h]
+// 0x8e5585 call    sub_603817
+// 0x8e558a mov     ecx, eax
+// 0x8e558c call    sub_60559F
+// 0x8e5591 test    eax, eax
+// 0x8e5593 lea     edi, [ebp+0A4h]
+// 0x8eeb16 push    edi; String2
+// 0x8eeb17 mov     ecx, [eax+68h]
+// 0x8eeb1a call    sub_603817
+// 0x8eeb1f mov     ecx, eax
+// 0x8eeb21 call    sub_60559F
+// 0x8eeb26 test    eax, eax
+// 0x8eeb28 jz      loc_8EEBD3
+// 0x8eeb2e mov     ecx, dword_ACC3C8
+// 0x8eeb34 push    offset aBtn0bcolor; "Btn0BColor"
+// 0x8eeb39 push    edi; String2
+// 0x8eeb3a lea     ebp, [esi+240h]
+// 0x8eeb40 mov     ecx, [ecx+68h]
+// 0x8eeb43 call    sub_60C822
+// 0x8eeb48 push    eax; lpString
+// 0x8eeb49 call    sub_60C9A3
+// 0x8eeb4e add     esp, 4
+// 0x8eeb51 mov     ecx, esi
+// 0x8eeb53 push    eax
+// 0x8eeb54 push    0
+// 0x8eeb56 push    ebp
+// 0x8eeb57 call    sub_610B6B
+// 0x8eeb5c mov     edx, dword_ACC3C8
+// 0x8eeb62 push    offset aBtn0bcolor; "Btn0BColor"
+// 0x8eeb67 push    edi; String2
+// 0x8eeb68 mov     ecx, [edx+68h]
+// 0x8eeb6b call    sub_60C822
+// 0x8eeb70 push    eax; lpString
+// 0x8eeb71 call    sub_60C9A3
+// 0x8eeb76 add     esp, 4
+// 0x8eeb79 mov     ecx, esi
+// 0x8eeb7b push    eax
+// 0x8eeb7c push    1
+// 0x8eeb7e push    ebp
+// 0x8eeb7f call    sub_610B6B
+// 0x8eeb84 mov     eax, dword_ACC3C8
+// 0x8eeb89 push    offset aBtn0bcolor; "Btn0BColor"
+// 0x8eeb8e push    edi; String2
+// 0x8eeb8f mov     ecx, [eax+68h]
+// 0x8eeb92 call    sub_60C822
+// 0x8eeb97 push    eax; lpString
+// 0x8eeb98 call    sub_60C9A3
+// 0x8eeb9d add     esp, 4
+// 0x8eeba0 mov     ecx, esi
+// 0x8eeba2 push    eax
+// 0x8eeba3 push    2
+// 0x8eeba5 push    ebp
+// 0x8eeba6 call    sub_610B6B
+// 0x8eebab mov     ecx, dword_ACC3C8
+// 0x8eebb1 push    offset aBtn0bcolor; "Btn0BColor"
+// 0x8eebb6 push    edi; String2
+// 0x8eebb7 mov     ecx, [ecx+68h]
+// 0x8eebba call    sub_60C822
+// 0x8eebbf push    eax; lpString
+// 0x8eebc0 call    sub_60C9A3
+// 0x8eebc5 add     esp, 4
+// 0x8eebc8 mov     ecx, esi
+// 0x8eebca push    eax
+// 0x8eebcb push    3
+// 0x8eebcd push    ebp
+// 0x8eebce call    sub_610B6B
+// 0x8eebd3 mov     edx, dword_ACC3C8
+// 0x8eebd9 push    offset aBtn0normalpic; "Btn0NormalPic"
+// 0x8eebde push    edi; String2
+// 0x8eebdf mov     ecx, [edx+68h]
+// 0x8eebe2 call    sub_603817
+// 0x8eebe7 mov     ecx, eax
+// 0x8eebe9 call    sub_60559F
+// 0x8eebee test    eax, eax
+// 0x8eebf0 jz      short loc_8EEC16
+// 0x8eebf2 mov     eax, dword_ACC3C8
+// 0x8ef4a4 push    edi; String2
+// 0x8ef4a5 mov     ecx, [ecx+68h]
+// 0x8ef4a8 call    sub_603817
+// 0x8ef4ad mov     ecx, eax
+// 0x8ef4af call    sub_60559F
+// 0x8ef4b4 test    eax, eax
+// 0x8ef4b6 jz      loc_8EF561
+// 0x8ef4bc mov     edx, dword_ACC3C8
+// 0x8ef4c2 push    offset aBtn1bcolor; "Btn1BColor"
+// 0x8ef4c7 push    edi; String2
+// 0x8ef4c8 lea     ebp, [esi+2F0h]
+// 0x8ef4ce mov     ecx, [edx+68h]
+// 0x8ef4d1 call    sub_60C822
+// 0x8ef4d6 push    eax; lpString
+// 0x8ef4d7 call    sub_60C9A3
+// 0x8ef4dc add     esp, 4
+// 0x8ef4df mov     ecx, esi
+// 0x8ef4e1 push    eax
+// 0x8ef4e2 push    0
+// 0x8ef4e4 push    ebp
+// 0x8ef4e5 call    sub_610B6B
+// 0x8ef4ea mov     eax, dword_ACC3C8
+// 0x8ef4ef push    offset aBtn1bcolor; "Btn1BColor"
+// 0x8ef4f4 push    edi; String2
+// 0x8ef4f5 mov     ecx, [eax+68h]
+// 0x8ef4f8 call    sub_60C822
+// 0x8ef4fd push    eax; lpString
+// 0x8ef4fe call    sub_60C9A3
+// 0x8ef503 add     esp, 4
+// 0x8ef506 mov     ecx, esi
+// 0x8ef508 push    eax
+// 0x8ef509 push    1
+// 0x8ef50b push    ebp
+// 0x8ef50c call    sub_610B6B
+// 0x8ef511 mov     ecx, dword_ACC3C8
+// 0x8ef517 push    offset aBtn1bcolor; "Btn1BColor"
+// 0x8ef51c push    edi; String2
+// 0x8ef51d mov     ecx, [ecx+68h]
+// 0x8ef520 call    sub_60C822
+// 0x8ef525 push    eax; lpString
+// 0x8ef526 call    sub_60C9A3
+// 0x8ef52b add     esp, 4
+// 0x8ef52e mov     ecx, esi
+// 0x8ef530 push    eax
+// 0x8ef531 push    2
+// 0x8ef533 push    ebp
+// 0x8ef534 call    sub_610B6B
+// 0x8ef539 mov     edx, dword_ACC3C8
+// 0x8ef53f push    offset aBtn1bcolor; "Btn1BColor"
+// 0x8ef544 push    edi; String2
+// 0x8ef545 mov     ecx, [edx+68h]
+// 0x8ef548 call    sub_60C822
+// 0x8ef54d push    eax; lpString
+// 0x8ef54e call    sub_60C9A3
+// 0x8ef553 add     esp, 4
+// 0x8ef556 mov     ecx, esi
+// 0x8ef558 push    eax
+// 0x8ef559 push    3
+// 0x8ef55b push    ebp
+// 0x8ef55c call    sub_610B6B
+// 0x8ef561 mov     eax, dword_ACC3C8
+// 0x8ef566 push    offset aBtn1normalpic; "Btn1NormalPic"
+// 0x8ef56b push    edi; String2
+// 0x8ef56c mov     ecx, [eax+68h]
+// 0x8ef56f call    sub_603817
+// 0x8ef574 mov     ecx, eax
+// 0x8ef576 call    sub_60559F
+// 0x8ef57b test    eax, eax
+// 0x8ef57d jz      short loc_8EF5A4
+// 0x8ef57f mov     ecx, dword_ACC3C8
+// 0x8efe31 push    edi; String2
+// 0x8efe32 mov     ecx, [edx+68h]
+// 0x8efe35 call    sub_603817
+// 0x8efe3a mov     ecx, eax
+// 0x8efe3c call    sub_60559F
+// 0x8efe41 test    eax, eax
+// 0x8efe43 jz      loc_8EFEED
+// 0x8efe49 mov     eax, dword_ACC3C8
+// 0x8efe4e push    offset aBtn2bcolor; "Btn2BColor"
+// 0x8efe53 push    edi; String2
+// 0x8efe54 lea     ebp, [esi+3A0h]
+// 0x8efe5a mov     ecx, [eax+68h]
+// 0x8efe5d call    sub_60C822
+// 0x8efe62 push    eax; lpString
+// 0x8efe63 call    sub_60C9A3
+// 0x8efe68 add     esp, 4
+// 0x8efe6b mov     ecx, esi
+// 0x8efe6d push    eax
+// 0x8efe6e push    0
+// 0x8efe70 push    ebp
+// 0x8efe71 call    sub_610B6B
+// 0x8efe76 mov     ecx, dword_ACC3C8
+// 0x8efe7c push    offset aBtn2bcolor; "Btn2BColor"
+// 0x8efe81 push    edi; String2
+// 0x8efe82 mov     ecx, [ecx+68h]
+// 0x8efe85 call    sub_60C822
+// 0x8efe8a push    eax; lpString
+// 0x8efe8b call    sub_60C9A3
+// 0x8efe90 add     esp, 4
+// 0x8efe93 mov     ecx, esi
+// 0x8efe95 push    eax
+// 0x8efe96 push    1
+// 0x8efe98 push    ebp
+// 0x8efe99 call    sub_610B6B
+// 0x8efe9e mov     edx, dword_ACC3C8
+// 0x8efea4 push    offset aBtn2bcolor; "Btn2BColor"
+// 0x8efea9 push    edi; String2
+// 0x8efeaa mov     ecx, [edx+68h]
+// 0x8efead call    sub_60C822
+// 0x8efeb2 push    eax; lpString
+// 0x8efeb3 call    sub_60C9A3
+// 0x8efeb8 add     esp, 4
+// 0x8efebb mov     ecx, esi
+// 0x8efebd push    eax
+// 0x8efebe push    2
+// 0x8efec0 push    ebp
+// 0x8efec1 call    sub_610B6B
+// 0x8efec6 mov     eax, dword_ACC3C8
+// 0x8efecb push    offset aBtn2bcolor; "Btn2BColor"
+// 0x8efed0 push    edi; String2
+// 0x8efed1 mov     ecx, [eax+68h]
+// 0x8efed4 call    sub_60C822
+// 0x8efed9 push    eax; lpString
+// 0x8efeda call    sub_60C9A3
+// 0x8efedf add     esp, 4
+// 0x8efee2 mov     ecx, esi
+// 0x8efee4 push    eax
+// 0x8efee5 push    3
+// 0x8efee7 push    ebp
+// 0x8efee8 call    sub_610B6B
+// 0x8efeed mov     ecx, dword_ACC3C8
+// 0x8efef3 push    offset aBtn2normalpic; "Btn2NormalPic"
+// 0x8efef8 push    edi; String2
+// 0x8efef9 mov     ecx, [ecx+68h]
+// 0x8efefc call    sub_603817
+// 0x8eff01 mov     ecx, eax
+// 0x8eff03 call    sub_60559F
+// 0x8eff08 test    eax, eax
+// 0x8eff0a pop     ebp
+// 0x8eff0b jz      short loc_8EFF32
+// 0x8f81de push    offset aNorbcolor; "NorBColor"
+// 0x8f81e3 push    edi; String2
+// 0x8f81e4 mov     ecx, [edx+68h]
+// 0x8f81e7 call    sub_603817
+// 0x8f81ec mov     ecx, eax
+// 0x8f81ee call    sub_60559F
+// 0x8f81f3 test    eax, eax
+// 0x8f81f5 jz      short loc_8F8224
+// 0x8f81f7 mov     eax, dword_ACC3C8
+// 0x8f81fc push    offset aNorbcolor; "NorBColor"
+// 0x8f8201 push    edi; String2
+// 0x8f8202 mov     ecx, [eax+68h]
+// 0x8f8205 call    sub_60C822
+// 0x8f820a push    eax; lpString
+// 0x8f820b call    sub_60C9A3
+// 0x8f8210 add     esp, 4
+// 0x8f8213 lea     ecx, [esi+254h]
+// 0x8f8219 push    eax
+// 0x8f821a push    0
+// 0x8f821c push    ecx
+// 0x8f821d mov     ecx, esi
+// 0x8f821f call    sub_610B6B
+// 0x8f8224 mov     edx, dword_ACC3C8
+// 0x8f822a push    offset aDownbcolor; "DownBColor"
+// 0x8f822f push    edi; String2
+// 0x8f8230 mov     ecx, [edx+68h]
+// 0x8f8233 call    sub_603817
+// 0x8f8238 mov     ecx, eax
+// 0x8f823a call    sub_60559F
+// 0x8f823f test    eax, eax
+// 0x8f8241 jz      short loc_8F8270
+// 0x8f8243 mov     eax, dword_ACC3C8
+// 0x8f8248 push    offset aDownbcolor; "DownBColor"
+// 0x8f824d push    edi; String2
+// 0x8f824e mov     ecx, [eax+68h]
+// 0x8f8251 call    sub_60C822
+// 0x8f8256 push    eax; lpString
+// 0x8f8257 call    sub_60C9A3
+// 0x8f825c add     esp, 4
+// 0x8f825f lea     ecx, [esi+254h]
+// 0x8f8265 push    eax
+// 0x8f8266 push    2
+// 0x8f8268 push    ecx
+// 0x8f8269 mov     ecx, esi
+// 0x8f826b call    sub_610B6B
+// 0x8f8270 mov     edx, dword_ACC3C8
+// 0x8f8276 push    offset aInbcolor; "InBColor"
+// 0x8f827b push    edi; String2
+// 0x8f827c mov     ecx, [edx+68h]
+// 0x8f827f call    sub_603817
+// 0x8f8284 mov     ecx, eax
+// 0x8f8286 call    sub_60559F
+// 0x8f828b test    eax, eax
+// 0x8f828d jz      short loc_8F82BC
+// 0x8f828f mov     eax, dword_ACC3C8
+// 0x8f8294 push    offset aInbcolor; "InBColor"
+// 0x8f8299 push    edi; String2
+// 0x8f829a mov     ecx, [eax+68h]
+// 0x8f829d call    sub_60C822
+// 0x8f82a2 push    eax; lpString
+// 0x8f82a3 call    sub_60C9A3
+// 0x8f82a8 add     esp, 4
+// 0x8f82ab lea     ecx, [esi+254h]
+// 0x8f82b1 push    eax
+// 0x8f82b2 push    1
+// 0x8f82b4 push    ecx
+// 0x8f82b5 mov     ecx, esi
+// 0x8f82b7 call    sub_610B6B
+// 0x8f82bc mov     edx, dword_ACC3C8
+// 0x8f82c2 push    offset aDisbcolor; "DisBColor"
+// 0x8f82c7 push    edi; String2
+// 0x8f82c8 mov     ecx, [edx+68h]
+// 0x8f82cb call    sub_603817
+// 0x8f82d0 mov     ecx, eax
+// 0x8f82d2 call    sub_60559F
+// 0x8f82d7 test    eax, eax
+// 0x8f82d9 jz      short loc_8F8308
+// 0x8f82db mov     eax, dword_ACC3C8
+// 0x8f82e0 push    offset aDisbcolor; "DisBColor"
+// 0x8f82e5 push    edi; String2
+// 0x8f82e6 mov     ecx, [eax+68h]
+// 0x8f82e9 call    sub_60C822
+// 0x8f82ee push    eax; lpString
+// 0x8f82ef call    sub_60C9A3
+// 0x8f82f4 add     esp, 4
+// 0x8f82f7 lea     ecx, [esi+254h]
+// 0x8f82fd push    eax
+// 0x8f82fe push    3
+// 0x8f8300 push    ecx
+// 0x8f8301 mov     ecx, esi
+// 0x8f8303 call    sub_610B6B
+// 0x8f8308 mov     edx, dword_ACC3C8
+// 0x8f830e push    offset aNorbpic; "NorBPic"
+// 0x8f8313 push    edi; String2
+// 0x8f8314 mov     ecx, [edx+68h]
+// 0x8f8317 call    sub_603817
+// 0x8f831c mov     ecx, eax
+// 0x8f831e call    sub_60559F
+// 0x8f8323 test    eax, eax
+// 0x8f8325 jz      short loc_8F834B
+// 0x8f8bc9 push    offset aNorfontcolor; "NorFontColor"
+// 0x8f8bce push    edi; String2
+// 0x8f8bcf mov     ecx, [ecx+68h]
+// 0x8f8bd2 call    sub_603817
+// 0x8f8bd7 mov     ecx, eax
+// 0x8f8bd9 call    sub_60559F
+// 0x8f8bde test    eax, eax
+// 0x8f8be0 jz      short loc_8F8C05
+// 0x8f8be2 mov     edx, dword_ACC3C8
+// 0x8f8be8 push    offset aNorfontcolor; "NorFontColor"
+// 0x8f8bed push    edi; String2
+// 0x8f8bee mov     ecx, [edx+68h]
+// 0x8f8bf1 call    sub_60C822
+// 0x8f8bf6 push    eax; lpString
+// 0x8f8bf7 call    sub_60C9A3
+// 0x8f8bfc add     esp, 4
+// 0x8f8bff mov     [esi+94h], eax
+// 0x8f8c05 mov     eax, dword_ACC3C8
+// 0x8f8c0a push    offset aDownfontcolor; "DownFontColor"
+// 0x8f8c0f push    edi; String2
+// 0x8f8c10 mov     ecx, [eax+68h]
+// 0x8f8c13 call    sub_603817
+// 0x8f8c18 mov     ecx, eax
+// 0x8f8c1a call    sub_60559F
+// 0x8f8c1f test    eax, eax
+// 0x8f8c21 jz      short loc_8F8C46
+// 0x8f8c23 mov     ecx, dword_ACC3C8
+// 0x8f8c29 push    offset aDownfontcolor; "DownFontColor"
+// 0x8f8c2e push    edi; String2
+// 0x8f8c2f mov     ecx, [ecx+68h]
+// 0x8f8c32 call    sub_60C822
+// 0x8f8c37 push    eax; lpString
+// 0x8f8c38 call    sub_60C9A3
+// 0x8f8c3d add     esp, 4
+// 0x8f8c40 mov     [esi+98h], eax
+// 0x8f8c46 mov     edx, dword_ACC3C8
+// 0x8f8c4c push    offset aInfontcolor; "InFontColor"
+// 0x8f8c51 push    edi; String2
+// 0x8f8c52 mov     ecx, [edx+68h]
+// 0x8f8c55 call    sub_603817
+// 0x8f8c5a mov     ecx, eax
+// 0x8f8c5c call    sub_60559F
+// 0x8f8c61 test    eax, eax
+// 0x8f8c63 jz      short loc_8F8C87
+// 0x8f8c65 mov     eax, dword_ACC3C8
+// 0x8f8c6a push    offset aInfontcolor; "InFontColor"
+// 0x8f8c6f push    edi; String2
+// 0x8f8c70 mov     ecx, [eax+68h]
+// 0x8f8c73 call    sub_60C822
+// 0x8f8c78 push    eax; lpString
+// 0x8f8c79 call    sub_60C9A3
+// 0x8f8c7e add     esp, 4
+// 0x8f8c81 mov     [esi+9Ch], eax
+// 0x8f8c87 mov     ecx, dword_ACC3C8
+// 0x8f8c8d push    offset aDisfontcolor; "DisFontColor"
+// 0x8f8c92 push    edi; String2
+// 0x8f8c93 mov     ecx, [ecx+68h]
+// 0x8f8c96 call    sub_603817
+// 0x8f8c9b mov     ecx, eax
+// 0x8f8c9d call    sub_60559F
+// 0x8f8ca2 test    eax, eax
+// 0x8f8ca4 jz      short loc_8F8CC9
+// 0x8f8ca6 mov     edx, dword_ACC3C8
+// 0x8f8cac push    offset aDisfontcolor; "DisFontColor"
+// 0x8f8cb1 push    edi; String2
+// 0x8f8cb2 mov     ecx, [edx+68h]
+// 0x8f8cb5 call    sub_60C822
+// 0x8f8cba push    eax; lpString
+// 0x8f8cbb call    sub_60C9A3
+// 0x8f8cc0 add     esp, 4
+// 0x8f8cc3 mov     [esi+0A0h], eax
+// 0x8f8cc9 mov     eax, dword_ACC3C8
+// 0x8f8cce push    offset aNorfontbcolor; "NorFontBColor"
+// 0x8f8cd3 push    edi; String2
+// 0x8f8cd4 mov     ecx, [eax+68h]
+// 0x8f8cd7 call    sub_603817
+// 0x8f8cdc mov     ecx, eax
+// 0x8f8cde call    sub_60559F
+// 0x8f8ce3 test    eax, eax
+// 0x8f8ce5 jz      short loc_8F8D0A
+// 0x8f8ce7 mov     ecx, dword_ACC3C8
+// 0x8f8ced push    offset aNorfontcolor; "NorFontColor"
+// 0x8f8cf2 push    edi; String2
+// 0x8f8cf3 mov     ecx, [ecx+68h]
+// 0x8f8cf6 call    sub_60C822
+// 0x8f8cfb push    eax; lpString
+// 0x8f8cfc call    sub_60C9A3
+// 0x8f8d01 add     esp, 4
+// 0x8f8d04 mov     [esi+84h], eax
+// 0x8f8d0a mov     edx, dword_ACC3C8
+// 0x8f8d10 push    offset aDownfontbcolor; "DownFontBColor"
+// 0x8f8d15 push    edi; String2
+// 0x8f8d16 mov     ecx, [edx+68h]
+// 0x8f8d19 call    sub_603817
+// 0x8f8d1e mov     ecx, eax
+// 0x8f8d20 call    sub_60559F
+// 0x8f8d25 test    eax, eax
+// 0x8f8d27 jz      short loc_8F8D4B
+// 0x8f8d29 mov     eax, dword_ACC3C8
+// 0x8f8d2e push    offset aDownfontcolor; "DownFontColor"
+// 0x8f8d33 push    edi; String2
+// 0x8f8d34 mov     ecx, [eax+68h]
+// 0x8f8d37 call    sub_60C822
+// 0x8f8d3c push    eax; lpString
+// 0x8f8d3d call    sub_60C9A3
+// 0x8f8d42 add     esp, 4
+// 0x8f8d45 mov     [esi+88h], eax
+// 0x8f8d4b mov     ecx, dword_ACC3C8
+// 0x8f8d51 push    offset aInfontbcolor; "InFontBColor"
+// 0x8f8d56 push    edi; String2
+// 0x8f8d57 mov     ecx, [ecx+68h]
+// 0x8f8d5a call    sub_603817
+// 0x8f8d5f mov     ecx, eax
+// 0x8f8d61 call    sub_60559F
+// 0x8f8d66 test    eax, eax
+// 0x8f8d68 jz      short loc_8F8D8D
+// 0x8f8d6a mov     edx, dword_ACC3C8
+// 0x8f8d70 push    offset aInfontcolor; "InFontColor"
+// 0x8f8d75 push    edi; String2
+// 0x8f8d76 mov     ecx, [edx+68h]
+// 0x8f8d79 call    sub_60C822
+// 0x8f8d7e push    eax; lpString
+// 0x8f8d7f call    sub_60C9A3
+// 0x8f8d84 add     esp, 4
+// 0x8f8d87 mov     [esi+8Ch], eax
+// 0x8f8d8d mov     eax, dword_ACC3C8
+// 0x8f8d92 push    offset aDisfontbcolor; "DisFontBColor"
+// 0x8f8d97 push    edi; String2
+// 0x8f8d98 mov     ecx, [eax+68h]
+// 0x8f8d9b call    sub_603817
+// 0x8f8da0 mov     ecx, eax
+// 0x8f8da2 call    sub_60559F
+// 0x8f8da7 test    eax, eax
+// 0x8f8da9 jz      short loc_8F8DCE
+// 0x8f8dab mov     ecx, dword_ACC3C8
+// 0x8f8db1 push    offset aDisfontcolor; "DisFontColor"
+// 0x8f8db6 push    edi; String2
+// 0x8f8db7 mov     ecx, [ecx+68h]
+// 0x8f8dba call    sub_60C822
+// 0x8f8dbf push    eax; lpString
+// 0x8f8dc0 call    sub_60C9A3
+// 0x8f8dc5 add     esp, 4
+// 0x8f8dc8 mov     [esi+90h], eax
+// 0x8f8dce mov     edx, dword_ACC3C8
+// 0x8f8dd4 push    offset aMultiselect; "MultiSelect"
+// 0x8f8dd9 push    edi; String2
+// 0x8f8dda mov     ecx, [edx+68h]
+// 0x8f8ddd call    sub_603817
+// 0x8f8de2 mov     ecx, eax
+// 0x8f8de4 call    sub_60559F
+// 0x8f8de9 test    eax, eax
+// 0x8f8deb jz      short loc_8F8E14
+// 0x8f8ded mov     eax, dword_ACC3C8
+// 0x8f8df2 push    offset aMultiselect; "MultiSelect"
+// 0x8f8df7 push    edi; String2
+// 0x8f8df8 mov     ecx, [eax+68h]
+// 0x8f8dfb call    sub_60C822
+// 0x900e1f push    offset aCheckcolor; "CheckColor"
+// 0x900e24 push    edi; String2
+// 0x900e25 mov     ecx, [eax+68h]
+// 0x900e28 call    sub_603817
+// 0x900e2d mov     ecx, eax
+// 0x900e2f call    sub_60559F
+// 0x900e34 test    eax, eax
+// 0x900e36 jz      short loc_900E5B
+// 0x900e38 mov     ecx, dword_ACC3C8
+// 0x900e3e push    offset aCheckcolor; "CheckColor"
+// 0x900e43 push    edi; String2
+// 0x900e44 mov     ecx, [ecx+68h]
+// 0x900e47 call    sub_60C822
+// 0x900e4c push    eax; lpString
+// 0x900e4d call    sub_60C9A3
+// 0x900e52 add     esp, 4
+// 0x900e55 mov     [esi+368h], eax
+// 0x900e5b mov     edx, dword_ACC3C8
+// 0x900e61 push    offset aPaste; "Paste"
+// 0x900e66 push    edi; String2
+// 0x900e67 mov     ecx, [edx+68h]
+// 0x900e6a call    sub_603817
+// 0x900e6f mov     ecx, eax
+// 0x900e71 call    sub_60559F
+// 0x900e76 test    eax, eax
+// 0x900e78 jz      short loc_900EA1
+// 0x900e7a mov     eax, dword_ACC3C8
+// 0x900e7f push    offset aPaste; "Paste"
+// 0x900e84 push    edi; String2
+// 0x900e85 mov     ecx, [eax+68h]
+// 0x900e88 call    sub_60C822
+// 0x901df2 push    offset aTopcolor; "TopColor"
+// 0x901df7 push    esi; String2
+// 0x901df8 mov     ecx, [eax+68h]
+// 0x901dfb call    sub_603817
+// 0x901e00 mov     ecx, eax
+// 0x901e02 call    sub_60559F
+// 0x901e07 test    eax, eax
+// 0x901e09 jz      short loc_901E2E
+// 0x901e0b mov     ecx, dword_ACC3C8
+// 0x901e11 push    offset aTopcolor; "TopColor"
+// 0x901e16 push    esi; String2
+// 0x901e17 mov     ecx, [ecx+68h]
+// 0x901e1a call    sub_60C822
+// 0x901e1f push    eax; lpString
+// 0x901e20 call    sub_60C9A3
+// 0x901e25 add     esp, 4
+// 0x901e28 mov     [edi+260h], eax
+// 0x901e2e mov     edx, dword_ACC3C8
+// 0x901e34 push    offset aPosition_1; "Position"
+// 0x901e39 push    esi; String2
+// 0x901e3a mov     ecx, [edx+68h]
+// 0x901e3d call    sub_603817
+// 0x901e42 mov     ecx, eax
+// 0x901e44 call    sub_60559F
+// 0x901e49 test    eax, eax
+// 0x901e4b jz      short loc_901E68
+// 0x901e4d mov     eax, dword_ACC3C8
+// 0x901e52 push    offset aPosition_1; "Position"
+// 0x901e57 push    esi; String2
+// 0x901e58 mov     ecx, [eax+68h]
+// 0x901e5b call    sub_60B2C9
+// 0x9047a2 mov     ecx, [ecx+68h]
+// 0x9047a5 call    sub_603817
+// 0x9047aa mov     ecx, eax
+// 0x9047ac call    sub_60559F
+// 0x9047b1 test    eax, eax
+// 0x9047b3 jz      loc_904860
+// 0x9047b9 mov     edx, dword_ACC3C8
+// 0x9047bf push    ebx
+// 0x9047c0 push    offset aBtnbcolor; "BtnBColor"
+// 0x9047c5 push    edi; String2
+// 0x9047c6 mov     ecx, [edx+68h]
+// 0x9047c9 lea     ebx, [esi+240h]
+// 0x9047cf call    sub_60C822
+// 0x9047d4 push    eax; lpString
+// 0x9047d5 call    sub_60C9A3
+// 0x9047da add     esp, 4
+// 0x9047dd mov     ecx, esi
+// 0x9047df push    eax
+// 0x9047e0 push    0
+// 0x9047e2 push    ebx
+// 0x9047e3 call    sub_610B6B
+// 0x9047e8 mov     eax, dword_ACC3C8
+// 0x9047ed push    offset aBtnbcolor; "BtnBColor"
+// 0x9047f2 push    edi; String2
+// 0x9047f3 mov     ecx, [eax+68h]
+// 0x9047f6 call    sub_60C822
+// 0x9047fb push    eax; lpString
+// 0x9047fc call    sub_60C9A3
+// 0x904801 add     esp, 4
+// 0x904804 mov     ecx, esi
+// 0x904806 push    eax
+// 0x904807 push    1
+// 0x904809 push    ebx
+// 0x90480a call    sub_610B6B
+// 0x90480f mov     ecx, dword_ACC3C8
+// 0x904815 push    offset aBtnbcolor; "BtnBColor"
+// 0x90481a push    edi; String2
+// 0x90481b mov     ecx, [ecx+68h]
+// 0x90481e call    sub_60C822
+// 0x904823 push    eax; lpString
+// 0x904824 call    sub_60C9A3
+// 0x904829 add     esp, 4
+// 0x90482c mov     ecx, esi
+// 0x90482e push    eax
+// 0x90482f push    2
+// 0x904831 push    ebx
+// 0x904832 call    sub_610B6B
+// 0x904837 mov     edx, dword_ACC3C8
+// 0x90483d push    offset aBtnbcolor; "BtnBColor"
+// 0x904842 push    edi; String2
+// 0x904843 mov     ecx, [edx+68h]
+// 0x904846 call    sub_60C822
+// 0x90484b push    eax; lpString
+// 0x90484c call    sub_60C9A3
+// 0x904851 add     esp, 4
+// 0x904854 mov     ecx, esi
+// 0x904856 push    eax
+// 0x904857 push    3
+// 0x904859 push    ebx
+// 0x90485a call    sub_610B6B
+// 0x90485f pop     ebx
+// 0x904860 mov     eax, dword_ACC3C8
+// 0x904865 push    offset aBtnnormalpic; "BtnNormalPic"
+// 0x90486a push    edi; String2
+// 0x90486b mov     ecx, [eax+68h]
+// 0x90486e call    sub_603817
+// 0x904873 mov     ecx, eax
+// 0x904875 call    sub_60559F
+// 0x90487a test    eax, eax
+// 0x90487c jz      short loc_9048A3
+// 0x90a94b push    offset aCheckcolor; "CheckColor"
+// 0x90a950 push    esi; String2
+// 0x90a951 mov     ecx, [eax+68h]
+// 0x90a954 call    sub_603817
+// 0x90a959 mov     ecx, eax
+// 0x90a95b call    sub_60559F
+// 0x90a960 test    eax, eax
+// 0x90a962 jz      short loc_90A987
+// 0x90a964 mov     ecx, dword_ACC3C8
+// 0x90a96a push    offset aCheckcolor; "CheckColor"
+// 0x90a96f push    esi; String2
+// 0x90a970 mov     ecx, [ecx+68h]
+// 0x90a973 call    sub_60C822
+// 0x90a978 push    eax; lpString
+// 0x90a979 call    sub_60C9A3
+// 0x90a97e add     esp, 4
+// 0x90a981 mov     [edi+254h], eax
+// 0x90a987 mov     edx, dword_ACC3C8
+// 0x90a98d push    offset aDownsound; "DownSound"
+// 0x90a992 push    esi; String2
+// 0x90a993 mov     ecx, [edx+68h]
+// 0x90a996 call    sub_603817
+// 0x90a99b mov     ecx, eax
+// 0x90a99d call    sub_60559F
+// 0x90a9a2 test    eax, eax
+// 0x90a9a4 jz      short loc_90A9BF
+// 0x90a9a6 mov     eax, dword_ACC3C8
+// 0x90a9ab push    offset aDownsound; "DownSound"
+// 0x90a9b0 push    esi; String2
+// 0x90a9b1 mov     ecx, [eax+68h]
+// 0x90a9b4 call    sub_60B2C9
+// 0x90da16 push    offset aNormalcapfontf; "NormalCapFontFColor"
+// 0x90da1b push    esi; String2
+// 0x90da1c mov     ecx, [eax+68h]
+// 0x90da1f call    sub_603817
+// 0x90da24 mov     ecx, eax
+// 0x90da26 call    sub_60559F
+// 0x90da2b test    eax, eax
+// 0x90da2d jz      short loc_90DA52
+// 0x90da2f mov     ecx, dword_ACC3C8
+// 0x90da35 push    offset aNormalcapfontf; "NormalCapFontFColor"
+// 0x90da3a push    esi; String2
+// 0x90da3b mov     ecx, [ecx+68h]
+// 0x90da3e call    sub_60C822
+// 0x90da43 push    eax; lpString
+// 0x90da44 call    sub_60C9A3
+// 0x90da49 add     esp, 4
+// 0x90da4c mov     [ebx+94h], eax
+// 0x90da52 mov     edx, dword_ACC3C8
+// 0x90da58 push    offset aMouseincapfont; "MouseInCapFontFColor"
+// 0x90da5d push    esi; String2
+// 0x90da5e mov     ecx, [edx+68h]
+// 0x90da61 call    sub_603817
+// 0x90da66 mov     ecx, eax
+// 0x90da68 call    sub_60559F
+// 0x90da6d test    eax, eax
+// 0x90da6f jz      short loc_90DA93
+// 0x90da71 mov     eax, dword_ACC3C8
+// 0x90da76 push    offset aMouseincapfont; "MouseInCapFontFColor"
+// 0x90da7b push    esi; String2
+// 0x90da7c mov     ecx, [eax+68h]
+// 0x90da7f call    sub_60C822
+// 0x90da84 push    eax; lpString
+// 0x90da85 call    sub_60C9A3
+// 0x90da8a add     esp, 4
+// 0x90da8d mov     [ebx+98h], eax
+// 0x90da93 mov     ecx, dword_ACC3C8
+// 0x90da99 push    offset aMousedowncapfo; "MouseDownCapFontFColor"
+// 0x90da9e push    esi; String2
+// 0x90da9f mov     ecx, [ecx+68h]
+// 0x90daa2 call    sub_603817
+// 0x90daa7 mov     ecx, eax
+// 0x90daa9 call    sub_60559F
+// 0x90daae test    eax, eax
+// 0x90dab0 jz      short loc_90DAD5
+// 0x90dab2 mov     edx, dword_ACC3C8
+// 0x90dab8 push    offset aMousedowncapfo; "MouseDownCapFontFColor"
+// 0x90dabd push    esi; String2
+// 0x90dabe mov     ecx, [edx+68h]
+// 0x90dac1 call    sub_60C822
+// 0x90dac6 push    eax; lpString
+// 0x90dac7 call    sub_60C9A3
+// 0x90dacc add     esp, 4
+// 0x90dacf mov     [ebx+9Ch], eax
+// 0x90dad5 mov     eax, dword_ACC3C8
+// 0x90dada push    offset aDisablecapfont; "DisableCapFontFColor"
+// 0x90dadf push    esi; String2
+// 0x90dae0 mov     ecx, [eax+68h]
+// 0x90dae3 call    sub_603817
+// 0x90dae8 mov     ecx, eax
+// 0x90daea call    sub_60559F
+// 0x90daef test    eax, eax
+// 0x90daf1 jz      short loc_90DB16
+// 0x90daf3 mov     ecx, dword_ACC3C8
+// 0x90daf9 push    offset aDisablecapfont; "DisableCapFontFColor"
+// 0x90dafe push    esi; String2
+// 0x90daff mov     ecx, [ecx+68h]
+// 0x90db02 call    sub_60C822
+// 0x90db07 push    eax; lpString
+// 0x90db08 call    sub_60C9A3
+// 0x90db0d add     esp, 4
+// 0x90db10 mov     [ebx+0A0h], eax
+// 0x90db16 mov     edx, dword_ACC3C8
+// 0x90db1c push    offset aNormalcapfontb; "NormalCapFontBColor"
+// 0x90db21 push    esi; String2
+// 0x90db22 mov     ecx, [edx+68h]
+// 0x90db25 call    sub_603817
+// 0x90db2a mov     ecx, eax
+// 0x90db2c call    sub_60559F
+// 0x90db31 test    eax, eax
+// 0x90db33 jz      short loc_90DB57
+// 0x90db35 mov     eax, dword_ACC3C8
+// 0x90db3a push    offset aNormalcapfontb; "NormalCapFontBColor"
+// 0x90db3f push    esi; String2
+// 0x90db40 mov     ecx, [eax+68h]
+// 0x90db43 call    sub_60C822
+// 0x90db48 push    eax; lpString
+// 0x90db49 call    sub_60C9A3
+// 0x90db4e add     esp, 4
+// 0x90db51 mov     [ebx+84h], eax
+// 0x90db57 mov     ecx, dword_ACC3C8
+// 0x90db5d push    offset aMouseincapfont_0; "MouseInCapFontBColor"
+// 0x90db62 push    esi; String2
+// 0x90db63 mov     ecx, [ecx+68h]
+// 0x90db66 call    sub_603817
+// 0x90db6b mov     ecx, eax
+// 0x90db6d call    sub_60559F
+// 0x90db72 test    eax, eax
+// 0x90db74 jz      short loc_90DB99
+// 0x90db76 mov     edx, dword_ACC3C8
+// 0x90db7c push    offset aMouseincapfont_0; "MouseInCapFontBColor"
+// 0x90db81 push    esi; String2
+// 0x90db82 mov     ecx, [edx+68h]
+// 0x90db85 call    sub_60C822
+// 0x90db8a push    eax; lpString
+// 0x90db8b call    sub_60C9A3
+// 0x90db90 add     esp, 4
+// 0x90db93 mov     [ebx+88h], eax
+// 0x90db99 mov     eax, dword_ACC3C8
+// 0x90db9e push    offset aMousedowncapfo_0; "MouseDownCapFontBColor"
+// 0x90dba3 push    esi; String2
+// 0x90dba4 mov     ecx, [eax+68h]
+// 0x90dba7 call    sub_603817
+// 0x90dbac mov     ecx, eax
+// 0x90dbae call    sub_60559F
+// 0x90dbb3 test    eax, eax
+// 0x90dbb5 jz      short loc_90DBDA
+// 0x90dbb7 mov     ecx, dword_ACC3C8
+// 0x90dbbd push    offset aMousedowncapfo_0; "MouseDownCapFontBColor"
+// 0x90dbc2 push    esi; String2
+// 0x90dbc3 mov     ecx, [ecx+68h]
+// 0x90dbc6 call    sub_60C822
+// 0x90dbcb push    eax; lpString
+// 0x90dbcc call    sub_60C9A3
+// 0x90dbd1 add     esp, 4
+// 0x90dbd4 mov     [ebx+8Ch], eax
+// 0x90dbda mov     edx, dword_ACC3C8
+// 0x90dbe0 push    offset aDisablecapfont_0; "DisableCapFontBColor"
+// 0x90dbe5 push    esi; String2
+// 0x90dbe6 mov     ecx, [edx+68h]
+// 0x90dbe9 call    sub_603817
+// 0x90dbee mov     ecx, eax
+// 0x90dbf0 call    sub_60559F
+// 0x90dbf5 test    eax, eax
+// 0x90dbf7 jz      short loc_90DC1B
+// 0x90dbf9 mov     eax, dword_ACC3C8
+// 0x90dbfe push    offset aDisablecapfont_0; "DisableCapFontBColor"
+// 0x90dc03 push    esi; String2
+// 0x90dc04 mov     ecx, [eax+68h]
+// 0x90dc07 call    sub_60C822
+// 0x90dc0c push    eax; lpString
+// 0x90dc0d call    sub_60C9A3
+// 0x90dc12 add     esp, 4
+// 0x90dc15 mov     [ebx+90h], eax
+// 0x90dc1b mov     ecx, dword_ACC3C8
+// 0x90dc21 push    offset aCapfontsize; "CapFontSize"
+// 0x90dc26 push    esi; String2
+// 0x90dc27 mov     ecx, [ecx+68h]
+// 0x90dc2a call    sub_603817
+// 0x90dc2f mov     ecx, eax
+// 0x90dc31 call    sub_60559F
+// 0x90dc36 test    eax, eax
+// 0x90dc38 jz      short loc_90DC5A
+// 0x90dc3a mov     edx, dword_ACC3C8
+// 0x90dc40 push    offset aCapfontsize; "CapFontSize"
+// 0x90dc45 push    esi; String2
+// 0x90dc46 mov     ecx, [edx+68h]
+// 0x90dc49 call    sub_60B2C9

@@ -1,0 +1,214 @@
+{
+  "stage": "作者静态分析完成，独立结论另见审阅报告",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "scope": "第二十批Grant；11新采入口、2完整复用入口、2局部消费窗；复用不计新增覆盖",
+  "functions": [
+    {
+      "va": "0x6280e0",
+      "status": "完整函数静态审阅",
+      "conclusion": "A76720懒建；new尺寸100124；构造失败零槽路径与EH释放路径分别记录",
+      "unknown": "原类名及多线程调用安全性未知；不证明对象已加载资源",
+      "document": "01_生命周期与配置读取.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/0",
+      "coverage_origin": "本批新增完整原证"
+    },
+    {
+      "va": "0x7d9100",
+      "status": "完整函数静态审阅",
+      "conclusion": "5x5000 DWORD表默认-1，100字节gate清0，ICCode/昵称清0，两个float默认1.0",
+      "unknown": "+18711..13未直接初始化；原结构体类型名未知",
+      "document": "02_对象布局与安全边界.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/5",
+      "coverage_origin": "本批新增完整原证"
+    },
+    {
+      "va": "0x7d91d0",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "逐段原地写入；缺字段沿用，gate/prop无界索引；失败文件门先于业务写入；PROP键返回未判",
+      "unknown": "当前Grant.kpd缺失，资源装载依赖及中途异常状态未闭合；不证明实际加载成功",
+      "document": "01_生命周期与配置读取.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/6；证据/grant_resource_raw.json",
+      "coverage_origin": "本批新增完整原证，语义只提升字段/路径"
+    },
+    {
+      "va": "0x7d98e0",
+      "status": "完整函数静态审阅",
+      "conclusion": "signed规则行0..4接受，非法返回EAX=-1；合法直接读DWORD表，列无范围检查",
+      "unknown": "所有调用者列合法性与所有消费者对-1的解释未知",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/7",
+      "coverage_origin": "本批新增完整原证"
+    },
+    {
+      "va": "0x7d9940",
+      "status": "完整函数静态审阅",
+      "conclusion": "恒AL=1，不读Grant字段/两个参数，retn8；不是实际gate字节访问器",
+      "unknown": "原设计用途未知，完整EAX不保证恒1",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/8",
+      "coverage_origin": "本批新增完整原证"
+    },
+    {
+      "va": "0x7d99d0",
+      "status": "完整函数静态审阅",
+      "conclusion": "AL读取+186AC+arg原字节，retn4；无范围检查及布尔归一化",
+      "unknown": "所有gate调用者的索引合法性未知",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/9",
+      "coverage_origin": "本批新增完整原证"
+    },
+    {
+      "va": "0x6b76d0",
+      "status": "完整函数静态审阅",
+      "conclusion": "原样返回this+186A8 DWORD，不验证或转换",
+      "unknown": "ICCode的业务单位与完整消费群未知",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/4",
+      "coverage_origin": "本批新增完整原证"
+    },
+    {
+      "va": "0x6a35b0",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "signed arg<5或9940非零调用828F60(15,arg)；恒真桩使正常Grant拒绝提示路径不可达",
+      "unknown": "828F60/UI依赖全文及实际联网行为未知；函数返回不提升为bool",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/2",
+      "coverage_origin": "本批新增完整原证，语义只提升字段/路径"
+    },
+    {
+      "va": "0x6a3640",
+      "status": "完整函数静态审阅",
+      "conclusion": "signed arg<5直接AL1，其他按9940 AL判；当前正常契约均AL1，可能触发单例懒建",
+      "unknown": "异常及分配失败的运行表现未知；不证明服务端许可",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/3",
+      "coverage_origin": "本批新增完整原证"
+    },
+    {
+      "va": "0x6a1730",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "6A1C10或gate字节非零提前真；否则列表命中后检查当前/前项，前项0特殊不查",
+      "unknown": "列表及6A1C10/6A1660依赖业务未闭合；不证明线上消息或权威规则",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_core_raw.json#/functions/1",
+      "coverage_origin": "本批新增完整原证，语义只提升字段/路径"
+    },
+    {
+      "va": "0x7d9c30",
+      "status": "完整函数静态审阅",
+      "conclusion": "DWORD[this+0]=0，DWORD[this+4]=-1，返回this",
+      "unknown": "原子结构体名称未知，不能由默认值解释全部复活业务",
+      "document": "01_生命周期与配置读取.txt",
+      "evidence": "证据/grant_supplement_raw.json#/functions/0",
+      "coverage_origin": "本批新增完整原证"
+    },
+    {
+      "va": "0x8198e0",
+      "status": "完整函数静态审阅",
+      "conclusion": "复用行读取契约：LF停止/双字节/反引号n/NUL；写后计数+1断言，不是128安全截断",
+      "unknown": "不验证源端尾部完整性；不恢复原编码类名",
+      "document": "02_对象布局与安全边界.txt",
+      "evidence": "证据/grant_reused_raw.json#/functions/0；证据/grant_reused_raw.json#/provenance/0",
+      "coverage_origin": "完整复用，不计新增覆盖"
+    },
+    {
+      "va": "0x81a090",
+      "status": "完整函数静态审阅",
+      "conclusion": "mode0从base+offset同步94/90/8C；mode2从base+length+offset-1同步；mode1只加94",
+      "unknown": "没有旧IDB原字节；旧汇编逐指令文本重核当前磁盘，当前声明单块无尾缺口",
+      "document": "01_生命周期与配置读取.txt",
+      "evidence": "证据/grant_reused_raw.json#/legacy_rechecked_functions/0；证据/grant_reuse_declarations_raw.json#/reused_declarations/1",
+      "coverage_origin": "旧文本完整复用并核当前磁盘，不计新增覆盖"
+    },
+    {
+      "va": "0x7113a0",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "711738..711803窗：动作表前读取Grant(rule,prop)，-1绕过，次数+1超过则清许可标志",
+      "unknown": "旧源原字节核当前磁盘但原全文仅局部审阅；次数/规则依赖与动作表全文未闭合",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_reused_raw.json#/consumer_windows/0",
+      "coverage_origin": "复用局部消费窗，不计新增完整函数覆盖"
+    },
+    {
+      "va": "0x7cdab0",
+      "status": "字段或调用路径局部审阅",
+      "conclusion": "7CDAD0..7CDB3B窗：固定prop1076；-1绕过；WORD计数零扩展+1，超过限额则AL0",
+      "unknown": "原专题仅导出，窗后消息/扣物依赖不作全文提升；不证明网络发送或服务端认可",
+      "document": "03_短访问器与消费闭环.txt",
+      "evidence": "证据/grant_reused_raw.json#/consumer_windows/1",
+      "coverage_origin": "复用局部消费窗，不计新增完整函数覆盖"
+    }
+  ],
+  "initial_plan_seeds": [
+    {
+      "seed_va": "0x6280e0",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x7d9100",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x7d91d0",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x7d98e0",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x7d9940",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x7d99d0",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x6b76d0",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x6a35b0",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x6a3640",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    },
+    {
+      "seed_va": "0x6a1730",
+      "pending_status": "待采证",
+      "planning_note": "第二十批导航种子；准备只读导出，不主张已审阅。",
+      "pending_questions": "声明块、字节一致性、字段与依赖契约需原证及逐条审阅。",
+      "planning_source": "00_实施范围与取证计划.txt；证据/export_grant_readonly.py（准备脚本，非已采原证）"
+    }
+  ]
+}

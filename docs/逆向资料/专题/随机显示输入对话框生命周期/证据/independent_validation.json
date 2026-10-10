@@ -1,0 +1,320 @@
+{
+  "status": "PASS",
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "capstone_version": "5.0.6",
+  "unique_functions": 20,
+  "declared_bytes": 8439,
+  "checked_ranges": 70,
+  "bridges": 29,
+  "incoming_records": 32,
+  "window_bytes": 324,
+  "anchors": [
+    {
+      "va": "0x912ed0",
+      "disk_hex": "8d8190010000",
+      "mnemonic": "lea",
+      "operands": "eax, [ecx + 0x190]",
+      "meaning": "返回键盘对象this+400"
+    },
+    {
+      "va": "0x917130",
+      "disk_hex": "8d8190020000",
+      "mnemonic": "lea",
+      "operands": "eax, [ecx + 0x290]",
+      "meaning": "返回按键对象this+656，this不同"
+    },
+    {
+      "va": "0x913eb9",
+      "disk_hex": "8be9",
+      "mnemonic": "mov",
+      "operands": "ebp, ecx",
+      "meaning": "软键优化函数保存入口this"
+    },
+    {
+      "va": "0x91422d",
+      "disk_hex": "8be9",
+      "mnemonic": "mov",
+      "operands": "ebp, ecx",
+      "meaning": "物理键优化函数保存入口this"
+    },
+    {
+      "va": "0x913efd",
+      "disk_hex": "8bc8",
+      "mnemonic": "mov",
+      "operands": "ecx, eax",
+      "meaning": "软键getter使用映射返回的按键对象"
+    },
+    {
+      "va": "0x913f04",
+      "disk_hex": "e83f13cfff",
+      "mnemonic": "call",
+      "operands": "0x605248",
+      "meaning": "按键getter调用桥"
+    },
+    {
+      "va": "0x913f09",
+      "disk_hex": "8a10",
+      "mnemonic": "mov",
+      "operands": "dl, byte ptr [eax]",
+      "meaning": "读取按键操作首BYTE"
+    },
+    {
+      "va": "0x913f0b",
+      "disk_hex": "80faf7",
+      "mnemonic": "cmp",
+      "operands": "dl, 0xf7",
+      "meaning": "普通字符与特殊操作区分"
+    },
+    {
+      "va": "0x914039",
+      "disk_hex": "83f840",
+      "mnemonic": "cmp",
+      "operands": "eax, 0x40",
+      "meaning": "软键普通追加长度门"
+    },
+    {
+      "va": "0x91403c",
+      "disk_hex": "734a",
+      "mnemonic": "jae",
+      "operands": "0x914088",
+      "meaning": "长度达到64跳过普通追加"
+    },
+    {
+      "va": "0x913fe2",
+      "disk_hex": "668917",
+      "mnemonic": "mov",
+      "operands": "word ptr [edi], dx",
+      "meaning": "TAB分支直接写WORD"
+    },
+    {
+      "va": "0x91401f",
+      "disk_hex": "66890f",
+      "mnemonic": "mov",
+      "operands": "word ptr [edi], cx",
+      "meaning": "空格分支直接写WORD"
+    },
+    {
+      "va": "0x914256",
+      "disk_hex": "84e4",
+      "mnemonic": "test",
+      "operands": "ah, ah",
+      "meaning": "SHIFT高位检查"
+    },
+    {
+      "va": "0x914258",
+      "disk_hex": "780c",
+      "mnemonic": "js",
+      "operands": "0x914266",
+      "meaning": "SHIFT成立直接进入大写，无需CAPS分支"
+    },
+    {
+      "va": "0x914262",
+      "disk_hex": "a801",
+      "mnemonic": "test",
+      "operands": "al, 1",
+      "meaning": "CAPS低位检查"
+    },
+    {
+      "va": "0x914264",
+      "disk_hex": "7403",
+      "mnemonic": "je",
+      "operands": "0x914269",
+      "meaning": "CAPS不成立保留小写"
+    },
+    {
+      "va": "0x914266",
+      "disk_hex": "80c3e0",
+      "mnemonic": "add",
+      "operands": "bl, 0xe0",
+      "meaning": "从小写减32回大写，两个条件为OR"
+    },
+    {
+      "va": "0x91427d",
+      "disk_hex": "83f840",
+      "mnemonic": "cmp",
+      "operands": "eax, 0x40",
+      "meaning": "物理三类追加长度门"
+    },
+    {
+      "va": "0x9142d9",
+      "disk_hex": "83f840",
+      "mnemonic": "cmp",
+      "operands": "eax, 0x40",
+      "meaning": "物理三类追加长度门"
+    },
+    {
+      "va": "0x91434b",
+      "disk_hex": "83f840",
+      "mnemonic": "cmp",
+      "operands": "eax, 0x40",
+      "meaning": "物理三类追加长度门"
+    },
+    {
+      "va": "0x911be8",
+      "disk_hex": "68c4020000",
+      "mnemonic": "push",
+      "operands": "0x2c4",
+      "meaning": "WM_INITDIALOG分配708字节"
+    },
+    {
+      "va": "0x911bb0",
+      "disk_hex": "8a08",
+      "mnemonic": "mov",
+      "operands": "cl, byte ptr [eax]",
+      "meaning": "提交复制源逐字节读取"
+    },
+    {
+      "va": "0x911bb3",
+      "disk_hex": "880a",
+      "mnemonic": "mov",
+      "operands": "byte ptr [edx], cl",
+      "meaning": "提交逐字节写入全局缓冲"
+    },
+    {
+      "va": "0x911bb8",
+      "disk_hex": "75f6",
+      "mnemonic": "jne",
+      "operands": "0x911bb0",
+      "meaning": "复制包含终止NUL"
+    },
+    {
+      "va": "0x911bbe",
+      "disk_hex": "6a64",
+      "mnemonic": "push",
+      "operands": "0x64",
+      "meaning": "提交EndDialog返回100"
+    },
+    {
+      "va": "0x911ed1",
+      "disk_hex": "83ff64",
+      "mnemonic": "cmp",
+      "operands": "edi, 0x64",
+      "meaning": "入口仅100复制结果"
+    },
+    {
+      "va": "0x911ee3",
+      "disk_hex": "880c02",
+      "mnemonic": "mov",
+      "operands": "byte ptr [edx + eax], cl",
+      "meaning": "向调用者out逐字节复制"
+    },
+    {
+      "va": "0x911ee9",
+      "disk_hex": "75f6",
+      "mnemonic": "jne",
+      "operands": "0x911ee1",
+      "meaning": "out复制包含终止NUL"
+    },
+    {
+      "va": "0x911d14",
+      "disk_hex": "f7ff",
+      "mnemonic": "idiv",
+      "operands": "edi",
+      "meaning": "水平余量没有本体零除数门控"
+    },
+    {
+      "va": "0x911d3a",
+      "disk_hex": "f7fb",
+      "mnemonic": "idiv",
+      "operands": "ebx",
+      "meaning": "垂直余量没有本体零除数门控"
+    },
+    {
+      "va": "0x9169b4",
+      "disk_hex": "8db1b4020000",
+      "mnemonic": "lea",
+      "operands": "esi, [ecx + 0x2b4]",
+      "meaning": "消息容器对象this+692"
+    },
+    {
+      "va": "0x917043",
+      "disk_hex": "e85781ceff",
+      "mnemonic": "call",
+      "operands": "0x5ff19f",
+      "meaning": "删除包装器先调用析构桥"
+    },
+    {
+      "va": "0x918ef0",
+      "disk_hex": "8b917c010000",
+      "mnemonic": "mov",
+      "operands": "edx, dword ptr [ecx + 0x17c]",
+      "meaning": "宽字段this+380"
+    },
+    {
+      "va": "0x918efc",
+      "disk_hex": "8b8980010000",
+      "mnemonic": "mov",
+      "operands": "ecx, dword ptr [ecx + 0x180]",
+      "meaning": "高字段this+384"
+    }
+  ],
+  "api_checks": {
+    "0x914250": {
+      "slot": "0xad3f6c",
+      "name": "GetAsyncKeyState"
+    },
+    "0x91425c": {
+      "slot": "0xad3e84",
+      "name": "GetKeyState"
+    },
+    "0x911e5d": {
+      "slot": "0xad3c64",
+      "name": "LoadLibraryA"
+    },
+    "0x911e9d": {
+      "slot": "0xad3e78",
+      "name": "DialogBoxParamA"
+    },
+    "0x911eaa": {
+      "slot": "0xad3c68",
+      "name": "FreeLibrary"
+    },
+    "0x911bc1": {
+      "slot": "0xad3e74",
+      "name": "EndDialog"
+    }
+  },
+  "fixed_rows": [
+    {
+      "pointer": "0xa315a4",
+      "hex": "31323334353637383930ff"
+    },
+    {
+      "pointer": "0xa31594",
+      "hex": "f871776572747975696f70"
+    },
+    {
+      "pointer": "0xa31584",
+      "hex": "f8f86173646667686a6b6cfe"
+    },
+    {
+      "pointer": "0xa31574",
+      "hex": "f8f8f87a786376626e6dfcfa"
+    },
+    {
+      "pointer": "0xa315a4",
+      "hex": "31323334353637383930ff"
+    },
+    {
+      "pointer": "0xa31564",
+      "hex": "f851574552545955494f50"
+    },
+    {
+      "pointer": "0xa31554",
+      "hex": "f8f84153444647484a4b4cfe"
+    },
+    {
+      "pointer": "0xa31544",
+      "hex": "f8f8f85a584356424e4dfbfa"
+    }
+  ],
+  "fixed_row_special_bytes": [
+    248,
+    250,
+    251,
+    252,
+    254,
+    255
+  ],
+  "scope": "独立磁盘与关键Capstone语义锚点，基础WNDPROC、子控件与树内部未审；未运行游戏"
+}

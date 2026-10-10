@@ -28,13 +28,19 @@ struct RichonlineTerminalSnapshot {
     std::vector<std::int8_t> boss_slots;
     std::vector<std::int8_t> eliminated_slots;
 };
+enum class RichonlineTerminalCause { bankruptcy, month_limit };
 struct RichonlineTerminalDecision {
     std::optional<GameOutcome> outcome;
     RichonlineTerminalSnapshot after;
     std::vector<std::int8_t> newly_eliminated;
+    RichonlineTerminalCause cause=RichonlineTerminalCause::bankruptcy;
 };
 RichonlineTerminalDecision plan_richonline_terminal(const RichonlineTerminalSnapshot& snapshot,
     std::span<const std::int8_t> bankrupt_actors,const RichonlineTerminalRules& rules);
+// Simulator policy: an unfinished BOSS challenge loses on expiry. No living
+// actor is eliminated, and this is not an inferred original-server reward rule.
+RichonlineTerminalDecision plan_richonline_month_limit_terminal(
+    const RichonlineTerminalSnapshot& snapshot,const RichonlineTerminalRules& rules);
 
 // Does not mutate combat balances. The request's outcome/delivery are replaced
 // by the validated decision; all rewards and any real pledge remain explicit.

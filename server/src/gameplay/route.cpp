@@ -79,6 +79,20 @@ RichonlineRoadTopology richonline_road_topology(const OriginalEmp& emp) {
                 cells[i].neighbors[direction] = static_cast<std::int16_t>(*adjacent[direction]);
     }
     RichonlineRoadTopology result(emp.width,emp.height,std::move(cells));
+    // NEW7DF010 loads map+70/+72 from these two coordinate pairs.
+    // Maps without a jail may use unavailable coordinates; they remain playable.
+    if(emp.tail_offset<=payload.size() && payload.size()-emp.tail_offset>=48) {
+        std::array<std::int16_t,2> jail{};
+        bool available=true;
+        for(std::size_t i=0;i<jail.size();++i) {
+            const auto jx=read_le(payload.subspan(emp.tail_offset+32+8*i,4));
+            const auto jy=read_le(payload.subspan(emp.tail_offset+36+8*i,4));
+            if(jx>=emp.width || jy>=emp.height) { available=false;break; }
+            jail[i]=static_cast<std::int16_t>(jy*emp.width+jx);
+            if(!result.cell(jail[i]).walkable) { available=false;break; }
+        }
+        if(available && jail[0]!=jail[1]) result.jail_=jail;
+    }
     const auto portals=std::count_if(result.cells_.begin(),result.cells_.end(),
         [](const auto& entry){return entry.walkable && entry.static_type==61;});
     if(portals!=0) {

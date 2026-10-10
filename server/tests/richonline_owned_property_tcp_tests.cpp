@@ -243,7 +243,14 @@ struct Scenario {
                         rules.terminal=[](const auto&)->RichonlineTurnTerminalResult {throw CodecError("normal_card_unexpected_terminal");};
                         rules.npc_landing_preflight=[](const auto&){};
                         rules.cards=normal_hand;rules.ground=normal_ground;rules.ledger=temple_ledger;rules.property=property;
-                        rules.ground_card_visible=[](std::uint8_t,std::int16_t,std::int16_t){return true;};
+                        rules.ground_card_visible=[](std::uint8_t,std::int16_t,std::int16_t){return false;};
+                        auto raw=std::make_shared<RichonlineRawAuthority>(2,game_id);
+                        raw->initialize_game();raw->initialize_actor(0);raw->initialize_actor(1);
+                        rules.timed_bombs=std::make_shared<const RichonlineTimedBombTurnPolicy>(RichonlineTimedBombTurnPolicy{
+                            std::make_shared<const RichonlineTimedBombRules>(RichonlineTimedBombRules::load(resources)),0xa7,
+                            [raw](std::uint8_t mover,std::int16_t position) {
+                                return raw->timed_bomb_step_context(mover,position);
+                            }});
                     }
                     if(temple_npc!=-1 || temple_aura) {
                         const auto chance=std::make_shared<const RichonlineChanceResources>(RichonlineChanceResources::load(resources));
@@ -308,7 +315,11 @@ struct Scenario {
 };
 void turn(Peer& peer,std::uint8_t actor) {
     check(peer.receive()==Bytes({0x10,0x40,0x34,0x12,actor,1,0,0xa2}),"next_actor_wrong");
-    check(peer.receive()==Bytes({0x0f,0x42,0x34,0x12,0xff,0xff}),"turn_status_missing");
+    auto status=peer.receive();
+    if(actor==1 && status==Bytes({0x1e,0x40,0x34,0x12})) status=peer.receive();
+    if(status!=Bytes({0x0f,0x42,0x34,0x12,0xff,0xff}))
+        throw std::runtime_error("turn_status_missing actor="+std::to_string(actor)+
+            " opcode="+std::to_string(read_le(View(status).first(2))));
 }
 void movement(Peer& peer,std::uint16_t start) {
     const auto bytes=peer.receive();
@@ -326,6 +337,32 @@ void opening(Scenario& scenario,Peer& peer,bool boss_owned) {
 }
 void stop_ack(Peer& peer,std::uint8_t endpoint) {
     check(peer.receive()==Bytes({0x13,0x40,0x34,0x12,endpoint,0}),"owned_landing_stop_ack_missing");
+}
+void roadblock_early_stop_over_tcp(const std::filesystem::path& resources) {
+    Scenario scenario(resources,false,0,true);Peer peer(scenario.service->bound_port());opening(scenario,peer,false);
+    peer.send(request(0x11,calendar+1,235));stop_ack(peer,235);turn(peer,0);
+    auto hand=scenario.normal_hand->inventory();hand[4]={1038,1};scenario.normal_hand->commit_inventory(hand);
+    const auto funds=scenario.temple_ledger->snapshot(0);
+    peer.send(Bytes{108,0,0x69,0x45,2,0,232,0});
+    check(peer.receive()==Bytes({0xbc,0x40,0x34,0x12,2,0,232,0}),"roadblock_stop_placement_failed");
+    peer.send(Bytes{108,0,0x69,0x45,2,0,231,0});
+    check(peer.receive()==Bytes({0xbc,0x40,0x34,0x12,2,0,231,0}),"roadblock_future_placement_failed");
+    peer.send(Bytes{103,0,0x69,0x45,4,0,6,0,0,0,0,0});
+    check(peer.receive()==Bytes({0xb7,0x40,0x34,0x12,4,0}),"roadblock_controlled_die_response_wrong");
+    const auto move=peer.receive();
+    check(read_le(View(move).first(2))==0x4011 && move[8]==6 && move[7]>=6,"roadblock_wire_route_truncated");
+    peer.send(request(0x11,calendar+2,232));stop_ack(peer,232);peer.quiet();
+    peer.send(request(0x37,calendar+2,10));
+    check(peer.receive()==Bytes({0x3d,0x40,0x34,0x12,10}),"roadblock_landing_decision_failed");
+    turn(peer,1);movement(peer,235);
+    peer.send(request(0x11,calendar+3,234));stop_ack(peer,234);turn(peer,0);peer.quiet();scenario.stop();
+    check(!scenario.normal_ground->snapshot().objects.contains(232) &&
+        scenario.normal_ground->snapshot().objects.at(231)==RichonlineGroundObject{11,0,255},
+        "roadblock_stop_consumed_unvisited_object");
+    check(scenario.normal_hand->inventory()[2]==RichonlineChanceCardSlot{} &&
+        scenario.normal_hand->inventory()[4]==RichonlineChanceCardSlot{} &&
+        scenario.temple_ledger->snapshot(0).funds==funds.funds,"roadblock_stop_changed_funds_or_card_count");
+    std::cout<<"PASS TCP roadblock: die6 -> stop232 -> build cancel -> next two turns; future roadblock231 retained\n";
 }
 void normal_cards_complete_over_tcp(const std::filesystem::path& resources) {
     Scenario scenario(resources,false,0,true);Peer peer(scenario.service->bound_port());opening(scenario,peer,false);
@@ -600,7 +637,7 @@ void temple_summon_and_aura_over_tcp(const std::filesystem::path& resources,cons
 int main(int argc,char** argv) {
     try {
         check(argc==2,"resource_path_required"); const Network network; const std::filesystem::path resources(argv[1]);
-        normal_cards_complete_over_tcp(resources);
+        normal_cards_complete_over_tcp(resources);roadblock_early_stop_over_tcp(resources);
         for (const unsigned level : {0U,1U,5U}) boss_owned_property_completes_over_tcp(resources,level);
         for (const bool upgrade : {false,true})
             for (const auto decision : {Decision::accept,Decision::cancel,Decision::timeout})

@@ -48,7 +48,7 @@ RichonlineBossProperty::RichonlineBossProperty(const std::filesystem::path& root
     if (stage.mode!=3 || stage.width!=topology_.width() || stage.height!=topology_.height())
         throw CodecError("richonline_boss_property_stage_mismatch");
     for (const auto& property:initial_properties(root,stage.map_name,topology_).properties)
-        properties_.emplace(property.id,Property{property.price,property.owner,{property.kind,property.level}});
+        properties_.emplace(property.id,Property{property.price,property.owner,{property.kind,property.level},property.district,property.sprite_type});
     const auto research=load_original_research_resources(root/"Data"/"BwbValue.kpd");
     temple_rules_=original_pyramid_rules(research);
     for(std::size_t i=0;i<research_choices_.size();++i)
@@ -116,7 +116,7 @@ bool RichonlineBossProperty::validate_landing(const RichonlineLandingContext& ct
     if (!cell.walkable || ctx.static_type != cell.static_type ||
         ctx.property_ref != cell.property_ref || degree != ctx.road_degree) return false;
     if (deadline_) throw CodecError("richonline_property_decision_already_pending");
-    if (property.owner && property.building.kind==16) {
+    if (property.owner && property.building.kind==16 && property.building.level>0) {
         const bool friendly=*property.owner==ctx.actor_slot;
         if(!temple_supported(ctx,property.building,friendly)) return false;
         if(friendly && !richonline_landing_controlled(ctx.actor_status)) {
@@ -138,7 +138,7 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
     if((!property.owner || *property.owner==ctx.actor_slot) && richonline_landing_controlled(ctx.actor_status)) {
         Bytes stop; append_le(stop,0x4013,2); append_le(stop,game_id_,2);
         append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
-        if(property.owner && property.building.kind==16)
+        if(property.owner && property.building.kind==16 && property.building.level>0)
             return temple_result(ctx,property.building,true,{std::move(stop)});
         return RichonlineLandingResult{{std::move(stop)},RichonlineLandingProgress::complete};
     }
@@ -149,7 +149,8 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
             Bytes stop;
             append_le(stop,0x4013,2); append_le(stop,game_id_,2);
             append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
-            if(property.building.kind==16) return temple_result(ctx,property.building,false,{std::move(stop)});
+            if(property.building.kind==16 && property.building.level>0)
+                return temple_result(ctx,property.building,false,{std::move(stop)});
             return RichonlineLandingResult{{std::move(stop)},RichonlineLandingProgress::complete};
         }
         return owned_land(ctx,property);
@@ -299,7 +300,9 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_house_car
     if(found==result.after_.end() || found->owner!=actor)
         throw CodecError("richonline_house_card_target_not_owned");
     if(found->level>=7) throw CodecError("richonline_house_card_maximum_level");
-    if(found->level>0) {
+    if(found->kind==3 && found->level>=5) throw CodecError("richonline_house_card_building_cap");
+    if(found->level>0 && found->kind!=3) {
+        if(found->kind<11 || found->kind>20) throw CodecError("richonline_house_card_kind_invalid");
         const auto index=static_cast<std::size_t>(found->kind-11);
         const auto skill=actor==0 ? human_skills_.at(index) : construction_.synthetic_skills.at(index);
         if(found->level>=construction_.scenario_caps.at(index) || found->level>=skill)
@@ -307,6 +310,103 @@ RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_house_car
     }
     if(found->level==0) found->kind=construction_.default_kind;
     ++found->level;
+    return result;
+}
+RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_purchase_card(
+    std::int16_t property_ref,std::uint8_t actor) const {
+    PreparedCombat result;
+    result.expected_=combat_snapshot();result.after_=result.expected_.buildings;
+    if(property_ref<0 || actor>=2 || result.expected_.decision_pending ||
+        result.expected_.revision==std::numeric_limits<std::uint64_t>::max())
+        throw CodecError("richonline_purchase_card_state_invalid");
+    const auto found=std::ranges::find_if(result.after_,[property_ref](const auto& building) {
+        return building.property==static_cast<std::uint32_t>(property_ref);
+    });
+    if(found==result.after_.end() || found->owner==actor ||
+        found->kind==8 || found->kind==9 || found->kind==10)
+        throw CodecError("richonline_purchase_card_target_invalid");
+    found->owner=actor;
+    return result;
+}
+RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_destruction_card(
+    std::int16_t property_ref,std::uint8_t levels) const {
+    if(property_ref<0 || (levels!=1 && levels!=5))
+        throw CodecError("richonline_destruction_card_request_invalid");
+    const auto before=combat_snapshot();
+    auto after=before.buildings;
+    const auto found=std::ranges::find_if(after,[property_ref](const auto& building) {
+        return building.property==static_cast<std::uint32_t>(property_ref);
+    });
+    if(found==after.end() || found->level==0 || found->kind==8 || found->kind==9 || found->kind==10)
+        throw CodecError("richonline_destruction_card_target_invalid");
+    // NEW7E4020 clears type12 buildings to kind-1 when their level reaches zero.
+    found->level=found->level>levels ? static_cast<std::uint8_t>(found->level-levels) : std::uint8_t{0};
+    if(found->level==0) found->kind=-1;
+    return prepare_combat(before,after);
+}
+RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_conversion_card(
+    std::int16_t property_ref,std::int8_t kind,std::uint8_t actor) const {
+    PreparedCombat result;
+    result.expected_=combat_snapshot();
+    if(property_ref<0 || kind<11 || kind>16 || actor>=2 || result.expected_.decision_pending ||
+        result.expected_.revision==std::numeric_limits<std::uint64_t>::max())
+        throw CodecError("richonline_conversion_card_state_invalid");
+    result.after_=result.expected_.buildings;
+    const auto found=std::ranges::find_if(result.after_,[property_ref](const auto& building) {
+        return building.property==static_cast<std::uint32_t>(property_ref);
+    });
+    if(found==result.after_.end() || !found->owner || found->level==0 || found->kind==kind ||
+        (found->kind!=3 && (found->kind<11 || found->kind>20)))
+        throw CodecError("richonline_conversion_card_target_invalid");
+    const auto index=static_cast<std::size_t>(kind-11);
+    const auto skill=actor==0 ? human_skills_.at(index) : construction_.synthetic_skills.at(index);
+    if(skill<0 || skill>7) throw CodecError("richonline_conversion_card_skill_invalid");
+    // NEW 6823A0 keeps the level, capped by the current actor's ability, even at zero.
+    found->kind=kind;
+    found->level=std::min(found->level,static_cast<std::uint8_t>(skill));
+    return result;
+}
+RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_swap_card(
+    std::int16_t source,std::int16_t target,bool buildings) const {
+    PreparedCombat result;
+    result.expected_=combat_snapshot();result.after_=result.expected_.buildings;
+    if(source==target || result.expected_.decision_pending ||
+        result.expected_.revision==std::numeric_limits<std::uint64_t>::max())
+        throw CodecError("richonline_swap_card_state_invalid");
+    auto find=[&](std::int16_t ref) {
+        return std::ranges::find_if(result.after_,[ref](const auto& b){return b.property==static_cast<std::uint32_t>(ref);});
+    };
+    const auto a=find(source),b=find(target);
+    if(a==result.after_.end() || b==result.after_.end()) throw CodecError("richonline_swap_card_property_invalid");
+    if(buildings) {
+        std::swap(a->kind,b->kind);std::swap(a->level,b->level);
+    } else {
+        if(a->owner==b->owner) throw CodecError("richonline_swap_card_owner_equal");
+        std::swap(a->owner,b->owner);
+    }
+    return result;
+}
+RichonlineBossProperty::PreparedCombat RichonlineBossProperty::prepare_growth_card(
+    std::int16_t source,std::optional<std::uint8_t> owner,int levels) const {
+    PreparedCombat result;
+    result.expected_=combat_snapshot();result.after_=result.expected_.buildings;
+    const auto origin=properties_.find(source);
+    if((!owner && origin==properties_.end()) || (owner && *owner>=2) || levels==0 ||
+        result.expected_.decision_pending || result.expected_.revision==std::numeric_limits<std::uint64_t>::max())
+        throw CodecError("richonline_growth_card_state_invalid");
+    for(auto& b:result.after_) {
+        const auto& property=properties_.at(static_cast<std::int16_t>(b.property));
+        if(owner ? b.owner!=owner : property.street!=origin->second.street) continue;
+        if(property.sprite_type==11 && b.kind==1) continue;
+        if(levels<0) {
+            b.level=b.level>-levels ? static_cast<std::uint8_t>(b.level+levels) : 0;
+            if(!b.level && property.sprite_type==12) b.kind=-1;
+        } else if(b.level<5) {
+            // NEW7E3670 type12 creates kind3 on empty property.
+            if(!b.level && property.sprite_type==12) b.kind=3;
+            b.level=static_cast<std::uint8_t>(std::min(5,static_cast<int>(b.level)+levels));
+        }
+    }
     return result;
 }
 bool RichonlineBossProperty::combat_matches(const PreparedCombat& prepared) const noexcept {

@@ -227,7 +227,8 @@ RichonlineCombatTurnPlan prepare_richonline_boss_combat_turn(const RichonlineCom
         auto& attempt=plan.boss_attempts[i];
         const auto& actor=*plan.after.actors[boss];
         if (!actor.active) { attempt.outcome=RichonlineCombatAttemptOutcome::actor_eliminated; continue; }
-        if (actor.in_hospital || actor.in_prison || !richonline_combat_action_allowed(actor.status)) {
+        if (actor.in_hospital || actor.in_prison || !richonline_combat_action_allowed(actor.status) ||
+            actor.status.one_step || actor.status.six_steps || actor.status.turtle || actor.status.stay) {
             attempt.outcome=RichonlineCombatAttemptOutcome::controlled; continue;
         }
         const auto roll=randomness.rolls[i];
@@ -271,6 +272,31 @@ RichonlineCombatTurnPlan prepare_richonline_combat_mine_day(const RichonlineComb
         plan.packets.push_back(encode_richonline_mine_explosion4017(before.game_id,mine.position));
         chain(plan,world,mine.position);
     }
+    finish(plan,true);
+    return plan;
+}
+RichonlineCombatTurnPlan prepare_richonline_combat_detonate(const RichonlineCombatSessionView& before,
+    const RichonlineCombatWorld& world,std::uint8_t actor,const RichonlineBossCards::PreparedConsumption& consumption) {
+    auto plan=initial(before,world);
+    if(actor!=0 || !before.actors[actor] || !world.detonation_roots)
+        throw CodecError("richonline_detonation_authority_required");
+    const auto& human=*before.actors[actor];
+    if(!human.active || human.in_hospital || human.in_prison || !richonline_combat_action_allowed(human.status))
+        throw CodecError("richonline_detonation_actor_controlled");
+    if(consumption.source_inventory!=human.inventory || consumption.card_id!=501 || consumption.slot<0 || consumption.slot>=8)
+        throw CodecError("richonline_detonation_inventory_invalid");
+    const auto roots=world.detonation_roots(actor,before);
+    if(roots.empty()) throw CodecError("richonline_detonation_no_visible_mines");
+    plan.after.actors[actor]->inventory=consumption.remaining_inventory;
+    plan.card_consumptions.push_back({actor,consumption});
+    Bytes success;append_le(success,0x40ef,2);append_le(success,before.game_id,2);
+    success.push_back(static_cast<std::uint8_t>(consumption.slot));success.insert(success.end(),3,0);
+    plan.packets.push_back(std::move(success));
+    for(const auto root:roots) if(mine_exists(plan.after,root)) {
+        plan.packets.push_back(encode_richonline_mine_explosion4017(before.game_id,root));
+        chain(plan,world,root);
+    }
+    plan.packets.push_back(encode_richonline_dice_recovery400b(before.game_id));
     finish(plan,true);
     return plan;
 }

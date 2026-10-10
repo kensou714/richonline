@@ -1,0 +1,56 @@
+{
+  "scope": "第十七批：目标DWORD的根对象、构造缺省和EMP头生产；完整导出不等于完整审阅",
+  "new_unique_va": 0,
+  "existing_constructor_rechecks": 2,
+  "status_counts": {
+    "完整语义已审阅": 1,
+    "局部语义已审阅": 4
+  },
+  "functions": [
+    {
+      "va": "0x629c90",
+      "status": "完整语义已审阅",
+      "reuse": "既有局部资料的语义补足；不计新增唯一VA",
+      "conclusion": "A7672C懒创建0x14794字节G，以分配指针ECX调用构造器，保存并返回；异常尾块delete分配指针。",
+      "unknown": "外部allocator完整失败/抛出契约、全单例释放者与线程调用图未闭合；未实机。",
+      "evidence": "证据/load_source_raw.json/functions/0x629c90；01_根对象与地图归属.txt",
+      "reviewed_ranges": [["0x629c90", "0x629d2d"], ["0xa11730", "0xa11745"]]
+    },
+    {
+      "va": "0x64f2a0",
+      "status": "局部语义已审阅",
+      "reuse": "既有函数的新局部结论；不计新增唯一VA",
+      "conclusion": "前序88字节复制到G+64..151不覆盖目标；以G+0x65C为ECX装载地图，并检查整体返回值。",
+      "unknown": "其余模式分支、显示挂接、子对象调用与完整初始化失败恢复未逐项审阅。",
+      "evidence": "证据/load_source_raw.json/functions/0x64f2a0；02_EMP头字段生产链.txt",
+      "reviewed_ranges": [["0x64f2a0", "0x64f343"]]
+    },
+    {
+      "va": "0x7df010",
+      "status": "局部语义已审阅",
+      "reuse": "既有函数的新局部结论；完整原证不代表完整语义审阅",
+      "conclusion": "入口保存Map，rb打开并读取头；signed version>=2写Map+104/+108，>=3写+112；目标fread返回数量未检查。",
+      "unknown": "路径构造助手、剩余EMP载荷、最终返回所有路径和全运行时写者未知；三样本不证明实际加载成功。",
+      "evidence": "证据/load_source_raw.json/functions/0x7df010；证据/emp_header_samples.json；02_EMP头字段生产链.txt",
+      "reviewed_ranges": [["0x7df010", "0x7df181"]]
+    },
+    {
+      "va": "0x7bae60",
+      "status": "局部语义已审阅",
+      "reuse": "既有构造器局部字节复核；不计新增函数覆盖",
+      "conclusion": "保存G后，以G+0x65C的ECX经60700C调用7DE310，闭合嵌入Map归属。",
+      "unknown": "G其余成员、完整构造异常和全生命周期未在本批逐项审阅。",
+      "evidence": "证据/roots_raw.json/functions/0x7bae60；01_根对象与地图归属.txt",
+      "reviewed_ranges": [["0x7baf06", "0x7baf14"]]
+    },
+    {
+      "va": "0x7de310",
+      "status": "局部语义已审阅",
+      "reuse": "既有构造器局部字节复核；不计新增函数覆盖",
+      "conclusion": "保存Map入口ECX，同一this的+104/+108/+112各写DWORD 0；其它构造调用对象不自动归入G。",
+      "unknown": "完整类布局、其它构造调用对象归属、所有后续写者与重建/复用时机未闭合。",
+      "evidence": "证据/roots_raw.json/functions/0x7de310；证据/roots_incoming.json；01_根对象与地图归属.txt",
+      "reviewed_ranges": [["0x7de3be", "0x7de3dc"]]
+    }
+  ]
+}

@@ -1,0 +1,718 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "baseline_reference": "全量分析/版本核验_第二批.json",
+  "scope": "当前IDA数据库；逐块保存指令范围与声明块原始字节，两者重叠不相加；块内数据语义及外部依赖另核",
+  "functions": [
+    {
+      "va": "0x629570",
+      "end_va": "0x6295ad",
+      "name": "sub_629570",
+      "status": "仅导出",
+      "pseudocode": [
+        "void *__thiscall sub_629570(void *this, char a2)",
+        "{",
+        "  sub_608A74();",
+        "  if ( (a2 & 1) != 0 )",
+        "    operator delete(a1: this);",
+        "  return this;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x629570",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x629571",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x629573",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x629574",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x62957b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x62957e",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x629581",
+          "text": "call    sub_608A74"
+        },
+        {
+          "va": "0x629586",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x629589",
+          "text": "and     eax, 1"
+        },
+        {
+          "va": "0x62958c",
+          "text": "jz      short loc_62959A"
+        },
+        {
+          "va": "0x62958e",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x629591",
+          "text": "push    ecx; void *"
+        },
+        {
+          "va": "0x629592",
+          "text": "call    operator delete(void *)"
+        },
+        {
+          "va": "0x629597",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x62959a",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x62959d",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x6295a0",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x6295a2",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x6295a7",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x6295a9",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x6295aa",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x629581",
+          "target": "0x608a74",
+          "implementation": "0x63fb90",
+          "thunks": [
+            "0x608a74"
+          ]
+        },
+        {
+          "site": "0x629592",
+          "target": "0x604cfd",
+          "implementation": "0x91fc60",
+          "thunks": [
+            "0x604cfd"
+          ]
+        },
+        {
+          "site": "0x6295a2",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x60cdcc",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x629570",
+          "end_va": "0x6295ad",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x629570",
+          "size": 61,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b4dfce8eef4fdff8b450883e001740c8b4dfc51e866b7fdff83c4048b45fc83c4043bece8cf1ffeff8be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b4dfce8eef4fdff8b450883e001740c8b4dfc51e866b7fdff83c4048b45fc83c4043bece8cf1ffeff8be55dc20400",
+          "matching": true
+        }
+      ],
+      "chunk_byte_ranges": [
+        {
+          "va": "0x629570",
+          "size": 61,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b4dfce8eef4fdff8b450883e001740c8b4dfc51e866b7fdff83c4048b45fc83c4043bece8cf1ffeff8be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b4dfce8eef4fdff8b450883e001740c8b4dfc51e866b7fdff83c4048b45fc83c4043bece8cf1ffeff8be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63fb20",
+      "end_va": "0x63fb6f",
+      "name": "sub_63FB20",
+      "status": "仅导出",
+      "pseudocode": [
+        "_DWORD *__thiscall sub_63FB20(_DWORD *this)",
+        "{",
+        "  int i; // [esp+0h] [ebp-8h]",
+        "",
+        "  *this = -1;",
+        "  for ( i = 0; i < 16; ++i )",
+        "    *(this + i + 2) = -1;",
+        "  return this;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63fb20",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63fb21",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63fb23",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x63fb26",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63fb2d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63fb34",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63fb37",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63fb3a",
+          "text": "mov     dword ptr [eax], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x63fb40",
+          "text": "mov     [ebp+var_8], 0"
+        },
+        {
+          "va": "0x63fb47",
+          "text": "jmp     short loc_63FB52"
+        },
+        {
+          "va": "0x63fb49",
+          "text": "mov     ecx, [ebp+var_8]"
+        },
+        {
+          "va": "0x63fb4c",
+          "text": "add     ecx, 1"
+        },
+        {
+          "va": "0x63fb4f",
+          "text": "mov     [ebp+var_8], ecx"
+        },
+        {
+          "va": "0x63fb52",
+          "text": "cmp     [ebp+var_8], 10h"
+        },
+        {
+          "va": "0x63fb56",
+          "text": "jge     short loc_63FB68"
+        },
+        {
+          "va": "0x63fb58",
+          "text": "mov     edx, [ebp+var_8]"
+        },
+        {
+          "va": "0x63fb5b",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63fb5e",
+          "text": "mov     dword ptr [eax+edx*4+8], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x63fb66",
+          "text": "jmp     short loc_63FB49"
+        },
+        {
+          "va": "0x63fb68",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63fb6b",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63fb6d",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63fb6e",
+          "text": "retn"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x612155",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x63fb20",
+          "end_va": "0x63fb6f",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63fb20",
+          "size": 79,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fcc700ffffffffc745f800000000eb098b4df883c101894df8837df8107d108b55f88b45fcc7449008ffffffffebe18b45fc8be55dc3",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fcc700ffffffffc745f800000000eb098b4df883c101894df8837df8107d108b55f88b45fcc7449008ffffffffebe18b45fc8be55dc3",
+          "matching": true
+        }
+      ],
+      "chunk_byte_ranges": [
+        {
+          "va": "0x63fb20",
+          "size": 79,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fcc700ffffffffc745f800000000eb098b4df883c101894df8837df8107d108b55f88b45fcc7449008ffffffffebe18b45fc8be55dc3",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fcc700ffffffffc745f800000000eb098b4df883c101894df8837df8107d108b55f88b45fcc7449008ffffffffebe18b45fc8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x63fb90",
+      "end_va": "0x63fbdd",
+      "name": "sub_63FB90",
+      "status": "仅导出",
+      "pseudocode": [
+        "void __thiscall sub_63FB90(void **this)",
+        "{",
+        "  if ( *(this + 1) != nullptr )",
+        "  {",
+        "    operator delete[](a1: *(this + 1));",
+        "    *(this + 1) = nullptr;",
+        "  }",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x63fb90",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x63fb91",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x63fb93",
+          "text": "sub     esp, 8"
+        },
+        {
+          "va": "0x63fb96",
+          "text": "mov     [ebp+var_8], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63fb9d",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x63fba4",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x63fba7",
+          "text": "mov     eax, [ebp+var_4]"
+        },
+        {
+          "va": "0x63fbaa",
+          "text": "cmp     dword ptr [eax+4], 0"
+        },
+        {
+          "va": "0x63fbae",
+          "text": "jz      short loc_63FBCF"
+        },
+        {
+          "va": "0x63fbb0",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x63fbb3",
+          "text": "mov     edx, [ecx+4]"
+        },
+        {
+          "va": "0x63fbb6",
+          "text": "mov     [ebp+var_8], edx"
+        },
+        {
+          "va": "0x63fbb9",
+          "text": "mov     eax, [ebp+var_8]"
+        },
+        {
+          "va": "0x63fbbc",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x63fbbd",
+          "text": "call    operator delete[](void *)"
+        },
+        {
+          "va": "0x63fbc2",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x63fbc5",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x63fbc8",
+          "text": "mov     dword ptr [ecx+4], 0"
+        },
+        {
+          "va": "0x63fbcf",
+          "text": "add     esp, 8"
+        },
+        {
+          "va": "0x63fbd2",
+          "text": "cmp     ebp, esp"
+        },
+        {
+          "va": "0x63fbd4",
+          "text": "call    j___RTC_CheckEsp"
+        },
+        {
+          "va": "0x63fbd9",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x63fbdb",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x63fbdc",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x63fbbd",
+          "target": "0x601cd3",
+          "implementation": "0x91f7e0",
+          "thunks": [
+            "0x601cd3"
+          ]
+        },
+        {
+          "site": "0x63fbd4",
+          "target": "0x60b576",
+          "implementation": "0x91f6d0",
+          "thunks": [
+            "0x60b576"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x608a74",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x63fb90",
+          "end_va": "0x63fbdd",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x63fb90",
+          "size": 77,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fc83780400741f8b4dfc8b51048955f88b45f850e81121fcff83c4048b4dfcc741040000000083c4083bece89db9fcff8be55dc3",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fc83780400741f8b4dfc8b51048955f88b45f850e81121fcff83c4048b4dfcc741040000000083c4083bece89db9fcff8be55dc3",
+          "matching": true
+        }
+      ],
+      "chunk_byte_ranges": [
+        {
+          "va": "0x63fb90",
+          "size": 77,
+          "idb_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fc83780400741f8b4dfc8b51048955f88b45f850e81121fcff83c4048b4dfcc741040000000083c4083bece89db9fcff8be55dc3",
+          "disk_hex": "558bec83ec08c745f8ccccccccc745fccccccccc894dfc8b45fc83780400741f8b4dfc8b51048955f88b45f850e81121fcff83c4048b4dfcc741040000000083c4083bece89db9fcff8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x646690",
+      "end_va": "0x6466b4",
+      "name": "sub_646690",
+      "status": "仅导出",
+      "pseudocode": [
+        "char __thiscall sub_646690(_DWORD *this, int a2)",
+        "{",
+        "  return *(_BYTE *)(*(this + 1) + 76 * a2 + 72);",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x646690",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x646691",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x646693",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x646694",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x64669b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x64669e",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x6466a1",
+          "text": "imul    eax, 4Ch ; 'L'"
+        },
+        {
+          "va": "0x6466a4",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x6466a7",
+          "text": "mov     edx, [ecx+4]"
+        },
+        {
+          "va": "0x6466aa",
+          "text": "mov     al, [edx+eax+48h]"
+        },
+        {
+          "va": "0x6466ae",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x6466b0",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x6466b1",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x6019c7",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x646690",
+          "end_va": "0x6466b4",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x646690",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc04c8b4dfc8b51048a4402488be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc04c8b4dfc8b51048a4402488be55dc20400",
+          "matching": true
+        }
+      ],
+      "chunk_byte_ranges": [
+        {
+          "va": "0x646690",
+          "size": 36,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc04c8b4dfc8b51048a4402488be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc04c8b4dfc8b51048a4402488be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    },
+    {
+      "va": "0x7fdb10",
+      "end_va": "0x7fdb3c",
+      "name": "sub_7FDB10",
+      "status": "仅导出",
+      "pseudocode": [
+        "bool __thiscall sub_7FDB10(_DWORD *this, int a2)",
+        "{",
+        "  return *(_DWORD *)(*(this + 1) + 76 * a2 + 4) == 0;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x7fdb10",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x7fdb11",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x7fdb13",
+          "text": "push    ecx"
+        },
+        {
+          "va": "0x7fdb14",
+          "text": "mov     [ebp+var_4], 0CCCCCCCCh"
+        },
+        {
+          "va": "0x7fdb1b",
+          "text": "mov     [ebp+var_4], ecx"
+        },
+        {
+          "va": "0x7fdb1e",
+          "text": "mov     eax, [ebp+arg_0]"
+        },
+        {
+          "va": "0x7fdb21",
+          "text": "imul    eax, 4Ch ; 'L'"
+        },
+        {
+          "va": "0x7fdb24",
+          "text": "mov     ecx, [ebp+var_4]"
+        },
+        {
+          "va": "0x7fdb27",
+          "text": "mov     edx, [ecx+4]"
+        },
+        {
+          "va": "0x7fdb2a",
+          "text": "xor     ecx, ecx"
+        },
+        {
+          "va": "0x7fdb2c",
+          "text": "cmp     dword ptr [edx+eax+4], 0"
+        },
+        {
+          "va": "0x7fdb31",
+          "text": "setz    cl"
+        },
+        {
+          "va": "0x7fdb34",
+          "text": "mov     al, cl"
+        },
+        {
+          "va": "0x7fdb36",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x7fdb38",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x7fdb39",
+          "text": "retn    4"
+        }
+      ],
+      "calls": [],
+      "references": [
+        {
+          "source": "0x603ad8",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x7fdb10",
+          "end_va": "0x7fdb3c",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x7fdb10",
+          "size": 44,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc04c8b4dfc8b510433c9837c0204000f94c18ac18be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc04c8b4dfc8b510433c9837c0204000f94c18ac18be55dc20400",
+          "matching": true
+        }
+      ],
+      "chunk_byte_ranges": [
+        {
+          "va": "0x7fdb10",
+          "size": 44,
+          "idb_hex": "558bec51c745fccccccccc894dfc8b45086bc04c8b4dfc8b510433c9837c0204000f94c18ac18be55dc20400",
+          "disk_hex": "558bec51c745fccccccccc894dfc8b45086bc04c8b4dfc8b510433c9837c0204000f94c18ac18be55dc20400",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    }
+  ],
+  "thunks": [
+    {
+      "va": "0x608a74",
+      "size": 5,
+      "idb_hex": "e917710300",
+      "disk_hex": "e917710300",
+      "matching": true,
+      "target": "0x63fb90"
+    },
+    {
+      "va": "0x604cfd",
+      "size": 5,
+      "idb_hex": "e95eaf3100",
+      "disk_hex": "e95eaf3100",
+      "matching": true,
+      "target": "0x91fc60"
+    },
+    {
+      "va": "0x60b576",
+      "size": 5,
+      "idb_hex": "e955413100",
+      "disk_hex": "e955413100",
+      "matching": true,
+      "target": "0x91f6d0"
+    },
+    {
+      "va": "0x601cd3",
+      "size": 5,
+      "idb_hex": "e908db3100",
+      "disk_hex": "e908db3100",
+      "matching": true,
+      "target": "0x91f7e0"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "scope": "第十九批VehPet：9个新导主体与7个复用函数；复用原证不增加唯一VA，消费者只审本批字段窗口",
+  "functions": [
+    {"va":"0x63fb70","status":"本体契约已审","conclusion":"8字节V的构造只清V+4，返回this","unknown":"V+0在读取器前未初始化；分配器整体失败环境另核","evidence":["证据/vehpet_raw.json","01_对象布局与配置生产.txt"]},
+    {"va":"0x63fbe0","status":"本体契约已审","conclusion":"76*N固定数组，按indx写记录，16prop缺键保留默认，type精确匹配，smoke按true置位；不释放旧数组","unknown":"通用配置游标/CRT输入边界沿用既有专题；分配与异常实机环境未测","evidence":["证据/vehpet_raw.json","证据/supplement_context_verified.json","01_对象布局与配置生产.txt"]},
+    {"va":"0x63ffb0","status":"本体契约已审","conclusion":"CAR/MOTO/PET三项精确strcmp，返回0/1/2或-1","unknown":"未知字符串实机来源及可达性未测","evidence":["证据/vehpet_raw.json","证据/supplement_context_verified.json"]},
+    {"va":"0x6400b0","status":"本体契约已审","conclusion":"BYTE归一后调用6DBA40类别4资源映射，不读取V/R","unknown":"下游无效映射及资源存在性另核","evidence":["证据/vehpet_raw.json","02_索引映射与角色消费.txt"]},
+    {"va":"0x63fb20","status":"本体契约已审","conclusion":"R+0和16prop默认-1；type/smoke未初始化","unknown":"未初始化字段的运行时残留内容不在本批测量","evidence":["证据/supplement_raw.json","01_对象布局与配置生产.txt"]},
+    {"va":"0x63fb90","status":"本体契约已审","conclusion":"删除非空V+4数组并清指针，不清数量","unknown":"所有调用时序及游戏重新加载入口未全追","evidence":["证据/supplement_raw.json","03_释放重载与类型查询.txt"]},
+    {"va":"0x629570","status":"本体契约已审","conclusion":"先析构数组，flags&1为真再delete管理对象","unknown":"delete实现及全部外层销毁对象另核","evidence":["证据/supplement_raw.json","证据/vehpet_context_verified.json"]},
+    {"va":"0x7fdb10","status":"本体契约已审","conclusion":"直接索引读取R+4，AL返回type==0即CAR","unknown":"非法/未配置索引不保护；入口调用者可达性另核","evidence":["证据/supplement_raw.json","证据/supplement_context_verified.json"]},
+    {"va":"0x646690","status":"本体契约已审","conclusion":"直接索引读取R+72烟雾BYTE，AL原样返回","unknown":"非法/未配置索引不保护；全部动作可达性未核","evidence":["证据/supplement_raw.json","05_smoke字段与额外资源.txt"]},
+    {"va":"0x627cf0","status":"复用本体契约已审","conclusion":"A766EC单例，空时分配8字节调用63FB70；异常尾释放局部分配","unknown":"分配失败真实触发环境另核；本批不新增唯一VA","evidence":["证据/reused_verified.json","01_对象布局与配置生产.txt"]},
+    {"va":"0x640020","status":"复用本体契约已审","conclusion":"按槽和16prop顺序搜索，首次命中返回R+0；无记录-1","unknown":"prop真实物品类型域未全核；本批不新增唯一VA","evidence":["证据/reused_verified.json","02_索引映射与角色消费.txt"]},
+    {"va":"0x642740","status":"既有审阅补字段窗口","conclusion":"+10/+14改变且大于0才映射到+1E8/+1EC","unknown":"其他所有状态字段由旧专题负责，不因全块重核新认领","evidence":["证据/reused_verified.json","证据/vehpet_context_verified.json"]},
+    {"va":"0x642b30","status":"局部消费契约已审","conclusion":"两窗把+1EC/+C/+8==9交6400B0，再取返回槽尺寸","unknown":"全部角色绘制分支、方向域及可达性未闭合","evidence":["证据/reused_verified.json","02_索引映射与角色消费.txt"]},
+    {"va":"0x643a00","status":"局部消费契约已审","conclusion":"两主图槽窗与两smoke门窗闭合；var63 BYTE来源限定局部","unknown":"完整动作状态机与各模式玩法名未审","evidence":["证据/reused_verified.json","05_smoke字段与额外资源.txt"]},
+    {"va":"0x6425a0","status":"复用局部消费契约已审","conclusion":"方向1/2/3选other15的71/72/73资源并按谓词修正坐标","unknown":"SellProp谓词玩法与视觉资产未全核；本批不新增唯一VA","evidence":["证据/reused_verified.json","05_smoke字段与额外资源.txt"]},
+    {"va":"0x7f7160","status":"复用局部消费契约已审","conclusion":"先谓词，随后type==CAR分别选择100/121/120","unknown":"前置7D7850玩法谓词与全部音效触发条件未审；本批不新增唯一VA","evidence":["证据/reused_verified.json","03_释放重载与类型查询.txt"]}
+  ]
+}

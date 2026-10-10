@@ -1,0 +1,96 @@
+{
+  "scope": "地图建筑等级配置加载、MAP 记录布局与 67B890 的局部消费链；其余批量导出访问器仅为候选，不计语义审阅",
+  "pe_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "functions": [
+    {
+      "va": "0x805660",
+      "status": "完整块导出且三文件短路调用已审阅",
+      "conclusion": "三次加载按成功返回短路，前一失败不继续后续文件。",
+      "evidence": ["证据/functions_raw.json", "01_加载入口与MAP记录.txt"],
+      "boundary": "各加载器返回 1 不保证字段有效。"
+    },
+    {
+      "va": "0x8056c0",
+      "status": "完整块导出且 MAP 局部布局已审阅",
+      "conclusion": "读取七级表并构造 420 字节 MAP 记录；+256 为默认建筑，+260..+296 为十个等级上限，+300 为 npc 数组。",
+      "evidence": ["证据/functions_raw.json", "证据/resources.json", "01_加载入口与MAP记录.txt"],
+      "boundary": "未穷尽七级表全部消费者；成功返回不等于字段完整性校验。"
+    },
+    {
+      "va": "0x806670",
+      "status": "完整块导出且 KoNews 输入形式已审阅",
+      "conclusion": "文件内容按行读取并用 sscanf 解析字段，不以 [SECTION] 为前提。",
+      "evidence": ["证据/functions_raw.json", "01_加载入口与MAP记录.txt"],
+      "boundary": "未给新闻记录字段建立完整语义模型。"
+    },
+    {
+      "va": "0x806a30",
+      "status": "完整块导出且 KoNpc 加载边界已审阅",
+      "conclusion": "按节读取 NPC 参数，是 Ko 配置三文件链的第三项。",
+      "evidence": ["证据/functions_raw.json", "01_加载入口与MAP记录.txt"],
+      "boundary": "未分析 NPC 效果的全部下游消费者。"
+    },
+    {
+      "va": "0x7af4a0",
+      "status": "完整块导出且与 8056C0 的布局差异已审阅",
+      "conclusion": "读取相似七级表，但目标偏移整体多一个 DWORD，且没有 MAP 循环。",
+      "evidence": ["证据/functions_raw.json", "01_加载入口与MAP记录.txt"],
+      "boundary": "不将两个读取器归入同一对象。"
+    },
+    {
+      "va": "0x628010",
+      "status": "完整块导出且单例取得契约已审阅",
+      "conclusion": "缓存 dword_A7671C，首次分配 0x4588 字节。",
+      "evidence": ["证据/dependencies_raw.json", "01_加载入口与MAP记录.txt"],
+      "boundary": "未推定生命周期、线程安全性。"
+    },
+    {
+      "va": "0x8053c0",
+      "status": "完整块导出且 MAP 默认字段初始化已审阅",
+      "conclusion": "+256 和 +260..+296 初始化为 0。",
+      "evidence": ["证据/closure_raw.json", "01_加载入口与MAP记录.txt"],
+      "boundary": "只证明本构造链的初值，不推定资源字段均存在。"
+    },
+    {
+      "va": "0x807c40",
+      "status": "完整块导出且按地图名查找契约已审阅",
+      "conclusion": "按 420 字节步长 strcmp，未找到返回 0。",
+      "evidence": ["证据/accessors_raw.json", "01_加载入口与MAP记录.txt"],
+      "boundary": "调用者空值处理未逐处审阅。"
+    },
+    {
+      "va": "0x807bd0",
+      "status": "完整块导出且十项 token 映射已审阅",
+      "conclusion": "off_A676DC 的十项字符串命中后返回 11..20，未命中返回 -1。",
+      "evidence": ["证据/implementations_raw.json", "证据/build_tokens.json", "02_编号映射与地产事件消费.txt"],
+      "boundary": "只论当前十项数据表，不推定其他建筑编号语义。"
+    },
+    {
+      "va": "0x8054a0",
+      "status": "完整块导出且上限访问契约已审阅",
+      "conclusion": "按 record+216+4*kind 读取 DWORD；kind=11..20 对应 MAP 的十项上限。",
+      "evidence": ["证据/implementations_raw.json", "02_编号映射与地产事件消费.txt"],
+      "boundary": "函数内部没有范围或空值检查。"
+    },
+    {
+      "va": "0x63f2d0",
+      "status": "完整块导出且地产类型字节写入已审阅",
+      "conclusion": "按 68 字节地产步长写记录+1 的一个建筑类型字节。",
+      "evidence": ["证据/implementations_raw.json", "02_编号映射与地产事件消费.txt"],
+      "boundary": "函数自身不升级等级，也不发送网络回执。"
+    },
+    {
+      "va": "0x67b890",
+      "status": "完整块导出且 MAP 上限和默认建筑消费局部分支已审阅",
+      "conclusion": "条件分支读取 maxLev 并在后续条件成立时使用 MAP+256 写地产建筑类型。",
+      "evidence": ["证据/closure_raw.json", "02_编号映射与地产事件消费.txt"],
+      "boundary": "事件所有子分支及其后续网络时序未完整解释。"
+    }
+  ],
+  "alias_thunks": [
+    {"va": "0x600a9a", "target": "0x8054a0", "status": "E9 桥已核；不算业务实现"},
+    {"va": "0x60c048", "target": "0x807bd0", "status": "E9 桥已核；不算业务实现"},
+    {"va": "0x60cbce", "target": "0x63f2d0", "status": "E9 桥已核；不算业务实现"}
+  ],
+  "candidate_only": "accessors_raw.json 中其余访问器及 consumer_callsites.json 的调用站点只供后续筛选，不计为本专题已完成语义审阅"
+}

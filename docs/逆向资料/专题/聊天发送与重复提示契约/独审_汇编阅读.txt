@@ -1,0 +1,3167 @@
+// 独审阅读摘录：完整主体与计时复用；大函数局部按明确分支限定。
+//
+// 0x64a520 sub_64A520
+// 0x64a520 push    ebp
+// 0x64a521 mov     ebp, esp
+// 0x64a523 sub     esp, 40h
+// 0x64a526 push    esi
+// 0x64a527 push    edi; this
+// 0x64a528 push    ecx
+// 0x64a529 lea     edi, [ebp+var_40]
+// 0x64a52c mov     ecx, 10h
+// 0x64a531 mov     eax, 0CCCCCCCCh
+// 0x64a536 rep stosd
+// 0x64a538 pop     ecx
+// 0x64a539 mov     [ebp+var_4], ecx
+// 0x64a53c mov     [ebp+var_24], 0
+// 0x64a543 xor     eax, eax
+// 0x64a545 mov     [ebp+var_20], eax
+// 0x64a548 mov     [ebp+var_1C], eax
+// 0x64a54b mov     [ebp+var_18], eax
+// 0x64a54e mov     [ebp+var_14], eax
+// 0x64a551 mov     [ebp+var_10], eax
+// 0x64a554 mov     [ebp+var_C], eax
+// 0x64a557 mov     [ebp+var_34], 0FFFFFFFFh
+// 0x64a55e mov     ecx, [ebp+Source]
+// 0x64a561 movsx   edx, byte ptr [ecx]
+// 0x64a564 test    edx, edx
+// 0x64a566 jnz     short loc_64A56D
+// 0x64a568 jmp     loc_64A7CA
+// 0x64a56d movzx   eax, byte_A76E68
+// 0x64a574 test    eax, eax
+// 0x64a576 jz      short loc_64A5AC
+// 0x64a578 mov     ecx, offset unk_A772A0
+// 0x64a57d call    sub_6107F1
+// 0x64a582 movzx   ecx, al
+// 0x64a585 test    ecx, ecx
+// 0x64a587 jnz     short loc_64A5AC
+// 0x64a589 push    0; Source
+// 0x64a58b push    0FFAF3333h; int
+// 0x64a590 push    65h ; 'e'
+// 0x64a592 call    sub_61094F
+// 0x64a597 mov     ecx, eax
+// 0x64a599 call    sub_60FC52
+// 0x64a59e push    eax; int
+// 0x64a59f mov     ecx, [ebp+var_4]
+// 0x64a5a2 call    sub_607138
+// 0x64a5a7 jmp     loc_64A7CA
+// 0x64a5ac cmp     [ebp+arg_0], 2
+// 0x64a5b0 jz      short loc_64A61C
+// 0x64a5b2 mov     ecx, offset unk_A772A8
+// 0x64a5b7 call    sub_6107F1
+// 0x64a5bc movzx   edx, al
+// 0x64a5bf test    edx, edx
+// 0x64a5c1 jnz     short loc_64A61C
+// 0x64a5c3 push    offset byte_A76E70; Str2
+// 0x64a5c8 mov     eax, [ebp+Source]
+// 0x64a5cb push    eax; Str1
+// 0x64a5cc call    j__strcmp
+// 0x64a5d1 add     esp, 8
+// 0x64a5d4 test    eax, eax
+// 0x64a5d6 jnz     short loc_64A61C
+// 0x64a5d8 push    0; Source
+// 0x64a5da push    0FFAF3333h; int
+// 0x64a5df push    64h ; 'd'
+// 0x64a5e1 call    sub_61094F
+// 0x64a5e6 mov     ecx, eax
+// 0x64a5e8 call    sub_60FC52
+// 0x64a5ed push    eax; int
+// 0x64a5ee mov     ecx, [ebp+var_4]
+// 0x64a5f1 call    sub_607138
+// 0x64a5f6 mov     esi, esp
+// 0x64a5f8 call    ds:GetTickCount; KERNEL32
+// 0x64a5fe cmp     esi, esp
+// 0x64a600 call    j___RTC_CheckEsp
+// 0x64a605 push    eax
+// 0x64a606 mov     ecx, offset unk_A772A0
+// 0x64a60b call    j_unknown_libname_666
+// 0x64a610 mov     byte_A76E68, 1
+// 0x64a617 jmp     loc_64A7CA
+// 0x64a61c mov     ecx, [ebp+Source]
+// 0x64a61f push    ecx; Source
+// 0x64a620 push    offset byte_A76E70; Destination
+// 0x64a625 call    j__strcpy
+// 0x64a62a add     esp, 8
+// 0x64a62d call    sub_610DB9
+// 0x64a632 mov     ecx, eax
+// 0x64a634 call    CMFCColorPickerCtrl::GetCursorRect(void)
+// 0x64a639 mov     [ebp+var_30], eax
+// 0x64a63c mov     [ebp+var_24], 2
+// 0x64a643 mov     edx, [ebp+var_30]
+// 0x64a646 mov     [ebp+var_1C], edx
+// 0x64a649 mov     eax, [ebp+arg_0]
+// 0x64a64c mov     [ebp+var_38], eax
+// 0x64a64f cmp     [ebp+var_38], 3; switch 4 cases
+// 0x64a653 ja      def_64A65C; jumptable 0064A65C default case
+// 0x64a659 mov     ecx, [ebp+var_38]
+// 0x64a65c jmp     ds:jpt_64A65C[ecx*4]; switch jump
+// 0x64a663 mov     [ebp+var_20], 0; jumptable 0064A65C case 0
+// 0x64a66a call    sub_610DB9
+// 0x64a66f mov     ecx, eax
+// 0x64a671 call    CWnd::GetSuperWndProcAddr(void)
+// 0x64a676 mov     edx, [eax+130h]
+// 0x64a67c mov     [ebp+var_18], edx
+// 0x64a67f mov     [ebp+var_14], 0
+// 0x64a686 jmp     short def_64A65C; jumptable 0064A65C default case
+// 0x64a688 mov     [ebp+var_20], 1; jumptable 0064A65C cases 1,3
+// 0x64a68f call    sub_610DB9
+// 0x64a694 mov     ecx, eax
+// 0x64a696 call    sub_611831
+// 0x64a69b mov     [ebp+var_18], eax
+// 0x64a69e mov     [ebp+var_14], 1
+// 0x64a6a5 jmp     short def_64A65C; jumptable 0064A65C default case
+// 0x64a6a7 cmp     [ebp+Str1], 0; jumptable 0064A65C case 2
+// 0x64a6ab jz      short loc_64A6B7
+// 0x64a6ad mov     eax, [ebp+Str1]
+// 0x64a6b0 movsx   ecx, byte ptr [eax]
+// 0x64a6b3 test    ecx, ecx
+// 0x64a6b5 jnz     short loc_64A6BC
+// 0x64a6b7 jmp     loc_64A7CA
+// 0x64a6bc mov     edx, [ebp+Str1]
+// 0x64a6bf push    edx; Str1
+// 0x64a6c0 call    sub_610DB9
+// 0x64a6c5 mov     ecx, eax
+// 0x64a6c7 call    CMFCColorBar::SelectPalette(CDC *)
+// 0x64a6cc mov     [ebp+var_34], eax
+// 0x64a6cf cmp     [ebp+var_34], 0FFFFFFFFh
+// 0x64a6d3 jnz     short loc_64A6DA
+// 0x64a6d5 jmp     loc_64A7CA
+// 0x64a6da mov     [ebp+var_20], 2
+// 0x64a6e1 mov     eax, [ebp+var_34]
+// 0x64a6e4 mov     [ebp+var_18], eax
+// 0x64a6e7 mov     [ebp+var_14], 4
+// 0x64a6ee mov     [ebp+var_2C], 0; jumptable 0064A65C default case
+// 0x64a6f5 mov     ecx, [ebp+var_2C]
+// 0x64a6f8 add     ecx, offset byte_A77090
+// 0x64a6fe mov     [ebp+Buffer], ecx
+// 0x64a701 mov     edx, [ebp+var_2C]
+// 0x64a704 add     edx, 1
+// 0x64a707 mov     [ebp+var_2C], edx
+// 0x64a70a mov     eax, [ebp+arg_0]
+// 0x64a70d push    eax
+// 0x64a70e push    offset aD_0; "%d"
+// 0x64a713 push    1; BufferCount
+// 0x64a715 mov     ecx, [ebp+Buffer]
+// 0x64a718 push    ecx; Buffer
+// 0x64a719 call    j___snprintf
+// 0x64a71e add     esp, 10h
+// 0x64a721 mov     edx, [ebp+var_2C]
+// 0x64a724 add     edx, offset byte_A77090
+// 0x64a72a mov     [ebp+var_40], edx
+// 0x64a72d mov     eax, [ebp+var_2C]
+// 0x64a730 add     eax, 1
+// 0x64a733 mov     [ebp+var_2C], eax
+// 0x64a736 call    sub_60BC01
+// 0x64a73b mov     ecx, eax
+// 0x64a73d call    sub_610175
+// 0x64a742 push    eax
+// 0x64a743 push    offset aD_1; "%d"
+// 0x64a748 push    1; BufferCount
+// 0x64a74a mov     ecx, [ebp+var_40]
+// 0x64a74d push    ecx; Buffer
+// 0x64a74e call    j___snprintf
+// 0x64a753 add     esp, 10h
+// 0x64a756 mov     edx, [ebp+Source]
+// 0x64a759 push    edx
+// 0x64a75a call    sub_60E6D1
+// 0x64a75f mov     ecx, eax
+// 0x64a761 call    sub_600F90
+// 0x64a766 push    1
+// 0x64a768 mov     eax, [ebp+Source]
+// 0x64a76b push    eax
+// 0x64a76c call    sub_60E6D1
+// 0x64a771 mov     ecx, eax
+// 0x64a773 call    sub_5FF4DD
+// 0x64a778 mov     ecx, [ebp+Source]
+// 0x64a77b push    ecx; Source
+// 0x64a77c mov     edx, [ebp+var_2C]
+// 0x64a77f add     edx, offset byte_A77090
+// 0x64a785 push    edx; Destination
+// 0x64a786 call    j__strcpy
+// 0x64a78b add     esp, 8
+// 0x64a78e mov     [ebp+var_C], offset byte_A77090
+// 0x64a795 mov     eax, [ebp+var_2C]
+// 0x64a798 add     eax, offset byte_A77090
+// 0x64a79d push    eax; Str
+// 0x64a79e call    j__strlen
+// 0x64a7a3 add     esp, 4
+// 0x64a7a6 mov     ecx, [ebp+var_2C]
+// 0x64a7a9 lea     edx, [ecx+eax+1]
+// 0x64a7ad mov     [ebp+var_10], edx
+// 0x64a7b0 lea     eax, [ebp+var_24]
+// 0x64a7b3 push    eax
+// 0x64a7b4 push    0Dh
+// 0x64a7b6 call    sub_6042DA
+// 0x64a7bb add     esp, 8
+// 0x64a7be mov     ecx, [ebp+Source]
+// 0x64a7c1 push    ecx; Source
+// 0x64a7c2 mov     ecx, [ebp+var_4]
+// 0x64a7c5 call    sub_611F16
+// 0x64a7ca push    edx
+// 0x64a7cb mov     ecx, ebp; Esp
+// 0x64a7cd push    eax
+// 0x64a7ce lea     edx, stru_64A7ED; Fd
+// 0x64a7d4 call    _RTC_CheckStackVars(x,x)
+// 0x64a7d9 pop     eax
+// 0x64a7da pop     edx
+// 0x64a7db pop     edi
+// 0x64a7dc pop     esi
+// 0x64a7dd add     esp, 40h
+// 0x64a7e0 cmp     ebp, esp
+// 0x64a7e2 call    j___RTC_CheckEsp
+// 0x64a7e7 mov     esp, ebp
+// 0x64a7e9 pop     ebp
+// 0x64a7ea retn    0Ch
+//
+// 0x64a430 sub_64A430
+// 0x64a430 push    ebp
+// 0x64a431 mov     ebp, esp
+// 0x64a433 sub     esp, 8
+// 0x64a436 mov     [ebp+var_8], 0CCCCCCCCh
+// 0x64a43d mov     [ebp+var_4], 0CCCCCCCCh
+// 0x64a444 mov     [ebp+var_4], ecx
+// 0x64a447 mov     eax, [ebp+var_4]
+// 0x64a44a mov     dword ptr [eax+2A800h], 0
+// 0x64a454 mov     ecx, [ebp+var_4]
+// 0x64a457 mov     dword ptr [ecx+2A804h], 0
+// 0x64a461 mov     edx, [ebp+var_4]
+// 0x64a464 mov     dword ptr [edx+2A808h], 0
+// 0x64a46e mov     eax, [ebp+var_4]
+// 0x64a471 mov     dword ptr [eax+2BD4Ch], 0
+// 0x64a47b mov     ecx, [ebp+var_4]
+// 0x64a47e mov     dword ptr [ecx+2BD50h], 0FFFFFFFFh
+// 0x64a488 movzx   edx, byte_A67341
+// 0x64a48f test    edx, edx
+// 0x64a491 jz      short loc_64A4DB
+// 0x64a493 mov     byte_A76E70, 0
+// 0x64a49a push    64h ; 'd'
+// 0x64a49c mov     ecx, offset unk_A772A8
+// 0x64a4a1 call    sub_60BAB7
+// 0x64a4a6 push    0
+// 0x64a4a8 mov     ecx, offset unk_A772A8
+// 0x64a4ad call    j_unknown_libname_666
+// 0x64a4b2 push    493E0h
+// 0x64a4b7 mov     ecx, offset unk_A772A0
+// 0x64a4bc call    sub_60BAB7
+// 0x64a4c1 push    0
+// 0x64a4c3 mov     ecx, offset unk_A772A0
+// 0x64a4c8 call    j_unknown_libname_666
+// 0x64a4cd mov     byte_A76E68, 0
+// 0x64a4d4 mov     byte_A67341, 0
+// 0x64a4db call    sub_6087D6
+// 0x64a4e0 mov     ecx, eax
+// 0x64a4e2 call    sub_600FE5
+// 0x64a4e7 mov     [ebp+var_8], eax
+// 0x64a4ea cmp     [ebp+var_8], 0FFFFFFFFh
+// 0x64a4ee jz      short loc_64A510
+// 0x64a4f0 push    0; Source
+// 0x64a4f2 push    0FFAF3333h; int
+// 0x64a4f7 mov     eax, [ebp+var_8]
+// 0x64a4fa push    eax
+// 0x64a4fb call    sub_61094F
+// 0x64a500 mov     ecx, eax
+// 0x64a502 call    sub_60FC52
+// 0x64a507 push    eax; int
+// 0x64a508 mov     ecx, [ebp+var_4]
+// 0x64a50b call    sub_607138
+// 0x64a510 add     esp, 8
+// 0x64a513 cmp     ebp, esp
+// 0x64a515 call    j___RTC_CheckEsp
+// 0x64a51a mov     esp, ebp
+// 0x64a51c pop     ebp
+// 0x64a51d retn
+//
+// 0x64a820 sub_64A820
+// 0x64a820 push    ebp
+// 0x64a821 mov     ebp, esp
+// 0x64a823 sub     esp, 28h
+// 0x64a826 push    esi
+// 0x64a827 push    edi
+// 0x64a828 push    ecx
+// 0x64a829 lea     edi, [ebp+var_28]
+// 0x64a82c mov     ecx, 0Ah
+// 0x64a831 mov     eax, 0CCCCCCCCh
+// 0x64a836 rep stosd
+// 0x64a838 pop     ecx
+// 0x64a839 mov     [ebp+var_4], ecx
+// 0x64a83c mov     eax, [ebp+Source]
+// 0x64a83f movsx   ecx, byte ptr [eax]
+// 0x64a842 test    ecx, ecx
+// 0x64a844 jnz     short loc_64A84B
+// 0x64a846 jmp     loc_64A9A9
+// 0x64a84b movzx   edx, byte_A76E68
+// 0x64a852 test    edx, edx
+// 0x64a854 jz      short loc_64A88A
+// 0x64a856 mov     ecx, offset unk_A772A0
+// 0x64a85b call    sub_6107F1
+// 0x64a860 movzx   eax, al
+// 0x64a863 test    eax, eax
+// 0x64a865 jnz     short loc_64A88A
+// 0x64a867 push    0; Source
+// 0x64a869 push    0FFAF3333h; int
+// 0x64a86e push    65h ; 'e'
+// 0x64a870 call    sub_61094F
+// 0x64a875 mov     ecx, eax
+// 0x64a877 call    sub_60FC52
+// 0x64a87c push    eax; int
+// 0x64a87d mov     ecx, [ebp+var_4]
+// 0x64a880 call    sub_607138
+// 0x64a885 jmp     loc_64A9A9
+// 0x64a88a mov     ecx, offset unk_A772A8
+// 0x64a88f call    sub_6107F1
+// 0x64a894 movzx   ecx, al
+// 0x64a897 test    ecx, ecx
+// 0x64a899 jnz     short loc_64A8F4
+// 0x64a89b push    offset byte_A76E70; Str2
+// 0x64a8a0 mov     edx, [ebp+Source]
+// 0x64a8a3 push    edx; Str1
+// 0x64a8a4 call    j__strcmp
+// 0x64a8a9 add     esp, 8
+// 0x64a8ac test    eax, eax
+// 0x64a8ae jnz     short loc_64A8F4
+// 0x64a8b0 push    0; Source
+// 0x64a8b2 push    0FFAF3333h; int
+// 0x64a8b7 push    64h ; 'd'
+// 0x64a8b9 call    sub_61094F
+// 0x64a8be mov     ecx, eax
+// 0x64a8c0 call    sub_60FC52
+// 0x64a8c5 push    eax; int
+// 0x64a8c6 mov     ecx, [ebp+var_4]
+// 0x64a8c9 call    sub_607138
+// 0x64a8ce mov     esi, esp
+// 0x64a8d0 call    ds:GetTickCount; KERNEL32
+// 0x64a8d6 cmp     esi, esp
+// 0x64a8d8 call    j___RTC_CheckEsp
+// 0x64a8dd push    eax
+// 0x64a8de mov     ecx, offset unk_A772A0
+// 0x64a8e3 call    j_unknown_libname_666
+// 0x64a8e8 mov     byte_A76E68, 1
+// 0x64a8ef jmp     loc_64A9A9
+// 0x64a8f4 mov     eax, [ebp+Source]
+// 0x64a8f7 push    eax; Source
+// 0x64a8f8 push    offset byte_A76E70; Destination
+// 0x64a8fd call    j__strcpy
+// 0x64a902 add     esp, 8
+// 0x64a905 push    1
+// 0x64a907 mov     ecx, [ebp+Source]
+// 0x64a90a push    ecx
+// 0x64a90b call    sub_60E6D1
+// 0x64a910 mov     ecx, eax
+// 0x64a912 call    sub_5FF4DD
+// 0x64a917 mov     [ebp+var_24], 0
+// 0x64a91e xor     edx, edx
+// 0x64a920 mov     [ebp+var_20], edx
+// 0x64a923 mov     [ebp+var_1C], edx
+// 0x64a926 mov     [ebp+var_18], edx
+// 0x64a929 mov     [ebp+var_14], edx
+// 0x64a92c mov     [ebp+var_10], edx
+// 0x64a92f mov     [ebp+var_C], edx
+// 0x64a932 mov     [ebp+var_14], 3
+// 0x64a939 mov     [ebp+var_20], 1
+// 0x64a940 mov     eax, [ebp+Source]
+// 0x64a943 push    eax
+// 0x64a944 call    sub_60E6D1
+// 0x64a949 mov     ecx, eax
+// 0x64a94b call    sub_600F90
+// 0x64a950 mov     ecx, off_A67308; "[gm]"
+// 0x64a956 push    ecx; Source
+// 0x64a957 push    offset byte_A77090; Destination
+// 0x64a95c call    j__strcpy
+// 0x64a961 add     esp, 8
+// 0x64a964 mov     edx, [ebp+Source]
+// 0x64a967 push    edx; Source
+// 0x64a968 push    offset byte_A77090; Destination
+// 0x64a96d call    j__strcat
+// 0x64a972 add     esp, 8
+// 0x64a975 mov     [ebp+var_C], offset byte_A77090
+// 0x64a97c push    offset byte_A77090; Str
+// 0x64a981 call    j__strlen
+// 0x64a986 add     esp, 4
+// 0x64a989 add     eax, 1
+// 0x64a98c mov     [ebp+var_10], eax
+// 0x64a98f lea     eax, [ebp+var_24]
+// 0x64a992 push    eax
+// 0x64a993 push    0Dh
+// 0x64a995 call    sub_6042DA
+// 0x64a99a add     esp, 8
+// 0x64a99d mov     ecx, [ebp+Source]
+// 0x64a9a0 push    ecx; Source
+// 0x64a9a1 mov     ecx, [ebp+var_4]
+// 0x64a9a4 call    sub_611F16
+// 0x64a9a9 push    edx
+// 0x64a9aa mov     ecx, ebp; Esp
+// 0x64a9ac push    eax
+// 0x64a9ad lea     edx, stru_64A9CC; Fd
+// 0x64a9b3 call    _RTC_CheckStackVars(x,x)
+// 0x64a9b8 pop     eax
+// 0x64a9b9 pop     edx
+// 0x64a9ba pop     edi
+// 0x64a9bb pop     esi
+// 0x64a9bc add     esp, 28h
+// 0x64a9bf cmp     ebp, esp
+// 0x64a9c1 call    j___RTC_CheckEsp
+// 0x64a9c6 mov     esp, ebp
+// 0x64a9c8 pop     ebp
+// 0x64a9c9 retn    4
+//
+// 0x64c140 sub_64C140
+// 0x64c140 push    ebp
+// 0x64c141 mov     ebp, esp
+// 0x64c143 sub     esp, 8
+// 0x64c146 mov     [ebp+var_8], 0CCCCCCCCh
+// 0x64c14d mov     [ebp+var_4], 0CCCCCCCCh
+// 0x64c154 mov     [ebp+var_4], ecx
+// 0x64c157 push    0
+// 0x64c159 mov     eax, [ebp+Source]
+// 0x64c15c push    eax
+// 0x64c15d call    sub_60E6D1
+// 0x64c162 mov     ecx, eax
+// 0x64c164 call    sub_5FF4DD
+// 0x64c169 mov     [ebp+var_8], 0
+// 0x64c170 jmp     short loc_64C17B
+// 0x64c172 mov     ecx, [ebp+var_8]
+// 0x64c175 add     ecx, 1
+// 0x64c178 mov     [ebp+var_8], ecx
+// 0x64c17b cmp     [ebp+var_8], 10h
+// 0x64c17f jge     short loc_64C1A9
+// 0x64c181 mov     edx, [ebp+Source]
+// 0x64c184 push    edx; Str2
+// 0x64c185 mov     eax, [ebp+var_8]
+// 0x64c188 imul    eax, 154h
+// 0x64c18e mov     ecx, [ebp+var_4]
+// 0x64c191 lea     edx, [ecx+eax+2A80Ch]
+// 0x64c198 push    edx; Str1
+// 0x64c199 call    j__strcmp
+// 0x64c19e add     esp, 8
+// 0x64c1a1 test    eax, eax
+// 0x64c1a3 jnz     short loc_64C1A7
+// 0x64c1a5 jmp     short loc_64C202
+// 0x64c1a7 jmp     short loc_64C172
+// 0x64c1a9 mov     eax, [ebp+Source]
+// 0x64c1ac push    eax; Source
+// 0x64c1ad mov     ecx, [ebp+var_4]
+// 0x64c1b0 mov     edx, [ecx+2BD4Ch]
+// 0x64c1b6 imul    edx, 154h
+// 0x64c1bc mov     eax, [ebp+var_4]
+// 0x64c1bf lea     ecx, [eax+edx+2A80Ch]
+// 0x64c1c6 push    ecx; Destination
+// 0x64c1c7 call    j__strcpy
+// 0x64c1cc add     esp, 8
+// 0x64c1cf mov     edx, [ebp+var_4]
+// 0x64c1d2 mov     eax, [edx+2BD4Ch]
+// 0x64c1d8 add     eax, 1
+// 0x64c1db and     eax, 8000000Fh
+// 0x64c1e0 jns     short loc_64C1E7
+// 0x64c1e2 dec     eax
+// 0x64c1e3 or      eax, 0FFFFFFF0h
+// 0x64c1e6 inc     eax
+// 0x64c1e7 mov     ecx, [ebp+var_4]
+// 0x64c1ea mov     [ecx+2BD4Ch], eax
+// 0x64c1f0 mov     edx, [ebp+var_4]
+// 0x64c1f3 mov     eax, [ebp+var_4]
+// 0x64c1f6 mov     ecx, [eax+2BD4Ch]
+// 0x64c1fc mov     [edx+2BD50h], ecx
+// 0x64c202 add     esp, 8
+// 0x64c205 cmp     ebp, esp
+// 0x64c207 call    j___RTC_CheckEsp
+// 0x64c20c mov     esp, ebp
+// 0x64c20e pop     ebp
+// 0x64c20f retn    4
+//
+// 0x64c400 sub_64C400
+// 0x64c400 push    ebp
+// 0x64c401 mov     ebp, esp
+// 0x64c403 push    ecx
+// 0x64c404 mov     [ebp+var_4], 0CCCCCCCCh
+// 0x64c40b mov     [ebp+var_4], ecx
+// 0x64c40e movzx   eax, byte_A76E68
+// 0x64c415 test    eax, eax
+// 0x64c417 jz      short loc_64C44F
+// 0x64c419 mov     ecx, offset unk_A772A0
+// 0x64c41e call    sub_6107F1
+// 0x64c423 movzx   ecx, al
+// 0x64c426 test    ecx, ecx
+// 0x64c428 jz      short loc_64C44F
+// 0x64c42a push    0; Source
+// 0x64c42c push    0FFAF3333h; int
+// 0x64c431 push    66h ; 'f'
+// 0x64c433 call    sub_61094F
+// 0x64c438 mov     ecx, eax
+// 0x64c43a call    sub_60FC52
+// 0x64c43f push    eax; int
+// 0x64c440 mov     ecx, [ebp+var_4]
+// 0x64c443 call    sub_607138
+// 0x64c448 mov     byte_A76E68, 0
+// 0x64c44f add     esp, 4
+// 0x64c452 cmp     ebp, esp
+// 0x64c454 call    j___RTC_CheckEsp
+// 0x64c459 mov     esp, ebp
+// 0x64c45b pop     ebp
+// 0x64c45c retn
+//
+// 0x81bcb0 sub_81BCB0
+// 0x81bcb0 push    ebp
+// 0x81bcb1 mov     ebp, esp
+// 0x81bcb3 push    ecx
+// 0x81bcb4 push    esi
+// 0x81bcb5 mov     [ebp+var_4], 0CCCCCCCCh
+// 0x81bcbc mov     [ebp+var_4], ecx
+// 0x81bcbf mov     eax, [ebp+var_4]
+// 0x81bcc2 mov     ecx, [ebp+arg_0]
+// 0x81bcc5 mov     [eax], ecx
+// 0x81bcc7 mov     esi, esp
+// 0x81bcc9 call    ds:GetTickCount; KERNEL32
+// 0x81bccf cmp     esi, esp
+// 0x81bcd1 call    j___RTC_CheckEsp
+// 0x81bcd6 mov     edx, [ebp+var_4]
+// 0x81bcd9 mov     [edx+4], eax
+// 0x81bcdc pop     esi
+// 0x81bcdd add     esp, 4
+// 0x81bce0 cmp     ebp, esp
+// 0x81bce2 call    j___RTC_CheckEsp
+// 0x81bce7 mov     esp, ebp
+// 0x81bce9 pop     ebp
+// 0x81bcea retn    4
+//
+// 0x81bcf0 unknown_libname_1074
+// 0x81bcf0 push    ebp
+// 0x81bcf1 mov     ebp, esp
+// 0x81bcf3 push    ecx
+// 0x81bcf4 mov     [ebp+var_4], 0CCCCCCCCh
+// 0x81bcfb mov     [ebp+var_4], ecx
+// 0x81bcfe mov     eax, [ebp+var_4]
+// 0x81bd01 mov     ecx, [ebp+arg_0]
+// 0x81bd04 mov     [eax+4], ecx
+// 0x81bd07 mov     esp, ebp
+// 0x81bd09 pop     ebp
+// 0x81bd0a retn    4
+//
+// 0x81bd10 sub_81BD10
+// 0x81bd10 push    ebp
+// 0x81bd11 mov     ebp, esp
+// 0x81bd13 sub     esp, 8
+// 0x81bd16 push    esi
+// 0x81bd17 mov     [ebp+var_8], 0CCCCCCCCh
+// 0x81bd1e mov     [ebp+var_4], 0CCCCCCCCh
+// 0x81bd25 mov     [ebp+var_4], ecx
+// 0x81bd28 mov     esi, esp
+// 0x81bd2a call    ds:GetTickCount; KERNEL32
+// 0x81bd30 cmp     esi, esp
+// 0x81bd32 call    j___RTC_CheckEsp
+// 0x81bd37 mov     [ebp+var_8], eax
+// 0x81bd3a mov     eax, [ebp+var_4]
+// 0x81bd3d mov     ecx, [ebp+var_8]
+// 0x81bd40 cmp     ecx, [eax+4]
+// 0x81bd43 jbe     short loc_81BD6E
+// 0x81bd45 mov     edx, [ebp+var_4]
+// 0x81bd48 mov     eax, [ebp+var_8]
+// 0x81bd4b sub     eax, [edx+4]
+// 0x81bd4e mov     ecx, [ebp+var_4]
+// 0x81bd51 cmp     eax, [ecx]
+// 0x81bd53 jb      short loc_81BD6E
+// 0x81bd55 mov     esi, esp
+// 0x81bd57 call    ds:GetTickCount; KERNEL32
+// 0x81bd5d cmp     esi, esp
+// 0x81bd5f call    j___RTC_CheckEsp
+// 0x81bd64 mov     edx, [ebp+var_4]
+// 0x81bd67 mov     [edx+4], eax
+// 0x81bd6a mov     al, 1
+// 0x81bd6c jmp     short loc_81BD70
+// 0x81bd6e xor     al, al
+// 0x81bd70 pop     esi
+// 0x81bd71 add     esp, 8
+// 0x81bd74 cmp     ebp, esp
+// 0x81bd76 call    j___RTC_CheckEsp
+// 0x81bd7b mov     esp, ebp
+// 0x81bd7d pop     ebp
+// 0x81bd7e retn
+//
+// 0x828f60 sub_828F60
+// 0x828f60 push    ebp
+// 0x828f61 mov     ebp, esp
+// 0x828f63 push    0FFFFFFFFh
+// 0x828f65 push    offset SEH_828F60
+// 0x828f6a mov     eax, large fs:0
+// 0x828f70 push    eax
+// 0x828f71 mov     large fs:0, esp
+// 0x828f78 sub     esp, 514h
+// 0x828f7e push    ebx
+// 0x828f7f push    esi
+// 0x828f80 push    edi
+// 0x828f81 lea     edi, [ebp+var_520]
+// 0x828f87 mov     ecx, 145h
+// 0x828f8c mov     eax, 0CCCCCCCCh
+// 0x828f91 rep stosd
+// 0x828f93 mov     eax, [ebp+arg_0]
+// 0x828f96 mov     [ebp+var_520], eax
+// 0x828f9c cmp     [ebp+var_520], 67h; switch 104 cases
+// 0x828fa3 ja      def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x828fa9 mov     ecx, [ebp+var_520]
+// 0x828faf movzx   edx, ds:byte_82A355[ecx]
+// 0x828fb6 jmp     ds:jpt_828FB6[edx*4]; switch jump
+// 0x828fbd call    sub_60ED48; jumptable 00828FB6 case 101
+// 0x828fc2 mov     ecx, eax
+// 0x828fc4 call    sub_60E4A1
+// 0x828fc9 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x828fce mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 0
+// 0x828fd1 mov     [ebp+var_14], eax
+// 0x828fd4 push    0D8h; Size
+// 0x828fd9 call    operator new(uint)
+// 0x828fde add     esp, 4
+// 0x828fe1 mov     [ebp+var_50C], eax
+// 0x828fe7 mov     [ebp+var_4], 0
+// 0x828fee cmp     [ebp+var_50C], 0
+// 0x828ff5 jz      short loc_82900A
+// 0x828ff7 mov     ecx, [ebp+var_50C]
+// 0x828ffd call    sub_606AB7
+// 0x829002 mov     [ebp+var_520], eax
+// 0x829008 jmp     short loc_829014
+// 0x82900a mov     [ebp+var_520], 0
+// 0x829014 mov     eax, [ebp+var_520]
+// 0x82901a mov     [ebp+var_518], eax
+// 0x829020 mov     [ebp+var_4], 0FFFFFFFFh
+// 0x829027 mov     ecx, [ebp+var_518]
+// 0x82902d mov     [ebp+var_20], ecx
+// 0x829030 push    84h; int
+// 0x829035 mov     eax, [ebp+var_14]
+// 0x829038 push    eax; int
+// 0x829039 mov     cx, word_ACB83C
+// 0x829040 push    ecx; __int16
+// 0x829041 mov     ecx, offset unk_ACB840
+// 0x829046 call    sub_60590A
+// 0x82904b push    eax; Str
+// 0x82904c mov     ecx, [ebp+var_20]
+// 0x82904f call    sub_61166A
+// 0x829054 mov     eax, [ebp+var_20]
+// 0x829057 push    eax
+// 0x829058 mov     cx, word_ACB83C
+// 0x82905f push    ecx
+// 0x829060 mov     ecx, offset unk_ACB840
+// 0x829065 call    sub_60590A
+// 0x82906a push    eax
+// 0x82906b call    sub_60ED48
+// 0x829070 mov     ecx, eax
+// 0x829072 call    sub_6041B3
+// 0x829077 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82907c mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 58
+// 0x82907f mov     [ebp+var_2C], eax
+// 0x829082 mov     eax, [ebp+var_2C]
+// 0x829085 cmp     dword ptr [eax+8], 0
+// 0x829089 jnz     loc_82913A
+// 0x82908f mov     eax, [ebp+var_2C]
+// 0x829092 mov     ecx, [eax]
+// 0x829094 mov     [ebp+var_38], ecx
+// 0x829097 push    0D8h; Size
+// 0x82909c call    operator new(uint)
+// 0x8290a1 add     esp, 4
+// 0x8290a4 mov     [ebp+var_4F4], eax
+// 0x8290aa mov     [ebp+var_4], 1
+// 0x8290b1 cmp     [ebp+var_4F4], 0
+// 0x8290b8 jz      short loc_8290CD
+// 0x8290ba mov     ecx, [ebp+var_4F4]
+// 0x8290c0 call    sub_606AB7
+// 0x8290c5 mov     [ebp+var_520], eax
+// 0x8290cb jmp     short loc_8290D7
+// 0x8290cd mov     [ebp+var_520], 0
+// 0x8290d7 mov     eax, [ebp+var_520]
+// 0x8290dd mov     [ebp+var_500], eax
+// 0x8290e3 mov     [ebp+var_4], 0FFFFFFFFh
+// 0x8290ea mov     ecx, [ebp+var_500]
+// 0x8290f0 mov     [ebp+var_44], ecx
+// 0x8290f3 push    84h; int
+// 0x8290f8 mov     eax, [ebp+var_38]
+// 0x8290fb push    eax; int
+// 0x8290fc mov     cx, word_ACB83C
+// 0x829103 push    ecx; __int16
+// 0x829104 mov     ecx, offset unk_ACB840
+// 0x829109 call    sub_60590A
+// 0x82910e push    eax; Str
+// 0x82910f mov     ecx, [ebp+var_44]
+// 0x829112 call    sub_61166A
+// 0x829117 mov     eax, [ebp+var_44]
+// 0x82911a push    eax
+// 0x82911b mov     cx, word_ACB83C
+// 0x829122 push    ecx
+// 0x829123 mov     ecx, offset unk_ACB840
+// 0x829128 call    sub_60590A
+// 0x82912d push    eax
+// 0x82912e call    sub_60ED48
+// 0x829133 mov     ecx, eax
+// 0x829135 call    sub_6041B3
+// 0x82913a jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82913f mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 61
+// 0x829142 mov     [ebp+var_50], eax
+// 0x829145 push    0D8h; Size
+// 0x82914a call    operator new(uint)
+// 0x82914f add     esp, 4
+// 0x829152 mov     [ebp+var_4DC], eax
+// 0x829158 mov     [ebp+var_4], 2
+// 0x82915f cmp     [ebp+var_4DC], 0
+// 0x829166 jz      short loc_82917B
+// 0x829168 mov     ecx, [ebp+var_4DC]
+// 0x82916e call    sub_606AB7
+// 0x829173 mov     [ebp+var_520], eax
+// 0x829179 jmp     short loc_829185
+// 0x82917b mov     [ebp+var_520], 0
+// 0x829185 mov     eax, [ebp+var_520]
+// 0x82918b mov     [ebp+var_4E8], eax
+// 0x829191 mov     [ebp+var_4], 0FFFFFFFFh
+// 0x829198 mov     ecx, [ebp+var_4E8]
+// 0x82919e mov     [ebp+var_5C], ecx
+// 0x8291a1 mov     eax, [ebp+var_50]
+// 0x8291a4 add     eax, 8
+// 0x8291a7 push    eax
+// 0x8291a8 mov     ecx, [ebp+var_50]
+// 0x8291ab add     ecx, 48h ; 'H'
+// 0x8291ae push    ecx
+// 0x8291af mov     edx, [ebp+var_50]
+// 0x8291b2 mov     eax, [edx+4]
+// 0x8291b5 push    eax
+// 0x8291b6 mov     ecx, [ebp+var_50]
+// 0x8291b9 mov     edx, [ecx]
+// 0x8291bb push    edx
+// 0x8291bc mov     ax, word_ACB83C
+// 0x8291c2 push    eax
+// 0x8291c3 mov     ecx, offset unk_ACB840
+// 0x8291c8 call    sub_60590A
+// 0x8291cd push    eax
+// 0x8291ce mov     ecx, [ebp+var_5C]
+// 0x8291d1 call    sub_6047FD
+// 0x8291d6 mov     eax, [ebp+var_5C]
+// 0x8291d9 push    eax
+// 0x8291da mov     cx, word_ACB83C
+// 0x8291e1 push    ecx
+// 0x8291e2 mov     ecx, offset unk_ACB840
+// 0x8291e7 call    sub_60590A
+// 0x8291ec push    eax
+// 0x8291ed call    sub_60ED48
+// 0x8291f2 mov     ecx, eax
+// 0x8291f4 call    sub_6041B3
+// 0x8291f9 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8291fe mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 34
+// 0x829201 mov     [ebp+var_68], eax
+// 0x829204 call    sub_60ED48
+// 0x829209 mov     ecx, eax
+// 0x82920b call    sub_6005E0
+// 0x829210 mov     ecx, eax
+// 0x829212 call    sub_60DF01
+// 0x829217 mov     ecx, eax
+// 0x829219 call    sub_609D2A
+// 0x82921e mov     [ebp+var_74], eax
+// 0x829221 mov     eax, [ebp+var_68]
+// 0x829224 push    eax
+// 0x829225 mov     ecx, [ebp+var_74]
+// 0x829228 call    sub_608434
+// 0x82922d jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829232 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 33
+// 0x829235 mov     [ebp+var_80], eax
+// 0x829238 call    sub_60ED48
+// 0x82923d mov     ecx, eax
+// 0x82923f call    sub_6005E0
+// 0x829244 mov     ecx, eax
+// 0x829246 call    sub_60DF01
+// 0x82924b mov     ecx, eax
+// 0x82924d call    sub_609D2A
+// 0x829252 mov     [ebp+var_8C], eax
+// 0x829258 mov     eax, [ebp+var_80]
+// 0x82925b mov     ecx, [eax]
+// 0x82925d push    ecx
+// 0x82925e mov     edx, [ebp+var_80]
+// 0x829261 add     edx, 24h ; '$'
+// 0x829264 push    edx
+// 0x829265 mov     eax, [ebp+var_80]
+// 0x829268 add     eax, 4
+// 0x82926b push    eax
+// 0x82926c mov     ecx, [ebp+var_8C]
+// 0x829272 call    sub_60F7B1
+// 0x829277 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82927c call    sub_60ED48; jumptable 00828FB6 case 35
+// 0x829281 mov     ecx, eax
+// 0x829283 call    sub_6005E0
+// 0x829288 mov     ecx, eax
+// 0x82928a call    sub_60DF01
+// 0x82928f mov     ecx, eax
+// 0x829291 call    sub_609D2A
+// 0x829296 mov     [ebp+var_98], eax
+// 0x82929c mov     eax, [ebp+arg_4]
+// 0x82929f push    eax
+// 0x8292a0 mov     ecx, [ebp+var_98]
+// 0x8292a6 call    sub_60E13B
+// 0x8292ab jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8292b0 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 36
+// 0x8292b3 mov     [ebp+var_A4], eax
+// 0x8292b9 call    sub_60ED48
+// 0x8292be mov     ecx, eax
+// 0x8292c0 call    sub_6005E0
+// 0x8292c5 mov     ecx, eax
+// 0x8292c7 call    sub_60DF01
+// 0x8292cc mov     ecx, eax
+// 0x8292ce call    sub_609D2A
+// 0x8292d3 mov     [ebp+var_B0], eax
+// 0x8292d9 mov     eax, [ebp+var_A4]
+// 0x8292df add     eax, 4
+// 0x8292e2 push    eax
+// 0x8292e3 mov     ecx, [ebp+var_A4]
+// 0x8292e9 mov     edx, [ecx]
+// 0x8292eb push    edx
+// 0x8292ec mov     ecx, [ebp+var_B0]
+// 0x8292f2 call    sub_603A42
+// 0x8292f7 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8292fc mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 15
+// 0x8292ff push    eax
+// 0x829300 call    sub_60ED48
+// 0x829305 mov     ecx, eax
+// 0x829307 call    sub_6005E0
+// 0x82930c mov     ecx, eax
+// 0x82930e call    sub_60DF01
+// 0x829313 mov     ecx, eax
+// 0x829315 call    sub_611F57
+// 0x82931a jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82931f mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 29
+// 0x829322 mov     [ebp+var_BC], eax
+// 0x829328 call    sub_60ED48
+// 0x82932d mov     ecx, eax
+// 0x82932f call    sub_6005E0
+// 0x829334 mov     ecx, eax
+// 0x829336 call    sub_60DF01
+// 0x82933b mov     ecx, eax
+// 0x82933d call    sub_611B9C
+// 0x829342 mov     [ebp+var_C8], eax
+// 0x829348 mov     eax, [ebp+var_BC]
+// 0x82934e add     eax, 4
+// 0x829351 push    eax
+// 0x829352 mov     ecx, [ebp+var_BC]
+// 0x829358 mov     edx, [ecx]
+// 0x82935a push    edx
+// 0x82935b mov     ecx, [ebp+var_C8]
+// 0x829361 call    sub_5FF514
+// 0x829366 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82936b call    sub_60ED48; jumptable 00828FB6 case 32
+// 0x829370 mov     ecx, eax
+// 0x829372 call    sub_6005E0
+// 0x829377 mov     ecx, eax
+// 0x829379 call    sub_60DF01
+// 0x82937e mov     ecx, eax
+// 0x829380 call    sub_611B9C
+// 0x829385 mov     [ebp+var_D4], eax
+// 0x82938b mov     eax, [ebp+arg_4]
+// 0x82938e push    eax
+// 0x82938f mov     ecx, [ebp+var_D4]
+// 0x829395 call    sub_604460
+// 0x82939a jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82939f mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 31
+// 0x8293a2 mov     [ebp+var_E0], eax
+// 0x8293a8 call    sub_60ED48
+// 0x8293ad mov     ecx, eax
+// 0x8293af call    sub_6005E0
+// 0x8293b4 mov     ecx, eax
+// 0x8293b6 call    sub_60DF01
+// 0x8293bb mov     ecx, eax
+// 0x8293bd call    sub_611B9C
+// 0x8293c2 mov     [ebp+var_EC], eax
+// 0x8293c8 mov     eax, [ebp+var_E0]
+// 0x8293ce add     eax, 4
+// 0x8293d1 push    eax
+// 0x8293d2 mov     ecx, [ebp+var_E0]
+// 0x8293d8 mov     edx, [ecx]
+// 0x8293da push    edx
+// 0x8293db mov     ecx, [ebp+var_EC]
+// 0x8293e1 call    sub_6016DE
+// 0x8293e6 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8293eb mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 30
+// 0x8293ee mov     [ebp+var_F8], eax
+// 0x8293f4 call    sub_60ED48
+// 0x8293f9 mov     ecx, eax
+// 0x8293fb call    sub_6005E0
+// 0x829400 mov     ecx, eax
+// 0x829402 call    sub_60DF01
+// 0x829407 mov     ecx, eax
+// 0x829409 call    sub_611B9C
+// 0x82940e mov     [ebp+var_104], eax
+// 0x829414 mov     eax, [ebp+var_F8]
+// 0x82941a push    eax
+// 0x82941b mov     ecx, [ebp+var_104]
+// 0x829421 call    sub_60137D
+// 0x829426 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82942b call    sub_60ED48; jumptable 00828FB6 case 103
+// 0x829430 mov     ecx, eax
+// 0x829432 call    sub_6005E0
+// 0x829437 mov     ecx, eax
+// 0x829439 call    sub_60DF01
+// 0x82943e mov     ecx, eax
+// 0x829440 call    sub_60977B
+// 0x829445 mov     [ebp+var_110], eax
+// 0x82944b mov     ecx, [ebp+var_110]
+// 0x829451 call    sub_6039A2
+// 0x829456 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82945b mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 45
+// 0x82945e mov     [ebp+var_11C], eax
+// 0x829464 call    sub_60ED48
+// 0x829469 mov     ecx, eax
+// 0x82946b call    sub_6005E0
+// 0x829470 mov     ecx, eax
+// 0x829472 call    sub_60DF01
+// 0x829477 mov     ecx, eax
+// 0x829479 call    sub_60977B
+// 0x82947e mov     [ebp+var_128], eax
+// 0x829484 mov     eax, [ebp+var_11C]
+// 0x82948a fld     qword ptr [eax+8]
+// 0x82948d sub     esp, 8
+// 0x829490 fstp    [esp+534h+var_534]; double
+// 0x829493 mov     ecx, [ebp+var_128]
+// 0x829499 call    sub_60C8CC
+// 0x82949e jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8294a3 call    sub_60ED48; jumptable 00828FB6 case 56
+// 0x8294a8 mov     ecx, eax
+// 0x8294aa call    sub_6005E0
+// 0x8294af mov     ecx, eax
+// 0x8294b1 call    sub_60DF01
+// 0x8294b6 mov     ecx, eax
+// 0x8294b8 call    sub_60977B
+// 0x8294bd mov     [ebp+var_134], eax
+// 0x8294c3 fild    [ebp+arg_4]
+// 0x8294c6 sub     esp, 8
+// 0x8294c9 fstp    [esp+534h+var_534]; double
+// 0x8294cc mov     ecx, [ebp+var_134]
+// 0x8294d2 call    sub_603D49
+// 0x8294d7 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8294dc call    sub_60ED48; jumptable 00828FB6 case 57
+// 0x8294e1 mov     ecx, eax
+// 0x8294e3 call    sub_6005E0
+// 0x8294e8 mov     ecx, eax
+// 0x8294ea call    sub_60DF01
+// 0x8294ef mov     ecx, eax
+// 0x8294f1 call    sub_60977B
+// 0x8294f6 mov     [ebp+var_140], eax
+// 0x8294fc fild    [ebp+arg_4]
+// 0x8294ff sub     esp, 8
+// 0x829502 fstp    [esp+534h+var_534]; double
+// 0x829505 mov     ecx, [ebp+var_140]
+// 0x82950b call    sub_608650
+// 0x829510 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829515 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 7
+// 0x829518 push    eax
+// 0x829519 call    sub_60ED48
+// 0x82951e mov     ecx, eax
+// 0x829520 call    sub_6005E0
+// 0x829525 mov     ecx, eax
+// 0x829527 call    sub_60C2AA
+// 0x82952c mov     [ebp+var_14C], eax
+// 0x829532 mov     ecx, [ebp+var_14C]
+// 0x829538 call    sub_60EE51
+// 0x82953d jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829542 call    sub_60ED48; jumptable 00828FB6 case 12
+// 0x829547 mov     ecx, eax
+// 0x829549 call    sub_6005E0
+// 0x82954e mov     ecx, eax
+// 0x829550 call    sub_60DF01
+// 0x829555 mov     ecx, eax
+// 0x829557 call    sub_60DC90
+// 0x82955c mov     ecx, eax
+// 0x82955e call    sub_60286D
+// 0x829563 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829568 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 2
+// 0x82956b mov     [ebp+Str], eax
+// 0x829571 lea     ecx, [ebp+var_1D8]
+// 0x829577 call    sub_60F522
+// 0x82957c mov     [ebp+var_4], 3
+// 0x829583 mov     eax, [ebp+Str]
+// 0x829589 push    eax; Str
+// 0x82958a lea     ecx, [ebp+var_1D8]
+// 0x829590 call    sub_60F9F5
+// 0x829595 mov     eax, [ebp+Str]
+// 0x82959b mov     ecx, [eax+40h]
+// 0x82959e push    ecx
+// 0x82959f lea     ecx, [ebp+var_1D8]
+// 0x8295a5 call    sub_611EDA
+// 0x8295aa mov     eax, [ebp+Str]
+// 0x8295b0 mov     ecx, [eax+24h]
+// 0x8295b3 push    ecx
+// 0x8295b4 lea     ecx, [ebp+var_1D8]
+// 0x8295ba call    sub_600BC1
+// 0x8295bf mov     eax, [ebp+Str]
+// 0x8295c5 mov     ecx, [eax+28h]
+// 0x8295c8 push    ecx
+// 0x8295c9 lea     ecx, [ebp+var_1D8]
+// 0x8295cf call    sub_6018B4
+// 0x8295d4 mov     eax, [ebp+Str]
+// 0x8295da mov     ecx, [eax+2Ch]
+// 0x8295dd push    ecx
+// 0x8295de lea     ecx, [ebp+var_1D8]
+// 0x8295e4 call    sub_60E22B
+// 0x8295e9 mov     eax, [ebp+Str]
+// 0x8295ef mov     ecx, [eax+44h]
+// 0x8295f2 push    ecx
+// 0x8295f3 lea     ecx, [ebp+var_1D8]
+// 0x8295f9 call    sub_60B43B
+// 0x8295fe mov     eax, [ebp+Str]
+// 0x829604 mov     ecx, [eax+28h]
+// 0x829607 push    ecx
+// 0x829608 lea     ecx, [ebp+var_1D8]
+// 0x82960e call    sub_60396B
+// 0x829613 mov     eax, [ebp+Str]
+// 0x829619 mov     ecx, [eax+20h]
+// 0x82961c and     ecx, 1
+// 0x82961f jz      short loc_829636
+// 0x829621 mov     eax, [ebp+Str]
+// 0x829627 add     eax, 4Ch ; 'L'
+// 0x82962a push    eax; Str
+// 0x82962b lea     ecx, [ebp+var_1D8]
+// 0x829631 call    sub_60F6B2
+// 0x829636 mov     eax, [ebp+Str]
+// 0x82963c mov     ecx, [eax+20h]
+// 0x82963f and     ecx, 1000h
+// 0x829645 jz      short loc_829652
+// 0x829647 lea     ecx, [ebp+var_1D8]
+// 0x82964d call    sub_606120
+// 0x829652 mov     eax, [ebp+Str]
+// 0x829658 mov     ecx, [eax+20h]
+// 0x82965b and     ecx, 40h
+// 0x82965e jz      short loc_82967F
+// 0x829660 mov     eax, [ebp+Str]
+// 0x829666 mov     ecx, [eax+78h]
+// 0x829669 push    ecx; Size
+// 0x82966a mov     edx, [ebp+Str]
+// 0x829670 mov     eax, [edx+7Ch]
+// 0x829673 push    eax; Src
+// 0x829674 lea     ecx, [ebp+var_1D8]
+// 0x82967a call    sub_6080D8
+// 0x82967f lea     eax, [ebp+var_1D8]
+// 0x829685 push    eax
+// 0x829686 call    sub_60ED48
+// 0x82968b mov     ecx, eax
+// 0x82968d call    sub_6005E0
+// 0x829692 mov     ecx, eax
+// 0x829694 call    sub_60DF01
+// 0x829699 mov     ecx, eax
+// 0x82969b call    sub_60DC90
+// 0x8296a0 mov     ecx, eax
+// 0x8296a2 call    sub_60E55A
+// 0x8296a7 mov     [ebp+var_4], 0FFFFFFFFh
+// 0x8296ae lea     ecx, [ebp+var_1D8]
+// 0x8296b4 call    sub_60E3D9
+// 0x8296b9 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8296be mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 3
+// 0x8296c1 mov     [ebp+var_1E4], eax
+// 0x8296c7 mov     eax, [ebp+var_1E4]
+// 0x8296cd mov     ecx, [eax]
+// 0x8296cf push    ecx
+// 0x8296d0 call    sub_60ED48
+// 0x8296d5 mov     ecx, eax
+// 0x8296d7 call    sub_6005E0
+// 0x8296dc mov     ecx, eax
+// 0x8296de call    sub_60DF01
+// 0x8296e3 mov     ecx, eax
+// 0x8296e5 call    sub_60DC90
+// 0x8296ea mov     ecx, eax
+// 0x8296ec call    sub_612AAB
+// 0x8296f1 mov     [ebp+var_1F0], eax
+// 0x8296f7 cmp     [ebp+var_1F0], 0
+// 0x8296fe jz      short loc_82972E
+// 0x829700 mov     eax, [ebp+var_1E4]
+// 0x829706 cmp     dword ptr [eax+8], 2
+// 0x82970a jnz     short loc_829719
+// 0x82970c mov     ecx, [ebp+var_1F0]
+// 0x829712 call    sub_602B42
+// 0x829717 jmp     short loc_82972E
+// 0x829719 mov     eax, [ebp+var_1E4]
+// 0x82971f mov     ecx, [eax+4]
+// 0x829722 push    ecx
+// 0x829723 mov     ecx, [ebp+var_1F0]
+// 0x829729 call    sub_60850B
+// 0x82972e jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829733 call    sub_60ED48; jumptable 00828FB6 case 5
+// 0x829738 mov     ecx, eax
+// 0x82973a call    sub_6005E0
+// 0x82973f mov     ecx, eax
+// 0x829741 call    sub_60DF01
+// 0x829746 mov     ecx, eax
+// 0x829748 call    sub_60D411
+// 0x82974d mov     ecx, eax
+// 0x82974f call    sub_6060AD
+// 0x829754 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829759 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 14
+// 0x82975c push    eax
+// 0x82975d call    sub_60ED48
+// 0x829762 mov     ecx, eax
+// 0x829764 call    sub_6005E0
+// 0x829769 mov     ecx, eax
+// 0x82976b call    sub_60DF01
+// 0x829770 mov     ecx, eax
+// 0x829772 call    sub_60D411
+// 0x829777 mov     ecx, eax
+// 0x829779 call    sub_6050E0
+// 0x82977e jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829783 call    sub_60ED48; jumptable 00828FB6 case 4
+// 0x829788 mov     ecx, eax
+// 0x82978a call    sub_6005E0
+// 0x82978f mov     ecx, eax
+// 0x829791 call    sub_60DF01
+// 0x829796 mov     ecx, eax
+// 0x829798 call    sub_60D411
+// 0x82979d mov     ecx, eax
+// 0x82979f call    sub_610350
+// 0x8297a4 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8297a9 call    sub_60ED48; jumptable 00828FB6 case 55
+// 0x8297ae mov     ecx, eax
+// 0x8297b0 call    sub_6005E0
+// 0x8297b5 mov     ecx, eax
+// 0x8297b7 call    sub_60DF01
+// 0x8297bc mov     ecx, eax
+// 0x8297be call    sub_60D411
+// 0x8297c3 mov     ecx, eax
+// 0x8297c5 call    sub_605068
+// 0x8297ca jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8297cf mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 25
+// 0x8297d2 mov     [ebp+var_1FC], eax
+// 0x8297d8 mov     eax, [ebp+var_1FC]
+// 0x8297de add     eax, 0Ch
+// 0x8297e1 push    eax
+// 0x8297e2 mov     ecx, [ebp+var_1FC]
+// 0x8297e8 mov     edx, [ecx+8]
+// 0x8297eb push    edx
+// 0x8297ec call    sub_60ED48
+// 0x8297f1 mov     ecx, eax
+// 0x8297f3 call    sub_6005E0
+// 0x8297f8 mov     ecx, eax
+// 0x8297fa call    sub_60DF01
+// 0x8297ff mov     ecx, eax
+// 0x829801 call    sub_60D411
+// 0x829806 mov     ecx, eax
+// 0x829808 call    sub_60004F
+// 0x82980d jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829812 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 27
+// 0x829815 mov     [ebp+var_208], eax
+// 0x82981b mov     eax, [ebp+var_208]
+// 0x829821 mov     ecx, [eax+7Ch]
+// 0x829824 push    ecx
+// 0x829825 mov     edx, [ebp+var_208]
+// 0x82982b mov     eax, [edx+80h]
+// 0x829831 push    eax
+// 0x829832 call    sub_60ED48
+// 0x829837 mov     ecx, eax
+// 0x829839 call    sub_6005E0
+// 0x82983e mov     ecx, eax
+// 0x829840 call    sub_60DF01
+// 0x829845 mov     ecx, eax
+// 0x829847 call    sub_60D411
+// 0x82984c mov     ecx, eax
+// 0x82984e call    sub_60DE3E
+// 0x829853 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829858 call    sub_60ED48; jumptable 00828FB6 case 9
+// 0x82985d mov     ecx, eax
+// 0x82985f call    sub_6005E0
+// 0x829864 mov     ecx, eax
+// 0x829866 call    sub_60DF01
+// 0x82986b mov     ecx, eax
+// 0x82986d call    sub_60F11C
+// 0x829872 mov     [ebp+var_214], eax
+// 0x829878 cmp     [ebp+var_214], 0
+// 0x82987f jz      loc_829981
+// 0x829885 mov     eax, [ebp+arg_4]
+// 0x829888 mov     [ebp+var_220], eax
+// 0x82988e mov     eax, [ebp+var_220]
+// 0x829894 mov     ecx, [eax+8]
+// 0x829897 add     ecx, 5
+// 0x82989a mov     [ebp+Size], ecx
+// 0x8298a0 mov     [ebp+var_238], offset unk_ACB340
+// 0x8298aa cmp     [ebp+Size], 400h
+// 0x8298b4 jbe     short loc_8298D7
+// 0x8298b6 mov     eax, [ebp+Size]
+// 0x8298bc push    eax; Size
+// 0x8298bd call    CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(uint,int)
+// 0x8298c2 add     esp, 4
+// 0x8298c5 mov     [ebp+var_4D0], eax
+// 0x8298cb mov     ecx, [ebp+var_4D0]
+// 0x8298d1 mov     [ebp+var_238], ecx
+// 0x8298d7 mov     eax, [ebp+var_238]
+// 0x8298dd mov     [ebp+var_244], eax
+// 0x8298e3 mov     eax, [ebp+var_244]
+// 0x8298e9 mov     ecx, [ebp+var_220]
+// 0x8298ef mov     dx, [ecx+8]
+// 0x8298f3 mov     [eax+2], dx
+// 0x8298f7 mov     eax, [ebp+var_244]
+// 0x8298fd mov     ecx, [ebp+var_220]
+// 0x829903 mov     dx, [ecx]
+// 0x829906 mov     [eax], dx
+// 0x829909 mov     eax, [ebp+var_244]
+// 0x82990f mov     ecx, [ebp+var_220]
+// 0x829915 mov     dl, [ecx+0Ch]
+// 0x829918 mov     [eax+4], dl
+// 0x82991b mov     eax, [ebp+var_220]
+// 0x829921 mov     ecx, [eax+8]
+// 0x829924 push    ecx; Size
+// 0x829925 mov     edx, [ebp+var_220]
+// 0x82992b mov     eax, [edx+4]
+// 0x82992e push    eax; Src
+// 0x82992f mov     ecx, [ebp+var_238]
+// 0x829935 add     ecx, 5
+// 0x829938 push    ecx; void *
+// 0x829939 call    j__memcpy
+// 0x82993e add     esp, 0Ch
+// 0x829941 mov     eax, [ebp+Size]
+// 0x829947 push    eax
+// 0x829948 mov     ecx, [ebp+var_238]
+// 0x82994e push    ecx
+// 0x82994f mov     ecx, [ebp+var_214]
+// 0x829955 call    sub_600126
+// 0x82995a cmp     [ebp+Size], 400h
+// 0x829964 jbe     short loc_829981
+// 0x829966 mov     eax, [ebp+var_238]
+// 0x82996c mov     [ebp+var_4C4], eax
+// 0x829972 mov     ecx, [ebp+var_4C4]
+// 0x829978 push    ecx
+// 0x829979 call    operator delete[](void *)
+// 0x82997e add     esp, 4
+// 0x829981 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829986 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 52
+// 0x829989 mov     [ebp+var_250], eax
+// 0x82998f call    sub_60ED48
+// 0x829994 mov     ecx, eax
+// 0x829996 call    sub_6005E0
+// 0x82999b mov     ecx, eax
+// 0x82999d call    sub_60DF01
+// 0x8299a2 mov     ecx, eax
+// 0x8299a4 call    sub_60E055
+// 0x8299a9 mov     [ebp+var_25C], eax
+// 0x8299af mov     eax, [ebp+var_250]
+// 0x8299b5 mov     ecx, [eax+8]
+// 0x8299b8 push    ecx
+// 0x8299b9 mov     edx, [ebp+var_250]
+// 0x8299bf mov     eax, [edx+4]
+// 0x8299c2 push    eax
+// 0x8299c3 mov     ecx, [ebp+var_25C]
+// 0x8299c9 call    sub_6075AC
+// 0x8299ce jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x8299d3 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 53
+// 0x8299d6 mov     [ebp+var_268], eax
+// 0x8299dc call    sub_60ED48
+// 0x8299e1 mov     ecx, eax
+// 0x8299e3 call    sub_6005E0
+// 0x8299e8 mov     ecx, eax
+// 0x8299ea call    sub_60DF01
+// 0x8299ef mov     ecx, eax
+// 0x8299f1 call    sub_60E055
+// 0x8299f6 mov     [ebp+var_274], eax
+// 0x8299fc mov     eax, [ebp+var_268]
+// 0x829a02 mov     ecx, [eax+4]
+// 0x829a05 push    ecx
+// 0x829a06 mov     ecx, [ebp+var_274]
+// 0x829a0c call    sub_606526
+// 0x829a11 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829a16 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 37
+// 0x829a19 push    eax
+// 0x829a1a call    sub_60ED48
+// 0x829a1f mov     ecx, eax
+// 0x829a21 call    sub_6005E0
+// 0x829a26 mov     ecx, eax
+// 0x829a28 call    sub_60DF01
+// 0x829a2d mov     ecx, eax
+// 0x829a2f call    sub_6042E4
+// 0x829a34 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829a39 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 38
+// 0x829a3c push    eax
+// 0x829a3d call    sub_60ED48
+// 0x829a42 mov     ecx, eax
+// 0x829a44 call    sub_6005E0
+// 0x829a49 mov     ecx, eax
+// 0x829a4b call    sub_60DF01
+// 0x829a50 mov     ecx, eax
+// 0x829a52 call    sub_601F3F
+// 0x829a57 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829a5c mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 39
+// 0x829a5f mov     [ebp+var_280], eax
+// 0x829a65 mov     eax, [ebp+var_280]
+// 0x829a6b add     eax, 4
+// 0x829a6e push    eax
+// 0x829a6f mov     ecx, [ebp+var_280]
+// 0x829a75 mov     edx, [ecx]
+// 0x829a77 push    edx
+// 0x829a78 call    sub_60ED48
+// 0x829a7d mov     ecx, eax
+// 0x829a7f call    sub_6005E0
+// 0x829a84 mov     ecx, eax
+// 0x829a86 call    sub_60DF01
+// 0x829a8b mov     ecx, eax
+// 0x829a8d call    sub_60A5DB
+// 0x829a92 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829a97 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 40
+// 0x829a9a mov     [ebp+var_28C], eax
+// 0x829aa0 mov     eax, [ebp+var_28C]
+// 0x829aa6 cmp     dword ptr [eax], 19h
+// 0x829aa9 jnz     short loc_829AF1
+// 0x829aab mov     eax, [ebp+var_28C]
+// 0x829ab1 mov     ecx, [eax+4]
+// 0x829ab4 mov     [ebp+var_298], ecx
+// 0x829aba mov     eax, [ebp+var_298]
+// 0x829ac0 add     eax, 0Ch
+// 0x829ac3 push    eax
+// 0x829ac4 mov     ecx, [ebp+var_298]
+// 0x829aca mov     edx, [ecx+8]
+// 0x829acd push    edx
+// 0x829ace call    sub_60ED48
+// 0x829ad3 mov     ecx, eax
+// 0x829ad5 call    sub_6005E0
+// 0x829ada mov     ecx, eax
+// 0x829adc call    sub_60DF01
+// 0x829ae1 mov     ecx, eax
+// 0x829ae3 call    sub_60D411
+// 0x829ae8 mov     ecx, eax
+// 0x829aea call    sub_611D59
+// 0x829aef jmp     short loc_829B43
+// 0x829af1 mov     eax, [ebp+var_28C]
+// 0x829af7 cmp     dword ptr [eax], 1Bh
+// 0x829afa jnz     short loc_829B43
+// 0x829afc mov     eax, [ebp+var_28C]
+// 0x829b02 mov     ecx, [eax+4]
+// 0x829b05 mov     [ebp+var_2A4], ecx
+// 0x829b0b mov     eax, [ebp+var_2A4]
+// 0x829b11 mov     ecx, [eax+7Ch]
+// 0x829b14 push    ecx
+// 0x829b15 mov     edx, [ebp+var_2A4]
+// 0x829b1b mov     eax, [edx+80h]
+// 0x829b21 push    eax
+// 0x829b22 call    sub_60ED48
+// 0x829b27 mov     ecx, eax
+// 0x829b29 call    sub_6005E0
+// 0x829b2e mov     ecx, eax
+// 0x829b30 call    sub_60DF01
+// 0x829b35 mov     ecx, eax
+// 0x829b37 call    sub_60D411
+// 0x829b3c mov     ecx, eax
+// 0x829b3e call    sub_6055AE
+// 0x829b43 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829b48 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 41
+// 0x829b4b mov     [ebp+var_2B0], eax
+// 0x829b51 mov     eax, [ebp+var_2B0]
+// 0x829b57 cmp     dword ptr [eax+4], 1Bh
+// 0x829b5b jnz     short loc_829B93
+// 0x829b5d mov     eax, [ebp+var_2B0]
+// 0x829b63 mov     ecx, [eax+8]
+// 0x829b66 push    ecx
+// 0x829b67 mov     edx, [ebp+var_2B0]
+// 0x829b6d mov     eax, [edx]
+// 0x829b6f push    eax
+// 0x829b70 call    sub_60ED48
+// 0x829b75 mov     ecx, eax
+// 0x829b77 call    sub_6005E0
+// 0x829b7c mov     ecx, eax
+// 0x829b7e call    sub_60DF01
+// 0x829b83 mov     ecx, eax
+// 0x829b85 call    sub_60D411
+// 0x829b8a mov     ecx, eax
+// 0x829b8c call    sub_60F16C
+// 0x829b91 jmp     short loc_829BD3
+// 0x829b93 mov     eax, [ebp+var_2B0]
+// 0x829b99 cmp     dword ptr [eax+4], 17h
+// 0x829b9d jnz     short loc_829BD3
+// 0x829b9f mov     eax, [ebp+var_2B0]
+// 0x829ba5 mov     ecx, [eax+8]
+// 0x829ba8 push    ecx
+// 0x829ba9 mov     edx, [ebp+var_2B0]
+// 0x829baf mov     eax, [edx]
+// 0x829bb1 push    eax
+// 0x829bb2 call    sub_60ED48
+// 0x829bb7 mov     ecx, eax
+// 0x829bb9 call    sub_6005E0
+// 0x829bbe mov     ecx, eax
+// 0x829bc0 call    sub_60DF01
+// 0x829bc5 mov     ecx, eax
+// 0x829bc7 call    sub_60D411
+// 0x829bcc mov     ecx, eax
+// 0x829bce call    sub_602615
+// 0x829bd3 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829bd8 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 13
+// 0x829bdb mov     [ebp+var_2BC], eax
+// 0x829be1 mov     eax, [ebp+var_2BC]
+// 0x829be7 mov     ecx, [eax+18h]
+// 0x829bea push    ecx; Str
+// 0x829beb call    sub_82AEA0
+// 0x829bf0 add     esp, 4
+// 0x829bf3 movzx   edx, al
+// 0x829bf6 test    edx, edx
+// 0x829bf8 jz      short loc_829C4B
+// 0x829bfa push    offset aGm; "[gm]"
+// 0x829bff call    j__strlen
+// 0x829c04 add     esp, 4
+// 0x829c07 mov     ecx, [ebp+var_2BC]
+// 0x829c0d add     eax, [ecx+18h]
+// 0x829c10 push    eax
+// 0x829c11 call    sub_60ED48
+// 0x829c16 mov     ecx, eax
+// 0x829c18 call    sub_6005E0
+// 0x829c1d mov     ecx, eax
+// 0x829c1f call    sub_60DF01
+// 0x829c24 mov     ecx, eax
+// 0x829c26 call    sub_60DC90
+// 0x829c2b push    eax
+// 0x829c2c call    sub_60ED48
+// 0x829c31 mov     ecx, eax
+// 0x829c33 call    sub_6005E0
+// 0x829c38 mov     ecx, eax
+// 0x829c3a call    sub_60DF01
+// 0x829c3f mov     ecx, eax
+// 0x829c41 call    sub_612411
+// 0x829c46 jmp     def_829C6D; jumptable 00829C6D default case
+// 0x829c4b mov     eax, [ebp+var_2BC]
+// 0x829c51 mov     ecx, [eax+10h]
+// 0x829c54 mov     [ebp+var_520], ecx
+// 0x829c5a cmp     [ebp+var_520], 6; switch 7 cases
+// 0x829c61 ja      def_829C6D; jumptable 00829C6D default case
+// 0x829c67 mov     edx, [ebp+var_520]
+// 0x829c6d jmp     ds:jpt_829C6D[edx*4]; switch jump
+// 0x829c74 mov     eax, [ebp+var_2BC]; jumptable 00829C6D case 0
+// 0x829c7a mov     ecx, [eax+18h]
+// 0x829c7d push    ecx
+// 0x829c7e call    sub_60ED48
+// 0x829c83 mov     ecx, eax
+// 0x829c85 call    sub_6005E0
+// 0x829c8a mov     ecx, eax
+// 0x829c8c call    sub_60DF01
+// 0x829c91 mov     ecx, eax
+// 0x829c93 call    sub_60DC90
+// 0x829c98 push    eax
+// 0x829c99 call    sub_60ED48
+// 0x829c9e mov     ecx, eax
+// 0x829ca0 call    sub_6005E0
+// 0x829ca5 mov     ecx, eax
+// 0x829ca7 call    sub_60DF01
+// 0x829cac mov     ecx, eax
+// 0x829cae call    sub_60112F
+// 0x829cb3 jmp     def_829C6D; jumptable 00829C6D default case
+// 0x829cb8 mov     eax, [ebp+var_2BC]; jumptable 00829C6D case 1
+// 0x829cbe mov     ecx, [eax+18h]
+// 0x829cc1 push    ecx
+// 0x829cc2 call    sub_60ED48
+// 0x829cc7 mov     ecx, eax
+// 0x829cc9 call    sub_6005E0
+// 0x829cce mov     ecx, eax
+// 0x829cd0 call    sub_60DF01
+// 0x829cd5 mov     ecx, eax
+// 0x829cd7 call    sub_60D411
+// 0x829cdc push    eax
+// 0x829cdd call    sub_60ED48
+// 0x829ce2 mov     ecx, eax
+// 0x829ce4 call    sub_6005E0
+// 0x829ce9 mov     ecx, eax
+// 0x829ceb call    sub_60DF01
+// 0x829cf0 mov     ecx, eax
+// 0x829cf2 call    sub_6065AD
+// 0x829cf7 jmp     def_829C6D; jumptable 00829C6D default case
+// 0x829cfc mov     eax, [ebp+var_2BC]; jumptable 00829C6D case 5
+// 0x829d02 mov     ecx, [eax+18h]
+// 0x829d05 push    ecx
+// 0x829d06 mov     edx, [ebp+var_2BC]
+// 0x829d0c mov     eax, [edx+0Ch]
+// 0x829d0f push    eax
+// 0x829d10 call    sub_60ED48
+// 0x829d15 mov     ecx, eax
+// 0x829d17 call    sub_6005E0
+// 0x829d1c mov     ecx, eax
+// 0x829d1e call    sub_60DF01
+// 0x829d23 mov     ecx, eax
+// 0x829d25 call    sub_60449C
+// 0x829d2a jmp     def_829C6D; jumptable 00829C6D default case
+// 0x829d2f mov     eax, [ebp+var_2BC]; jumptable 00829C6D case 6
+// 0x829d35 mov     ecx, [eax+18h]
+// 0x829d38 push    ecx
+// 0x829d39 mov     edx, [ebp+var_2BC]
+// 0x829d3f mov     eax, [edx+0Ch]
+// 0x829d42 push    eax
+// 0x829d43 call    sub_60ED48
+// 0x829d48 mov     ecx, eax
+// 0x829d4a call    sub_6005E0
+// 0x829d4f mov     ecx, eax
+// 0x829d51 call    sub_60DF01
+// 0x829d56 mov     ecx, eax
+// 0x829d58 call    sub_609627
+// 0x829d5d jmp     short def_829C6D; jumptable 00829C6D default case
+// 0x829d5f mov     eax, [ebp+var_2BC]; jumptable 00829C6D cases 2-4
+// 0x829d65 mov     ecx, [eax+0Ch]
+// 0x829d68 push    ecx
+// 0x829d69 call    sub_60ED48
+// 0x829d6e mov     ecx, eax
+// 0x829d70 call    sub_6005E0
+// 0x829d75 mov     ecx, eax
+// 0x829d77 call    sub_60DF01
+// 0x829d7c mov     ecx, eax
+// 0x829d7e call    sub_60DC90
+// 0x829d83 mov     ecx, eax
+// 0x829d85 call    sub_609F4B
+// 0x829d8a mov     [ebp+var_2C8], eax
+// 0x829d90 mov     eax, [ebp+var_2BC]
+// 0x829d96 mov     ecx, [eax+18h]
+// 0x829d99 push    ecx
+// 0x829d9a mov     edx, [ebp+var_2C8]
+// 0x829da0 push    edx
+// 0x829da1 call    sub_60ED48
+// 0x829da6 mov     ecx, eax
+// 0x829da8 call    sub_6005E0
+// 0x829dad mov     ecx, eax
+// 0x829daf call    sub_60DF01
+// 0x829db4 mov     ecx, eax
+// 0x829db6 call    sub_5FF46A
+// 0x829dbb jmp     def_828FB6; jumptable 00829C6D default case
+// 0x829dc0 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 47
+// 0x829dc3 mov     [ebp+var_2D4], eax
+// 0x829dc9 call    sub_60ED48
+// 0x829dce mov     ecx, eax
+// 0x829dd0 call    sub_6005E0
+// 0x829dd5 mov     ecx, eax
+// 0x829dd7 call    sub_60DF01
+// 0x829ddc mov     ecx, eax
+// 0x829dde call    sub_6107C9
+// 0x829de3 mov     [ebp+var_2E0], eax
+// 0x829de9 mov     eax, [ebp+var_2D4]
+// 0x829def push    eax
+// 0x829df0 mov     ecx, [ebp+var_2E0]
+// 0x829df6 call    sub_606490
+// 0x829dfb jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829e00 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 49
+// 0x829e03 mov     [ebp+var_2EC], eax
+// 0x829e09 call    sub_60ED48
+// 0x829e0e mov     ecx, eax
+// 0x829e10 call    sub_6005E0
+// 0x829e15 mov     ecx, eax
+// 0x829e17 call    sub_60DF01
+// 0x829e1c mov     ecx, eax
+// 0x829e1e call    sub_6107C9
+// 0x829e23 mov     [ebp+var_2F8], eax
+// 0x829e29 mov     eax, [ebp+var_2EC]
+// 0x829e2f mov     ecx, [eax+4]
+// 0x829e32 push    ecx
+// 0x829e33 mov     edx, [ebp+var_2EC]
+// 0x829e39 mov     eax, [edx]
+// 0x829e3b push    eax
+// 0x829e3c mov     ecx, [ebp+var_2F8]
+// 0x829e42 call    sub_60430C
+// 0x829e47 mov     [ebp+var_304], eax
+// 0x829e4d cmp     [ebp+var_304], 0
+// 0x829e54 jz      short loc_829E61
+// 0x829e56 mov     ecx, [ebp+var_304]
+// 0x829e5c call    sub_61274F
+// 0x829e61 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829e66 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 54
+// 0x829e69 mov     [ebp+var_310], eax
+// 0x829e6f call    sub_60ED48
+// 0x829e74 mov     ecx, eax
+// 0x829e76 call    sub_6005E0
+// 0x829e7b mov     ecx, eax
+// 0x829e7d call    sub_60DF01
+// 0x829e82 mov     ecx, eax
+// 0x829e84 call    sub_6107C9
+// 0x829e89 mov     [ebp+var_31C], eax
+// 0x829e8f mov     [ebp+var_328], 0
+// 0x829e99 jmp     short loc_829EAA
+// 0x829e9b mov     eax, [ebp+var_328]
+// 0x829ea1 add     eax, 1
+// 0x829ea4 mov     [ebp+var_328], eax
+// 0x829eaa mov     eax, [ebp+var_310]
+// 0x829eb0 mov     ecx, [ebp+var_328]
+// 0x829eb6 cmp     ecx, [eax]
+// 0x829eb8 jge     short loc_829F09
+// 0x829eba mov     eax, [ebp+var_328]
+// 0x829ec0 imul    eax, 0Ch
+// 0x829ec3 mov     ecx, [ebp+var_310]
+// 0x829ec9 mov     edx, [ecx+eax+8]
+// 0x829ecd push    edx
+// 0x829ece mov     eax, [ebp+var_328]
+// 0x829ed4 imul    eax, 0Ch
+// 0x829ed7 mov     ecx, [ebp+var_310]
+// 0x829edd mov     edx, [ecx+eax+4]
+// 0x829ee1 push    edx
+// 0x829ee2 mov     ecx, [ebp+var_31C]
+// 0x829ee8 call    sub_60430C
+// 0x829eed mov     [ebp+var_334], eax
+// 0x829ef3 cmp     [ebp+var_334], 0
+// 0x829efa jz      short loc_829F07
+// 0x829efc mov     ecx, [ebp+var_334]
+// 0x829f02 call    sub_6048F2
+// 0x829f07 jmp     short loc_829E9B
+// 0x829f09 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829f0e mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 50
+// 0x829f11 mov     [ebp+var_340], eax
+// 0x829f17 call    sub_60ED48
+// 0x829f1c mov     ecx, eax
+// 0x829f1e call    sub_6005E0
+// 0x829f23 mov     ecx, eax
+// 0x829f25 call    sub_60DF01
+// 0x829f2a mov     ecx, eax
+// 0x829f2c call    sub_6107C9
+// 0x829f31 mov     [ebp+var_34C], eax
+// 0x829f37 mov     eax, [ebp+var_340]
+// 0x829f3d mov     ecx, [eax+4]
+// 0x829f40 push    ecx
+// 0x829f41 mov     edx, [ebp+var_340]
+// 0x829f47 mov     eax, [edx]
+// 0x829f49 push    eax
+// 0x829f4a mov     ecx, [ebp+var_34C]
+// 0x829f50 call    sub_60BDD2
+// 0x829f55 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829f5a mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 44
+// 0x829f5d mov     dword_A67794, eax
+// 0x829f62 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829f67 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 17
+// 0x829f6a mov     dword_A67790, eax
+// 0x829f6f mov     word ptr [ebp+var_35C], 0FFFFh
+// 0x829f78 mov     word ptr [ebp+var_35C+2], 0FFFFh
+// 0x829f81 mov     ax, word ptr dword_A67790
+// 0x829f87 mov     [ebp+var_358], ax
+// 0x829f8e mov     esi, esp
+// 0x829f90 sub     esp, 8
+// 0x829f93 mov     eax, esp
+// 0x829f95 mov     ecx, [ebp+var_35C]
+// 0x829f9b mov     [eax], ecx
+// 0x829f9d mov     dx, [ebp+var_358]
+// 0x829fa4 mov     [eax+4], dx
+// 0x829fa8 push    18h
+// 0x829faa call    dword_ACB864
+// 0x829fb0 cmp     esi, esp
+// 0x829fb2 call    j___RTC_CheckEsp
+// 0x829fb7 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x829fbc mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 19
+// 0x829fbf mov     [ebp+var_368], eax
+// 0x829fc5 call    sub_60ED48
+// 0x829fca mov     ecx, eax
+// 0x829fcc call    sub_6005E0
+// 0x829fd1 mov     ecx, eax
+// 0x829fd3 call    sub_60DF01
+// 0x829fd8 mov     ecx, eax
+// 0x829fda call    sub_611D31
+// 0x829fdf mov     [ebp+var_374], eax
+// 0x829fe5 cmp     dword_A67790, 0FFFFFFFFh
+// 0x829fec jnz     loc_82A0B5
+// 0x829ff2 mov     [ebp+var_380], 0
+// 0x829ffc jmp     short loc_82A00D
+// 0x829ffe mov     eax, [ebp+var_380]
+// 0x82a004 add     eax, 1
+// 0x82a007 mov     [ebp+var_380], eax
+// 0x82a00d mov     eax, [ebp+var_368]
+// 0x82a013 mov     ecx, [ebp+var_380]
+// 0x82a019 cmp     ecx, [eax+0Ch]
+// 0x82a01c jge     loc_82A0B3
+// 0x82a022 mov     eax, [ebp+var_368]
+// 0x82a028 mov     ecx, [eax+10h]
+// 0x82a02b mov     edx, [ebp+var_380]
+// 0x82a031 mov     eax, [ecx+edx*8]
+// 0x82a034 and     eax, 0FFFF0FFFh
+// 0x82a039 mov     ecx, [ebp+var_368]
+// 0x82a03f mov     edx, [ecx+10h]
+// 0x82a042 mov     ecx, [ebp+var_380]
+// 0x82a048 mov     [edx+ecx*8], eax
+// 0x82a04b mov     edx, [ebp+var_368]
+// 0x82a051 mov     eax, [edx+10h]
+// 0x82a054 mov     ecx, dword_A67794
+// 0x82a05a shl     ecx, 0Ch
+// 0x82a05d mov     edx, [ebp+var_380]
+// 0x82a063 or      ecx, [eax+edx*8]
+// 0x82a066 mov     eax, [ebp+var_368]
+// 0x82a06c mov     edx, [eax+10h]
+// 0x82a06f mov     eax, [ebp+var_380]
+// 0x82a075 mov     [edx+eax*8], ecx
+// 0x82a078 mov     ecx, [ebp+var_368]
+// 0x82a07e mov     edx, [ecx+10h]
+// 0x82a081 mov     eax, [ebp+var_380]
+// 0x82a087 mov     ecx, [edx+eax*8]
+// 0x82a08a mov     [ebp+var_38C], ecx
+// 0x82a090 mov     eax, [ebp+var_368]
+// 0x82a096 mov     ecx, [eax+10h]
+// 0x82a099 mov     edx, [ebp+var_380]
+// 0x82a09f mov     eax, [ecx+edx*8]
+// 0x82a0a2 push    eax
+// 0x82a0a3 mov     ecx, [ebp+var_374]
+// 0x82a0a9 call    sub_60CF3E
+// 0x82a0ae jmp     loc_829FFE
+// 0x82a0b3 jmp     short loc_82A124
+// 0x82a0b5 cmp     dword_A67790, 0FFFFFFFEh
+// 0x82a0bc jnz     short loc_82A124
+// 0x82a0be mov     [ebp+var_398], 0
+// 0x82a0c8 jmp     short loc_82A0D9
+// 0x82a0ca mov     eax, [ebp+var_398]
+// 0x82a0d0 add     eax, 1
+// 0x82a0d3 mov     [ebp+var_398], eax
+// 0x82a0d9 mov     eax, [ebp+var_368]
+// 0x82a0df mov     ecx, [ebp+var_398]
+// 0x82a0e5 cmp     ecx, [eax+0Ch]
+// 0x82a0e8 jge     short loc_82A124
+// 0x82a0ea mov     eax, [ebp+var_368]
+// 0x82a0f0 mov     ecx, [eax+10h]
+// 0x82a0f3 mov     edx, [ebp+var_398]
+// 0x82a0f9 mov     eax, [ecx+edx*8]
+// 0x82a0fc push    eax
+// 0x82a0fd mov     ecx, [ebp+var_374]
+// 0x82a103 call    sub_609131
+// 0x82a108 mov     [ebp+var_3A4], eax
+// 0x82a10e cmp     [ebp+var_3A4], 0
+// 0x82a115 jz      short loc_82A122
+// 0x82a117 mov     ecx, [ebp+var_3A4]
+// 0x82a11d call    sub_60E46F
+// 0x82a122 jmp     short loc_82A0CA
+// 0x82a124 jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82a129 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 59
+// 0x82a12c mov     [ebp+var_3B0], eax
+// 0x82a132 call    sub_60ED48
+// 0x82a137 mov     ecx, eax
+// 0x82a139 call    sub_6005E0
+// 0x82a13e mov     ecx, eax
+// 0x82a140 call    sub_60DF01
+// 0x82a145 mov     ecx, eax
+// 0x82a147 call    sub_611D31
+// 0x82a14c mov     [ebp+var_3BC], eax
+// 0x82a152 mov     eax, [ebp+var_3B0]
+// 0x82a158 mov     ecx, [eax+4]
+// 0x82a15b push    ecx
+// 0x82a15c mov     ecx, [ebp+var_3BC]
+// 0x82a162 call    sub_609131
+// 0x82a167 mov     [ebp+var_3C8], eax
+// 0x82a16d cmp     [ebp+var_3C8], 0
+// 0x82a174 jz      short loc_82A18A
+// 0x82a176 mov     eax, [ebp+var_3B0]
+// 0x82a17c mov     ecx, [eax]
+// 0x82a17e push    ecx
+// 0x82a17f mov     ecx, [ebp+var_3C8]
+// 0x82a185 call    sub_607935
+// 0x82a18a jmp     def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82a18f mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 42
+// 0x82a192 mov     [ebp+var_3D4], eax
+// 0x82a198 call    sub_60ED48
+// 0x82a19d mov     ecx, eax
+// 0x82a19f call    sub_6005E0
+// 0x82a1a4 mov     ecx, eax
+// 0x82a1a6 call    sub_60DF01
+// 0x82a1ab mov     ecx, eax
+// 0x82a1ad call    sub_611D31
+// 0x82a1b2 mov     [ebp+var_3E0], eax
+// 0x82a1b8 mov     eax, [ebp+var_3D4]
+// 0x82a1be mov     ecx, [eax]
+// 0x82a1c0 push    ecx
+// 0x82a1c1 mov     ecx, [ebp+var_3E0]
+// 0x82a1c7 call    sub_609131
+// 0x82a1cc mov     [ebp+var_3EC], eax
+// 0x82a1d2 cmp     [ebp+var_3EC], 0
+// 0x82a1d9 jz      short loc_82A1F0
+// 0x82a1db mov     eax, [ebp+var_3D4]
+// 0x82a1e1 mov     ecx, [eax+8]
+// 0x82a1e4 push    ecx
+// 0x82a1e5 mov     ecx, [ebp+var_3EC]
+// 0x82a1eb call    sub_611A8E
+// 0x82a1f0 jmp     short def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82a1f2 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 60
+// 0x82a1f5 push    eax
+// 0x82a1f6 call    sub_60ED48
+// 0x82a1fb mov     ecx, eax
+// 0x82a1fd call    sub_6005E0
+// 0x82a202 mov     ecx, eax
+// 0x82a204 call    sub_60DF01
+// 0x82a209 mov     ecx, eax
+// 0x82a20b call    sub_600CC5
+// 0x82a210 jmp     short def_828FB6; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82a212 mov     eax, [ebp+arg_4]; jumptable 00828FB6 case 51
+// 0x82a215 mov     [ebp+var_3F8], eax
+// 0x82a21b mov     eax, [ebp+var_3F8]
+// 0x82a221 push    eax
+// 0x82a222 call    sub_60ED48
+// 0x82a227 mov     ecx, eax
+// 0x82a229 call    sub_6005E0
+// 0x82a22e mov     ecx, eax
+// 0x82a230 call    sub_60DF01
+// 0x82a235 mov     ecx, eax
+// 0x82a237 call    sub_608533
+// 0x82a23c mov     eax, 1; jumptable 00828FB6 default case, cases 1,6,8,10,11,16,18,20-24,26,28,43,46,48,62-100,102
+// 0x82a241 push    edx
+// 0x82a242 mov     ecx, ebp; Esp
+// 0x82a244 push    eax
+// 0x82a245 lea     edx, stru_82A270; Fd
+// 0x82a24b call    _RTC_CheckStackVars(x,x)
+// 0x82a250 pop     eax
+// 0x82a251 pop     edx
+// 0x82a252 mov     ecx, [ebp+var_C]
+// 0x82a255 mov     large fs:0, ecx
+// 0x82a25c pop     edi
+// 0x82a25d pop     esi
+// 0x82a25e pop     ebx
+// 0x82a25f add     esp, 520h
+// 0x82a265 cmp     ebp, esp
+// 0x82a267 call    j___RTC_CheckEsp
+// 0x82a26c mov     esp, ebp
+// 0x82a26e pop     ebp
+// 0x82a26f retn
+// 0xa15cd0 mov     eax, [ebp+var_50C]
+// 0xa15cd6 push    eax; void *
+// 0xa15cd7 call    operator delete(void *)
+// 0xa15cdc pop     ecx
+// 0xa15cdd retn
+// 0xa15cde mov     eax, [ebp+var_4F4]
+// 0xa15ce4 push    eax; void *
+// 0xa15ce5 call    operator delete(void *)
+// 0xa15cea pop     ecx
+// 0xa15ceb retn
+// 0xa15cec mov     eax, [ebp+var_4DC]
+// 0xa15cf2 push    eax; void *
+// 0xa15cf3 call    operator delete(void *)
+// 0xa15cf8 pop     ecx
+// 0xa15cf9 retn
+// 0xa15cfa lea     ecx, [ebp+var_1D8]
+// 0xa15d00 jmp     sub_60E3D9
+// 0xa15d05 mov     eax, offset stru_A5B820
+// 0xa15d0a jmp     j____CxxFrameHandler3
+//
+// 0x9204c0 _strcpy
+// 0x9204c0 push    edi
+// 0x9204c1 mov     edi, [esp+4+Destination]
+// 0x9204c5 jmp     short copy_start
+//
+// 0x9204d0 _strcat
+// 0x9204d0 mov     ecx, [esp+Destination]
+// 0x9204d4 push    edi
+// 0x9204d5 test    ecx, 3
+// 0x9204db jz      short find_end_of_dest_string_loop
+// 0x9204dd mov     al, [ecx]
+// 0x9204df add     ecx, 1
+// 0x9204e2 test    al, al
+// 0x9204e4 jz      short start_byte_3
+// 0x9204e6 test    ecx, 3
+// 0x9204ec jnz     short dest_misaligned
+// 0x9204ee mov     edi, edi
+// 0x9204f0 mov     eax, [ecx]
+// 0x9204f2 mov     edx, 7EFEFEFFh
+// 0x9204f7 add     edx, eax
+// 0x9204f9 xor     eax, 0FFFFFFFFh
+// 0x9204fc xor     eax, edx
+// 0x9204fe add     ecx, 4
+// 0x920501 test    eax, 81010100h
+// 0x920506 jz      short find_end_of_dest_string_loop
+// 0x920508 mov     eax, [ecx-4]
+// 0x92050b test    al, al
+// 0x92050d jz      short start_byte_0
+// 0x92050f test    ah, ah
+// 0x920511 jz      short start_byte_1
+// 0x920513 test    eax, 0FF0000h
+// 0x920518 jz      short start_byte_2
+// 0x92051a test    eax, 0FF000000h
+// 0x92051f jz      short start_byte_3
+// 0x920521 jmp     short find_end_of_dest_string_loop
+// 0x920523 lea     edi, [ecx-1]
+// 0x920526 jmp     short copy_start
+// 0x920528 lea     edi, [ecx-2]
+// 0x92052b jmp     short copy_start
+// 0x92052d lea     edi, [ecx-3]
+// 0x920530 jmp     short copy_start
+// 0x920532 lea     edi, [ecx-4]
+// 0x920535 mov     ecx, [esp+4+Source]
+// 0x920539 test    ecx, 3
+// 0x92053f jz      short main_loop_entrance
+// 0x920541 mov     dl, [ecx]
+// 0x920543 add     ecx, 1
+// 0x920546 test    dl, dl
+// 0x920548 jz      short loc_9205B0
+// 0x92054a mov     [edi], dl
+// 0x92054c add     edi, 1
+// 0x92054f test    ecx, 3
+// 0x920555 jnz     short src_misaligned
+// 0x920557 jmp     short main_loop_entrance
+// 0x920559 mov     [edi], edx
+// 0x92055b add     edi, 4
+// 0x92055e mov     edx, 7EFEFEFFh
+// 0x920563 mov     eax, [ecx]
+// 0x920565 add     edx, eax
+// 0x920567 xor     eax, 0FFFFFFFFh
+// 0x92056a xor     eax, edx
+// 0x92056c mov     edx, [ecx]
+// 0x92056e add     ecx, 4
+// 0x920571 test    eax, 81010100h
+// 0x920576 jz      short main_loop_0
+// 0x920578 test    dl, dl
+// 0x92057a jz      short loc_9205B0
+// 0x92057c test    dh, dh
+// 0x92057e jz      short loc_9205A7
+// 0x920580 test    edx, 0FF0000h
+// 0x920586 jz      short loc_92059A
+// 0x920588 test    edx, 0FF000000h
+// 0x92058e jz      short loc_920592
+// 0x920590 jmp     short main_loop_0
+// 0x920592 mov     [edi], edx
+// 0x920594 mov     eax, [esp+4+Destination]
+// 0x920598 pop     edi
+// 0x920599 retn
+// 0x92059a mov     [edi], dx
+// 0x92059d mov     eax, [esp+4+Destination]
+// 0x9205a1 mov     byte ptr [edi+2], 0
+// 0x9205a5 pop     edi
+// 0x9205a6 retn
+// 0x9205a7 mov     [edi], dx
+// 0x9205aa mov     eax, [esp+4+Destination]
+// 0x9205ae pop     edi
+// 0x9205af retn
+// 0x9205b0 mov     [edi], dl
+// 0x9205b2 mov     eax, [esp+4+Destination]
+// 0x9205b6 pop     edi
+// 0x9205b7 retn
+//
+// 0x922930 __snprintf
+// 0x922930 push    ebp
+// 0x922931 mov     ebp, esp
+// 0x922933 sub     esp, 30h
+// 0x922936 lea     eax, [ebp+var_2C]
+// 0x922939 mov     [ebp+File], eax
+// 0x92293c lea     ecx, [ebp+arg_C]
+// 0x92293f mov     [ebp+var_4], ecx
+// 0x922942 cmp     [ebp+Format], 0
+// 0x922946 jnz     short loc_922966
+// 0x922948 push    offset aFormatNull
+// 0x92294d push    0; int
+// 0x92294f push    5Dh ; ']'; Value
+// 0x922951 push    offset aFVs70builds307
+// 0x922956 push    2; int
+// 0x922958 call    j___CrtDbgReport
+// 0x92295d add     esp, 14h
+// 0x922960 cmp     eax, 1
+// 0x922963 jnz     short loc_922966
+// 0x922965 int     3; Trap to Debugger
+// 0x922966 cmp     [ebp+Buffer], 0
+// 0x92296a jnz     short loc_92298A
+// 0x92296c push    offset aStringNull
+// 0x922971 push    0; int
+// 0x922973 push    5Eh ; '^'; Value
+// 0x922975 push    offset aFVs70builds307
+// 0x92297a push    2; int
+// 0x92297c call    j___CrtDbgReport
+// 0x922981 add     esp, 14h
+// 0x922984 cmp     eax, 1
+// 0x922987 jnz     short loc_92298A
+// 0x922989 int     3; Trap to Debugger
+// 0x92298a mov     ecx, [ebp+File]
+// 0x92298d mov     edx, [ebp+BufferCount]
+// 0x922990 mov     [ecx+4], edx
+// 0x922993 mov     eax, [ebp+File]
+// 0x922996 mov     dword ptr [eax+0Ch], 42h ; 'B'
+// 0x92299d mov     ecx, [ebp+File]
+// 0x9229a0 mov     edx, [ebp+Buffer]
+// 0x9229a3 mov     [ecx+8], edx
+// 0x9229a6 mov     eax, [ebp+File]
+// 0x9229a9 mov     ecx, [ebp+Buffer]
+// 0x9229ac mov     [eax], ecx
+// 0x9229ae mov     edx, [ebp+var_4]
+// 0x9229b1 push    edx; int
+// 0x9229b2 mov     eax, [ebp+Format]
+// 0x9229b5 push    eax; int
+// 0x9229b6 mov     ecx, [ebp+File]
+// 0x9229b9 push    ecx; File
+// 0x9229ba call    j___output
+// 0x9229bf add     esp, 0Ch
+// 0x9229c2 mov     [ebp+var_8], eax
+// 0x9229c5 cmp     [ebp+Buffer], 0
+// 0x9229c9 jz      short loc_922A16
+// 0x9229cb mov     edx, [ebp+File]
+// 0x9229ce mov     eax, [edx+4]
+// 0x9229d1 sub     eax, 1
+// 0x9229d4 mov     ecx, [ebp+File]
+// 0x9229d7 mov     [ecx+4], eax
+// 0x9229da mov     edx, [ebp+File]
+// 0x9229dd cmp     dword ptr [edx+4], 0
+// 0x9229e1 jl      short loc_922A05
+// 0x9229e3 mov     eax, [ebp+File]
+// 0x9229e6 mov     ecx, [eax]
+// 0x9229e8 mov     byte ptr [ecx], 0
+// 0x9229eb xor     edx, edx
+// 0x9229ed and     edx, 0FFh
+// 0x9229f3 mov     [ebp+var_30], edx
+// 0x9229f6 mov     eax, [ebp+File]
+// 0x9229f9 mov     ecx, [eax]
+// 0x9229fb add     ecx, 1
+// 0x9229fe mov     edx, [ebp+File]
+// 0x922a01 mov     [edx], ecx
+// 0x922a03 jmp     short loc_922A16
+// 0x922a05 mov     eax, [ebp+File]
+// 0x922a08 push    eax; File
+// 0x922a09 push    0; Ch
+// 0x922a0b call    j___flsbuf
+// 0x922a10 add     esp, 8
+// 0x922a13 mov     [ebp+var_30], eax
+// 0x922a16 mov     eax, [ebp+var_8]
+// 0x922a19 mov     esp, ebp
+// 0x922a1b pop     ebp
+// 0x922a1c retn
+//
+// 0x932cd0 __flsbuf
+// 0x932cd0 push    ebp
+// 0x932cd1 mov     ebp, esp
+// 0x932cd3 sub     esp, 14h
+// 0x932cd6 cmp     [ebp+File], 0
+// 0x932cda jnz     short loc_932CFA
+// 0x932cdc push    offset aStrNull
+// 0x932ce1 push    0; int
+// 0x932ce3 push    66h ; 'f'; Value
+// 0x932ce5 push    offset aFlsbufC
+// 0x932cea push    2; int
+// 0x932cec call    j___CrtDbgReport
+// 0x932cf1 add     esp, 14h
+// 0x932cf4 cmp     eax, 1
+// 0x932cf7 jnz     short loc_932CFA
+// 0x932cf9 int     3; Trap to Debugger
+// 0x932cfa mov     ecx, [ebp+File]
+// 0x932cfd mov     [ebp+var_8], ecx
+// 0x932d00 mov     edx, [ebp+var_8]
+// 0x932d03 mov     eax, [edx+10h]
+// 0x932d06 mov     [ebp+FileHandle], eax
+// 0x932d09 mov     ecx, [ebp+var_8]
+// 0x932d0c mov     edx, [ecx+0Ch]
+// 0x932d0f and     edx, 82h
+// 0x932d15 jz      short loc_932D22
+// 0x932d17 mov     eax, [ebp+var_8]
+// 0x932d1a mov     ecx, [eax+0Ch]
+// 0x932d1d and     ecx, 40h
+// 0x932d20 jz      short loc_932D39
+// 0x932d22 mov     edx, [ebp+var_8]
+// 0x932d25 mov     eax, [edx+0Ch]
+// 0x932d28 or      eax, 20h
+// 0x932d2b mov     ecx, [ebp+var_8]
+// 0x932d2e mov     [ecx+0Ch], eax
+// 0x932d31 or      eax, 0FFFFFFFFh
+// 0x932d34 jmp     loc_932F1D
+// 0x932d39 mov     edx, [ebp+var_8]
+// 0x932d3c mov     eax, [edx+0Ch]
+// 0x932d3f and     eax, 1
+// 0x932d42 jz      short loc_932D8C
+// 0x932d44 mov     ecx, [ebp+var_8]
+// 0x932d47 mov     dword ptr [ecx+4], 0
+// 0x932d4e mov     edx, [ebp+var_8]
+// 0x932d51 mov     eax, [edx+0Ch]
+// 0x932d54 and     eax, 10h
+// 0x932d57 jz      short loc_932D75
+// 0x932d59 mov     ecx, [ebp+var_8]
+// 0x932d5c mov     edx, [ebp+var_8]
+// 0x932d5f mov     eax, [edx+8]
+// 0x932d62 mov     [ecx], eax
+// 0x932d64 mov     ecx, [ebp+var_8]
+// 0x932d67 mov     edx, [ecx+0Ch]
+// 0x932d6a and     edx, 0FFFFFFFEh
+// 0x932d6d mov     eax, [ebp+var_8]
+// 0x932d70 mov     [eax+0Ch], edx
+// 0x932d73 jmp     short loc_932D8C
+// 0x932d75 mov     ecx, [ebp+var_8]
+// 0x932d78 mov     edx, [ecx+0Ch]
+// 0x932d7b or      edx, 20h
+// 0x932d7e mov     eax, [ebp+var_8]
+// 0x932d81 mov     [eax+0Ch], edx
+// 0x932d84 or      eax, 0FFFFFFFFh
+// 0x932d87 jmp     loc_932F1D
+// 0x932d8c mov     ecx, [ebp+var_8]
+// 0x932d8f mov     edx, [ecx+0Ch]
+// 0x932d92 or      edx, 2
+// 0x932d95 mov     eax, [ebp+var_8]
+// 0x932d98 mov     [eax+0Ch], edx
+// 0x932d9b mov     ecx, [ebp+var_8]
+// 0x932d9e mov     edx, [ecx+0Ch]
+// 0x932da1 and     edx, 0FFFFFFEFh
+// 0x932da4 mov     eax, [ebp+var_8]
+// 0x932da7 mov     [eax+0Ch], edx
+// 0x932daa mov     ecx, [ebp+var_8]
+// 0x932dad mov     dword ptr [ecx+4], 0
+// 0x932db4 mov     [ebp+MaxCharCount], 0
+// 0x932dbb mov     edx, [ebp+MaxCharCount]
+// 0x932dbe mov     [ebp+var_C], edx
+// 0x932dc1 mov     eax, [ebp+var_8]
+// 0x932dc4 mov     ecx, [eax+0Ch]
+// 0x932dc7 and     ecx, 10Ch
+// 0x932dcd jnz     short loc_932DFD
+// 0x932dcf cmp     [ebp+var_8], offset stru_A694E0
+// 0x932dd6 jz      short loc_932DE1
+// 0x932dd8 cmp     [ebp+var_8], offset Stream
+// 0x932ddf jnz     short loc_932DF1
+// 0x932de1 mov     edx, [ebp+FileHandle]
+// 0x932de4 push    edx; FileHandle
+// 0x932de5 call    j___isatty
+// 0x932dea add     esp, 4
+// 0x932ded test    eax, eax
+// 0x932def jnz     short loc_932DFD
+// 0x932df1 mov     eax, [ebp+var_8]
+// 0x932df4 push    eax
+// 0x932df5 call    j___getbuf
+// 0x932dfa add     esp, 4
+// 0x932dfd mov     ecx, [ebp+var_8]
+// 0x932e00 mov     edx, [ecx+0Ch]
+// 0x932e03 and     edx, 108h
+// 0x932e09 jz      loc_932EDB
+// 0x932e0f mov     eax, [ebp+var_8]
+// 0x932e12 mov     ecx, [ebp+var_8]
+// 0x932e15 mov     edx, [eax]
+// 0x932e17 sub     edx, [ecx+8]
+// 0x932e1a jns     short loc_932E3D
+// 0x932e1c push    offset aInconsistentIo
+// 0x932e21 push    0; int
+// 0x932e23 push    9Dh; Value
+// 0x932e28 push    offset aFlsbufC
+// 0x932e2d push    2; int
+// 0x932e2f call    j___CrtDbgReport
+// 0x932e34 add     esp, 14h
+// 0x932e37 cmp     eax, 1
+// 0x932e3a jnz     short loc_932E3D
+// 0x932e3c int     3; Trap to Debugger
+// 0x932e3d mov     ecx, [ebp+var_8]
+// 0x932e40 mov     edx, [ebp+var_8]
+// 0x932e43 mov     eax, [ecx]
+// 0x932e45 sub     eax, [edx+8]
+// 0x932e48 mov     [ebp+MaxCharCount], eax
+// 0x932e4b mov     ecx, [ebp+var_8]
+// 0x932e4e mov     edx, [ecx+8]
+// 0x932e51 add     edx, 1
+// 0x932e54 mov     eax, [ebp+var_8]
+// 0x932e57 mov     [eax], edx
+// 0x932e59 mov     ecx, [ebp+var_8]
+// 0x932e5c mov     edx, [ecx+18h]
+// 0x932e5f sub     edx, 1
+// 0x932e62 mov     eax, [ebp+var_8]
+// 0x932e65 mov     [eax+4], edx
+// 0x932e68 cmp     [ebp+MaxCharCount], 0
+// 0x932e6c jle     short loc_932E8A
+// 0x932e6e mov     ecx, [ebp+MaxCharCount]
+// 0x932e71 push    ecx; MaxCharCount
+// 0x932e72 mov     edx, [ebp+var_8]
+// 0x932e75 mov     eax, [edx+8]
+// 0x932e78 push    eax; Buf
+// 0x932e79 mov     ecx, [ebp+FileHandle]
+// 0x932e7c push    ecx; FileHandle
+// 0x932e7d call    j___write
+// 0x932e82 add     esp, 0Ch
+// 0x932e85 mov     [ebp+var_C], eax
+// 0x932e88 jmp     short loc_932ECE
+// 0x932e8a cmp     [ebp+FileHandle], 0FFFFFFFFh
+// 0x932e8e jz      short loc_932EAB
+// 0x932e90 mov     edx, [ebp+FileHandle]
+// 0x932e93 sar     edx, 5
+// 0x932e96 mov     eax, [ebp+FileHandle]
+// 0x932e99 and     eax, 1Fh
+// 0x932e9c imul    eax, 24h ; '$'
+// 0x932e9f add     eax, dword_AD0EE0[edx*4]
+// 0x932ea6 mov     [ebp+var_14], eax
+// 0x932ea9 jmp     short loc_932EB2
+// 0x932eab mov     [ebp+var_14], offset unk_A69EAC
+// 0x932eb2 mov     ecx, [ebp+var_14]
+// 0x932eb5 movsx   edx, byte ptr [ecx+4]
+// 0x932eb9 and     edx, 20h
+// 0x932ebc jz      short loc_932ECE
+// 0x932ebe push    2; Origin
+// 0x932ec0 push    0; Offset
+// 0x932ec2 mov     eax, [ebp+FileHandle]
+// 0x932ec5 push    eax; FileHandle
+// 0x932ec6 call    j___lseek
+// 0x932ecb add     esp, 0Ch
+// 0x932ece mov     ecx, [ebp+var_8]
+// 0x932ed1 mov     edx, [ecx+8]
+// 0x932ed4 mov     al, byte ptr [ebp+Buf]
+// 0x932ed7 mov     [edx], al
+// 0x932ed9 jmp     short loc_932EF9
+// 0x932edb mov     [ebp+MaxCharCount], 1
+// 0x932ee2 mov     ecx, [ebp+MaxCharCount]
+// 0x932ee5 push    ecx; MaxCharCount
+// 0x932ee6 lea     edx, [ebp+Buf]
+// 0x932ee9 push    edx; Buf
+// 0x932eea mov     eax, [ebp+FileHandle]
+// 0x932eed push    eax; FileHandle
+// 0x932eee call    j___write
+// 0x932ef3 add     esp, 0Ch
+// 0x932ef6 mov     [ebp+var_C], eax
+// 0x932ef9 mov     ecx, [ebp+var_C]
+// 0x932efc cmp     ecx, [ebp+MaxCharCount]
+// 0x932eff jz      short loc_932F15
+// 0x932f01 mov     edx, [ebp+var_8]
+// 0x932f04 mov     eax, [edx+0Ch]
+// 0x932f07 or      eax, 20h
+// 0x932f0a mov     ecx, [ebp+var_8]
+// 0x932f0d mov     [ecx+0Ch], eax
+// 0x932f10 or      eax, 0FFFFFFFFh
+// 0x932f13 jmp     short loc_932F1D
+// 0x932f15 mov     eax, [ebp+Buf]
+// 0x932f18 and     eax, 0FFh
+// 0x932f1d mov     esp, ebp
+// 0x932f1f pop     ebp
+// 0x932f20 retn
+//
+// 0x932fc0 __output
+// 0x932fc0 push    ebp
+// 0x932fc1 mov     ebp, esp
+// 0x932fc3 sub     esp, 2BCh
+// 0x932fc9 mov     eax, ___security_cookie
+// 0x932fce mov     [ebp+var_34], eax
+// 0x932fd1 mov     [ebp+var_24], 0
+// 0x932fd8 mov     [ebp+var_23C], 0
+// 0x932fe2 mov     [ebp+var_24C], 0
+// 0x932fec mov     [ebp+var_20], 0
+// 0x932ff3 mov     eax, [ebp+arg_4]
+// 0x932ff6 mov     cl, [eax]
+// 0x932ff8 mov     [ebp+var_241], cl
+// 0x932ffe movsx   edx, [ebp+var_241]
+// 0x933005 mov     eax, [ebp+arg_4]
+// 0x933008 add     eax, 1
+// 0x93300b mov     [ebp+arg_4], eax
+// 0x93300e test    edx, edx
+// 0x933010 jz      loc_933C76
+// 0x933016 cmp     [ebp+var_23C], 0
+// 0x93301d jl      loc_933C76
+// 0x933023 movsx   ecx, [ebp+var_241]
+// 0x93302a cmp     ecx, 20h ; ' '
+// 0x93302d jl      short loc_933054
+// 0x93302f movsx   edx, [ebp+var_241]
+// 0x933036 cmp     edx, 78h ; 'x'
+// 0x933039 jg      short loc_933054
+// 0x93303b movsx   eax, [ebp+var_241]
+// 0x933042 movsx   ecx, byte ptr [eax+0A33F60h]
+// 0x933049 and     ecx, 0Fh
+// 0x93304c mov     [ebp+var_2A4], ecx
+// 0x933052 jmp     short loc_93305E
+// 0x933054 mov     [ebp+var_2A4], 0
+// 0x93305e mov     edx, [ebp+var_2A4]
+// 0x933064 mov     [ebp+var_240], edx
+// 0x93306a mov     eax, [ebp+var_240]
+// 0x933070 mov     ecx, [ebp+var_24C]
+// 0x933076 movsx   edx, ds:byte_A33F80[ecx+eax*8]
+// 0x93307e sar     edx, 4
+// 0x933081 mov     [ebp+var_24C], edx
+// 0x933087 mov     eax, [ebp+var_24C]
+// 0x93308d mov     [ebp+var_2A8], eax
+// 0x933093 cmp     [ebp+var_2A8], 7; switch 8 cases
+// 0x93309a ja      def_9330A6; jumptable 009330A6 default case
+// 0x9330a0 mov     ecx, [ebp+var_2A8]
+// 0x9330a6 jmp     ds:jpt_9330A6[ecx*4]; switch jump
+// 0x9330ad mov     [ebp+var_C], 0; jumptable 009330A6 case 0
+// 0x9330b4 movzx   edx, [ebp+var_241]
+// 0x9330bb mov     eax, off_A69D74
+// 0x9330c0 movzx   ecx, word ptr [eax+edx*2]
+// 0x9330c4 and     ecx, 8000h
+// 0x9330ca jz      short loc_933126
+// 0x9330cc lea     edx, [ebp+var_23C]
+// 0x9330d2 push    edx; int
+// 0x9330d3 mov     eax, [ebp+File]
+// 0x9330d6 push    eax; File
+// 0x9330d7 mov     cl, [ebp+var_241]
+// 0x9330dd push    ecx; char
+// 0x9330de call    _write_char
+// 0x9330e3 add     esp, 0Ch
+// 0x9330e6 mov     edx, [ebp+arg_4]
+// 0x9330e9 mov     al, [edx]
+// 0x9330eb mov     [ebp+var_241], al
+// 0x9330f1 mov     ecx, [ebp+arg_4]
+// 0x9330f4 add     ecx, 1
+// 0x9330f7 mov     [ebp+arg_4], ecx
+// 0x9330fa movsx   edx, [ebp+var_241]
+// 0x933101 test    edx, edx
+// 0x933103 jnz     short loc_933126
+// 0x933105 push    offset aChT0
+// 0x93310a push    0; int
+// 0x93310c push    192h; Value
+// 0x933111 push    offset aOutputC
+// 0x933116 push    2; int
+// 0x933118 call    j___CrtDbgReport
+// 0x93311d add     esp, 14h
+// 0x933120 cmp     eax, 1
+// 0x933123 jnz     short loc_933126
+// 0x933125 int     3; Trap to Debugger
+// 0x933126 lea     ecx, [ebp+var_23C]
+// 0x93312c push    ecx; int
+// 0x93312d mov     edx, [ebp+File]
+// 0x933130 push    edx; File
+// 0x933131 mov     al, [ebp+var_241]
+// 0x933137 push    eax; char
+// 0x933138 call    _write_char
+// 0x93313d add     esp, 0Ch
+// 0x933140 jmp     def_9330A6; jumptable 009330A6 default case
+// 0x933145 mov     [ebp+var_2C], 0; jumptable 009330A6 case 1
+// 0x93314c mov     ecx, [ebp+var_2C]
+// 0x93314f mov     [ebp+var_28], ecx
+// 0x933152 mov     edx, [ebp+var_28]
+// 0x933155 mov     [ebp+var_18], edx
+// 0x933158 mov     eax, [ebp+var_18]
+// 0x93315b mov     [ebp+var_1C], eax
+// 0x93315e mov     [ebp+var_10], 0
+// 0x933165 mov     [ebp+var_30], 0FFFFFFFFh
+// 0x93316c mov     [ebp+var_C], 0
+// 0x933173 jmp     def_9330A6; jumptable 009330A6 default case
+// 0x933178 movsx   ecx, [ebp+var_241]; jumptable 009330A6 case 2
+// 0x93317f mov     [ebp+var_2AC], ecx
+// 0x933185 mov     edx, [ebp+var_2AC]
+// 0x93318b sub     edx, 20h ; ' '; switch 17 cases
+// 0x93318e mov     [ebp+var_2AC], edx
+// 0x933194 cmp     [ebp+var_2AC], 10h
+// 0x93319b ja      short def_9331AA; jumptable 009331AA default case, cases 33,34,36-42,44,46,47
+// 0x93319d mov     eax, [ebp+var_2AC]
+// 0x9331a3 movzx   ecx, ds:byte_933CC0[eax]
+// 0x9331aa jmp     ds:jpt_9331AA[ecx*4]; switch jump
+// 0x9331b1 mov     edx, [ebp+var_10]; jumptable 009331AA case 45
+// 0x9331b4 or      edx, 4
+// 0x9331b7 mov     [ebp+var_10], edx
+// 0x9331ba jmp     short def_9331AA; jumptable 009331AA default case, cases 33,34,36-42,44,46,47
+// 0x9331bc mov     eax, [ebp+var_10]; jumptable 009331AA case 43
+// 0x9331bf or      eax, 1
+// 0x9331c2 mov     [ebp+var_10], eax
+// 0x9331c5 jmp     short def_9331AA; jumptable 009331AA default case, cases 33,34,36-42,44,46,47
+// 0x9331c7 mov     ecx, [ebp+var_10]; jumptable 009331AA case 32
+// 0x9331ca or      ecx, 2
+// 0x9331cd mov     [ebp+var_10], ecx
+// 0x9331d0 jmp     short def_9331AA; jumptable 009331AA default case, cases 33,34,36-42,44,46,47
+// 0x9331d2 mov     edx, [ebp+var_10]; jumptable 009331AA case 35
+// 0x9331d5 or      edx, 80h
+// 0x9331db mov     [ebp+var_10], edx
+// 0x9331de jmp     short def_9331AA; jumptable 009331AA default case, cases 33,34,36-42,44,46,47
+// 0x9331e0 mov     eax, [ebp+var_10]; jumptable 009331AA case 48
+// 0x9331e3 or      eax, 8
+// 0x9331e6 mov     [ebp+var_10], eax
+// 0x9331e9 jmp     def_9330A6; jumptable 009331AA default case, cases 33,34,36-42,44,46,47
+// 0x9331ee movsx   ecx, [ebp+var_241]; jumptable 009330A6 case 3
+// 0x9331f5 cmp     ecx, 2Ah ; '*'
+// 0x9331f8 jnz     short loc_933222
+// 0x9331fa lea     edx, [ebp+arg_8]
+// 0x9331fd push    edx
+// 0x9331fe call    _get_int_arg
+// 0x933203 add     esp, 4
+// 0x933206 mov     [ebp+var_18], eax
+// 0x933209 cmp     [ebp+var_18], 0
+// 0x93320d jge     short loc_933220
+// 0x93320f mov     eax, [ebp+var_10]
+// 0x933212 or      eax, 4
+// 0x933215 mov     [ebp+var_10], eax
+// 0x933218 mov     ecx, [ebp+var_18]
+// 0x93321b neg     ecx
+// 0x93321d mov     [ebp+var_18], ecx
+// 0x933220 jmp     short loc_933236
+// 0x933222 mov     edx, [ebp+var_18]
+// 0x933225 imul    edx, 0Ah
+// 0x933228 movsx   eax, [ebp+var_241]
+// 0x93322f lea     ecx, [edx+eax-30h]
+// 0x933233 mov     [ebp+var_18], ecx
+// 0x933236 jmp     def_9330A6; jumptable 009330A6 default case
+// 0x93323b mov     [ebp+var_30], 0; jumptable 009330A6 case 4
+// 0x933242 jmp     def_9330A6; jumptable 009330A6 default case
+// 0x933247 movsx   edx, [ebp+var_241]; jumptable 009330A6 case 5
+// 0x93324e cmp     edx, 2Ah ; '*'
+// 0x933251 jnz     short loc_933271
+// 0x933253 lea     eax, [ebp+arg_8]
+// 0x933256 push    eax
+// 0x933257 call    _get_int_arg
+// 0x93325c add     esp, 4
+// 0x93325f mov     [ebp+var_30], eax
+// 0x933262 cmp     [ebp+var_30], 0
+// 0x933266 jge     short loc_93326F
+// 0x933268 mov     [ebp+var_30], 0FFFFFFFFh
+// 0x93326f jmp     short loc_933285
+// 0x933271 mov     ecx, [ebp+var_30]
+// 0x933274 imul    ecx, 0Ah
+// 0x933277 movsx   edx, [ebp+var_241]
+// 0x93327e lea     eax, [ecx+edx-30h]
+// 0x933282 mov     [ebp+var_30], eax
+// 0x933285 jmp     def_9330A6; jumptable 009330A6 default case
+// 0x93328a movsx   ecx, [ebp+var_241]; jumptable 009330A6 case 6
+// 0x933291 mov     [ebp+var_2B0], ecx
+// 0x933297 mov     edx, [ebp+var_2B0]
+// 0x93329d sub     edx, 49h ; 'I'; switch 47 cases
+// 0x9332a0 mov     [ebp+var_2B0], edx
+// 0x9332a6 cmp     [ebp+var_2B0], 2Eh
+// 0x9332ad ja      def_9332C0; jumptable 009332C0 default case, cases 74-103,105-107,109-118
+// 0x9332b3 mov     eax, [ebp+var_2B0]
+// 0x9332b9 movzx   ecx, ds:byte_933CE5[eax]
+// 0x9332c0 jmp     ds:jpt_9332C0[ecx*4]; switch jump
+// 0x9332c7 mov     edx, [ebp+var_10]; jumptable 009332C0 case 108
+// 0x9332ca or      edx, 10h
+// 0x9332cd mov     [ebp+var_10], edx
+// 0x9332d0 jmp     def_9332C0; jumptable 009332C0 default case, cases 74-103,105-107,109-118
+// 0x9332d5 mov     eax, [ebp+arg_4]; jumptable 009332C0 case 73
+// 0x9332d8 movsx   ecx, byte ptr [eax]
+// 0x9332db cmp     ecx, 36h ; '6'
+// 0x9332de jnz     short loc_933306
+// 0x9332e0 mov     edx, [ebp+arg_4]
+// 0x9332e3 movsx   eax, byte ptr [edx+1]
+// 0x9332e7 cmp     eax, 34h ; '4'
+// 0x9332ea jnz     short loc_933306
+// 0x9332ec mov     ecx, [ebp+arg_4]
+// 0x9332ef add     ecx, 2
+// 0x9332f2 mov     [ebp+arg_4], ecx
+// 0x9332f5 mov     edx, [ebp+var_10]
+// 0x9332f8 or      edx, 8000h
+// 0x9332fe mov     [ebp+var_10], edx
+// 0x933301 jmp     loc_933387
+// 0x933306 mov     eax, [ebp+arg_4]
+// 0x933309 movsx   ecx, byte ptr [eax]
+// 0x93330c cmp     ecx, 33h ; '3'
+// 0x93330f jnz     short loc_933334
+// 0x933311 mov     edx, [ebp+arg_4]
+// 0x933314 movsx   eax, byte ptr [edx+1]
+// 0x933318 cmp     eax, 32h ; '2'
+// 0x93331b jnz     short loc_933334
+// 0x93331d mov     ecx, [ebp+arg_4]
+// 0x933320 add     ecx, 2
+// 0x933323 mov     [ebp+arg_4], ecx
+// 0x933326 mov     edx, [ebp+var_10]
+// 0x933329 and     edx, 0FFFF7FFFh
+// 0x93332f mov     [ebp+var_10], edx
+// 0x933332 jmp     short loc_933387
+// 0x933334 mov     eax, [ebp+arg_4]
+// 0x933337 movsx   ecx, byte ptr [eax]
+// 0x93333a cmp     ecx, 64h ; 'd'
+// 0x93333d jz      short loc_933376
+// 0x93333f mov     edx, [ebp+arg_4]
+// 0x933342 movsx   eax, byte ptr [edx]
+// 0x933345 cmp     eax, 69h ; 'i'
+// 0x933348 jz      short loc_933376
+// 0x93334a mov     ecx, [ebp+arg_4]
+// 0x93334d movsx   edx, byte ptr [ecx]
+// 0x933350 cmp     edx, 6Fh ; 'o'
+// 0x933353 jz      short loc_933376
+// 0x933355 mov     eax, [ebp+arg_4]
+// 0x933358 movsx   ecx, byte ptr [eax]
+// 0x93335b cmp     ecx, 75h ; 'u'
+// 0x93335e jz      short loc_933376
+// 0x933360 mov     edx, [ebp+arg_4]
+// 0x933363 movsx   eax, byte ptr [edx]
+// 0x933366 cmp     eax, 78h ; 'x'
+// 0x933369 jz      short loc_933376
+// 0x93336b mov     ecx, [ebp+arg_4]
+// 0x93336e movsx   edx, byte ptr [ecx]
+// 0x933371 cmp     edx, 58h ; 'X'
+// 0x933374 jnz     short loc_933378
+// 0x933376 jmp     short loc_933387
+// 0x933378 mov     [ebp+var_24C], 0
+// 0x933382 jmp     loc_9330AD; jumptable 009330A6 case 0
+// 0x933387 jmp     short def_9332C0; jumptable 009332C0 default case, cases 74-103,105-107,109-118
+// 0x933389 mov     eax, [ebp+var_10]; jumptable 009332C0 case 104
+// 0x93338c or      eax, 20h
+// 0x93338f mov     [ebp+var_10], eax
+// 0x933392 jmp     short def_9332C0; jumptable 009332C0 default case, cases 74-103,105-107,109-118
+// 0x933394 mov     ecx, [ebp+var_10]; jumptable 009332C0 case 119
+// 0x933397 or      ecx, 800h
+// 0x93339d mov     [ebp+var_10], ecx
+// 0x9333a0 jmp     def_9330A6; jumptable 009332C0 default case, cases 74-103,105-107,109-118
+// 0x9333a5 movsx   edx, [ebp+var_241]; jumptable 009330A6 case 7
+// 0x9333ac mov     [ebp+var_2B4], edx
+// 0x9333b2 mov     eax, [ebp+var_2B4]
+// 0x9333b8 sub     eax, 43h ; 'C'; switch 54 cases
+// 0x9333bb mov     [ebp+var_2B4], eax
+// 0x9333c1 cmp     [ebp+var_2B4], 35h
+// 0x9333c8 ja      def_9333DB; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x9333ce mov     ecx, [ebp+var_2B4]
+// 0x9333d4 movzx   edx, ds:byte_933D50[ecx]
+// 0x9333db jmp     ds:jpt_9333DB[edx*4]; switch jump
+// 0x9333e2 mov     eax, [ebp+var_10]; jumptable 009333DB case 67
+// 0x9333e5 and     eax, 830h
+// 0x9333ea jnz     short loc_9333F8; jumptable 009333DB case 99
+// 0x9333ec mov     ecx, [ebp+var_10]
+// 0x9333ef or      ecx, 800h
+// 0x9333f5 mov     [ebp+var_10], ecx
+// 0x9333f8 mov     edx, [ebp+var_10]; jumptable 009333DB case 99
+// 0x9333fb and     edx, 810h
+// 0x933401 jz      short loc_93343F
+// 0x933403 lea     eax, [ebp+arg_8]
+// 0x933406 push    eax
+// 0x933407 call    _get_short_arg
+// 0x93340c add     esp, 4
+// 0x93340f mov     [ebp+WCh], ax
+// 0x933416 mov     cx, [ebp+WCh]
+// 0x93341d push    ecx; WCh
+// 0x93341e lea     edx, [ebp+MbCh]
+// 0x933424 push    edx; MbCh
+// 0x933425 call    j__wctomb
+// 0x93342a add     esp, 8
+// 0x93342d mov     [ebp+var_24], eax
+// 0x933430 cmp     [ebp+var_24], 0
+// 0x933434 jge     short loc_93343D
+// 0x933436 mov     [ebp+var_28], 1
+// 0x93343d jmp     short loc_933465
+// 0x93343f lea     eax, [ebp+arg_8]
+// 0x933442 push    eax
+// 0x933443 call    _get_int_arg
+// 0x933448 add     esp, 4
+// 0x93344b mov     [ebp+var_254], ax
+// 0x933452 mov     cl, byte ptr [ebp+var_254]
+// 0x933458 mov     [ebp+MbCh], cl
+// 0x93345e mov     [ebp+var_24], 1
+// 0x933465 lea     edx, [ebp+MbCh]
+// 0x93346b mov     [ebp+Str], edx
+// 0x93346e jmp     def_9333DB; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x933473 lea     eax, [ebp+arg_8]; jumptable 009333DB case 90
+// 0x933476 push    eax
+// 0x933477 call    _get_int_arg
+// 0x93347c add     esp, 4
+// 0x93347f mov     [ebp+var_258], eax
+// 0x933485 cmp     [ebp+var_258], 0
+// 0x93348c jz      short loc_93349A
+// 0x93348e mov     ecx, [ebp+var_258]
+// 0x933494 cmp     dword ptr [ecx+4], 0
+// 0x933498 jnz     short loc_9334B4
+// 0x93349a mov     edx, off_A69DA4
+// 0x9334a0 mov     [ebp+Str], edx
+// 0x9334a3 mov     eax, [ebp+Str]
+// 0x9334a6 push    eax; Str
+// 0x9334a7 call    j__strlen
+// 0x9334ac add     esp, 4
+// 0x9334af mov     [ebp+var_24], eax
+// 0x9334b2 jmp     short loc_933504
+// 0x9334b4 mov     ecx, [ebp+var_10]
+// 0x9334b7 and     ecx, 800h
+// 0x9334bd jz      short loc_9334E5
+// 0x9334bf mov     edx, [ebp+var_258]
+// 0x9334c5 mov     eax, [edx+4]
+// 0x9334c8 mov     [ebp+Str], eax
+// 0x9334cb mov     ecx, [ebp+var_258]
+// 0x9334d1 movsx   eax, word ptr [ecx]
+// 0x9334d4 cdq
+// 0x9334d5 sub     eax, edx
+// 0x9334d7 sar     eax, 1
+// 0x9334d9 mov     [ebp+var_24], eax
+// 0x9334dc mov     [ebp+var_C], 1
+// 0x9334e3 jmp     short loc_933504
+// 0x9334e5 mov     [ebp+var_C], 0
+// 0x9334ec mov     edx, [ebp+var_258]
+// 0x9334f2 mov     eax, [edx+4]
+// 0x9334f5 mov     [ebp+Str], eax
+// 0x9334f8 mov     ecx, [ebp+var_258]
+// 0x9334fe movsx   edx, word ptr [ecx]
+// 0x933501 mov     [ebp+var_24], edx
+// 0x933504 jmp     def_9333DB; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x933509 mov     eax, [ebp+var_10]; jumptable 009333DB case 83
+// 0x93350c and     eax, 830h
+// 0x933511 jnz     short loc_93351F; jumptable 009333DB case 115
+// 0x933513 mov     ecx, [ebp+var_10]
+// 0x933516 or      ecx, 800h
+// 0x93351c mov     [ebp+var_10], ecx
+// 0x93351f cmp     [ebp+var_30], 0FFFFFFFFh; jumptable 009333DB case 115
+// 0x933523 jnz     short loc_933531
+// 0x933525 mov     [ebp+var_2B8], 7FFFFFFFh
+// 0x93352f jmp     short loc_93353A
+// 0x933531 mov     edx, [ebp+var_30]
+// 0x933534 mov     [ebp+var_2B8], edx
+// 0x93353a mov     eax, [ebp+var_2B8]
+// 0x933540 mov     [ebp+var_260], eax
+// 0x933546 lea     ecx, [ebp+arg_8]
+// 0x933549 push    ecx
+// 0x93354a call    _get_int_arg
+// 0x93354f add     esp, 4
+// 0x933552 mov     [ebp+Str], eax
+// 0x933555 mov     edx, [ebp+var_10]
+// 0x933558 and     edx, 810h
+// 0x93355e jz      short loc_9335C5
+// 0x933560 cmp     [ebp+Str], 0
+// 0x933564 jnz     short loc_93356E
+// 0x933566 mov     eax, off_A69DA8
+// 0x93356b mov     [ebp+Str], eax
+// 0x93356e mov     [ebp+var_C], 1
+// 0x933575 mov     ecx, [ebp+Str]
+// 0x933578 mov     [ebp+var_264], ecx
+// 0x93357e mov     edx, [ebp+var_260]
+// 0x933584 mov     eax, [ebp+var_260]
+// 0x93358a sub     eax, 1
+// 0x93358d mov     [ebp+var_260], eax
+// 0x933593 test    edx, edx
+// 0x933595 jz      short loc_9335B5
+// 0x933597 mov     ecx, [ebp+var_264]
+// 0x93359d movzx   edx, word ptr [ecx]
+// 0x9335a0 test    edx, edx
+// 0x9335a2 jz      short loc_9335B5
+// 0x9335a4 mov     eax, [ebp+var_264]
+// 0x9335aa add     eax, 2
+// 0x9335ad mov     [ebp+var_264], eax
+// 0x9335b3 jmp     short loc_93357E
+// 0x9335b5 mov     ecx, [ebp+var_264]
+// 0x9335bb sub     ecx, [ebp+Str]
+// 0x9335be sar     ecx, 1
+// 0x9335c0 mov     [ebp+var_24], ecx
+// 0x9335c3 jmp     short loc_933620
+// 0x9335c5 cmp     [ebp+Str], 0
+// 0x9335c9 jnz     short loc_9335D4
+// 0x9335cb mov     edx, off_A69DA4
+// 0x9335d1 mov     [ebp+Str], edx
+// 0x9335d4 mov     eax, [ebp+Str]
+// 0x9335d7 mov     [ebp+var_25C], eax
+// 0x9335dd mov     ecx, [ebp+var_260]
+// 0x9335e3 mov     edx, [ebp+var_260]
+// 0x9335e9 sub     edx, 1
+// 0x9335ec mov     [ebp+var_260], edx
+// 0x9335f2 test    ecx, ecx
+// 0x9335f4 jz      short loc_933614
+// 0x9335f6 mov     eax, [ebp+var_25C]
+// 0x9335fc movsx   ecx, byte ptr [eax]
+// 0x9335ff test    ecx, ecx
+// 0x933601 jz      short loc_933614
+// 0x933603 mov     edx, [ebp+var_25C]
+// 0x933609 add     edx, 1
+// 0x93360c mov     [ebp+var_25C], edx
+// 0x933612 jmp     short loc_9335DD
+// 0x933614 mov     eax, [ebp+var_25C]
+// 0x93361a sub     eax, [ebp+Str]
+// 0x93361d mov     [ebp+var_24], eax
+// 0x933620 jmp     def_9333DB; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x933625 lea     ecx, [ebp+arg_8]; jumptable 009333DB case 110
+// 0x933628 push    ecx
+// 0x933629 call    _get_int_arg
+// 0x93362e add     esp, 4
+// 0x933631 mov     [ebp+var_268], eax
+// 0x933637 mov     edx, [ebp+var_10]
+// 0x93363a and     edx, 20h
+// 0x93363d jz      short loc_933651
+// 0x93363f mov     eax, [ebp+var_268]
+// 0x933645 mov     cx, word ptr [ebp+var_23C]
+// 0x93364c mov     [eax], cx
+// 0x93364f jmp     short loc_93365F
+// 0x933651 mov     edx, [ebp+var_268]
+// 0x933657 mov     eax, [ebp+var_23C]
+// 0x93365d mov     [edx], eax
+// 0x93365f mov     [ebp+var_28], 1
+// 0x933666 jmp     def_9333DB; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x93366b mov     [ebp+var_2C], 1; jumptable 009333DB cases 69,71
+// 0x933672 movsx   ecx, [ebp+var_241]
+// 0x933679 add     ecx, 20h ; ' '
+// 0x93367c mov     [ebp+var_241], cl
+// 0x933682 mov     edx, [ebp+var_10]; jumptable 009333DB cases 101-103
+// 0x933685 or      edx, 40h
+// 0x933688 mov     [ebp+var_10], edx
+// 0x93368b lea     eax, [ebp+MbCh]
+// 0x933691 mov     [ebp+Str], eax
+// 0x933694 cmp     [ebp+var_30], 0
+// 0x933698 jge     short loc_9336A3
+// 0x93369a mov     [ebp+var_30], 6
+// 0x9336a1 jmp     short loc_9336CE
+// 0x9336a3 cmp     [ebp+var_30], 0
+// 0x9336a7 jnz     short loc_9336BE
+// 0x9336a9 movsx   ecx, [ebp+var_241]
+// 0x9336b0 cmp     ecx, 67h ; 'g'
+// 0x9336b3 jnz     short loc_9336BE
+// 0x9336b5 mov     [ebp+var_30], 1
+// 0x9336bc jmp     short loc_9336CE
+// 0x9336be cmp     [ebp+var_30], 200h
+// 0x9336c5 jle     short loc_9336CE
+// 0x9336c7 mov     [ebp+var_30], 200h
+// 0x9336ce cmp     [ebp+var_30], 0A3h
+// 0x9336d5 jle     short loc_93370D
+// 0x9336d7 push    300h; int
+// 0x9336dc push    offset aOutputC
+// 0x9336e1 push    2; int
+// 0x9336e3 mov     edx, [ebp+var_30]
+// 0x9336e6 add     edx, 15Dh
+// 0x9336ec push    edx; Size
+// 0x9336ed call    j___malloc_dbg
+// 0x9336f2 add     esp, 10h
+// 0x9336f5 mov     [ebp+var_20], eax
+// 0x9336f8 cmp     [ebp+var_20], 0
+// 0x9336fc jz      short loc_933706
+// 0x9336fe mov     eax, [ebp+var_20]
+// 0x933701 mov     [ebp+Str], eax
+// 0x933704 jmp     short loc_93370D
+// 0x933706 mov     [ebp+var_30], 0A3h
+// 0x93370d mov     ecx, [ebp+arg_8]
+// 0x933710 add     ecx, 8
+// 0x933713 mov     [ebp+arg_8], ecx
+// 0x933716 mov     edx, [ebp+arg_8]
+// 0x933719 mov     eax, [edx-8]
+// 0x93371c mov     ecx, [edx-4]
+// 0x93371f mov     [ebp+var_270], eax
+// 0x933725 mov     [ebp+var_26C], ecx
+// 0x93372b mov     edx, [ebp+var_2C]
+// 0x93372e push    edx
+// 0x93372f mov     eax, [ebp+var_30]
+// 0x933732 push    eax
+// 0x933733 movsx   ecx, [ebp+var_241]
+// 0x93373a push    ecx
+// 0x93373b mov     edx, [ebp+Str]
+// 0x93373e push    edx
+// 0x93373f lea     eax, [ebp+var_270]
+// 0x933745 push    eax
+// 0x933746 call    off_A69DB0
+// 0x93374c add     esp, 14h
+// 0x93374f mov     ecx, [ebp+var_10]
+// 0x933752 and     ecx, 80h
+// 0x933758 jz      short loc_93376D
+// 0x93375a cmp     [ebp+var_30], 0
+// 0x93375e jnz     short loc_93376D
+// 0x933760 mov     edx, [ebp+Str]
+// 0x933763 push    edx
+// 0x933764 call    off_A69DBC
+// 0x93376a add     esp, 4
+// 0x93376d movsx   eax, [ebp+var_241]
+// 0x933774 cmp     eax, 67h ; 'g'
+// 0x933777 jnz     short loc_933791
+// 0x933779 mov     ecx, [ebp+var_10]
+// 0x93377c and     ecx, 80h
+// 0x933782 jnz     short loc_933791
+// 0x933784 mov     edx, [ebp+Str]
+// 0x933787 push    edx
+// 0x933788 call    off_A69DB4
+// 0x93378e add     esp, 4
+// 0x933791 mov     eax, [ebp+Str]
+// 0x933794 movsx   ecx, byte ptr [eax]
+// 0x933797 cmp     ecx, 2Dh ; '-'
+// 0x93379a jnz     short loc_9337B1
+// 0x93379c mov     edx, [ebp+var_10]
+// 0x93379f or      edx, 100h
+// 0x9337a5 mov     [ebp+var_10], edx
+// 0x9337a8 mov     eax, [ebp+Str]
+// 0x9337ab add     eax, 1
+// 0x9337ae mov     [ebp+Str], eax
+// 0x9337b1 mov     ecx, [ebp+Str]
+// 0x9337b4 push    ecx; Str
+// 0x9337b5 call    j__strlen
+// 0x9337ba add     esp, 4
+// 0x9337bd mov     [ebp+var_24], eax
+// 0x9337c0 jmp     def_9333DB; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x9337c5 mov     edx, [ebp+var_10]; jumptable 009333DB cases 100,105
+// 0x9337c8 or      edx, 40h
+// 0x9337cb mov     [ebp+var_10], edx
+// 0x9337ce mov     [ebp+var_8], 0Ah
+// 0x9337d5 jmp     short loc_933844
+// 0x9337d7 mov     [ebp+var_8], 0Ah; jumptable 009333DB case 117
+// 0x9337de jmp     short loc_933844
+// 0x9337e0 mov     [ebp+var_30], 8; jumptable 009333DB case 112
+// 0x9337e7 mov     [ebp+var_250], 7; jumptable 009333DB case 88
+// 0x9337f1 jmp     short loc_9337FD
+// 0x9337f3 mov     [ebp+var_250], 27h ; '''; jumptable 009333DB case 120
+// 0x9337fd mov     [ebp+var_8], 10h
+// 0x933804 mov     eax, [ebp+var_10]
+// 0x933807 and     eax, 80h
+// 0x93380c jz      short loc_933825
+// 0x93380e mov     byte ptr [ebp+var_14], 30h ; '0'
+// 0x933812 mov     ecx, [ebp+var_250]
+// 0x933818 add     ecx, 51h ; 'Q'
+// 0x93381b mov     byte ptr [ebp+var_14+1], cl
+// 0x93381e mov     [ebp+var_1C], 2
+// 0x933825 jmp     short loc_933844
+// 0x933827 mov     [ebp+var_8], 8; jumptable 009333DB case 111
+// 0x93382e mov     edx, [ebp+var_10]
+// 0x933831 and     edx, 80h
+// 0x933837 jz      short loc_933844
+// 0x933839 mov     eax, [ebp+var_10]
+// 0x93383c or      eax, 200h
+// 0x933841 mov     [ebp+var_10], eax
+// 0x933844 mov     ecx, [ebp+var_10]
+// 0x933847 and     ecx, 8000h
+// 0x93384d jz      short loc_93386C
+// 0x93384f lea     edx, [ebp+arg_8]
+// 0x933852 push    edx
+// 0x933853 call    _get_int64_arg
+// 0x933858 add     esp, 4
+// 0x93385b mov     dword ptr [ebp+var_280], eax
+// 0x933861 mov     dword ptr [ebp+var_280+4], edx
+// 0x933867 jmp     loc_9338F5
+// 0x93386c mov     eax, [ebp+var_10]
+// 0x93386f and     eax, 20h
+// 0x933872 jz      short loc_9338B8
+// 0x933874 mov     ecx, [ebp+var_10]
+// 0x933877 and     ecx, 40h
+// 0x93387a jz      short loc_93389A
+// 0x93387c lea     edx, [ebp+arg_8]
+// 0x93387f push    edx
+// 0x933880 call    _get_int_arg
+// 0x933885 add     esp, 4
+// 0x933888 movsx   eax, ax
+// 0x93388b cdq
+// 0x93388c mov     dword ptr [ebp+var_280], eax
+// 0x933892 mov     dword ptr [ebp+var_280+4], edx
+// 0x933898 jmp     short loc_9338B6
+// 0x93389a lea     eax, [ebp+arg_8]
+// 0x93389d push    eax
+// 0x93389e call    _get_int_arg
+// 0x9338a3 add     esp, 4
+// 0x9338a6 movzx   eax, ax
+// 0x9338a9 cdq
+// 0x9338aa mov     dword ptr [ebp+var_280], eax
+// 0x9338b0 mov     dword ptr [ebp+var_280+4], edx
+// 0x9338b6 jmp     short loc_9338F5
+// 0x9338b8 mov     ecx, [ebp+var_10]
+// 0x9338bb and     ecx, 40h
+// 0x9338be jz      short loc_9338DB
+// 0x9338c0 lea     edx, [ebp+arg_8]
+// 0x9338c3 push    edx
+// 0x9338c4 call    _get_int_arg
+// 0x9338c9 add     esp, 4
+// 0x9338cc cdq
+// 0x9338cd mov     dword ptr [ebp+var_280], eax
+// 0x9338d3 mov     dword ptr [ebp+var_280+4], edx
+// 0x9338d9 jmp     short loc_9338F5
+// 0x9338db lea     eax, [ebp+arg_8]
+// 0x9338de push    eax
+// 0x9338df call    _get_int_arg
+// 0x9338e4 add     esp, 4
+// 0x9338e7 xor     ecx, ecx
+// 0x9338e9 mov     dword ptr [ebp+var_280], eax
+// 0x9338ef mov     dword ptr [ebp+var_280+4], ecx
+// 0x9338f5 mov     edx, [ebp+var_10]
+// 0x9338f8 and     edx, 40h
+// 0x9338fb jz      short loc_93393E
+// 0x9338fd cmp     dword ptr [ebp+var_280+4], 0
+// 0x933904 jg      short loc_93393E
+// 0x933906 jl      short loc_933911
+// 0x933908 cmp     dword ptr [ebp+var_280], 0
+// 0x93390f jnb     short loc_93393E
+// 0x933911 mov     eax, dword ptr [ebp+var_280]
+// 0x933917 neg     eax
+// 0x933919 mov     ecx, dword ptr [ebp+var_280+4]
+// 0x93391f adc     ecx, 0
+// 0x933922 neg     ecx
+// 0x933924 mov     dword ptr [ebp+var_288], eax
+// 0x93392a mov     dword ptr [ebp+var_288+4], ecx
+// 0x933930 mov     edx, [ebp+var_10]
+// 0x933933 or      edx, 100h
+// 0x933939 mov     [ebp+var_10], edx
+// 0x93393c jmp     short loc_933956
+// 0x93393e mov     eax, dword ptr [ebp+var_280]
+// 0x933944 mov     dword ptr [ebp+var_288], eax
+// 0x93394a mov     ecx, dword ptr [ebp+var_280+4]
+// 0x933950 mov     dword ptr [ebp+var_288+4], ecx
+// 0x933956 mov     edx, [ebp+var_10]
+// 0x933959 and     edx, 8000h
+// 0x93395f jnz     short loc_93397C
+// 0x933961 mov     eax, dword ptr [ebp+var_288]
+// 0x933967 mov     ecx, dword ptr [ebp+var_288+4]
+// 0x93396d and     ecx, 0
+// 0x933970 mov     dword ptr [ebp+var_288], eax
+// 0x933976 mov     dword ptr [ebp+var_288+4], ecx
+// 0x93397c cmp     [ebp+var_30], 0
+// 0x933980 jge     short loc_93398B
+// 0x933982 mov     [ebp+var_30], 1
+// 0x933989 jmp     short loc_9339A4
+// 0x93398b mov     edx, [ebp+var_10]
+// 0x93398e and     edx, 0FFFFFFF7h
+// 0x933991 mov     [ebp+var_10], edx
+// 0x933994 cmp     [ebp+var_30], 200h
+// 0x93399b jle     short loc_9339A4
+// 0x93399d mov     [ebp+var_30], 200h
+// 0x9339a4 mov     eax, dword ptr [ebp+var_288]
+// 0x9339aa or      eax, dword ptr [ebp+var_288+4]
+// 0x9339b0 jnz     short loc_9339B9
+// 0x9339b2 mov     [ebp+var_1C], 0
+// 0x9339b9 lea     ecx, [ebp+var_39]
+// 0x9339bc mov     [ebp+Str], ecx
+// 0x9339bf mov     edx, [ebp+var_30]
+// 0x9339c2 mov     eax, [ebp+var_30]
+// 0x9339c5 sub     eax, 1
+// 0x9339c8 mov     [ebp+var_30], eax
+// 0x9339cb test    edx, edx
+// 0x9339cd jg      short loc_9339DD
+// 0x9339cf mov     ecx, dword ptr [ebp+var_288]
+// 0x9339d5 or      ecx, dword ptr [ebp+var_288+4]
+// 0x9339db jz      short loc_933A58
+// 0x9339dd mov     eax, [ebp+var_8]
+// 0x9339e0 cdq
+// 0x9339e1 push    edx
+// 0x9339e2 push    eax
+// 0x9339e3 mov     edx, dword ptr [ebp+var_288+4]
+// 0x9339e9 push    edx
+// 0x9339ea mov     eax, dword ptr [ebp+var_288]
+// 0x9339f0 push    eax
+// 0x9339f1 call    j___aullrem
+// 0x9339f6 add     eax, 30h ; '0'
+// 0x9339f9 mov     [ebp+var_274], eax
+// 0x9339ff mov     eax, [ebp+var_8]
+// 0x933a02 cdq
+// 0x933a03 push    edx
+// 0x933a04 push    eax
+// 0x933a05 mov     ecx, dword ptr [ebp+var_288+4]
+// 0x933a0b push    ecx
+// 0x933a0c mov     edx, dword ptr [ebp+var_288]
+// 0x933a12 push    edx
+// 0x933a13 call    j___aulldiv
+// 0x933a18 mov     dword ptr [ebp+var_288], eax
+// 0x933a1e mov     dword ptr [ebp+var_288+4], edx
+// 0x933a24 cmp     [ebp+var_274], 39h ; '9'
+// 0x933a2b jle     short loc_933A3F
+// 0x933a2d mov     eax, [ebp+var_274]
+// 0x933a33 add     eax, [ebp+var_250]
+// 0x933a39 mov     [ebp+var_274], eax
+// 0x933a3f mov     ecx, [ebp+Str]
+// 0x933a42 mov     dl, byte ptr [ebp+var_274]
+// 0x933a48 mov     [ecx], dl
+// 0x933a4a mov     eax, [ebp+Str]
+// 0x933a4d sub     eax, 1
+// 0x933a50 mov     [ebp+Str], eax
+// 0x933a53 jmp     loc_9339BF
+// 0x933a58 lea     ecx, [ebp+var_39]
+// 0x933a5b sub     ecx, [ebp+Str]
+// 0x933a5e mov     [ebp+var_24], ecx
+// 0x933a61 mov     edx, [ebp+Str]
+// 0x933a64 add     edx, 1
+// 0x933a67 mov     [ebp+Str], edx
+// 0x933a6a mov     eax, [ebp+var_10]
+// 0x933a6d and     eax, 200h
+// 0x933a72 jz      short def_9333DB; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x933a74 mov     ecx, [ebp+Str]
+// 0x933a77 movsx   edx, byte ptr [ecx]
+// 0x933a7a cmp     edx, 30h ; '0'
+// 0x933a7d jnz     short loc_933A85
+// 0x933a7f cmp     [ebp+var_24], 0
+// 0x933a83 jnz     short def_9333DB; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x933a85 mov     eax, [ebp+Str]
+// 0x933a88 sub     eax, 1
+// 0x933a8b mov     [ebp+Str], eax
+// 0x933a8e mov     ecx, [ebp+Str]
+// 0x933a91 mov     byte ptr [ecx], 30h ; '0'
+// 0x933a94 mov     edx, [ebp+var_24]
+// 0x933a97 add     edx, 1
+// 0x933a9a mov     [ebp+var_24], edx
+// 0x933a9d cmp     [ebp+var_28], 0; jumptable 009333DB default case, cases 68,70,72-82,84-87,89,91-98,104,106-109,113,114,116,118,119
+// 0x933aa1 jnz     loc_933C56
+// 0x933aa7 mov     eax, [ebp+var_10]
+// 0x933aaa and     eax, 40h
+// 0x933aad jz      short loc_933AEF
+// 0x933aaf mov     ecx, [ebp+var_10]
+// 0x933ab2 and     ecx, 100h
+// 0x933ab8 jz      short loc_933AC7
+// 0x933aba mov     byte ptr [ebp+var_14], 2Dh ; '-'
+// 0x933abe mov     [ebp+var_1C], 1
+// 0x933ac5 jmp     short loc_933AEF
+// 0x933ac7 mov     edx, [ebp+var_10]
+// 0x933aca and     edx, 1
+// 0x933acd jz      short loc_933ADC
+// 0x933acf mov     byte ptr [ebp+var_14], 2Bh ; '+'
+// 0x933ad3 mov     [ebp+var_1C], 1
+// 0x933ada jmp     short loc_933AEF
+// 0x933adc mov     eax, [ebp+var_10]
+// 0x933adf and     eax, 2
+// 0x933ae2 jz      short loc_933AEF
+// 0x933ae4 mov     byte ptr [ebp+var_14], 20h ; ' '
+// 0x933ae8 mov     [ebp+var_1C], 1
+// 0x933aef mov     ecx, [ebp+var_18]
+// 0x933af2 sub     ecx, [ebp+var_24]
+// 0x933af5 sub     ecx, [ebp+var_1C]
+// 0x933af8 mov     [ebp+var_28C], ecx
+// 0x933afe mov     edx, [ebp+var_10]
+// 0x933b01 and     edx, 0Ch
+// 0x933b04 jnz     short loc_933B22
+// 0x933b06 lea     eax, [ebp+var_23C]
+// 0x933b0c push    eax; int
+// 0x933b0d mov     ecx, [ebp+File]
+// 0x933b10 push    ecx; File
+// 0x933b11 mov     edx, [ebp+var_28C]
+// 0x933b17 push    edx; int
+// 0x933b18 push    20h ; ' '; char
+// 0x933b1a call    _write_multi_char
+// 0x933b1f add     esp, 10h
+// 0x933b22 lea     eax, [ebp+var_23C]
+// 0x933b28 push    eax; int
+// 0x933b29 mov     ecx, [ebp+File]
+// 0x933b2c push    ecx; File
+// 0x933b2d mov     edx, [ebp+var_1C]
+// 0x933b30 push    edx; int
+// 0x933b31 lea     eax, [ebp+var_14]
+// 0x933b34 push    eax; int
+// 0x933b35 call    _write_string
+// 0x933b3a add     esp, 10h
+// 0x933b3d mov     ecx, [ebp+var_10]
+// 0x933b40 and     ecx, 8
+// 0x933b43 jz      short loc_933B69
+// 0x933b45 mov     edx, [ebp+var_10]
+// 0x933b48 and     edx, 4
+// 0x933b4b jnz     short loc_933B69
+// 0x933b4d lea     eax, [ebp+var_23C]
+// 0x933b53 push    eax; int
+// 0x933b54 mov     ecx, [ebp+File]
+// 0x933b57 push    ecx; File
+// 0x933b58 mov     edx, [ebp+var_28C]
+// 0x933b5e push    edx; int
+// 0x933b5f push    30h ; '0'; char
+// 0x933b61 call    _write_multi_char
+// 0x933b66 add     esp, 10h
+// 0x933b69 cmp     [ebp+var_C], 0
+// 0x933b6d jz      loc_933C17
+// 0x933b73 cmp     [ebp+var_24], 0
+// 0x933b77 jle     loc_933C17
+// 0x933b7d mov     eax, [ebp+Str]
+// 0x933b80 mov     [ebp+var_290], eax
+// 0x933b86 mov     ecx, [ebp+var_24]
+// 0x933b89 mov     [ebp+var_294], ecx
+// 0x933b8f mov     edx, [ebp+var_294]
+// 0x933b95 mov     eax, [ebp+var_294]
+// 0x933b9b sub     eax, 1
+// 0x933b9e mov     [ebp+var_294], eax
+// 0x933ba4 test    edx, edx
+// 0x933ba6 jz      short loc_933C15
+// 0x933ba8 mov     ecx, [ebp+var_290]
+// 0x933bae mov     dx, [ecx]
+// 0x933bb1 mov     [ebp+var_2BA], dx
+// 0x933bb8 mov     ax, [ebp+var_2BA]
+// 0x933bbf push    eax; WCh
+// 0x933bc0 lea     ecx, [ebp+var_2A0]
+// 0x933bc6 push    ecx; MbCh
+// 0x933bc7 call    j__wctomb
+// 0x933bcc add     esp, 8
+// 0x933bcf mov     [ebp+var_298], eax
+// 0x933bd5 mov     edx, [ebp+var_290]
+// 0x933bdb add     edx, 2
+// 0x933bde mov     [ebp+var_290], edx
+// 0x933be4 cmp     [ebp+var_298], 0
+// 0x933beb jg      short loc_933BEF
+// 0x933bed jmp     short loc_933C15
+// 0x933bef lea     eax, [ebp+var_23C]
+// 0x933bf5 push    eax; int
+// 0x933bf6 mov     ecx, [ebp+File]
+// 0x933bf9 push    ecx; File
+// 0x933bfa mov     edx, [ebp+var_298]
+// 0x933c00 push    edx; int
+// 0x933c01 lea     eax, [ebp+var_2A0]
+// 0x933c07 push    eax; int
+// 0x933c08 call    _write_string
+// 0x933c0d add     esp, 10h
+// 0x933c10 jmp     loc_933B8F
+// 0x933c15 jmp     short loc_933C32
+// 0x933c17 lea     ecx, [ebp+var_23C]
+// 0x933c1d push    ecx; int
+// 0x933c1e mov     edx, [ebp+File]
+// 0x933c21 push    edx; File
+// 0x933c22 mov     eax, [ebp+var_24]
+// 0x933c25 push    eax; int
+// 0x933c26 mov     ecx, [ebp+Str]
+// 0x933c29 push    ecx; int
+// 0x933c2a call    _write_string
+// 0x933c2f add     esp, 10h
+// 0x933c32 mov     edx, [ebp+var_10]
+// 0x933c35 and     edx, 4
+// 0x933c38 jz      short loc_933C56
+// 0x933c3a lea     eax, [ebp+var_23C]
+// 0x933c40 push    eax; int
+// 0x933c41 mov     ecx, [ebp+File]
+// 0x933c44 push    ecx; File
+// 0x933c45 mov     edx, [ebp+var_28C]
+// 0x933c4b push    edx; int
+// 0x933c4c push    20h ; ' '; char
+// 0x933c4e call    _write_multi_char
+// 0x933c53 add     esp, 10h
+// 0x933c56 cmp     [ebp+var_20], 0
+// 0x933c5a jz      short def_9330A6; jumptable 009330A6 default case
+// 0x933c5c push    2
+// 0x933c5e mov     eax, [ebp+var_20]
+// 0x933c61 push    eax
+// 0x933c62 call    j___free_dbg
+// 0x933c67 add     esp, 8
+// 0x933c6a mov     [ebp+var_20], 0
+// 0x933c71 jmp     loc_932FF3; jumptable 009330A6 default case
+// 0x933c76 mov     eax, [ebp+var_23C]
+// 0x933c7c mov     ecx, [ebp+var_34]
+// 0x933c7f call    sub_60849D
+// 0x933c84 mov     esp, ebp
+// 0x933c86 pop     ebp
+// 0x933c87 retn
+//
+// 0x934100 _write_char
+// 0x934100 push    ebp
+// 0x934101 mov     ebp, esp
+// 0x934103 push    ecx
+// 0x934104 mov     eax, [ebp+File]
+// 0x934107 mov     ecx, [eax+0Ch]
+// 0x93410a and     ecx, 40h
+// 0x93410d jz      short loc_934127
+// 0x93410f mov     edx, [ebp+File]
+// 0x934112 cmp     dword ptr [edx+8], 0
+// 0x934116 jnz     short loc_934127
+// 0x934118 mov     eax, [ebp+arg_8]
+// 0x93411b mov     ecx, [eax]
+// 0x93411d add     ecx, 1
+// 0x934120 mov     edx, [ebp+arg_8]
+// 0x934123 mov     [edx], ecx
+// 0x934125 jmp     short loc_934197
+// 0x934127 mov     eax, [ebp+File]
+// 0x93412a mov     ecx, [eax+4]
+// 0x93412d sub     ecx, 1
+// 0x934130 mov     edx, [ebp+File]
+// 0x934133 mov     [edx+4], ecx
+// 0x934136 mov     eax, [ebp+File]
+// 0x934139 cmp     dword ptr [eax+4], 0
+// 0x93413d jl      short loc_934165
+// 0x93413f mov     ecx, [ebp+File]
+// 0x934142 mov     edx, [ecx]
+// 0x934144 mov     al, [ebp+arg_0]
+// 0x934147 mov     [edx], al
+// 0x934149 movsx   ecx, [ebp+arg_0]
+// 0x93414d and     ecx, 0FFh
+// 0x934153 mov     [ebp+var_4], ecx
+// 0x934156 mov     edx, [ebp+File]
+// 0x934159 mov     eax, [edx]
+// 0x93415b add     eax, 1
+// 0x93415e mov     ecx, [ebp+File]
+// 0x934161 mov     [ecx], eax
+// 0x934163 jmp     short loc_934179
+// 0x934165 mov     edx, [ebp+File]
+// 0x934168 push    edx; File
+// 0x934169 movsx   eax, [ebp+arg_0]
+// 0x93416d push    eax; Ch
+// 0x93416e call    j___flsbuf
+// 0x934173 add     esp, 8
+// 0x934176 mov     [ebp+var_4], eax
+// 0x934179 cmp     [ebp+var_4], 0FFFFFFFFh
+// 0x93417d jnz     short loc_93418A
+// 0x93417f mov     ecx, [ebp+arg_8]
+// 0x934182 mov     dword ptr [ecx], 0FFFFFFFFh
+// 0x934188 jmp     short loc_934197
+// 0x93418a mov     edx, [ebp+arg_8]
+// 0x93418d mov     eax, [edx]
+// 0x93418f add     eax, 1
+// 0x934192 mov     ecx, [ebp+arg_8]
+// 0x934195 mov     [ecx], eax
+// 0x934197 mov     esp, ebp
+// 0x934199 pop     ebp
+// 0x93419a retn
+//
+// 0x9341d0 _write_multi_char
+// 0x9341d0 push    ebp
+// 0x9341d1 mov     ebp, esp
+// 0x9341d3 mov     eax, [ebp+arg_4]
+// 0x9341d6 mov     ecx, [ebp+arg_4]
+// 0x9341d9 sub     ecx, 1
+// 0x9341dc mov     [ebp+arg_4], ecx
+// 0x9341df test    eax, eax
+// 0x9341e1 jle     short loc_934203
+// 0x9341e3 mov     edx, [ebp+arg_C]
+// 0x9341e6 push    edx; int
+// 0x9341e7 mov     eax, [ebp+File]
+// 0x9341ea push    eax; File
+// 0x9341eb mov     cl, [ebp+arg_0]
+// 0x9341ee push    ecx; char
+// 0x9341ef call    _write_char
+// 0x9341f4 add     esp, 0Ch
+// 0x9341f7 mov     edx, [ebp+arg_C]
+// 0x9341fa cmp     dword ptr [edx], 0FFFFFFFFh
+// 0x9341fd jnz     short loc_934201
+// 0x9341ff jmp     short loc_934203
+// 0x934201 jmp     short loc_9341D3
+// 0x934203 pop     ebp
+// 0x934204 retn
+//
+// 0x934220 _write_string
+// 0x934220 push    ebp
+// 0x934221 mov     ebp, esp
+// 0x934223 push    ecx
+// 0x934224 mov     eax, [ebp+File]
+// 0x934227 mov     ecx, [eax+0Ch]
+// 0x93422a and     ecx, 40h
+// 0x93422d jz      short loc_934247
+// 0x93422f mov     edx, [ebp+File]
+// 0x934232 cmp     dword ptr [edx+8], 0
+// 0x934236 jnz     short loc_934247
+// 0x934238 mov     eax, [ebp+arg_C]
+// 0x93423b mov     ecx, [eax]
+// 0x93423d add     ecx, [ebp+arg_4]
+// 0x934240 mov     edx, [ebp+arg_C]
+// 0x934243 mov     [edx], ecx
+// 0x934245 jmp     short loc_934288
+// 0x934247 mov     eax, [ebp+arg_4]
+// 0x93424a mov     ecx, [ebp+arg_4]
+// 0x93424d sub     ecx, 1
+// 0x934250 mov     [ebp+arg_4], ecx
+// 0x934253 test    eax, eax
+// 0x934255 jle     short loc_934288
+// 0x934257 mov     edx, [ebp+arg_0]
+// 0x93425a mov     al, [edx]
+// 0x93425c mov     [ebp+var_1], al
+// 0x93425f mov     ecx, [ebp+arg_C]
+// 0x934262 push    ecx; int
+// 0x934263 mov     edx, [ebp+File]
+// 0x934266 push    edx; File
+// 0x934267 mov     al, [ebp+var_1]
+// 0x93426a push    eax; char
+// 0x93426b call    _write_char
+// 0x934270 add     esp, 0Ch
+// 0x934273 mov     ecx, [ebp+arg_0]
+// 0x934276 add     ecx, 1
+// 0x934279 mov     [ebp+arg_0], ecx
+// 0x93427c mov     edx, [ebp+arg_C]
+// 0x93427f cmp     dword ptr [edx], 0FFFFFFFFh
+// 0x934282 jnz     short loc_934286
+// 0x934284 jmp     short loc_934288
+// 0x934286 jmp     short loc_934247
+// 0x934288 mov     esp, ebp
+// 0x93428a pop     ebp
+// 0x93428b retn

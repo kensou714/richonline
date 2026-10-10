@@ -10,6 +10,7 @@ struct RichonlineCombatRangePolicy {
     std::string name;
     std::uint16_t manhattan_radius;
     RichonlineProjectileCandidates projectile_candidates;
+    std::uint16_t viewport_width=0,viewport_height=0;
 };
 struct RichonlineCombatWorldPolicy {
     RichonlineCombatRangePolicy range;

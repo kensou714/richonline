@@ -1,0 +1,236 @@
+{
+  "disk_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "baseline_reference": "全量分析/版本核验_第二批.json",
+  "scope": "当前IDA数据库；逐块保存指令范围与声明块原始字节，两者重叠不相加；块内数据语义及外部依赖另核",
+  "functions": [
+    {
+      "va": "0x92de70",
+      "end_va": "0x92ded9",
+      "name": "___updatetlocinfo",
+      "status": "仅导出",
+      "pseudocode": [
+        "int __updatetlocinfo()",
+        "{",
+        "  int v1; // [esp+Ch] [ebp-1Ch]",
+        "",
+        "  j___lock(a1: 12);",
+        "  v1 = __updatetlocinfo_lk();",
+        "  j___unlock(a1: 12);",
+        "  return v1;",
+        "}"
+      ],
+      "assembly": [
+        {
+          "va": "0x92de70",
+          "text": "push    ebp"
+        },
+        {
+          "va": "0x92de71",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "va": "0x92de73",
+          "text": "push    0FFFFFFFFh"
+        },
+        {
+          "va": "0x92de75",
+          "text": "push    offset stru_A333E0"
+        },
+        {
+          "va": "0x92de7a",
+          "text": "push    offset j___except_handler3"
+        },
+        {
+          "va": "0x92de7f",
+          "text": "mov     eax, large fs:0"
+        },
+        {
+          "va": "0x92de85",
+          "text": "push    eax"
+        },
+        {
+          "va": "0x92de86",
+          "text": "mov     large fs:0, esp"
+        },
+        {
+          "va": "0x92de8d",
+          "text": "add     esp, 0FFFFFFF4h"
+        },
+        {
+          "va": "0x92de90",
+          "text": "push    ebx"
+        },
+        {
+          "va": "0x92de91",
+          "text": "push    esi"
+        },
+        {
+          "va": "0x92de92",
+          "text": "push    edi"
+        },
+        {
+          "va": "0x92de93",
+          "text": "push    0Ch"
+        },
+        {
+          "va": "0x92de95",
+          "text": "call    j___lock"
+        },
+        {
+          "va": "0x92de9a",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x92de9d",
+          "text": "mov     [ebp+ms_exc.registration.TryLevel], 0"
+        },
+        {
+          "va": "0x92dea4",
+          "text": "call    ___updatetlocinfo_lk"
+        },
+        {
+          "va": "0x92dea9",
+          "text": "mov     [ebp+var_1C], eax"
+        },
+        {
+          "va": "0x92deac",
+          "text": "mov     [ebp+ms_exc.registration.TryLevel], 0FFFFFFFFh"
+        },
+        {
+          "va": "0x92deb3",
+          "text": "call    loc_92DEBA"
+        },
+        {
+          "va": "0x92deb8",
+          "text": "jmp     short loc_92DEC5"
+        },
+        {
+          "va": "0x92deba",
+          "text": "push    0Ch"
+        },
+        {
+          "va": "0x92debc",
+          "text": "call    j___unlock"
+        },
+        {
+          "va": "0x92dec1",
+          "text": "add     esp, 4"
+        },
+        {
+          "va": "0x92dec4",
+          "text": "retn"
+        },
+        {
+          "va": "0x92dec5",
+          "text": "mov     eax, [ebp+var_1C]"
+        },
+        {
+          "va": "0x92dec8",
+          "text": "mov     ecx, [ebp+ms_exc.registration.Next]"
+        },
+        {
+          "va": "0x92decb",
+          "text": "mov     large fs:0, ecx"
+        },
+        {
+          "va": "0x92ded2",
+          "text": "pop     edi"
+        },
+        {
+          "va": "0x92ded3",
+          "text": "pop     esi"
+        },
+        {
+          "va": "0x92ded4",
+          "text": "pop     ebx"
+        },
+        {
+          "va": "0x92ded5",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "va": "0x92ded7",
+          "text": "pop     ebp"
+        },
+        {
+          "va": "0x92ded8",
+          "text": "retn"
+        }
+      ],
+      "calls": [
+        {
+          "site": "0x92de95",
+          "target": "0x5ffc35",
+          "implementation": "0x92f6e0",
+          "thunks": [
+            "0x5ffc35"
+          ]
+        },
+        {
+          "site": "0x92dea4",
+          "target": "0x92df00",
+          "implementation": "0x92df00",
+          "thunks": []
+        },
+        {
+          "site": "0x92debc",
+          "target": "0x60b3af",
+          "implementation": "0x92f730",
+          "thunks": [
+            "0x60b3af"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "source": "0x60b64d",
+          "kind": 19
+        }
+      ],
+      "declared_chunks": [
+        {
+          "start_va": "0x92de70",
+          "end_va": "0x92ded9",
+          "is_main": true
+        }
+      ],
+      "byte_ranges": [
+        {
+          "va": "0x92de70",
+          "size": 105,
+          "idb_hex": "558bec6aff68e033a300685293600064a100000000506489250000000083c4f45356576a0ce89b1dcdff83c404c745fc00000000e8570000008945e4c745fcffffffffe802000000eb0b6a0ce8eed4cdff83c404c38b45e48b4df064890d000000005f5e5b8be55dc3",
+          "disk_hex": "558bec6aff68e033a300685293600064a100000000506489250000000083c4f45356576a0ce89b1dcdff83c404c745fc00000000e8570000008945e4c745fcffffffffe802000000eb0b6a0ce8eed4cdff83c404c38b45e48b4df064890d000000005f5e5b8be55dc3",
+          "matching": true
+        }
+      ],
+      "chunk_byte_ranges": [
+        {
+          "va": "0x92de70",
+          "size": 105,
+          "idb_hex": "558bec6aff68e033a300685293600064a100000000506489250000000083c4f45356576a0ce89b1dcdff83c404c745fc00000000e8570000008945e4c745fcffffffffe802000000eb0b6a0ce8eed4cdff83c404c38b45e48b4df064890d000000005f5e5b8be55dc3",
+          "disk_hex": "558bec6aff68e033a300685293600064a100000000506489250000000083c4f45356576a0ce89b1dcdff83c404c745fc00000000e8570000008945e4c745fcffffffffe802000000eb0b6a0ce8eed4cdff83c404c38b45e48b4df064890d000000005f5e5b8be55dc3",
+          "matching": true
+        }
+      ],
+      "bytes_match_disk": true
+    }
+  ],
+  "thunks": [
+    {
+      "va": "0x5ffc35",
+      "size": 5,
+      "idb_hex": "e9a6fa3200",
+      "disk_hex": "e9a6fa3200",
+      "matching": true,
+      "target": "0x92f6e0"
+    },
+    {
+      "va": "0x60b3af",
+      "size": 5,
+      "idb_hex": "e97c433200",
+      "disk_hex": "e97c433200",
+      "matching": true,
+      "target": "0x92f730"
+    }
+  ]
+}

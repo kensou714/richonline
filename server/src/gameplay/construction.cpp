@@ -23,6 +23,7 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
     append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
     RichonlineLandingResult result{{std::move(stop)},RichonlineLandingProgress::complete};
     const bool empty=property.building.level==0;
+    if(!empty && property.building.kind==3) return result;
     if (!empty) {
         const auto index=static_cast<std::size_t>(property.building.kind-11);
         const auto skill=ctx.synthetic_actor ? static_cast<int>(construction_.synthetic_skills.at(index)) :
@@ -85,6 +86,8 @@ RichonlineLandingResult RichonlineBossProperty::complete_construction(std::int8_
 RichonlineLandingResult RichonlineBossProperty::complete_upgrade(bool accept) {
     // 新版 403E 只增加原建筑等级；此路径不扣现金、不再次消耗建筑许可证。
     auto& property=properties_.at(*pending_property_);
+    if(property.building.kind<11 || property.building.kind>20)
+        throw CodecError("richonline_upgrade_building_kind_invalid");
     const auto index=static_cast<std::size_t>(property.building.kind-11);
     const bool upgrade=accept && property.owner==0 && property.building.level>0 &&
         property.building.level<construction_.scenario_caps.at(index) && property.building.level<human_skills_.at(index);

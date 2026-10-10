@@ -1,0 +1,51 @@
+// 调用点与颜色存储
+// ============================================================================
+// color_calls.json保留IDA当前发现的所有60C9A3与8E0450直接引用。
+// 合计62条引用，其中61条是call、8个业务owner；另一条是
+// 60C9A3->8E0450的E9跳板(kind19)。不能把入口跳板算第9业务owner。
+// 90A979属于61条中的checkbox调用，没有被遗漏。
+// 此范围是IDA已发现直接引用；不承诺穷尽运行时计算的间接函数指针调用。
+//
+// 每个owner的call数量
+//   8E4FF0  公共控件    22
+//   8EE7B0  scrollbar   12
+//   8F8080  listbox     12
+//   900CD0  edit         1
+//   901D30  progress     1
+//   904480  slider       4
+//   90A8F0  checkbox     1
+//   90D9B0  label        8
+//   这些函数仅审颜色call附近的属性读取和结果写入，不能称为整套UI完整审阅。
+//
+// 直接字段：L表示当前控件对象，偏移均为字节
+//   公共Hint背景  +56/+60/+64/+68；前景 +72/+76/+80/+84。
+//       HintBColor或HintFColor存在时用于四态；否则使用
+//       HintNormal/MouseIn/MouseDown/Disable的BColor或FColor。
+//       两条路线共享最后一次转换：8E5223背景、8E5330前景。
+//       因此每组静态call是7个，不是8个；不能仅取最后邻近字符串推断输入。
+//       8E51AE跳到8E521D、8E52BB跳到8E532A保存了共享尾部的原证。
+//   label前景 +148/+152/+156/+160，对应Normal/MouseIn/MouseDown/Disable。
+//       键为NormalCapFontFColor等；背景同序 +132/+136/+140/+144。
+//       转换call从90DA44到90DC0D；逐项地址见结构化清单。
+//   listbox前景 +148/+152/+156/+160，配置次序为Nor/Down/In/Dis。
+//       背景写+132/+136/+140/+144，但检查FontBColor后实际取FontColor；
+//       与label的MouseIn/MouseDown次序不同，工具不能机械重命名。
+//   edit CheckColor：900E4D转换，结果写L+872。
+//   progress TopColor：901E20转换，结果写L+608。
+//   checkbox CheckColor：90A979转换，结果写L+596。
+//
+// 四态背景style路径
+//   公共BColor先对L+164风格块调用四次setter，state依次0/1/2/3。
+//       后面的Normal/MouseIn/MouseDown/DisableBColor键可再覆盖对应state。
+//   scrollbar Btn0/Btn1/Btn2BColor分别作用于L+576/+752/+928。
+//   slider BtnBColor作用于L+576。
+//   listbox Nor/Down/In/DisBColor作用于L+596，state分别0/2/1/3。
+//   共同调用610B6B->8E1C40；风格结构内部最终写入见窄依赖正文。
+//   这些是整32位值的存储/传递；没有在颜色入口中拆分ARGB通道。
+//   通道含义、透明混合和渲染器解释需结合绘制路径，不凭字段名字直接保证。
+//
+// 配置键、存储和资源三层不能混同
+//   某个资源键存在，不代表当前控件类型一定执行对应owner。
+//   某个owner有颜色call，不代表全部可见状态都在此次窗口展示中触发。
+//   样本格式符合8位hex只说明数值转换可预测，不证明渲染颜色视觉正确。
+//   调用点清单逐项列最近属性、直接存储或setter调用；共享尾部单独标注。

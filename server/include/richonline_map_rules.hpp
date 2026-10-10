@@ -4,6 +4,7 @@
 #include "richonline_property_resources.hpp"
 #include "richonline_route.hpp"
 #include <map>
+#include <functional>
 #include <span>
 
 namespace richnet {
@@ -19,7 +20,7 @@ struct RichonlineMapRuleSpecification {
 };
 enum class RichonlineMapStaticEffect {
     none, tickets, card_reward, pending_server_reward, chance_event, shop, paired_portal,
-    local_vendor, unsupported
+    local_vendor, unsupported, random_teleport
 };
 struct RichonlineMapStaticRule {
     RichonlineMapStaticEffect effect;
@@ -74,5 +75,6 @@ RichonlineMapRuleResources richonline_map_rule_resources(
 std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_conservative_spawns(
     const RichonlineRoadTopology& topology);
 std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_spawns(
-    const RichonlineRoadTopology& topology,RichonlineMapSpawnPolicy policy);
+    const RichonlineRoadTopology& topology,RichonlineMapSpawnPolicy policy,
+    const std::function<std::size_t(std::size_t)>& random = {});
 }

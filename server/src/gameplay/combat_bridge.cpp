@@ -138,21 +138,42 @@ bool RichonlineCombatBridge::has_mine(std::int16_t position) const {
     const auto snapshot=ground_->snapshot();const auto found=snapshot.objects.find(position);
     return found!=snapshot.objects.end() && (found->second.npc==12 || found->second.npc==27);
 }
+RichonlineCombatBridgeResult RichonlineCombatBridge::detonate_card(std::span<const RichonlineCombatActorRef> refs,
+    std::uint8_t slot,const std::function<void(const std::string&)>& log) {
+    const auto before=snapshot(refs);
+    std::optional<RichonlineCombatTurnPlan> plan;
+    try {
+        const auto consumption=cards_->prepare_consumption(static_cast<std::int8_t>(slot),501);
+        if(!consumption) throw CodecError("richonline_detonation_card_not_owned");
+        plan=prepare_richonline_combat_detonate(before.combat,world_,0,*consumption);
+    } catch(const CodecError& error) {
+        if(log) log(std::string("richonline_detonation_refused reason=")+error.what());
+        return {{encode_richonline_dice_recovery400b(game_)},{}};
+    }
+    return apply(refs,before,std::move(*plan));
+}
 RichonlineCombatBridgeResult RichonlineCombatBridge::stepped_mine(std::span<const RichonlineCombatActorRef> refs,std::int16_t root) {
     const auto before=snapshot(refs);
     return apply(refs,before,prepare_richonline_combat_stepped_mine(before.combat,world_,root));
 }
 RichonlineCombatBridgeResult RichonlineCombatBridge::timed_bomb_card(std::span<const RichonlineCombatActorRef> refs,
     std::uint8_t actor,const RichonlineTimedBombRequest110& request,std::uint16_t calendar,
-    const RichonlineTimedBombRules& rules,const RichonlineTimedBombEligibility& raw,std::uint8_t opaque) {
+    const RichonlineTimedBombRules& rules,const RichonlineTimedBombEligibility& raw,std::uint8_t opaque,
+    const std::function<void(const std::string&)>& log) {
     // This BOSS bridge owns the shared human hand only; other actor hands need
     // an explicit inventory authority before they can consume this card.
     if(actor!=0) throw CodecError("richonline_timed_bomb_bridge_inventory_actor_invalid");
     const auto before=snapshot(refs);
-    const auto consumption=cards_->prepare_consumption(request.inventory_slot,1045);
-    if(!consumption) throw CodecError("richonline_timed_bomb_card_not_owned");
-    return apply(refs,before,prepare_richonline_timed_bomb_card(before.combat,world_,actor,
-        request,calendar,rules,raw,*consumption,opaque));
+    std::optional<RichonlineCombatTurnPlan> plan;
+    try {
+        const auto consumption=cards_->prepare_consumption(request.inventory_slot,1045);
+        if(!consumption) throw CodecError("richonline_timed_bomb_card_not_owned");
+        plan=prepare_richonline_timed_bomb_card(before.combat,world_,actor,request,calendar,rules,raw,*consumption,opaque);
+    } catch(const CodecError& error) {
+        if(log) log(std::string("richonline_timed_bomb_card_refused reason=")+error.what());
+        return {{encode_richonline_dice_recovery400b(game_)},{}};
+    }
+    return apply(refs,before,std::move(*plan));
 }
 RichonlineCombatBridgeResult RichonlineCombatBridge::fire_landing(std::span<const RichonlineCombatActorRef> refs,
     std::uint8_t victim,std::int16_t position,std::uint32_t base,const std::function<void()>& preflight) {

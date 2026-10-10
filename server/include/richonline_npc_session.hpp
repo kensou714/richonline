@@ -55,7 +55,7 @@ public:
         std::shared_ptr<const RichonlineChanceEventTable>,std::shared_ptr<RichonlineGameLedger>,
         std::shared_ptr<RichonlineBossCards>,std::shared_ptr<RichonlineGroundObjects>,
         RichonlineNpcSessionPolicy);
-    RichonlineNpcSpawnResult initial();
+    RichonlineNpcSpawnResult initial(std::span<const std::int16_t> reserved = {});
     RichonlineNpcSpawnResult finish_round(std::uint64_t complete_round);
     RichonlinePossessionTick actor_begin(std::uint8_t actor,std::uint64_t own_turn,
         RichonlineActorStatus& authoritative_status);

@@ -24,12 +24,14 @@ public:
     const std::vector<RichonlineRoadCell>& cells() const noexcept { return cells_; }
     const RichonlineRoadCell& cell(std::int16_t position) const;
     std::optional<std::int16_t> portal_destination(std::int16_t position) const;
+    const std::optional<std::array<std::int16_t,2>>& jail_positions() const noexcept { return jail_; }
 private:
     RichonlineRoadTopology(std::uint32_t width, std::uint32_t height,
         std::vector<RichonlineRoadCell> cells);
     std::uint32_t width_, height_;
     std::vector<RichonlineRoadCell> cells_;
     std::optional<std::array<std::int16_t,2>> portals_;
+    std::optional<std::array<std::int16_t,2>> jail_;
     friend RichonlineRoadTopology richonline_road_topology(const OriginalEmp& emp);
 };
 RichonlineRoadTopology richonline_road_topology(const OriginalEmp& emp);

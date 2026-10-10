@@ -1,0 +1,68 @@
+{
+  "scope": "82BBE0 高频数据入口的窄分级静态审阅；完整导出不等于完整语义审阅",
+  "pe_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "declared_functions": 7,
+  "complete_function_exports": 6,
+  "alias_thunks": 1,
+  "functions": [
+    {
+      "va": "0x82bbe0",
+      "status": "主体静态局部语义已审阅",
+      "conclusion": "完整导出 1 块、21 条指令；以 ECX 为对象指针，返回 DWORD[ECX+16]，函数内无显式边界检查或业务写回。",
+      "evidence": ["证据/82bbe0_raw.json/functions/0", "证据/validation.json"],
+      "boundary": "未证明运行时对象有效、返回指针生命周期或所有调用者语义。"
+    },
+    {
+      "va": "0x60bfda",
+      "status": "直接跳板目标已核",
+      "conclusion": "五字节 E9 rel32 精确跳至 82BBE0；与主体共用一份业务实现。",
+      "evidence": ["证据/82bbe0_raw.json/thunks/0x60bfda", "证据/independent_offline.json"],
+      "boundary": "仅证明跳转目标及入口别名关系，不重复计为独立业务函数语义。"
+    },
+    {
+      "va": "0x82edd0",
+      "status": "完整块导出且局部消费路径已审阅",
+      "conclusion": "完整导出 2 块、115 条指令；确认 +16 指针经 +8 读取后写入 this+192。",
+      "evidence": ["证据/82bbe0_raw.json/functions/1", "01_偏移访问与调用路径.txt"],
+      "boundary": "字符串、时间、回调与其他分支未作完整语义结论。"
+    },
+    {
+      "va": "0x840230",
+      "status": "完整块导出且局部消费路径已审阅",
+      "conclusion": "完整导出 1 块、87 条指令；确认上游 +32/+80/+16 链、两次取值和本地事件 8 的交接。",
+      "evidence": ["证据/82bbe0_raw.json/functions/2", "01_偏移访问与调用路径.txt"],
+      "boundary": "A6779C/A677A0 的长期状态、回调内部与运行时分支未闭合。"
+    },
+    {
+      "va": "0x846ab0",
+      "status": "完整块导出且局部消费路径已审阅",
+      "conclusion": "完整导出 1 块、67 条指令；确认相同上游链的 +8 读取及 856C30 调用。",
+      "evidence": ["证据/82bbe0_raw.json/functions/3", "01_偏移访问与调用路径.txt"],
+      "boundary": "856C30 内部契约复用其他专题；本处不推定所有 +16 指针的统一对象类型。"
+    },
+    {
+      "va": "0x82cad0",
+      "status": "完整块导出且构造表指针局部链已审阅",
+      "conclusion": "完整导出 2 块、52 条指令；82CB20 将 A2F050 写入 this 首 DWORD；该表第三项经 609A05 跳至未声明 82D820。",
+      "evidence": ["证据/table_provenance.json/functions/0", "证据/table_provenance_validation.json", "04_表项来源与分派边界.txt"],
+      "boundary": "不宣称成员 +84h/+B4h 初始化语义、动态分派或类名已恢复。"
+    },
+    {
+      "va": "0x8553f0",
+      "status": "完整块导出且分配构造局部链已审阅",
+      "conclusion": "完整导出 2 块、52 条指令；申请 D0h 字节，非空时经 609DC0 调 82CAD0 并返回所得指针。",
+      "evidence": ["证据/table_provenance.json/functions/1", "证据/table_provenance_validation.json", "04_表项来源与分派边界.txt"],
+      "boundary": "仅一条静态创建路径，不证明全部实例来源及运行时表项调用。"
+    }
+  ],
+  "undeclared_ranges": [
+    {
+      "start_va": "0x82d820",
+      "end_va": "0x82d8b9",
+      "status": "未声明函数形代码窗口已核",
+      "conclusion": "153 字节、46 条连续已识别指令与当前 PE 一致；存在函数形序尾，82D864 经 60BFDA 调 82BBE0；609A05 的 E9 跳至窗口起点。",
+      "evidence": ["证据/82bbe0_raw.json/undeclared/0", "证据/independent_offline.json", "证据/independent_ida.json"],
+      "boundary": "IDA 未声明该窗口及 609A05 为函数；已核表项/构造的静态上游，运行时可达性、整体控制流和尾块归属待核，不能计为第七个完整函数。"
+    }
+  ]
+}

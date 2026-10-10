@@ -1,0 +1,139 @@
+// 十六进制文本格式化 / 45个保存调用点
+// ============================================================================
+// 偏移为当前控件对象的字节偏移；消费者均为管理器+96处的间接回调。
+// 局部参数交接不等于文件已写入，也不证明回调会深拷贝字符串。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e6966
+// 对象+56 -> HintNormalBColor；消费call 0x8e6975。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e6984
+// 对象+72 -> HintNormalFColor；消费call 0x8e6993。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e69a2
+// 对象+60 -> HintMouseInBColor；消费call 0x8e69b1。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e69c0
+// 对象+76 -> HintMouseInFColor；消费call 0x8e69cf。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e69e1
+// 对象+64 -> HintMouseDownBColor；消费call 0x8e69f0。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e69ff
+// 对象+80 -> HintMouseDownFColor；消费call 0x8e6a0e。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e6a1d
+// 对象+68 -> HintDisableBColor；消费call 0x8e6a2c。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e6a3b
+// 对象+84 -> HintDisableFColor；消费call 0x8e6a4a。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e6a78
+// 对象+196 -> NormalBColor；消费call 0x8e6a87。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e6a99
+// 对象+236 -> MouseInBColor；消费call 0x8e6aa8。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e6aba
+// 对象+276 -> MouseDownBColor；消费call 0x8e6ac9。
+//
+// 0x8e67c0 / 公共控件 / call 0x8e6adb
+// 对象+316 -> DisableBColor；消费call 0x8e6aed。
+//
+// 0x8f1000 / scrollbar / call 0x8f105a
+// 对象+608 -> Btn0NormalBColor；消费call 0x8f1069。
+//
+// 0x8f1000 / scrollbar / call 0x8f107b
+// 对象+648 -> Btn0MouseInBColor；消费call 0x8f108a。
+//
+// 0x8f1000 / scrollbar / call 0x8f109c
+// 对象+688 -> Btn0MouseDownBColor；消费call 0x8f10ab。
+//
+// 0x8f1000 / scrollbar / call 0x8f10bd
+// 对象+728 -> Btn0DisableBColor；消费call 0x8f10cf。
+//
+// 0x8f1000 / scrollbar / call 0x8f16e2
+// 对象+784 -> Btn1NormalBColor；消费call 0x8f16f1。
+//
+// 0x8f1000 / scrollbar / call 0x8f1703
+// 对象+824 -> Btn1MouseInBColor；消费call 0x8f1712。
+//
+// 0x8f1000 / scrollbar / call 0x8f1727
+// 对象+864 -> Btn1MouseDownBColor；消费call 0x8f1736。
+//
+// 0x8f1000 / scrollbar / call 0x8f1748
+// 对象+904 -> Btn1DisableBColor；消费call 0x8f1757。
+//
+// 0x8f1000 / scrollbar / call 0x8f1d6a
+// 对象+960 -> Btn2NormalBColor；消费call 0x8f1d79。
+//
+// 0x8f1000 / scrollbar / call 0x8f1d8b
+// 对象+1000 -> Btn2MouseInBColor；消费call 0x8f1d9a。
+//
+// 0x8f1000 / scrollbar / call 0x8f1daf
+// 对象+1040 -> Btn2MouseDownBColor；消费call 0x8f1dbe。
+//
+// 0x8f1000 / scrollbar / call 0x8f1dd0
+// 对象+1080 -> Btn2DisableBColor；消费call 0x8f1ddf。
+//
+// 0x8f9490 / listbox / call 0x8f94cd
+// 对象+628 -> NorBColor；消费call 0x8f94dc。
+//
+// 0x8f9490 / listbox / call 0x8f94ee
+// 对象+668 -> InBColor；消费call 0x8f94fd。
+//
+// 0x8f9490 / listbox / call 0x8f950f
+// 对象+708 -> DownBColor；消费call 0x8f951e。
+//
+// 0x8f9490 / listbox / call 0x8f9530
+// 对象+748 -> DisBColor；消费call 0x8f9542。
+//
+// 0x901f30 / progress / call 0x901fab
+// 对象+608 -> TopColor；消费call 0x901fba。
+//
+// 0x905420 / slider / call 0x90547a
+// 对象+608 -> NormalBtnBColor；消费call 0x905489。
+//
+// 0x905420 / slider / call 0x90549b
+// 对象+648 -> MouseInBtnBColor；消费call 0x9054aa。
+//
+// 0x905420 / slider / call 0x9054bc
+// 对象+688 -> MouseDownBtnBColor；消费call 0x9054cb。
+//
+// 0x905420 / slider / call 0x9054dd
+// 对象+728 -> DisableBtnBColor；消费call 0x9054ef。
+//
+// 0x909330 / tree / call 0x9093db
+// 对象+848 -> LineColor；消费call 0x9093ea。
+//
+// 0x909330 / tree / call 0x90943b
+// 对象+856 -> PlusColor；消费call 0x90944a。
+//
+// 0x909330 / tree / call 0x90945c
+// 对象+860 -> PlusBColor；消费call 0x90946b。
+//
+// 0x90aaa0 / checkbox / call 0x90ab0e
+// 对象+596 -> CheckColor；消费call 0x90ab1d。
+//
+// 0x90e060 / label / call 0x90e16f
+// 对象+148 -> NormalCapFontFColor；消费call 0x90e17e。
+//
+// 0x90e060 / label / call 0x90e190
+// 对象+152 -> MouseInCapFontFColor；消费call 0x90e19f。
+//
+// 0x90e060 / label / call 0x90e1b1
+// 对象+156 -> MouseDownCapFontFColor；消费call 0x90e1c0。
+//
+// 0x90e060 / label / call 0x90e1d2
+// 对象+160 -> DisableCapFontFColor；消费call 0x90e1e1。
+//
+// 0x90e060 / label / call 0x90e1f6
+// 对象+132 -> NormalCapFontBColor；消费call 0x90e205。
+//
+// 0x90e060 / label / call 0x90e217
+// 对象+136 -> MouseInCapFontBColor；消费call 0x90e226。
+//
+// 0x90e060 / label / call 0x90e238
+// 对象+140 -> MouseDownCapFontBColor；消费call 0x90e247。
+//
+// 0x90e060 / label / call 0x90e259
+// 对象+144 -> DisableCapFontBColor；消费call 0x90e268。

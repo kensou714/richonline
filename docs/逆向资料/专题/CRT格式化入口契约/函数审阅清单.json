@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "scope": "7个本体/主体契约，2个局部分支；全部外部CRT、locale、浮点回调尚未闭合",
+  "functions": [
+    {"va": "0x9206d0", "status": "静态主体契约已审阅", "conclusion": "cdecl可变参数地址、栈流四字段、NULL断言继续、原输出计数返回与NUL收尾", "unknown": "报告器内部、实机INT3恢复、目标真实容量由业务另核", "evidence": ["证据/sprintf_raw.json", "01_sprintf入口与栈流对象.txt"]},
+    {"va": "0x932cd0", "status": "局部字符串流契约已审阅", "conclusion": "flag42h首段设20h并返回-1，不扩容字符串Buffer；文件分支保留导航", "unknown": "isatty/getbuf/write/lseek内部与文件运行状态未闭合", "evidence": ["证据/dependencies_raw.json", "03_字节写者与错误返回.txt"]},
+    {"va": "0x932fc0", "status": "局部格式解析与输出契约已审阅", "conclusion": "8状态解析、宽度/精度、窄%s扫描、%n写指针、整数位型及共同padding/计数链", "unknown": "64位算术、浮点回调、locale、分配器、异常实参和完整CRT语义未闭合", "evidence": ["证据/dependencies_raw.json", "证据/tables_raw.json", "02_output解析与分支边界.txt"]},
+    {"va": "0x934100", "status": "静态主体契约已审阅", "conclusion": "单BYTE写、INT_MAX流计数消耗、NULL_base计数模式、失败置累计-1", "unknown": "文件流flush内部未审；实机未调用", "evidence": ["证据/helpers_raw.json", "03_字节写者与错误返回.txt"]},
+    {"va": "0x9341d0", "status": "静态主体契约已审阅", "conclusion": "signed正次数重复字符输出，累计-1时停止", "unknown": "单字节写者文件分支依赖未闭合", "evidence": ["证据/helpers_raw.json", "03_字节写者与错误返回.txt"]},
+    {"va": "0x934220", "status": "静态主体契约已审阅", "conclusion": "固定signed正长度逐BYTE输出，不依NUL；NULL_base仅累计+=长度", "unknown": "源分配范围和文件分支未闭合", "evidence": ["证据/helpers_raw.json", "03_字节写者与错误返回.txt"]},
+    {"va": "0x9342b0", "status": "静态本体已审阅", "conclusion": "参数游标先加4，再取原槽DWORD到EAX，无个数检查", "unknown": "上游格式与实参数量合法性由调用者承担", "evidence": ["证据/helpers_raw.json"]},
+    {"va": "0x9342d0", "status": "静态本体已审阅", "conclusion": "参数游标先加8，再取原槽低DWORD到EAX、高DWORD到EDX", "unknown": "上游格式与实参数量合法性由调用者承担", "evidence": ["证据/helpers_raw.json"]},
+    {"va": "0x934300", "status": "静态本体已审阅", "conclusion": "短值仍消费4字节槽，只取原槽WORD到AX", "unknown": "AX之外高位非本体返回保证，调用者按WORD消费", "evidence": ["证据/helpers_raw.json"]}
+  ]
+}

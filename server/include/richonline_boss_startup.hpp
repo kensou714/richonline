@@ -6,6 +6,7 @@
 #include "richonline_room_directory.hpp"
 
 #include <filesystem>
+#include <functional>
 
 namespace richnet {
 struct RichonlineBossWirePolicy {
@@ -25,6 +26,7 @@ struct RichonlineBossStartupInput {
     std::array<std::uint32_t, 32> profile_slots;
     std::array<std::int8_t, 10> building_skill_caps;
     RichonlineBossWirePolicy wire;
+    std::function<std::size_t(std::size_t)> spawn_random = {};
 };
 struct RichonlineBossStartup {
     RichonlineRoomSnapshot room;

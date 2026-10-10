@@ -55,6 +55,9 @@ struct RichonlineCombatWorld {
     // silently replace that card rule.
     std::function<std::vector<std::int16_t>(std::uint8_t,RichonlineCombatEffect,
         const RichonlineCombatSessionView&)> card_targets;
+    // Detonation uses the actor-centered server viewport, independently of
+    // placement eligibility. NEW sends no camera and no selected mine cell.
+    std::function<std::vector<std::int16_t>(std::uint8_t,const RichonlineCombatSessionView&)> detonation_roots;
     // Pure activation through shared card rules. The actor carries the same
     // per-game usage count and inventory that this prepared plan will commit.
     std::function<std::optional<RichonlineBossCards::PreparedConsumption>(
@@ -110,6 +113,8 @@ RichonlineCombatTurnPlan prepare_richonline_combat_human_card(const RichonlineCo
     std::uint16_t expected_calendar,const RichonlineBossCards::PreparedConsumption&);
 RichonlineCombatTurnPlan prepare_richonline_combat_mine_day(const RichonlineCombatSessionView&,
     const RichonlineCombatWorld&,std::uint64_t day,bool round_anchor);
+RichonlineCombatTurnPlan prepare_richonline_combat_detonate(const RichonlineCombatSessionView&,
+    const RichonlineCombatWorld&,std::uint8_t actor,const RichonlineBossCards::PreparedConsumption&);
 // Called only when the landing consumer will run the client's dynamic-NPC mine
 // animation. It mirrors state and produces no duplicate 4017.
 RichonlineCombatTurnPlan prepare_richonline_combat_stepped_mine(const RichonlineCombatSessionView&,

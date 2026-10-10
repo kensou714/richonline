@@ -119,7 +119,7 @@ RichonlineBossStartup build_richonline_boss_startup(const std::filesystem::path&
     const auto& package=find_richonline_map_package(stage.map_name,stage.category);
     std::array<RichonlineMapSpawnChoice,2> positions{};
     try {
-        positions=choose_richonline_map_spawns(richonline_road_topology(map),package.resource_rules.spawn_policy);
+        positions=choose_richonline_map_spawns(richonline_road_topology(map),package.resource_rules.spawn_policy,input.spawn_random);
     } catch(const CodecError& error) {
         if(std::string_view(error.what())=="richonline_map_rules_spawn_graph_disconnected")
             throw CodecError("richonline_boss_spawn_graph_disconnected");

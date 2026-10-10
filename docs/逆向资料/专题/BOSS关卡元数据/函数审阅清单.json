@@ -1,0 +1,41 @@
+{
+  "scope": "TeachMode 关卡元数据；目录名沿用 BOSS 候选任务名",
+  "pe_sha256": "a23410e79637e312c932f861176d8d81cd1fd5d222a286f279feccdece6263c2",
+  "functions": [
+    {
+      "va": "0x8103b0",
+      "end_va": "0x810cdb",
+      "status": "完整函数静态审阅",
+      "fact": "启动链传入 Data\\TeachMode.kpd；双遍 MAP 扫描，按 368 字节记录与 indx 写关卡字段，成功入口末尾返回 1。",
+      "inference": "当前资源六项 indx 连续且 firstPropNum 不超过 1；在 N 初值为零且扫描稳定时写入落在分配范围。",
+      "unknown": "依赖助手、N 初值、异常配置和实际运行结果未完整审阅。",
+      "evidence": ["证据/boss_metadata_raw.json#/functions/1", "证据/teachmode_offline_validation.json"]
+    },
+    {
+      "va": "0x810360",
+      "end_va": "0x8103ad",
+      "status": "完整函数静态审阅",
+      "fact": "this+4 非空时 delete[] 并清零指针。",
+      "inference": "是同形记录数组的释放路径；其全部所有者沿调用链尚未恢复。",
+      "unknown": "未清零 this+0；重复释放前后外层对象行为未知。",
+      "evidence": ["证据/boss_metadata_raw.json#/functions/0"]
+    },
+    {
+      "va": "0x810d20",
+      "end_va": "0x810d91",
+      "status": "完整函数静态审阅",
+      "fact": "以 368 字节步长顺序 strcmp 记录 +4 的 mapName；返回命中序号，否则 -1。",
+      "inference": "当前资源连续 indx 使序号与 indx 值一致，但函数本身没有读取记录 +0。",
+      "unknown": "调用者如何处理 -1 或畸形 N/R 未纳入本篇。",
+      "evidence": ["证据/boss_metadata_raw.json#/functions/2"]
+    },
+    {
+      "va": "0x623ee0",
+      "status": "既有原证引用，不计本专题新增函数覆盖",
+      "fact": "0x623FFF 以 Data\\TeachMode.kpd 调 0x609992；磁盘 E9 跳板指向 0x8103B0。",
+      "inference": "该入口将目标函数归入 TeachMode 资源加载链。",
+      "unknown": "其余启动函数职责沿用既有专题。",
+      "evidence": ["../神明附身与元数据/证据/metadata.json#/functions/0", "证据/teachmode_offline_validation.json#/startup_call"]
+    }
+  ]
+}
