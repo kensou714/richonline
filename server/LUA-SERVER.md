@@ -113,3 +113,5 @@ Lua 准备事务成功返回前不改权威状态；原生兼容调用可能已�
 # 2026-10-11 宠物放置占格
 
 `map.cell.placement_occupied`统一角色和宠物当前确知格；`core.ground.occupied`供单格及范围陷阱调用。旧EXE无字段时回退原角色占格。C++ `ground.prepare`/`prepare_batch`再次验证，禁止地面计划与位置/移动计划混合提交。宠物同步与文字协议属于C++通信边界，未将不可观测动画时钟下放为Lua猜测。
+
+定时炸弹1045已使用 `combat.prepare_timed_bomb`：Lua校验目标并构造40BE，C++准备原始状态资格、倒计时、归属与库存事务。与攻击卡共用响应完整性校验及延迟提交，旧原生入口复用同一准备路径。证据见 `evidence/normal-cards/lua-timed-bomb-card.md`。

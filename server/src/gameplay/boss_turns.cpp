@@ -1551,6 +1551,25 @@ struct Turns {
                     script_consumption->remaining_inventory};
                 return LuaValue{};
             }},
+            {"combat.prepare_timed_bomb",[&](const LuaValue& args) {
+                require_local_controls();
+                if(called || database_called || !script_consumption || script_attack || !rules.combat ||
+                    !rules.timed_bombs || script_consumption->card_id!=1045 ||
+                    phase!=Phase::roll || actor!=init.local_slot || !active[actor])
+                    throw CodecError("lua_timed_bomb_prepare_out_of_scope");
+                const auto request=decode_richonline_timed_bomb110(plain);
+                const auto& target=args.at("target");
+                if(!target.is_number_integer() || target!=request.target_actor)
+                    throw CodecError("lua_timed_bomb_target_mismatch");
+                const auto context=timed_context(init.participants[actor].position);
+                auto refs=combat_refs();
+                auto prepared=rules.combat->prepare_timed_bomb_card(refs,actor,request,active_counter,
+                    *rules.timed_bombs->resources,context.raw,*script_consumption,rules.timed_bombs->response_opaque7);
+                script_attack=ScriptAttack{std::move(prepared),actor,active_counter,turn_sequence,
+                    script_consumption->remaining_inventory};
+                // +7来自房间协议配置，不能照搬请求未使用的尾字节。计时器由核心资源规则负责。
+                return LuaValue{{"response_opaque7",rules.timed_bombs->response_opaque7}};
+            }},
             {"hibernate.snapshot",[&](const LuaValue&) {
                 if(called || database_called || !script_consumption || script_consumption->card_id!=506 ||
                     plain.size()!=6 || read_le(plain.first(2))!=164 || script_hibernate_snapshot)

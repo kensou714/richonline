@@ -228,6 +228,17 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::stepped_mine(std::span<cons
     const auto before=snapshot(refs);
     return apply(refs,before,prepare_richonline_combat_stepped_mine(before.combat,world_,root,notify_client));
 }
+RichonlineCombatBridge::PreparedHumanAttack RichonlineCombatBridge::prepare_timed_bomb_card(
+    std::span<const RichonlineCombatActorRef> refs,std::uint8_t actor,
+    const RichonlineTimedBombRequest110& request,std::uint16_t calendar,
+    const RichonlineTimedBombRules& rules,const RichonlineTimedBombEligibility& raw,
+    const RichonlineBossCards::PreparedConsumption& consumption,std::uint8_t opaque) const {
+    if(actor!=0) throw CodecError("richonline_timed_bomb_bridge_inventory_actor_invalid");
+    auto before=snapshot(refs);
+    auto plan=prepare_richonline_timed_bomb_card(before.combat,world_,actor,request,calendar,rules,raw,consumption,opaque);
+    return PreparedHumanAttack{std::make_shared<PreparedHumanAttack::Data>(
+        PreparedHumanAttack::Data{this,std::move(before),std::move(plan),false})};
+}
 RichonlineCombatBridgeResult RichonlineCombatBridge::timed_bomb_card(std::span<const RichonlineCombatActorRef> refs,
     std::uint8_t actor,const RichonlineTimedBombRequest110& request,std::uint16_t calendar,
     const RichonlineTimedBombRules& rules,const RichonlineTimedBombEligibility& raw,std::uint8_t opaque,

@@ -51,6 +51,10 @@ public:
     PreparedHumanAttack prepare_human_attack(std::span<const RichonlineCombatActorRef>,
         const RichonlineTargetCardRequest&,std::uint16_t expected_calendar,
         const RichonlineBossCards::PreparedConsumption&) const;
+    PreparedHumanAttack prepare_timed_bomb_card(std::span<const RichonlineCombatActorRef>,
+        std::uint8_t action_actor,const RichonlineTimedBombRequest110&,std::uint16_t expected_calendar,
+        const RichonlineTimedBombRules&,const RichonlineTimedBombEligibility&,
+        const RichonlineBossCards::PreparedConsumption&,std::uint8_t envelope_opaque7) const;
     RichonlineCombatBridgeResult commit_human_attack(std::span<const RichonlineCombatActorRef>,
         PreparedHumanAttack&,const std::function<void(const std::string&)>& log={});
     RichonlineCombatBridgeResult finish_round(std::span<const RichonlineCombatActorRef>,std::uint64_t day);
