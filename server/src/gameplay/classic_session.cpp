@@ -2465,7 +2465,7 @@ struct Session {
             if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
             if(opcode==142) return weapon_treaty(request);
             if(opcode==96 || opcode==97 || opcode==98 || opcode==99 || opcode==100 || opcode==101 || opcode==102 ||
-                opcode==119 || opcode==120 || opcode==134 || (opcode>=125 && opcode<=129))
+                opcode==119 || opcode==120 || opcode==123 || opcode==134 || (opcode>=125 && opcode<=129))
                 return property_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103 || (opcode>=137 && opcode<=140)) return immediate_move_card(request);

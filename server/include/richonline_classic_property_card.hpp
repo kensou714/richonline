@@ -4,7 +4,8 @@
 #include "lua_server.hpp"
 
 namespace richnet {
-// 经典购地/交换/开店/拆除/查封/涨价/天使/恶魔/建筑改造卡；97/98/99/101/125..129带目标地产WORD。
+// 经典购地/交换/开店/建屋/拆除/查封/涨价/天使/恶魔/建筑改造卡。
+// 97/98/99/101/125..129带目标地产WORD；123带规范后的建筑格WORD。
 class RichonlineClassicPropertyCardPlan final {
 public:
     const Bytes& response() const noexcept {return response_;}

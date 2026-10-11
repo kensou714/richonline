@@ -110,6 +110,22 @@ RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_op
     plan.after_[0].kind=1;plan.after_[0].level=1;
     return plan;
 }
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_house(
+    std::int16_t position) const {
+    if(pending_) throw CodecError("richonline_classic_house_choice_pending");
+    CardChange plan;plan.owner_=this;
+    // 655D60的7E4440已将鼠标位置规范为建筑格；不可再按道路property_ref重映射。
+    plan.before_={snapshot(position)};plan.after_=plan.before_;
+    const auto& before=plan.before_[0];
+    if(before.level>=5 || before.kind==1 || before.kind==8 || before.kind==9 || before.kind==10)
+        throw CodecError("richonline_classic_house_target_invalid");
+    // 634DA0经典分支：大型空地先写kind3，7E3F30加一级；不扣资金/许可证，
+    // 不改产权、价格、查封或涨价计时，也不套用BOSS场景的建筑能力上限。
+    auto& after=plan.after_[0];
+    if(after.sprite_type==12 && !after.level) after.kind=3;
+    ++after.level;
+    return plan;
+}
 RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_destruction(
     std::int16_t property,std::uint8_t levels) const {
     // 与新闻使用同一降级算法，但主动卡须有非保护且非零级建筑。
