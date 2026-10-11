@@ -66,6 +66,19 @@ public:
     // Hotel animation6 disables reporting before its delayed entry setter.
     void begin_hotel_relocation(std::uint8_t actor);
     void enter_hotel(std::uint8_t actor, std::int8_t days);
+    class PreparedHotelEntry final {
+    private:
+        PreparedHotelEntry()=default;
+        const RichonlineRawAuthority* owner_=nullptr;
+        std::uint8_t actor_=0;
+        std::int8_t days_=0;
+        RichonlineRawActorState before_{};
+        bool committed_=false;
+        friend class RichonlineRawAuthority;
+    };
+    PreparedHotelEntry prepare_hotel_entry(std::uint8_t actor,std::int8_t days) const;
+    bool matches_hotel_entry(const PreparedHotelEntry&) const noexcept;
+    bool commit_hotel_entry(PreparedHotelEntry&) noexcept;
     void exit_hotel(std::uint8_t actor);
     void enter_hospital(std::uint8_t actor, std::int8_t days);
     void exit_hospital(std::uint8_t actor);

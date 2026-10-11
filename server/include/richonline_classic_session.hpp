@@ -11,6 +11,7 @@
 #include "richonline_game_bank.hpp"
 #include "richonline_classic_news.hpp"
 #include "richonline_game_payment.hpp"
+#include "richonline_classic_hotel.hpp"
 
 namespace richnet {
 class RichonlineShopCatalog;
@@ -190,6 +191,13 @@ struct RichonlineClassicSessionRules {
     // 回调不得修改任何共享状态。0025不带点数，超时明确用4027(-1)取消而不掷假骰。
     std::function<std::int8_t(const RichonlineClassicTurnContext&,
         const RichonlineClassicPropertyState&)> trade_result;
+    struct HotelPolicy {
+        RichonlineClassicHotelRules resources;
+        std::function<std::int8_t(const RichonlineClassicTurnContext&,const RichonlineClassicPropertyState&)> result;
+        // 显式服务端排队策略，覆盖转盘/提示/入店动画；不是动画完成ACK。
+        std::chrono::milliseconds entry_delay{12000},turn_delay{1800},controlled_exit_delay{2000},exit_timeout{30000};
+    };
+    std::optional<HotelPolicy> hotel;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

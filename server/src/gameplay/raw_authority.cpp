@@ -77,6 +77,25 @@ void RichonlineRawAuthority::exit_hotel(std::uint8_t actor) {
     state.movement_reporting552 = false;
 }
 
+RichonlineRawAuthority::PreparedHotelEntry RichonlineRawAuthority::prepare_hotel_entry(
+    std::uint8_t target,std::int8_t days) const {
+    require_duration(days);
+    const auto& before=actor(target);
+    if(!timed_bomb_target(target).allowed()) throw CodecError("richonline_raw_hotel_target_unavailable");
+    PreparedHotelEntry plan;plan.owner_=this;plan.actor_=target;plan.days_=days;plan.before_=before;
+    return plan;
+}
+bool RichonlineRawAuthority::matches_hotel_entry(const PreparedHotelEntry& plan) const noexcept {
+    return plan.owner_==this && !plan.committed_ && plan.actor_<actor_count_ &&
+        initialized_[plan.actor_] && actors_[plan.actor_]==plan.before_;
+}
+bool RichonlineRawAuthority::commit_hotel_entry(PreparedHotelEntry& plan) noexcept {
+    if(!matches_hotel_entry(plan)) return false;
+    auto& state=actors_[plan.actor_];
+    state.hotel1493=plan.days_;state.movement_reporting552=false;
+    plan.committed_=true;return true;
+}
+
 void RichonlineRawAuthority::enter_hospital(std::uint8_t actor, std::int8_t days) {
     require_duration(days);
     auto& state = mutable_actor(actor);

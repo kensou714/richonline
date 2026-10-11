@@ -32,7 +32,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,feast_exit,lottery_draw,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,lottery,property,research,trade,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,feast_exit,lottery_draw,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,hotel_wait,hotel_exit,moving,bank,shop,lottery,property,research,trade,rent_transfer,event,junction,settling,closed };
 enum class Confinement { hospital,jail };
 struct Retired {
     std::uint8_t actor;
@@ -51,6 +51,10 @@ struct PendingTrade {
     RichonlineActorStatus owner_status;
     RichonlineRawActorState owner_raw;
     std::chrono::steady_clock::time_point deadline;
+};
+struct PreparedHotelEntry {
+    RichonlineClassicHotelVisit visit;
+    RichonlineRawAuthority::PreparedHotelEntry raw;
 };
 struct PreparedRetirement {
     RichonlineClassicProperty::Retirement property;
@@ -101,6 +105,13 @@ struct Session {
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_research;
     std::optional<PendingTrade> trade;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_trades;
+    std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_hotels;
+    std::vector<std::optional<RichonlineClassicHotelVisit>> hotel_visits;
+    std::optional<std::chrono::steady_clock::time_point> hotel_deadline;
+    Bytes hotel_wait_packet;
+    std::vector<bool> hotel_wait_sent;
+    std::chrono::milliseconds hotel_delay{0};
+    bool hotel_exit_roll_requested=false,hotel_exit_effects=false;
     std::vector<bool> disconnected;
     std::unique_ptr<RichonlineClassicTerminal> terminal;
     std::vector<Bytes> stock_opening;
@@ -127,6 +138,8 @@ struct Session {
          calendar(static_cast<std::uint16_t>(source.recipients.front().snapshot.calendar_counter)),
          disconnected(board.participants.size(),false) {
         const auto count=board.participants.size();
+        hotel_visits.resize(count);
+        hotel_wait_sent.resize(count,false);
         if(count<2 || count>4 || source.players.size()!=count || source.recipients.size()!=count ||
             actor>=count || dice.size()!=count || rules.opening_hands.size()!=count ||
             !rules.random || !rules.now || !rules.card_resources || !rules.resale || !rules.services ||
@@ -192,6 +205,15 @@ struct Session {
         if(rules.news) {
             if(!rules.news->select)
                 throw CodecError("richonline_classic_news_policy_invalid");
+        }
+        if(rules.hotel) {
+            const auto& policy=*rules.hotel;
+            if(!policy.result || policy.resources.stay_turns<1 || policy.entry_delay<std::chrono::milliseconds{3600} ||
+                policy.turn_delay<std::chrono::milliseconds{1800} || policy.controlled_exit_delay<std::chrono::milliseconds{900} ||
+                policy.exit_timeout<policy.controlled_exit_delay)
+                throw CodecError("richonline_classic_hotel_policy_invalid");
+            for(const auto delay:{policy.entry_delay,policy.turn_delay,policy.controlled_exit_delay,policy.exit_timeout})
+                if(delay>std::chrono::minutes{5}) throw CodecError("richonline_classic_hotel_policy_invalid");
         }
         if(rules.kidnap && (!rules.kidnap->return_position ||
             rules.kidnap->entry_delay<std::chrono::seconds{1} || rules.kidnap->entry_delay>std::chrono::seconds{30} ||
@@ -343,6 +365,10 @@ struct Session {
         if(retired.size()>64) retired.pop_front();
     }
     bool was_retired(std::uint8_t sender,View request) const {
+        if(request.size()>=2 && read_le(request.first(2))==0x26) {
+            const auto day=decode_richonline_classic_hotel_request(request);
+            if(std::ranges::find(retired_hotels,std::pair{sender,day})!=retired_hotels.end()) return true;
+        }
         if(request.size()>=2 && read_le(request.first(2))==0x25) {
             const auto day=decode_richonline_classic_trade_request(request);
             if(std::ranges::find(retired_trades,std::pair{sender,day})!=retired_trades.end()) return true;
@@ -393,6 +419,7 @@ struct Session {
         static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
         phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
+        hotel_deadline.reset();hotel_wait_packet.clear();hotel_exit_roll_requested=false;hotel_exit_effects=false;
         confinement_exit_roll_requested=false;
         calendar_roll_requested=false;
         // 7C0C50轮首先推进日期再递减查封/涨价；初始锚点只初始化日历，不进入递减块。
@@ -517,7 +544,7 @@ struct Session {
     }
     static bool reserved_event(std::uint16_t opcode) noexcept {
         return opcode==0x10 || opcode==0x11 || opcode==0x14 || opcode==0x15 || opcode==0x20 || opcode==0x21 ||
-            opcode==0x23 || opcode==0x24 || opcode==0x25 || opcode==0x27 || opcode==0x28 || opcode==0x29 || opcode==0x34 || opcode==0x76;
+            opcode==0x23 || opcode==0x24 || opcode==0x25 || opcode==0x26 || opcode==0x27 || opcode==0x28 || opcode==0x29 || opcode==0x34 || opcode==0x76;
     }
     std::vector<Bytes> turn_start_result(std::vector<Bytes> prefix,RichonlineLandingResult result) {
         if((result.progress!=RichonlineLandingProgress::complete && result.progress!=RichonlineLandingProgress::await_event) ||
@@ -547,6 +574,28 @@ struct Session {
                     " cancelled="+std::to_string(scan.cancelled)+" discarded_full="+std::to_string(scan.discarded_full));
         }
         phase=Phase::roll;pending_opcode.reset();
+        const auto hotel=raw->actor(actor).hotel1493;
+        if(!hotel || (*hotel>=0)!=hotel_visits[actor].has_value())
+            throw CodecError("richonline_classic_hotel_state_invalid");
+        if(*hotel>=0) {
+            if(!rules.hotel) throw CodecError("richonline_classic_hotel_policy_missing");
+            const auto& visit=*hotel_visits[actor];
+            const auto property=world.property->snapshot(visit.property);
+            if(board.participants[actor].position!=visit.inside)
+                throw CodecError("richonline_classic_hotel_position_stale");
+            // 7F7F60从备份道路格找地产：建筑归零或改成非饭店立即出店，不查产权/查封。
+            const bool exit=*hotel==0 || property.level==0 || property.kind!=4;
+            phase=exit ? Phase::hotel_exit : Phase::hotel_wait;
+            hotel_exit_roll_requested=false;
+            route={};route_cursor=0;movement.reset();
+            messages.push_back(encode_richonline_empty_turn420f(board.game_server_id));
+            arm_hotel_delay(messages.back(),exit ? (confinement_controlled() ? rules.hotel->controlled_exit_delay :
+                rules.hotel->exit_timeout) : rules.hotel->turn_delay);
+            if(rules.log) rules.log("richonline_classic_hotel_turn actor="+std::to_string(actor)+
+                " days="+std::to_string(*hotel)+" exiting="+std::to_string(exit)+
+                " property="+std::to_string(visit.property));
+            return messages;
+        }
         const auto hospital=raw->actor(actor).hospital1494;
         const auto jail=raw->actor(actor).jail1495;
         if(!hospital || !jail || (*hospital>=0 && *jail>=0))
@@ -609,6 +658,62 @@ struct Session {
     }
     bool confinement_controlled() const noexcept {
         return statuses[actor].possession==7 || statuses[actor].sleepwalking!=0;
+    }
+    std::optional<PreparedHotelEntry> prepare_hotel_entry() const {
+        if(!rules.hotel) throw CodecError("richonline_classic_hotel_policy_missing");
+        // 67F000/6712B0的type2只排除冰冻；免费、财神、梦游不会免除住店。
+        if(statuses[actor].frozen) return {};
+        if(hotel_visits[actor]) throw CodecError("richonline_classic_hotel_already_entered");
+        const auto road=board.participants[actor].position;
+        return PreparedHotelEntry{prepare_richonline_classic_hotel_visit(startup.topology,road,
+            startup.topology.cell(road).property_ref,rules.script),
+            raw->prepare_hotel_entry(actor,rules.hotel->resources.stay_turns)};
+    }
+    bool commit_hotel_entry(PreparedHotelEntry& plan) noexcept {
+        if(!raw->commit_hotel_entry(plan.raw)) return false;
+        hotel_visits[actor]=plan.visit;
+        statuses[actor].stay=0;
+        board.participants[actor].position=plan.visit.inside;
+        board.participants[actor].direction=plan.visit.heading;
+        return true;
+    }
+    void arm_hotel_delay(const Bytes& packet,std::chrono::milliseconds delay) {
+        hotel_wait_packet=packet;hotel_delay=delay;hotel_deadline.reset();
+        std::fill(hotel_wait_sent.begin(),hotel_wait_sent.end(),false);
+    }
+    std::vector<Bytes> hotel_payment_complete(std::vector<Bytes> messages) {
+        // 6043/type2结束后不再排phase6；6066入店动画无0011位置回报。
+        // 冰冻时无入店动画，同样不能私自补碰撞或地产附加效果。
+        collision_pending=false;pending_opcode.reset();phase=Phase::hotel_wait;
+        arm_hotel_delay(messages.front(),rules.hotel->entry_delay);
+        if(rules.log) rules.log("richonline_classic_hotel_paid actor="+std::to_string(actor)+
+            " entered="+std::to_string(hotel_visits[actor].has_value())+
+            " position="+std::to_string(board.participants[actor].position));
+        return messages;
+    }
+    std::vector<Bytes> hotel_exit_ready(std::vector<Bytes> messages) {
+        hotel_exit_effects=false;phase=Phase::roll;pending_opcode.reset();
+        if(std::exchange(hotel_exit_roll_requested,false)) append(messages,random_move({}));
+        return messages;
+    }
+    std::vector<Bytes> finish_hotel_exit() {
+        if(phase!=Phase::hotel_exit || !hotel_visits[actor] || !rules.hotel)
+            throw CodecError("richonline_classic_hotel_exit_invalid");
+        const auto visit=*hotel_visits[actor];
+        const auto hotel=raw->actor(actor).hotel1493;
+        const auto property=world.property->snapshot(visit.property);
+        if(!hotel || *hotel<0 || (*hotel!=0 && property.kind==4 && property.level>0) ||
+            board.participants[actor].position!=visit.inside)
+            throw CodecError("richonline_classic_hotel_exit_stale");
+        raw->exit_hotel(actor);
+        board.participants[actor].position=visit.road;
+        board.participants[actor].direction=static_cast<std::uint8_t>((visit.heading+2U)%4U);
+        hotel_visits[actor].reset();hotel_deadline.reset();hotel_wait_packet.clear();hotel_exit_effects=true;
+        if(rules.log) rules.log("richonline_classic_hotel_exit actor="+std::to_string(actor)+
+            " road="+std::to_string(visit.road)+" property="+std::to_string(visit.property));
+        // 630CC0恢复原道路，6084(4,0,0)只执行附加效果；完成后恢复同一玩家行动。
+        // 若附加效果要等事件，accept_result保留hotel_exit_effects直到该事件完成。
+        return property_effects({});
     }
     const RichonlineClassicConfinementPolicy& confinement_policy() const {
         if(confinement==Confinement::hospital && rules.hospital) return *rules.hospital;
@@ -709,6 +814,7 @@ struct Session {
         if(result.progress==RichonlineLandingProgress::await_event) {
             phase=Phase::event;pending_opcode=result.pending_opcode;return std::move(result.messages);
         }
+        if(hotel_exit_effects) return hotel_exit_ready(std::move(result.messages));
         return complete(std::move(result.messages));
     }
     RichonlineClassicPropertyEntry property_entry() const {
@@ -757,7 +863,7 @@ struct Session {
             throw CodecError("richonline_classic_rent_transfer_entry_stale");
         auto messages=std::vector<Bytes>{std::move(entry_packet)};
         // 贸易中心4027先暂停客户端队列3600ms，再显示UI27；给等待保留这段动画时间。
-        const auto delay=kind==RichonlineRentTransferKind::trade ? std::chrono::milliseconds{3600} :
+        const auto delay=kind!=RichonlineRentTransferKind::rent ? std::chrono::milliseconds{3600} :
             std::chrono::milliseconds{0};
         rent_transfer=PendingRentTransfer{std::move(state),property,board.participants[actor].position,sequence,
             rules.now()+rules.decision_timeout+delay};
@@ -778,6 +884,9 @@ struct Session {
             if(world.ledger->snapshot(slot)!=pending.state.funds[slot])
                 throw CodecError("richonline_classic_rent_transfer_funds_stale");
         auto plan=plan_richonline_rent_transfer(pending.state,choice,timed_out,rules.script);
+        const bool hotel=pending.state.kind==RichonlineRentTransferKind::hotel;
+        auto hotel_entry=hotel && (!plan.bankrupt || plan.payer!=actor) ? prepare_hotel_entry() :
+            std::optional<PreparedHotelEntry>{};
         auto messages=std::vector<Bytes>{std::move(plan.response)};
         std::optional<PreparedRetirement> retirement;
         if(plan.bankrupt) {
@@ -790,8 +899,10 @@ struct Session {
         if(!world.ledger->commit_sequence(plan.funds,[&]() {
             if(world.cards[actor]->inventory()!=pending.state.inventory ||
                 world.property->snapshot(pending.property.id)!=pending.property) return false;
+            if(hotel_entry && !raw->matches_hotel_entry(hotel_entry->raw)) return false;
             if(retirement && !commit_retirement(*retirement)) return false;
             if(retirement) retire_actor(plan.payer);
+            if(hotel_entry && !commit_hotel_entry(*hotel_entry)) std::terminate();
             world.cards[actor]->commit_inventory(plan.inventory);return true;
         })) throw CodecError("richonline_classic_rent_transfer_commit_stale");
         rent_transfer.reset();pending_opcode.reset();
@@ -803,6 +914,7 @@ struct Session {
             " sequence="+std::to_string(sequence));
         // 40C6(type0/1)排6080(2,5)，只进入附加效果，不再调用收费入口或补第二条4013。
         if(!active[actor]) {collision_pending=false;return advance(std::move(messages));}
+        if(hotel) return hotel_payment_complete(std::move(messages));
         return property_effects(std::move(messages));
     }
     PreparedRetirement prepare_bankruptcy(std::uint8_t bankrupt) const {
@@ -913,6 +1025,7 @@ struct Session {
     }
     std::vector<Bytes> property_payment(const RichonlineClassicPropertyState& property,
         const std::optional<RichonlineClassicTradeResult>& trade_result={}) {
+        const bool hotel=trade_result && property.kind==4;
         const auto suppressed=payment_suppressed(property);
         const auto owner=*property.owner;
         const auto possession=*statuses[actor].possession;
@@ -963,8 +1076,9 @@ struct Session {
         if(std::string_view(outcome)=="transfer_pending")
             return begin_rent_transfer(property,static_cast<std::uint32_t>(amount),inventory,payer,payee,
                 trade_result ? trade_result->message : stop(),trade_result ?
-                    RichonlineRentTransferKind::trade : RichonlineRentTransferKind::rent);
+                    (hotel ? RichonlineRentTransferKind::hotel : RichonlineRentTransferKind::trade) : RichonlineRentTransferKind::rent);
         const bool bankrupt=std::string_view(outcome)=="bankrupt";
+        auto hotel_entry=hotel && !bankrupt ? prepare_hotel_entry() : std::optional<PreparedHotelEntry>{};
         std::optional<PreparedRetirement> retirement;
         if(bankrupt) retirement=prepare_bankruptcy(actor);
         const auto charged=bankrupt ? payer.funds.cash+*payer.funds.deposit :
@@ -981,31 +1095,39 @@ struct Session {
             RichonlineGameFundsUpdate{owner,payee,payee_after}};
         if(!world.ledger->commit_batch(updates,[&]() {
             if(world.cards[actor]->inventory()!=inventory || world.property->snapshot(property.id)!=property) return false;
+            if(hotel_entry && !raw->matches_hotel_entry(hotel_entry->raw)) return false;
             if(retirement && !commit_retirement(*retirement)) return false;
             if(retirement) retire_actor(actor);
             if(free_card) world.cards[actor]->commit_inventory(free_card->remaining_inventory);
+            if(hotel_entry && !commit_hotel_entry(*hotel_entry)) std::terminate();
             return true;
         })) throw CodecError("richonline_classic_rent_commit_stale");
         if(bankrupt && std::ranges::count(active,std::uint8_t{1})==1)
             return finish_last_survivor(std::move(messages),actor);
         // 4013或4027已触发客户端6060/6061；只镜像账本/手牌，不发第二笔扣款或扣卡包。
-        if(rules.log) rules.log(std::string(trade_result ? "richonline_classic_trade_payment actor=" :
+        if(rules.log) rules.log(std::string(hotel ? "richonline_classic_hotel_payment actor=" :
+            trade_result ? "richonline_classic_trade_payment actor=" :
             "richonline_classic_rent actor=")+std::to_string(actor)+
             " owner="+std::to_string(owner)+" property="+std::to_string(property.id)+
             " sequence="+std::to_string(sequence)+" charged="+std::to_string(charged)+" outcome="+outcome);
         if(bankrupt) {collision_pending=false;return advance(std::move(messages));}
+        if(hotel) return hotel_payment_complete(std::move(messages));
         return property_effects(std::move(messages));
     }
     std::vector<Bytes> begin_trade(const RichonlineClassicPropertyState& property) {
-        if(!rules.trade_result || trade || property.kind!=3 || property.sprite_type!=12)
+        const bool hotel=property.kind==4;
+        if((hotel ? !rules.hotel : !rules.trade_result) || trade ||
+            (property.kind!=3 && !hotel) || property.sprite_type!=12)
             throw CodecError("richonline_classic_trade_policy_missing");
         if(payment_suppressed(property)) return property_effects({stop()});
+        // 在客户端开转盘前核实入住几何/状态，不能先收费再发现没有可恢复的道路。
+        if(hotel) static_cast<void>(prepare_hotel_entry());
         // 地主的控制/收容状态阻止收费；付款人梦游或冰冻并不跳过他人的贸易中心。
         // 财神免付仍要经过转盘，不能在4013后直接换人让UI15悬空。
         auto packet=stop();
         trade=PendingTrade{property_entry(),property,statuses[*property.owner],raw->actor(*property.owner),
             rules.now()+rules.decision_timeout};
-        phase=Phase::trade;pending_opcode=0x25;
+        phase=Phase::trade;pending_opcode=hotel ? 0x26 : 0x25;
         return {std::move(packet)};
     }
     bool trade_matches() const {
@@ -1023,23 +1145,27 @@ struct Session {
         for(std::uint8_t slot=0;slot<active.size();++slot) {
             funds.push_back(world.ledger->snapshot(slot));cards.push_back(world.cards[slot]->inventory());
         }
-        const auto selected=timed_out ? std::int8_t{-1} : rules.trade_result(context(),trade->property);
+        const bool hotel=trade->property.kind==4;
+        const auto selected=timed_out ? std::int8_t{-1} : hotel ? rules.hotel->result(context(),trade->property) :
+            rules.trade_result(context(),trade->property);
         if((!timed_out && (selected<1 || selected>6)) || !trade_matches())
             throw CodecError("richonline_classic_trade_selection_invalid");
         for(std::uint8_t slot=0;slot<active.size();++slot)
             if(funds[slot]!=world.ledger->snapshot(slot) || cards[slot]!=world.cards[slot]->inventory())
                 throw CodecError("richonline_classic_trade_selection_mutated_state");
-        auto result=prepare_richonline_classic_trade(board.game_server_id,trade->property,
+        auto result=(hotel ? prepare_richonline_classic_hotel : prepare_richonline_classic_trade)(board.game_server_id,trade->property,
             monetary_scale(),selected,rules.script);
         const auto property=trade->property;
-        retired_trades.emplace_back(actor,calendar);
-        if(retired_trades.size()>64) retired_trades.pop_front();
+        auto& history=hotel ? retired_hotels : retired_trades;
+        history.emplace_back(actor,calendar);
+        if(history.size()>64) history.pop_front();
         pending_opcode.reset();
-        // 4027(-1)直接排6084；正常结果经6042付款后排同一附加效果。
-        // 后继包在4027之后排队，客户端自身的3600ms暂停同时约束其消费顺序。
+        // 4027/4028(-1)直接排6084。正常贸易经6042转附加效果，饭店经6043转6066入住。
+        // 后继包在结果之后排队，客户端自身的3600ms暂停同时约束其消费顺序。
         auto messages=timed_out ? property_effects({std::move(result.message)}) : property_payment(property,result);
         trade.reset();
-        if(rules.log) rules.log("richonline_classic_trade property="+std::to_string(property.id)+
+        if(rules.log) rules.log(std::string(hotel ? "richonline_classic_hotel property=" :
+            "richonline_classic_trade property=")+std::to_string(property.id)+
             " result="+std::to_string(selected)+" quote="+std::to_string(result.quote)+
             " timed_out="+std::to_string(timed_out));
         return messages;
@@ -1434,11 +1560,12 @@ struct Session {
         if(current.landing.property_ref>=0) {
             const auto property=world.property->snapshot(current.landing.property_ref);
             if(property.kind!=0 && property.kind!=1 && !(property.sprite_type==12 && property.kind==-1) &&
-                !(property.kind==2 && world.research) && !(property.kind==3 && rules.trade_result))
+                !(property.kind==2 && world.research) && !(property.kind==3 && rules.trade_result) &&
+                !(property.kind==4 && rules.hotel))
                 throw CodecError("richonline_classic_property_landing_unimplemented");
             if(property.owner && *property.owner!=actor && (property.kind==0 || property.kind==1))
                 return property_payment(property);
-            if(property.owner && *property.owner!=actor && property.kind==3) return begin_trade(property);
+            if(property.owner && *property.owner!=actor && (property.kind==3 || property.kind==4)) return begin_trade(property);
             // 大型空地、他人研究所不收住宅租金，仍保留附加效果及同格续行。
             if(property.owner && *property.owner!=actor) return property_effects({stop()});
             const bool purchase=!property.owner;
@@ -2230,7 +2357,7 @@ struct Session {
         // 旧行动者的迟到选号也可能在换人后抵达；当前待决仍优先，不能吞掉同日再次购买。
         if(opcode==0x29 && !(phase==Phase::lottery && sender==actor && pending_opcode==opcode) &&
             was_retired(sender,request)) return {};
-        if(opcode==0x25 && !(phase==Phase::trade && sender==actor && pending_opcode==opcode) &&
+        if((opcode==0x25 || opcode==0x26) && !(phase==Phase::trade && sender==actor && pending_opcode==opcode) &&
             was_retired(sender,request)) return {};
         if(sender!=actor) throw CodecError("richonline_classic_sender_not_active");
         if((phase==Phase::feast_exit || phase==Phase::lottery_draw) && opcode==0x10) {
@@ -2246,8 +2373,9 @@ struct Session {
             auto result=world.research->handle(sender,request,property_entry());remember(sender,request);
             return research_result(std::move(result));
         }
-        if(phase==Phase::trade && opcode==0x25) {
-            if(decode_richonline_classic_trade_request(request)!=calendar)
+        if(phase==Phase::trade && pending_opcode==opcode) {
+            if((opcode==0x26 ? decode_richonline_classic_hotel_request(request) :
+                decode_richonline_classic_trade_request(request))!=calendar)
                 throw CodecError("richonline_classic_trade_calendar_mismatch");
             auto messages=finish_trade(rules.now()>=trade->deadline);remember(sender,request);return messages;
         }
@@ -2257,11 +2385,21 @@ struct Session {
         }
         if(opcode==0x15) {
             if(request.size()!=4) throw CodecError("richonline_classic_confinement_ack_invalid");
+            if(phase==Phase::hotel_exit && !confinement_controlled()) {
+                if(!hotel_deadline || rules.now()>=*hotel_deadline)
+                    throw CodecError("richonline_classic_hotel_exit_timeout");
+                remember(sender,request);return finish_hotel_exit();
+            }
             if(phase==Phase::confinement_exit && !confinement_controlled()) {
                 remember(sender,request);return finish_confinement_exit();
             }
             if(was_retired(sender,request)) return {};
             throw CodecError("richonline_classic_confinement_ack_out_of_phase");
+        }
+        if((phase==Phase::hotel_exit || hotel_exit_effects) && confinement_controlled() && opcode==0x10) {
+            const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
+            if(roll.parameter!=0) throw CodecError("richonline_classic_roll_parameter_unsupported");
+            hotel_exit_roll_requested=true;remember(sender,request);return {};
         }
         if(phase==Phase::confinement_exit && confinement_controlled() && opcode==0x10) {
             const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
@@ -2357,6 +2495,14 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
+        if(phase==Phase::hotel_wait || phase==Phase::hotel_exit) {
+            if(!hotel_deadline || rules.now()<*hotel_deadline) return {};
+            if(phase==Phase::hotel_exit) {
+                if(!confinement_controlled()) throw CodecError("richonline_classic_hotel_exit_timeout");
+                return finish_hotel_exit();
+            }
+            hotel_deadline.reset();hotel_wait_packet.clear();return advance({});
+        }
         if(phase==Phase::trade) {
             if(!trade) throw CodecError("richonline_classic_trade_pending_missing");
             if(rules.now()>=trade->deadline) return finish_trade(true);
@@ -2422,6 +2568,13 @@ struct Session {
     }
     void sent(std::uint8_t sender,View packet) {
         if(terminal) terminal->sent(sender,packet);
+        if((phase==Phase::hotel_wait || phase==Phase::hotel_exit) && std::ranges::equal(packet,hotel_wait_packet)) {
+            if(sender>=hotel_wait_sent.size()) throw CodecError("richonline_hotel_delivery_actor_invalid");
+            hotel_wait_sent[sender]=true;
+            // 先等全员收到入店/回合消息再计时，不把网络传输时间扣到动画/离店确认期限里。
+            if(!hotel_deadline && std::ranges::all_of(hotel_wait_sent,[](bool value){return value;}))
+                hotel_deadline=rules.now()+hotel_delay;
+        }
         if(phase!=Phase::lottery_draw || !std::ranges::equal(packet,lottery_draw_packet)) return;
         if(sender>=lottery_draw_sent.size()) throw CodecError("richonline_lottery_delivery_actor_invalid");
         lottery_draw_sent[sender]=true;
@@ -2433,6 +2586,7 @@ struct Session {
         disconnected[sender]=true;
         if(!terminal || !terminal->committed())phase=Phase::closed;
         movement.reset();rent_transfer.reset();trade.reset();kidnap_deadline.reset();confinement_deadline.reset();
+        hotel_deadline.reset();hotel_wait_packet.clear();hotel_visits.clear();hotel_exit_effects=false;hotel_exit_roll_requested=false;
         feast_exits.clear();calendar_roll_requested=false;
         lottery_draw_deadline.reset();lottery_draw_packet.clear();
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}

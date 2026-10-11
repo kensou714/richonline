@@ -17,7 +17,8 @@ RichonlineRentTransferPlan plan_richonline_rent_transfer(const RichonlineRentTra
     const RichonlineRentTransferChoice& choice,bool timed_out,std::shared_ptr<LuaServer> script) {
     constexpr auto maximum=static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max());
     const auto count=state.funds.size();
-    if((state.kind!=RichonlineRentTransferKind::rent && state.kind!=RichonlineRentTransferKind::trade) ||
+    if((state.kind!=RichonlineRentTransferKind::rent && state.kind!=RichonlineRentTransferKind::trade &&
+        state.kind!=RichonlineRentTransferKind::hotel) ||
         count<2 || count>4 || state.eligible.size()!=count || state.original_payer>=count ||
         state.recipient>=count || state.recipient==state.original_payer || state.amount<10000 ||
         state.amount>maximum || state.card_slot<0 || state.card_slot>=8 || choice.calendar!=state.calendar)

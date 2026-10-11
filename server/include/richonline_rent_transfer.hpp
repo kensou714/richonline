@@ -12,8 +12,8 @@ struct RichonlineRentTransferChoice {
     std::uint8_t unassigned_padding;
 };
 RichonlineRentTransferChoice decode_richonline_rent_transfer_choice(View);
-enum class RichonlineRentTransferKind { rent, trade };
-// 6712B0的type0租金/type1贸易中心共用资金与续行；不混用type2饭店或type3入狱。
+enum class RichonlineRentTransferKind { rent, trade, hotel };
+// type0/1/2共用资金提交，type2后续由会话入住；不混用type3陷害入狱。
 struct RichonlineRentTransferState {
     std::uint16_t game_id,calendar;
     std::uint8_t original_payer,recipient;

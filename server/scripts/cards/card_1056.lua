@@ -1,5 +1,5 @@
 -- 嫁祸卡（资源编号 1056）。本文件是该卡的独立业务入口。
--- 本卡没有主动使用请求；租金/type1贸易中心被动触发后，用0076/40C6完成一次选人。
+-- 租金/type1贸易中心/type2饭店被动触发后，用0076/40C6完成一次选人；饭店仍由原玩家入住。
 -- 核心持有待决快照，校验资格，并把库存和两步资金变更一起提交。
 -- reward_enabled 只控制随机赠卡；还必须通过资源 enable、CARD 类型及地图允许列表。
 local M = { id = 1056, name = "嫁祸卡", opcode = nil, reward_enabled = false, implementation = "native_compatibility" }
