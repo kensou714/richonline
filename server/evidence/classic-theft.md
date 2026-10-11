@@ -26,3 +26,12 @@
 ## 验证边界
 
 只执行源码静态复核、原客户端字节核验、Release及Lua语法编译。不新增或运行测试，不启动本机服务或客户端；实际多人抢夺动画、满包与防盗表现未进行实机验收。固定快照构建与发布回执在完成后追加。
+
+## 发布回执
+
+- 源码提交 `cf3c8389716d840a42ae22cebd42eb4e59308265`、tree `15ecf0dc2e9fd49dba32754f51d6876ebee80a3a` 已推送GitHub。后续仅文档回执提交不改变线上二进制来源。
+- 固定快照Release和172份Lua语法编译通过，未运行测试。发布包207文件，EXE SHA256 `FB051BFE37EEC94592C147CF0C2AE06B7FBEAC4FB1EEC110EBAF8E6A3804F4A3`，ZIP SHA256 `4CB28EF938CD4D32F69E0F317877DA036A990A98562298A4DBC5634DE1A835D9`。
+- 线上release `cf3c8389716d`，实际PID6968、instance `6968-114287671183500`；Win32_Process与运行计划任务均指向 `D:\richonline\releases\cf3c8389716d\RichOnline.Server.exe`。
+- 继续使用 `D:\richonline\shared\data`；发布前备份 `backups\accounts-1791743961225715.sqlite3`，部署备份 `D:\richonline\backups\20261011183921-cf3c8389716d`。旧实例通过ExpectedInstance正常停止，没有覆盖数据库。
+- 六项监听Ready，18600/18602/18604/18605/18606/18680公网TCP成功；两份大厅列表HTTP200，CP950解码及三个103.156.25.81:18600频道核对成功。商城日期兼容及BOSS全地图测试配置保留。
+- 本机EXE同哈希，172份脚本逐项匹配manifest，本机未启动。生产经典模式仍未开放；该上线回执不等同于多人抢夺的实机验收。
