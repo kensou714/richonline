@@ -71,3 +71,22 @@ raw权威存在时必须已知scripted_event83830且为-1，否则不猜测为�
 这是通信时点与准入修复，没有新增奖励业务，固定券仍使用既有Lua策略；
 不改研究、轮首伤害等其他阶段的顺序。经典模式完整日历、跨2034年规则仍待完成。
 本次验证范围为静态审阅、固定源码Release构建和Lua语法编译，发布结果另行记录。
+
+### 轮首修复发布结果
+
+- 源码`66d8f91de22650739ade8b34200bd58a7717e7d4`，tree
+  `d872251ee3af35351b05bae35ab58540a815b538`，已推送GitHub main。
+- 固定源码Release构建与168份Lua语法编译通过，未新增或运行测试。
+- 发布前查询到0个认证会话；安装器先在线备份，再带ExpectedInstance正常停止旧实例。
+  数据库备份`D:\richonline\shared\data\backups\accounts-1791732683177041.sqlite3`。
+- 线上release`66d8f91de226`，PID1872，instance`1872-103009622869300`。
+  实际进程、计划任务均指向`D:\richonline\releases\66d8f91de226\RichOnline.Server.exe`。
+- 线上与本机EXE SHA256均为
+  `7E24D5FBC35CB5725B7B803BC7CBB78BF012FD3EDCFFA969ED6F08C58CB4B8F5`；
+  本机168份Lua与发布包逐文件一致，本机未启动。
+- 保留线上`D:\richonline\shared\data`及商城日期兼容、BOSS全部地图测试配置。
+  六监听ready，18600/18602/18604/18605/18606/18680公网TCP可达，两份服务器列表HTTP200。
+- 收据`server/build-goal-resume/release-66d8f91de226-receipt.json`及同代
+  verified/process/bootstrap-after文件。此发布记录另行提交，不改变二进制源码身份。
+
+上述是编译、部署和连通性核验，尚无节日实机验收；金豆卡线上修复也仍待用户实机反馈。
