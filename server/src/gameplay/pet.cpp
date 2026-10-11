@@ -30,9 +30,4 @@ void follow_richonline_pet_step(RichonlinePetState& pet,std::int16_t previous_ow
     // 移动确认只有主人落格；不能根据服务器墙钟猜测独立动画已追上。
     pet.known_display_position.reset();
 }
-Bytes richonline_pet_stop_sync(std::uint16_t game,std::uint8_t heading) {
-    if(heading>3) throw CodecError("richonline_pet_heading_invalid");
-    Bytes message;append_le(message,0x402e,2);append_le(message,game,2);message.push_back(heading);
-    return message;
-}
 }

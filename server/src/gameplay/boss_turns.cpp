@@ -179,7 +179,10 @@ struct Turns {
         if(!pets[slot].equipped || !placement_present(slot)) return {};
         const auto& raw=rules.raw_authority->actor(slot);
         if(!raw.hotel1493) throw CodecError("richonline_pet_placement_state_unknown");
-        return *raw.hotel1493==-1 ? pets[slot].known_display_position : std::nullopt;
+        if(*raw.hotel1493!=-1) return {};
+        if(pets[slot].follow_target<0) throw CodecError("richonline_pet_follow_target_unknown");
+        // 用户明确接受逻辑跟随格占用；不把它标成客户端已确认的动画格。
+        return pets[slot].follow_target;
     }
     std::vector<std::int16_t> placement_reservations() const {
         std::vector<std::int16_t> reserved;
@@ -198,13 +201,6 @@ struct Turns {
     void reset_pet(std::uint8_t slot) {
         const auto& person=init.participants[slot];
         reset_richonline_pet(pets[slot],topology,person.position,person.direction);
-    }
-    std::vector<Bytes> sync_stopped_pet() {
-        if(!pets[actor].equipped) return {};
-        // 合法0011/0012/0028提交后、下一4010之前调用；原客户端附带幽灵转向提示。
-        auto message=richonline_pet_stop_sync(init.game_server_id,init.participants[actor].direction);
-        reset_pet(actor);
-        return {std::move(message)};
     }
     void commit_route_positions(std::size_t end) {
         // 路线已在调用前验证；每格镜像 actor536，途中过61传送口先按出口复位。
@@ -3097,10 +3093,7 @@ struct Turns {
             if(progress) static_cast<void>(commit_timed_progress(*progress));
             else if(ground_progress) commit_ground_progress(*ground_progress,*checkpoint);
             else commit_route_positions(*checkpoint);
-            auto messages=sync_stopped_pet();
-            auto bank=open_bank(request.position,request.calendar_counter,RichonlineGameBankVisit::passing,checkpoint);
-            messages.insert(messages.end(),std::make_move_iterator(bank.begin()),std::make_move_iterator(bank.end()));
-            return messages;
+            return open_bank(request.position,request.calendar_counter,RichonlineGameBankVisit::passing,checkpoint);
         }
         case 50: {
             const auto request=parse_richonline_card_discard50(plain);
@@ -3458,7 +3451,7 @@ struct Turns {
                 landing_counter=request.calendar_counter;route={};
                 Bytes stop;append_le(stop,0x4013,2);append_le(stop,init.game_server_id,2);
                 append_le(stop,static_cast<std::uint16_t>(endpoint),2);
-                auto messages=sync_stopped_pet();messages.insert(messages.begin(),std::move(stop));
+                std::vector<Bytes> messages{std::move(stop)};
                 if(endpoint==*boss_chest) return finish_chest(std::move(messages),true);
                 return resolve({std::move(messages),RichonlineLandingProgress::complete});
             }
@@ -3473,7 +3466,7 @@ struct Turns {
             if(progress) static_cast<void>(commit_timed_progress(*progress));
             else if(ground_progress) commit_ground_progress(*ground_progress,route.landings.size()-1);
             else if(!stationary) commit_route_positions(route.landings.size()-1);
-            return ground_landing(landing,sync_stopped_pet());
+            return ground_landing(landing,{});
         }
         case 0x12: {
             const auto request=std::get<RichonlineMoveCountdown12>(parse_richonline_movement_request(plain));
@@ -3493,8 +3486,6 @@ struct Turns {
             // valid across the immediately following turns and is bounded.
             retired_bomb_stops.reserve(retired_bomb_stops.size()+1);
             auto result=commit_timed_progress(*progress,request);
-            auto sync=sync_stopped_pet();
-            result.packets.insert(result.packets.begin(),std::make_move_iterator(sync.begin()),std::make_move_iterator(sync.end()));
             retired_bomb_stops.push_back({request.calendar_counter,request.endpoint,turn_sequence});
             route={};checkpoint_cursor=0;authenticated_steps=0;
             if(!result.bankrupt_actors.empty())
