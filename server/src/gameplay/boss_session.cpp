@@ -205,6 +205,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     rules.research_turn_started=[property](std::uint8_t actor){property->advance_research(actor);};
     rules.cards=std::move(cards);
     rules.property=property;
+    auto equipment_terms=std::make_shared<std::array<RichonlineEquipmentCombatTerms,2>>();
     if(startup.human_profile_slots) {
         const auto equipment=(*startup.human_profile_slots)[2];
         rules.human_purchase_half_price=equipment>0 && equipment<=0x7fffffffU;
@@ -268,6 +269,15 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         const auto modifiers=std::make_shared<const RichonlineCombatModifierResources>(RichonlineCombatModifierResources::load(resources));
         rules.payment_equipment=modifiers->paid_dice_equipment(*startup.human_profile_slots);
         const std::array equipment{*startup.human_profile_slots,RichonlineCombatModifierResources::boss_equipment(stage)};
+        rules.refresh_equipment=[modifiers,equipment,equipment_terms,ledger] {
+            // NEW7C0C50 ->60795D/7FAF80对所有在场角色刷新；7CE420只读缓存。
+            // 先完整算好再替换，资源异常不能留下只刷新了一名角色的状态。
+            std::array<RichonlineEquipmentCombatTerms,2> refreshed;
+            for(std::uint8_t slot=0;slot<refreshed.size();++slot)
+                refreshed[slot]=modifiers->equipment(equipment[slot],ledger->snapshot(slot).funds.cash);
+            *equipment_terms=refreshed;
+        };
+        rules.refresh_equipment();
         rules.equipment_healing=[modifiers,equipment,script=rules.script](std::uint8_t actor,std::uint32_t cash) {
             if(actor>=equipment.size()) throw CodecError("richonline_equipment_healing_actor_invalid");
             const auto terms=modifiers->healing(equipment[actor],cash);
@@ -409,6 +419,10 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         if (!rules.cards || !rules.terminal || !startup.human_profile_slots || !package.combat)
             throw CodecError("richonline_boss_combat_session_capability_required");
         auto combat_policy=*policy.combat;
+        combat_policy.equipment_terms=[equipment_terms](std::uint8_t slot) {
+            if(slot>=equipment_terms->size()) throw CodecError("richonline_equipment_cached_actor_invalid");
+            return (*equipment_terms)[slot];
+        };
         const auto mine_landings=std::make_shared<const RichonlineMineLandingPolicy>(topology,3,
             startup.init.local_slot,rules.npc_landing_preflight);
         const auto configured_mines=combat_policy.mine_landing_supported;

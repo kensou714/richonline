@@ -578,6 +578,7 @@ struct Turns {
             " slot=12 harmful_possession_and_timed_bombs_cleared=1");
     }
     std::vector<Bytes> begin_turn() {
+        if(rules.refresh_equipment) rules.refresh_equipment();
         // 7C0C50在回合入口先刷新属性；光环6060尚未消费，回血取进入本回合时的现金。
         const auto equipment_heal=rules.equipment_healing && rules.ledger ?
             rules.equipment_healing(actor,rules.ledger->snapshot(actor).funds.cash):0U;

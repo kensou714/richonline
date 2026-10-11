@@ -124,8 +124,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
             if((equipment[1][slot]&0xfffU)!=0)
                 throw CodecError("richonline_combat_world_boss_equipment_extension_required");
     }
-    // Check all BOSS Prop IDs at construction; cash conditions are re-evaluated
-    // from actual ledger cash by resolve_terms for every attack and mine chain.
+    // 开局校验BOSS资源；生产会话另外提供与客户端回合入口一致的装备缓存。
     (void)modifiers->equipment(equipment[1],stage.boss.base_cash);
     RichonlineCombatWorldFactoryResult result;
     result.target_policy=policy.range.name;
@@ -186,13 +185,14 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
     };
     result.world.building=[property=std::move(property)](const RichonlineCombatBuildingView& before,
         RichonlineBossBlastBuildingEffect effect) { return property->combat_building_effect(before,effect); };
-    result.world.resolve_terms=[modifiers,equipment,extra=policy.extra_terms]
+    result.world.resolve_terms=[modifiers,equipment,extra=policy.extra_terms,cached=policy.equipment_terms]
         (const RichonlineCombatActorView& actor,const RichonlineCombatSessionView& state) {
         if(actor.slot>=equipment.size()) throw CodecError("richonline_combat_world_actor_invalid");
         auto terms=extra?extra(actor,state):richonline_possession_combat_terms(actor,state);
         if(terms.attack.building_multiplier!=1.0F || terms.defense.building_multiplier!=1.0F)
             throw CodecError("richonline_combat_world_building_term_duplicated");
-        const auto attributes=modifiers->equipment(equipment[actor.slot],actor.funds.funds.cash);
+        const auto attributes=cached ? cached(actor.slot) :
+            modifiers->equipment(equipment[actor.slot],actor.funds.funds.cash);
         terms.flat_attack=add(terms.flat_attack,attributes.flat_attack);
         terms.flat_defense=add(terms.flat_defense,attributes.flat_defense);
         terms.attack.equipment_percentage=add(terms.attack.equipment_percentage,attributes.attack_percentage);

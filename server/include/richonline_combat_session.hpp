@@ -90,8 +90,8 @@ struct RichonlineCombatWorld {
         RichonlineCombatModifiers attack,defense;
         std::int32_t flat_attack,flat_defense;
     };
-    // Optional pure adapter for cash-dependent equipment and active building
-    // buffs. Re-evaluated before each attack/chain using the current snapshot.
+    // 每次攻击重读状态及建筑倍率；现金条件装备由生产会话按回合缓存，
+    // 不能因同一轮已扣血而逐发改变客户端尚未刷新的装备属性。
     std::function<ResolvedTerms(const RichonlineCombatActorView&,
         const RichonlineCombatSessionView&)> resolve_terms;
     std::vector<std::int16_t> missile_base_roads;
