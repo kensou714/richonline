@@ -166,6 +166,9 @@ struct RichonlineClassicSessionRules {
     std::function<std::uint32_t(const RichonlineClassicSubscriptionContext&)> subscription_quantity;
     std::optional<RichonlineClassicNewsPolicy> news;
     std::shared_ptr<const RichonlineMotionCardRules> motion_cards;
+    // 梦游卡的自动1071防护先查主手牌；未命中时必须证明目标第二套卡槽无可用防护卡。
+    // 缺席/false表示状态未知，拒绝施放且不扣施放者卡片。
+    std::function<bool(std::uint8_t)> secondary_sleep_protection_absent;
     std::optional<RichonlineClassicKidnapPolicy> kidnap;
     // 407F/4087还须地图具有已验证的医院入口/出口；不复用绑架返回位置策略。
     std::optional<RichonlineClassicHospitalPolicy> hospital;

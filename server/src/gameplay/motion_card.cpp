@@ -54,7 +54,7 @@ RichonlineMotionCardRequest parse_richonline_motion_card(View plain) {
 RichonlineMotionCardPlan plan_richonline_motion_card(std::uint16_t game_id,
     const RichonlineMotionCardRequest& request,std::uint16_t counter,std::int8_t active_actor,
     const RichonlineMotionCardTarget& target,const RichonlineMotionCardRules& rules,
-    const RichonlineRoadTopology& topology,const RichonlineRouteChooser& chooser,const RichonlineBossCards& cards) {
+    const RichonlineRoadTopology& topology,const RichonlineRouteChooser& chooser,const RichonlinePlayerCards& cards) {
     static_cast<void>(chooser);
     const auto opcode=static_cast<std::uint16_t>(request.kind);
     if(!motion_opcode(opcode) || request.slot<0 || request.slot>=8 || request.bank!=0 ||

@@ -1,6 +1,6 @@
 #pragma once
 #include "richonline_actor_status.hpp"
-#include "richonline_boss_cards.hpp"
+#include "richonline_player_cards.hpp"
 
 namespace richnet {
 enum class RichonlineMotionCard : std::uint16_t {
@@ -30,7 +30,7 @@ struct RichonlineMotionCardTarget {
 enum class RichonlineMotionCardContinuation { resume_controls, await_same_position17 };
 struct RichonlineMotionCardPlan {
     Bytes response;
-    RichonlineBossCards::PreparedConsumption consumption;
+    RichonlinePlayerCards::PreparedConsumption consumption;
     RichonlineMotionCardTarget before,after;
     RichonlineMotionCardContinuation continuation;
     bool blocked_by_protection;
@@ -42,5 +42,5 @@ RichonlineMotionCardRequest parse_richonline_motion_card(View);
 RichonlineMotionCardPlan plan_richonline_motion_card(std::uint16_t game_id,
     const RichonlineMotionCardRequest&,std::uint16_t current_counter,std::int8_t active_actor,
     const RichonlineMotionCardTarget&,const RichonlineMotionCardRules&,
-    const RichonlineRoadTopology&,const RichonlineRouteChooser&,const RichonlineBossCards&);
+    const RichonlineRoadTopology&,const RichonlineRouteChooser&,const RichonlinePlayerCards&);
 }

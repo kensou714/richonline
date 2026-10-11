@@ -14,6 +14,8 @@
 #include "richonline_theft_card.hpp"
 #include "richonline_classic_interest.hpp"
 #include "richonline_fixed_step_card.hpp"
+#include "richonline_motion_card.hpp"
+#include "richonline_card_protection.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -681,7 +683,7 @@ struct Session {
         if(result.status_change) {
             if(result.status_change->expected!=statuses[actor])
                 throw CodecError("richonline_classic_continuation_status_stale");
-            // 冰冻、梦游及炸弹需要各自回合/途中阶段，未接入前不能只写状态再普通掷骰。
+            // 外部落点回调不得绕过各卡牌、NPC和受控状态的独立事务。
             if(result.status_change->updated!=statuses[actor])
                 throw CodecError("richonline_classic_status_continuation_unimplemented");
         }
@@ -1155,7 +1157,7 @@ struct Session {
         const auto plan=portal_plan(landing);
         if(!plan) return {};
         const bool skip=plan->continuation==RichonlinePortalContinuation::property_phase2;
-        // 受控/脚本跳过传送时，有地产仍进入原phase2；本会话尚未开放这些状态写入口。
+        // 受控/脚本跳过传送时，有地产仍进入原phase2，不能直接跳过租金及附加效果。
         if(skip && landing.property_ref>=0) return {};
         std::optional<std::size_t> chosen;
         if(plan->continuation==RichonlinePortalContinuation::random_teleport) {
@@ -1321,26 +1323,30 @@ struct Session {
         collision_pending=true;
         const auto current=context();
         if(auto messages=portal_landing(current.landing)) return std::move(*messages);
-        if(lottery && current.landing.static_type==4) {
+        // 7C54B0在静态格分派之前统一排除梦游/睡神/冰冻；仍须执行地产phase2与同格phase6。
+        const bool controlled=richonline_landing_controlled(statuses[actor]);
+        if(!controlled && lottery && current.landing.static_type==4) {
             if(current.landing.property_ref!=-1) throw CodecError("richonline_classic_lottery_property_unsupported");
             const auto scripted=raw->game().scripted_event83830;
             if(!scripted) throw CodecError("richonline_classic_lottery_game_unknown");
             auto packet=stop();
-            if(*scripted!=-1 || richonline_landing_controlled(statuses[actor]) || !lottery->can_buy(actor))
+            if(*scripted!=-1 || !lottery->can_buy(actor))
                 return property_effects({std::move(packet)});
             lottery->begin(lottery_entry());phase=Phase::lottery;pending_opcode=0x29;
             return {std::move(packet)};
         }
         // 先完成静态/地产业务，同格效果由complete统一在phase6执行，不能提前抢卡。
         if(auto result=services.landing(current)) return accept_result(std::move(*result));
-        if(auto messages=local_reward_landing(current.landing)) return std::move(*messages);
-        if(auto messages=shop_landing(current.landing)) return std::move(*messages);
-        if(current.landing.static_type==1 && rules.news) return money_news(current);
-        if(current.landing.static_type==9) {
-            if(current.landing.property_ref!=-1)
-                throw CodecError("richonline_classic_bank_property_unimplemented");
-            auto messages=std::vector<Bytes>{stop()};
-            append(messages,open_bank(RichonlineGameBankVisit::landing));return messages;
+        if(!controlled) {
+            if(auto messages=local_reward_landing(current.landing)) return std::move(*messages);
+            if(auto messages=shop_landing(current.landing)) return std::move(*messages);
+            if(current.landing.static_type==1 && rules.news) return money_news(current);
+            if(current.landing.static_type==9) {
+                if(current.landing.property_ref!=-1)
+                    throw CodecError("richonline_classic_bank_property_unimplemented");
+                auto messages=std::vector<Bytes>{stop()};
+                append(messages,open_bank(RichonlineGameBankVisit::landing));return messages;
+            }
         }
         if(current.landing.property_ref>=0) {
             const auto property=world.property->snapshot(current.landing.property_ref);
@@ -1361,7 +1367,7 @@ struct Session {
             }
             std::uint32_t cost=purchase ? property.price : property.sprite_type==11 ? 500U : 1500U;
             if(entry.land_equipment>0) cost/=2;
-            const bool eligible=purchase || (property.kind!=1 && property.level<5);
+            const bool eligible=!controlled && (purchase || (property.kind!=1 && property.level<5));
             if(eligible && world.ledger->snapshot(actor).funds.cash>cost) {
                 auto packet=stop();
                 pending_opcode=world.property->begin(purchase ? RichonlineClassicPropertyChoice::purchase :
@@ -1370,6 +1376,7 @@ struct Session {
             }
             return property_effects({stop()});
         }
+        if(controlled) return complete({stop()});
         if(auto prepared=world.cards[actor]->prepare_landing(current.landing)) {
             auto result=std::move(prepared->result);
             world.cards[actor]->commit_landing(*prepared);
@@ -1426,7 +1433,8 @@ struct Session {
         }
         const auto& person=board.participants[actor];
         auto proposed=build_richonline_route(startup.topology,
-            {person.position,person.direction,budget,{},!confinement_controlled(),static_cast<bool>(bank)},rules.random);
+            {person.position,person.direction,budget,{},!confinement_controlled(),
+                static_cast<bool>(bank) || confinement_controlled()},rules.random);
         // 最后一步仍停在入口，等0011全员汇合才传送；途中61由不可变路线处理。
         std::vector<RichonlineMoveDirection> directions;
         for(const auto direction:proposed.directions) directions.push_back(static_cast<RichonlineMoveDirection>(direction));
@@ -1437,7 +1445,7 @@ struct Session {
             throw CodecError("richonline_classic_movement_sequence_overflow");
         static_cast<void>(raw->actor(actor));
         std::optional<std::size_t> checkpoint;
-        if(bank) for(std::size_t index=0;index+1<proposed.landings.size();++index)
+        if(bank && !confinement_controlled()) for(std::size_t index=0;index+1<proposed.landings.size();++index)
             if(startup.topology.cell(proposed.landings[index]).static_type==9) {checkpoint=index;break;}
         const RichonlineSharedMovementWait wait{movement_sequence+1,calendar,
             proposed.landings.at(checkpoint.value_or(proposed.landings.size()-1)),actor,
@@ -1600,9 +1608,168 @@ struct Session {
         commit_move(std::move(*move));
         return messages;
     }
+    std::vector<Bytes> motion_card(View request) {
+        const auto opcode=read_le(request.first(2));
+        const auto source=world.cards[actor];
+        const auto source_actor=actor;
+        const auto source_calendar=calendar;
+        const auto source_sequence=sequence;
+        const auto source_movement=movement_sequence;
+        const auto source_person=board.participants[actor];
+        const auto source_status=statuses[actor];
+        const auto source_raw=raw->actor(actor);
+        const auto source_inventory=source->inventory();
+        std::optional<RichonlineMotionCardPlan> card;
+        std::optional<PreparedMove> next_move;
+        std::optional<RichonlineSharedMovementWait> stationary_wait;
+        RichonlineChanceInventory target_inventory_before{},target_inventory_after{};
+        RichonlineBoardParticipant target_person{};
+        RichonlineRawActorState target_raw{};
+        std::shared_ptr<RichonlinePlayerCards> target_owner;
+        std::uint8_t target=0;
+        std::vector<Bytes> messages;
+        try {
+            if(!rules.motion_cards || phase!=Phase::roll || !active[actor] ||
+                source->actor_slot()!=actor || source->game_id()!=board.game_server_id || source->game_mode()!=0 ||
+                richonline_landing_controlled(source_status) || source_status.stay ||
+                !raw->game().scripted_event83830 || *raw->game().scripted_event83830!=-1 ||
+                !source_raw.hotel1493 || !source_raw.hospital1494 || !source_raw.jail1495 ||
+                !source_raw.kidnapped1497 || *source_raw.hotel1493!=-1 ||
+                *source_raw.hospital1494!=-1 || *source_raw.jail1495!=-1 ||
+                *source_raw.kidnapped1497!=-1)
+                throw CodecError("richonline_classic_motion_card_unavailable");
+            const auto use=parse_richonline_motion_card(request);
+            target=static_cast<std::uint8_t>(use.target_actor);
+            if(target>=active.size()) throw CodecError("richonline_classic_motion_target_invalid");
+            const auto& recipient=world.cards[target];
+            if(!recipient || recipient->actor_slot()!=target || recipient->game_id()!=board.game_server_id ||
+                recipient->game_mode()!=0)
+                throw CodecError("richonline_classic_motion_inventory_owner_invalid");
+            target_owner=recipient;
+            target_person=board.participants[target];
+            target_raw=raw->actor(target);
+            target_inventory_before=recipient->inventory();
+            const bool target_available=target_raw.hotel1493 && target_raw.hospital1494 &&
+                target_raw.jail1495 && target_raw.kidnapped1497 && *target_raw.hotel1493==-1 &&
+                *target_raw.hospital1494==-1 && *target_raw.jail1495==-1 && *target_raw.kidnapped1497==-1;
+            const RichonlineMotionCardTarget before{use.target_actor,target_person.position,target_person.direction,
+                statuses[target],active[target]!=0,target_available};
+            card=plan_richonline_motion_card(board.game_server_id,use,calendar,
+                static_cast<std::int8_t>(actor),before,*rules.motion_cards,startup.topology,
+                rules.random,*source);
+            target_inventory_after=target==actor ? card->consumption.remaining_inventory : target_inventory_before;
+            if(use.kind==RichonlineMotionCard::sleep1042) {
+                // 自动防梦游先查主手牌；第二套不可写时只能接受准入层的无卡证明。
+                RichonlineProtectionInventory protection_inventory{target,target,target_inventory_after,
+                    std::nullopt,false};
+                const auto protection=resolve_richonline_sleep_protection(startup.map_name,
+                    *rules.card_resources,protection_inventory,card->before.status);
+                if(!protection.consumed && !card->before.status.protected_from_status &&
+                    rules.card_resources->automatic_card_eligible(startup.map_name,1071) &&
+                    (!rules.secondary_sleep_protection_absent ||
+                    !rules.secondary_sleep_protection_absent(target)))
+                    throw CodecError("richonline_classic_sleep_secondary_protection_unknown");
+                target_inventory_after=protection.after.main;
+                if(protection.consumed || card->before.status.protected_from_status) {
+                    card->after.status=card->before.status;
+                    card->blocked_by_protection=true;
+                }
+            }
+            if(rules.script) {
+                bool consumed=false,planned=false,invalid_call=false;
+                const LuaBindings bindings{
+                    {"card.prepare",[&](const LuaValue& args) {
+                        if(consumed || planned || args!=LuaValue{{"card",card->consumption.card_id}} ||
+                            !args.at("card").is_number_integer()) {
+                            invalid_call=true;
+                            throw CodecError("lua_classic_motion_consumption_invalid");
+                        }
+                        consumed=true;
+                        return LuaValue{{"slot",card->consumption.slot},{"bank",0}};
+                    }},
+                    {"motion.prepare",[&](const LuaValue& args) {
+                        if(!consumed || planned || args!=LuaValue{{"card",card->consumption.card_id},
+                            {"target",target}} || !args.at("card").is_number_integer() ||
+                            !args.at("target").is_number_integer()) {
+                            invalid_call=true;
+                            throw CodecError("lua_classic_motion_target_invalid");
+                        }
+                        planned=true;
+                        if(card->movement_steps) next_move=prepare_move(*card->movement_steps);
+                        auto movement=LuaValue::array(),recovery=LuaValue::array();
+                        if(next_move) movement.push_back(lua_bytes(View(next_move->packet)));
+                        if(card->recovery) recovery.push_back(lua_bytes(View(*card->recovery)));
+                        return LuaValue{{"response",lua_bytes(View(card->response))},
+                            {"movement",std::move(movement)},{"recovery",std::move(recovery)},
+                            {"continuation",card->continuation==RichonlineMotionCardContinuation::await_same_position17 ?
+                                "stationary" : "resume"}};
+                    }}
+                };
+                const auto result=rules.script->call("game.action",{{"payload",lua_bytes(request)},
+                    {"opcode",opcode},{"map",startup.map_name},{"actor",actor},
+                    {"calendar",calendar},{"game_id",board.game_server_id}},bindings);
+                messages.push_back(card->response);
+                if(next_move) messages.push_back(next_move->packet);
+                if(card->recovery) messages.push_back(*card->recovery);
+                if(invalid_call || !consumed || !planned ||
+                    card->movement_steps.has_value()!=next_move.has_value() || !result.is_array() ||
+                    result.size()!=messages.size())
+                    throw CodecError("lua_classic_motion_response_invalid");
+                for(std::size_t index=0;index<messages.size();++index)
+                    if(!result[index].is_string() || lua_bytes(result[index])!=messages[index])
+                        throw CodecError("lua_classic_motion_response_invalid");
+            } else {
+                if(card->movement_steps) next_move=prepare_move(*card->movement_steps);
+                messages.push_back(card->response);
+                if(next_move) messages.push_back(next_move->packet);
+                if(card->recovery) messages.push_back(*card->recovery);
+            }
+            if(card->continuation==RichonlineMotionCardContinuation::await_same_position17) {
+                if(movement_sequence==std::numeric_limits<std::uint64_t>::max())
+                    throw CodecError("richonline_classic_movement_sequence_overflow");
+                stationary_wait=RichonlineSharedMovementWait{movement_sequence+1,calendar,
+                    source_person.position,actor,0x11};
+            }
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_motion_card_refused actor="+std::to_string(actor)+
+                " opcode="+std::to_string(opcode)+" reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        if(phase!=Phase::roll || actor!=source_actor || calendar!=source_calendar ||
+            sequence!=source_sequence || movement_sequence!=source_movement || !active[actor] ||
+            !active[target] || world.cards[actor]!=source ||
+            source->inventory()!=source_inventory || world.cards[target]!=target_owner ||
+            target_owner->inventory()!=target_inventory_before ||
+            board.participants[actor].position!=source_person.position ||
+            board.participants[actor].direction!=source_person.direction ||
+            board.participants[target].position!=target_person.position ||
+            board.participants[target].direction!=target_person.direction ||
+            raw->actor(actor)!=source_raw || raw->actor(target)!=target_raw ||
+            statuses[actor]!=source_status || statuses[target]!=card->before.status)
+            throw CodecError("richonline_classic_motion_card_stale");
+        remember(actor,request);
+        if(target==actor) source->commit_inventory(target_inventory_after);
+        else {
+            source->commit_consumption(card->consumption);
+            world.cards[target]->commit_inventory(target_inventory_after);
+        }
+        statuses[target]=card->after.status;
+        board.participants[target].direction=card->after.heading;
+        if(next_move) commit_move(std::move(*next_move));
+        else if(stationary_wait) {
+            route={};route_cursor=0;
+            movement_sequence=stationary_wait->sequence;movement=*stationary_wait;
+            phase=Phase::stationary;
+        }
+        if(rules.log) rules.log("richonline_classic_motion_card actor="+std::to_string(actor)+
+            " target="+std::to_string(target)+" opcode="+std::to_string(opcode)+
+            " blocked="+std::to_string(card->blocked_by_protection)+
+            " moved="+std::to_string(next_move.has_value())+" sequence="+std::to_string(sequence));
+        return messages;
+    }
     std::optional<std::size_t> next_bank() const {
         // 最后一格使用0011和落点4013，只有尚未走完的中间格使用0028。
-        if(!bank) return {};
+        if(!bank || confinement_controlled()) return {};
         for(auto index=route_cursor;index+1<route.landings.size();++index)
             if(startup.topology.cell(route.landings[index]).static_type==9) return index;
         return {};
@@ -1860,6 +2027,8 @@ struct Session {
         }
         // 商店显示时Shift弃卡仍产生0032，独立于0031出售，不增加点券也不结束商店。
         if((phase==Phase::roll || phase==Phase::shop) && opcode==0x32) {
+            if(richonline_landing_controlled(statuses[actor]))
+                return {encode_richonline_dice_recovery400b(board.game_server_id)};
             const auto discard=parse_richonline_card_discard50(request);
             auto prepared=world.cards[actor]->prepare_discard(discard,static_cast<std::int8_t>(actor));
             auto messages=std::vector<Bytes>{std::move(prepared.confirmation4033)};
@@ -1877,10 +2046,13 @@ struct Session {
             return shop_result(std::move(result));
         }
         if(phase==Phase::roll) {
+            if(opcode!=0x10 && richonline_landing_controlled(statuses[actor]))
+                return {encode_richonline_dice_recovery400b(board.game_server_id)};
             if(opcode==22) return paid_move(request);
             if(opcode==116) return theft_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103 || (opcode>=137 && opcode<=140)) return immediate_move_card(request);
+            if((opcode>=104 && opcode<=107) || opcode==136 || opcode==141) return motion_card(request);
             if(opcode==0x10) {
                 const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
                 if(roll.parameter!=0) throw CodecError("richonline_classic_roll_parameter_unsupported");
