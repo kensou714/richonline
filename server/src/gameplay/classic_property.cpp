@@ -94,6 +94,22 @@ RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_sw
     }
     return plan;
 }
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_open_shop(
+    std::int16_t property) const {
+    if(pending_) throw CodecError("richonline_classic_open_shop_choice_pending");
+    CardChange plan;plan.owner_=this;
+    plan.before_={snapshot(property)};plan.after_=plan.before_;
+    const auto& before=plan.before_[0];
+    // 652F40先经7E4440排除保护地产，再要求有产权、sprite11、非零级且非商店。
+    // 没有要求属于施放者，也没有查封排除门；不能额外限制为自有或未查封住宅。
+    if(!before.owner || before.sprite_type!=11 || !before.level || before.kind==1 ||
+        before.kind==8 || before.kind==9 || before.kind==10)
+        throw CodecError("richonline_classic_open_shop_target_invalid");
+    // 40B3排6074解除、6076转换、6071恢复原产权。694E40同时写kind1和level1，
+    // 地价、街区与两个计时不变；小型地产不涉及经典研究所登记。
+    plan.after_[0].kind=1;plan.after_[0].level=1;
+    return plan;
+}
 RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_destruction(
     std::int16_t property,std::uint8_t levels) const {
     // 与新闻使用同一降级算法，但主动卡须有非保护且非零级建筑。

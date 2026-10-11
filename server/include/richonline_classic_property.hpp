@@ -85,6 +85,8 @@ public:
     // 购地只换产权；换地只换两端产权；换屋只换种类/等级，不换价格和街区。
     CardChange prepare_card_purchase(std::int16_t property,std::uint8_t actor) const;
     CardChange prepare_card_swap(std::int16_t source,std::int16_t target,bool buildings) const;
+    // 开店卡可指定他人小型地产；原建筑无论几级都改成1级商店，产权与地价不变。
+    CardChange prepare_card_open_shop(std::int16_t property) const;
     CardChange prepare_card_destruction(std::int16_t property,std::uint8_t levels) const;
     // 同街区普通地产表成员重设5天，不限所有权/等级；初始kind8/9/10不在此表。
     enum class StreetEffect { seal, price_rise };

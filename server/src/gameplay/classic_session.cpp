@@ -2169,7 +2169,7 @@ struct Session {
                 !before_raw.kidnapped1497 || *before_raw.kidnapped1497!=-1 ||
                 raw->game().scripted_event83830!=-1)
                 throw CodecError("richonline_classic_property_card_unavailable");
-            // P+152沿用开局装备原值；只有购地卡读取，其他四卡不额外依赖折扣来源。
+            // P+152沿用开局装备原值；只有购地卡读取，其余地产卡不依赖折扣来源。
             const auto land=read_le(request.first(2))==96 ? startup.players[actor].equipment[2] : 0;
             if(land>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max()))
                 throw CodecError("richonline_classic_land_equipment_invalid");
@@ -2464,7 +2464,7 @@ struct Session {
             if(opcode==116) return theft_card(request);
             if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
             if(opcode==142) return weapon_treaty(request);
-            if(opcode==96 || opcode==97 || opcode==98 || opcode==100 || opcode==101 || opcode==102 ||
+            if(opcode==96 || opcode==97 || opcode==98 || opcode==99 || opcode==100 || opcode==101 || opcode==102 ||
                 opcode==119 || opcode==120 || opcode==134 || (opcode>=125 && opcode<=129))
                 return property_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);

@@ -11,8 +11,8 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
     if(packet.size()<6) throw CodecError("richonline_classic_property_card_wire_invalid");
     const auto opcode=read_le(packet.first(2));
     const bool conversion=opcode>=125 && opcode<=129;
-    const bool has_target=opcode==97 || opcode==98 || opcode==101 || conversion;
-    if((opcode!=96 && opcode!=97 && opcode!=98 && opcode!=100 && opcode!=101 && opcode!=102 &&
+    const bool has_target=opcode==97 || opcode==98 || opcode==99 || opcode==101 || conversion;
+    if((opcode!=96 && opcode!=97 && opcode!=98 && opcode!=99 && opcode!=100 && opcode!=101 && opcode!=102 &&
             opcode!=119 && opcode!=120 && opcode!=134 && !conversion) ||
         packet.size()!=(has_target?8U:6U) || read_le(packet.subspan(2,2))!=calendar || packet[4]>=8 || packet[5]!=0)
         throw CodecError("richonline_classic_property_card_wire_invalid");
@@ -43,6 +43,9 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
         auto after=before.funds;after.cash-=price;
         plan.funds_=RichonlineGameFundsUpdate{actor,before,after};
         operation={{"operation","purchase"}};
+    } else if(opcode==99) {
+        plan.change_=property.prepare_card_open_shop(target);
+        operation={{"operation","open_shop"},{"property",target}};
     } else if(opcode==100 || opcode==119) {
         plan.change_=property.prepare_card_street(current_property,opcode==100 ?
             RichonlineClassicProperty::StreetEffect::seal : RichonlineClassicProperty::StreetEffect::price_rise);
@@ -103,7 +106,7 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
             }}
         };
         const auto response=script->call("game.action",{{"payload",lua_bytes(packet)},{"opcode",opcode},
-            {"map",std::string(cards.map_name())},{"actor",actor},{"calendar",calendar},
+            {"mode",0},{"map",std::string(cards.map_name())},{"actor",actor},{"calendar",calendar},
             {"game_id",cards.game_id()}},bindings);
         if(invalid || !consumed_call || !property_call || snapshot_call!=(opcode==96) || funds_call!=(opcode==96) ||
             !response.is_array() || response.size()!=1 || !response[0].is_string() || lua_bytes(response[0])!=plan.response_)
