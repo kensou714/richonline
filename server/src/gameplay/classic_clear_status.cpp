@@ -57,7 +57,7 @@ RichonlineClassicClearStatusPlan prepare_richonline_classic_clear_status(View pa
                 status_call=true;return LuaValue{};
             }},
             {"relations.clear_actor",[&](const LuaValue& args) {
-                // 与现有经典资金卡相同：关系保持开局全零；未来结盟接入必须扩展事务。
+                // 共享会话核验同一关系快照，在本计划提交后无异常地清除双向关系。
                 if(!status_call || relations_call || args!=LuaValue{{"target",target}} ||
                     !args.at("target").is_number_integer()) return reject();
                 relations_call=true;return LuaValue{};

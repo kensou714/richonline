@@ -21,6 +21,7 @@
 #include "richonline_classic_property_card.hpp"
 #include "richonline_classic_clear_status.hpp"
 #include "richonline_classic_relocation.hpp"
+#include "richonline_classic_alliance.hpp"
 #include "richonline_classic_trade.hpp"
 #include "richonline_classic_computer.hpp"
 #include "lua_server.hpp"
@@ -79,6 +80,7 @@ struct Session {
     RichonlineClassicServices services;
     RichonlineBoardInit board;
     std::vector<RichonlineActorStatus> statuses;
+    RichonlineClassicAlliances alliances{};
     std::vector<std::uint8_t> active;
     std::vector<std::uint8_t> dice;
     RichonlinePlayerOpeningHands opening_hands;
@@ -148,6 +150,8 @@ struct Session {
         hotel_visits.resize(count);
         hotel_wait_sent.resize(count,false);
         frozen_wait_sent.resize(count,false);
+        if(rules.alliance_days && (!*rules.alliance_days || *rules.alliance_days>127))
+            throw CodecError("richonline_classic_alliance_policy_invalid");
         if(rules.frozen_turn_delay<std::chrono::milliseconds{1} ||
             rules.frozen_turn_delay>std::chrono::minutes{5} ||
             (rules.hibernate && (!rules.hibernate->frozen_turns || rules.hibernate->frozen_turns>127)))
@@ -430,6 +434,10 @@ struct Session {
         ++sequence;calendar=static_cast<std::uint16_t>(calendar+1U);
         static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
+        // 7C0C50日期推进块→7C01C0→7F94A0：全体活动角色一起递减，初始日不减。
+        if(actor==round_anchor && completed_rounds)
+            for(std::uint8_t slot=0;slot<active.size();++slot) if(active[slot])
+                for(auto& days:alliances[slot]) if(static_cast<std::int8_t>(days)>0) --days;
         accepted_hibernate={};frozen_deadline.reset();frozen_wait_packet.clear();
         phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
         hotel_deadline.reset();hotel_wait_packet.clear();hotel_exit_roll_requested=false;hotel_exit_effects=false;
@@ -1036,7 +1044,7 @@ struct Session {
             do {round_anchor=static_cast<std::uint8_t>((round_anchor+1U)%active.size());} while(!active[round_anchor]);
         }
         // 7BE160不清手牌和票券。股票已在同一提交回调内回收，不按卖出给破产者存款。
-        // 当前会话尚无关系卡和建筑增益写入口。
+        clear_richonline_classic_alliances(alliances,bankrupt);
         // 7F9560仅清已实现的移动状态；原始住院/监狱等字段不借破产擅自重置。
         auto& state=statuses[bankrupt];
         state.one_step=state.six_steps=state.turtle=state.stay=state.sleepwalking=state.frozen=0;
@@ -1051,9 +1059,10 @@ struct Session {
             !owner_raw.kidnapped1497 || !owner_status.possession || !statuses[actor].possession)
             throw CodecError("richonline_classic_rent_state_unknown");
         // 7C94xx读取地主的状态，而1472/1480关系由付款者按地主索引读取。
-        // 关系卡尚未开放；查封读取落脚地产，涨价在报价内逐块处理，不排除其他查封地块的贡献。
+        // 同盟读取付款者关系；查封读取落脚地产，涨价在报价内逐块处理。
         // 7E4140的联排报价本身不检查查封，7C6640在租金入口检查目标D+4。
-        return property.sealed_days || owner_status.possession==7 || owner_status.sleepwalking || owner_status.frozen ||
+        return static_cast<std::int8_t>(alliances[actor][owner])>0 ||
+            property.sealed_days || owner_status.possession==7 || owner_status.sleepwalking || owner_status.frozen ||
             *owner_raw.hotel1493!=-1 || *owner_raw.hospital1494!=-1 ||
             *owner_raw.jail1495!=-1 || *owner_raw.kidnapped1497!=-1;
     }
@@ -1873,6 +1882,7 @@ struct Session {
         return messages;
     }
     std::vector<Bytes> motion_card(View request) {
+        const auto before_alliances=alliances;
         const auto opcode=read_le(request.first(2));
         const auto source=world.cards[actor];
         const auto source_actor=actor;
@@ -2009,7 +2019,7 @@ struct Session {
             board.participants[target].position!=target_person.position ||
             board.participants[target].direction!=target_person.direction ||
             raw->actor(actor)!=source_raw || raw->actor(target)!=target_raw ||
-            statuses[actor]!=source_status || statuses[target]!=card->before.status)
+            statuses[actor]!=source_status || statuses[target]!=card->before.status || alliances!=before_alliances)
             throw CodecError("richonline_classic_motion_card_stale");
         remember(actor,request);
         if(target==actor) source->commit_inventory(target_inventory_after);
@@ -2018,6 +2028,8 @@ struct Session {
             world.cards[target]->commit_inventory(target_inventory_after);
         }
         statuses[target]=card->after.status;
+        // 梦游40BB先解除双方正同盟，再检查免疫/清醒卡；抵挡也不能保留同盟。
+        if(opcode==107) break_richonline_classic_alliance(alliances,actor,target);
         board.participants[target].direction=card->after.heading;
         if(next_move) commit_move(std::move(*next_move));
         else if(stationary_wait) {
@@ -2208,7 +2220,42 @@ struct Session {
         // 经典宠物尚未装配；接入时须按7F7990同时准备各宠物跟随格，不能只写人物坐标。
         return messages;
     }
+    std::vector<Bytes> alliance_card(View request) {
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto before_actors=relocation_snapshot();
+        const auto owner=world.cards[actor];
+        std::optional<RichonlineClassicAlliancePlan> plan;
+        const auto available=[](const RichonlineRawActorState& state) {
+            return state.hotel1493==-1 && state.hospital1494==-1 && state.jail1495==-1 && state.kidnapped1497==-1;
+        };
+        try {
+            if(phase!=Phase::roll || !rules.alliance_days || !owner || !active[actor] ||
+                owner->actor_slot()!=actor || owner->game_id()!=board.game_server_id ||
+                richonline_landing_controlled(statuses[actor]) || statuses[actor].stay ||
+                !available(raw->actor(actor)) || raw->game().scripted_event83830!=-1 || movement ||
+                request.size()!=8 || request[6]>=active.size() || !active[request[6]] ||
+                !available(raw->actor(request[6])))
+                throw CodecError("richonline_classic_alliance_unavailable");
+            plan=prepare_richonline_classic_alliance(request,calendar,*rules.alliance_days,*owner,active,alliances,rules.script);
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_alliance_refused actor="+std::to_string(actor)+" reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        std::vector<Bytes> messages{plan->response()};
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            world.cards[actor]!=owner || relocation_snapshot()!=before_actors || movement || raw->game().scripted_event83830!=-1)
+            throw CodecError("richonline_classic_alliance_stale");
+        remember(actor,request);
+        if(!commit_richonline_classic_alliance(*owner,active,alliances,*plan))
+            throw CodecError("richonline_classic_alliance_commit_stale");
+        if(rules.log) rules.log("richonline_classic_alliance actor="+std::to_string(actor)+
+            " target="+std::to_string(request[6])+" days="+std::to_string(*rules.alliance_days));
+        return messages;
+    }
     std::vector<Bytes> clear_status_card(View request) {
+        const auto before_alliances=alliances;
         const auto before_actor=actor;
         const auto before_calendar=calendar;
         const auto before_sequence=sequence;
@@ -2241,11 +2288,12 @@ struct Session {
         if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
             world.cards[actor]!=owner || raw->actor(actor)!=before_raw || raw->actor(plan->target())!=target_raw ||
             board.participants[actor].position!=before_position || board.participants[actor].direction!=before_heading ||
-            raw->game().scripted_event83830!=-1)
+            raw->game().scripted_event83830!=-1 || alliances!=before_alliances)
             throw CodecError("richonline_classic_clear_status_stale");
         remember(actor,request);
         if(!commit_richonline_classic_clear_status(*owner,statuses,active,*plan))
             throw CodecError("richonline_classic_clear_status_commit_stale");
+        clear_richonline_classic_alliances(alliances,plan->target());
         if(rules.log) rules.log("richonline_classic_clear_status actor="+std::to_string(actor)+
             " target="+std::to_string(plan->target())+" sequence="+std::to_string(sequence));
         // 40D7本地解除状态、扣卡、6006恢复操作；无需ACK，不触发目标格或推进回合。
@@ -2264,8 +2312,7 @@ struct Session {
             auto& target=snapshot.actors[slot];
             target.present=active[slot];target.status=statuses[slot];
             target.inventory={slot,slot,owner->inventory(),std::nullopt,false};
-            // 经典结盟入口尚未开放，关系保持开局全零，不能读取另一局或BOSS的关系。
-            // 接入结盟时须将关系权威一并传入本快照及提交，而非继续使用此空关系前提。
+            target.relations1472=alliances[slot];
             if(!target.present) continue;
             const auto& state=raw->actor(slot);
             if(!state.hotel1493 || !state.hospital1494 || !state.jail1495 || !state.kidnapped1497)
@@ -2357,6 +2404,7 @@ struct Session {
         for(std::uint8_t slot=0;slot<active.size();++slot) {
             owners[slot]->commit_inventory(plan->after.actors[slot].inventory.main);
             statuses[slot]=plan->after.actors[slot].status;
+            alliances[slot]=plan->after.actors[slot].relations1472;
         }
         accepted_hibernate[accepted[4]]=accepted;
         if(rules.log) rules.log("richonline_classic_hibernate actor="+std::to_string(actor)+
@@ -2466,6 +2514,7 @@ struct Session {
         return messages;
     }
     std::vector<Bytes> funds_card(View request) {
+        const auto before_alliances=alliances;
         const auto before_actor=actor;
         const auto before_calendar=calendar;
         const auto before_sequence=sequence;
@@ -2506,11 +2555,12 @@ struct Session {
         if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
             world.cards[actor]!=owner || statuses[actor]!=before_status || raw->actor(actor)!=before_raw ||
             board.participants[actor].position!=before_position || board.participants[actor].direction!=before_heading ||
-            raw->game().scripted_event83830!=-1 || (target && raw->actor(*target)!=target_raw))
+            raw->game().scripted_event83830!=-1 || (target && raw->actor(*target)!=target_raw) || alliances!=before_alliances)
             throw CodecError("richonline_classic_funds_card_stale");
         remember(actor,request);
         if(!commit_richonline_classic_funds_card(*owner,*world.ledger,active,*plan))
             throw CodecError("richonline_classic_funds_card_commit_stale");
+        if(target) break_richonline_classic_alliance(alliances,actor,*target);
         if(rules.log) rules.log("richonline_classic_funds_card actor="+std::to_string(actor)+
             " opcode="+std::to_string(read_le(request.first(2)))+" sequence="+std::to_string(sequence));
         // 三张卡均由确认包本地恢复操作；零现金/存款不在这里生成破产或结束回合。
@@ -2686,6 +2736,7 @@ struct Session {
             if(opcode==142) return weapon_treaty(request);
             if(opcode==164) return hibernate_card(request);
             if(opcode==135) return clear_status_card(request);
+            if(opcode==121) return alliance_card(request);
             if(opcode==161) return swap_positions_card(request);
             if(opcode==96 || opcode==97 || opcode==98 || opcode==99 || opcode==100 || opcode==101 || opcode==102 ||
                 opcode==119 || opcode==120 || opcode==123 || opcode==134 || (opcode>=125 && opcode<=129))

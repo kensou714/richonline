@@ -792,8 +792,10 @@ struct Turns {
         jail_deadline.reset();
         jail_exit_roll_requested=false;
         if(rules.raw_authority) static_cast<void>(rules.raw_authority->apply_verified_actor_timer_phase(actor,turn_sequence));
-        for(std::uint8_t other=0;other<active.size();++other)
-            if(static_cast<std::int8_t>(relations1472[actor][other])>0) --relations1472[actor][other];
+        // 7C01C0仅在日期推进块调用7F94A0，全体活动角色同时递减八个同盟槽。
+        if(actor==1 && complete_rounds && !boss_chest)
+            for(std::uint8_t slot=0;slot<active.size();++slot) if(active[slot])
+                for(auto& days:relations1472[slot]) if(static_cast<std::int8_t>(days)>0) --days;
         if(rules.research_turn_started) rules.research_turn_started(actor);
         if(accepted_random_roll && turn_sequence-accepted_random_roll->turn>2) accepted_random_roll.reset();
         frozen_deadline.reset();

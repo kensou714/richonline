@@ -201,6 +201,8 @@ struct RichonlineClassicSessionRules {
     std::optional<HotelPolicy> hotel;
     // 冬眠计数来自同代GValue30；未提供资源时拒绝506，不猜文案中的回合数。
     std::optional<RichonlineHibernateRules> hibernate;
+    // 准入从同代GValue11提供，不能沿用BOSS默认值或按文案猜天数。
+    std::optional<std::uint8_t> alliance_days;
     // 冰冻阶段无移动ACK。全员420F发送完成后按此服务端策略续到下一回合；
     // 1800ms对应原生提示时长，不代表已经获知客户端动画播放完成。
     std::chrono::milliseconds frozen_turn_delay{1800};

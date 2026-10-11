@@ -98,7 +98,7 @@ RichonlineClassicFundsCardPlan prepare_richonline_classic_funds_card(View packet
             {"relations.break",[&](const LuaValue& args) {
                 if(!use.target || relations_call || prepared!=plan.funds_.size() ||
                     args!=LuaValue{{"target",*use.target}} || !args.at("target").is_number_integer()) return reject();
-                // 当前经典会话没有结盟入口，关系保持开局的空状态；未来接结盟须扩充共同事务。
+                // 共享会话核验关系快照，并在账本/扣卡提交后无异常地解除这对同盟。
                 relations_call=true;return LuaValue{};
             }}
         };

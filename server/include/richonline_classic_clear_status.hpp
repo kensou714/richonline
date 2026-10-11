@@ -25,7 +25,7 @@ private:
 RichonlineClassicClearStatusPlan prepare_richonline_classic_clear_status(View,std::uint16_t calendar,
     const RichonlinePlayerCards&,std::span<const RichonlineActorStatus>,std::span<const std::uint8_t> active,
     const std::shared_ptr<LuaServer>& script={});
-// 当前经典模式尚无结盟/NPC独立时钟入口；未来开放时须将同一份关系和时钟纳入本事务。
+// 共享会话须先核验关系快照，成功后无异常地清除双向同盟；NPC独立时钟仍待接入。
 bool commit_richonline_classic_clear_status(RichonlinePlayerCards&,std::span<RichonlineActorStatus>,
     std::span<const std::uint8_t> active,const RichonlineClassicClearStatusPlan&) noexcept;
 }
