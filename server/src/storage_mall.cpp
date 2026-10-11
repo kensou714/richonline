@@ -144,7 +144,8 @@ nlohmann::json Storage::use_mall_gold_voucher(const std::string& username,std::i
         throw StorageError("mall_use_context_invalid");
     const auto id=static_cast<std::uint16_t>(request.owned_key&4095U);
     const auto found=catalog.products().find(id);
-    if(id<100 || id>104 || found==catalog.products().end() || !found->second.enabled ||
+    const bool is_gold_voucher=(id>=100 && id<=104) || (id>=113 && id<=117) || id==3001 || id==3002;
+    if(!is_gold_voucher || found==catalog.products().end() || !found->second.enabled ||
        found->second.type!="FUNC" || found->second.subtype!="FUNC_DT" ||
        (request.owned_key&0x40010000U)!=0)
         throw StorageError("mall_use_product_unavailable");
