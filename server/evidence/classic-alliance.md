@@ -47,3 +47,21 @@
 
 本轮只做静态证据核对、源码审阅和Release/Lua编译，不新增或运行测试，不启动
 服务或游戏，不部署或重启线上；编译通过不能代表实机联机同盟验收。
+
+## 固定构建与本机交付
+
+2026-10-12，源码提交`1c65e2780effbd043ff444fdd168a11c0f45bf06`已推送，
+GitHub main引用核对一致。固定tree为`260b5dd7f277d1b0352cc3d2e665e8e65a5677e2`，
+源码目录`server/build-classic-alliance-source/server`，独立Release构建目录
+`server/build-classic-alliance-fixed`。构建退出0，178个Lua模块语法编译通过。
+
+交付时CIM未发现RichOnline.Server.exe进程；本机`server/RichOnline.Server.exe`
+已替换为本次构建文件，SHA256为
+`CAEA42CF741DA69D448F276F3886A95056DBBA028D89E72E8D4B6E597AACB36B`。
+178个Lua在固定源码、构建输出与本机scripts之间逐项哈希一致。旧EXE保存在
+`server/build-classic-alliance-fixed/RichOnline.Server.before-1c65e27.exe`。
+
+本次重新核验同盟证据18个函数、原生回血证据19个函数及回血顺序证据6个函数的
+全部chunk，哈希均与当前磁盘客户端一致。当前源码继续包含原生回血与光环顺序修正，
+但没有新的实战回血日志，不能据静态核验宣称玩家所见偏差已实机解决。
+未新增或运行测试，未启动服务或游戏，未部署或重启线上。
