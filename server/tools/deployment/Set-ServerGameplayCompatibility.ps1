@@ -32,6 +32,9 @@ function Invoke-Control([string]$Operation,[string]$Instance = '') {
     $value = $parsed | Select-Object -Last 1
     if (!$value) { throw "No control response: $Operation" }
     if ($value.PSObject.Properties['value'] -and $value.PSObject.Properties['Count']) { $value = $value.value | Select-Object -Last 1 }
+    if ($Operation -eq 'database.backup' -and [string]::IsNullOrWhiteSpace([string]$value.path)) {
+        throw 'Control backup response has no database path; do not stop the service.'
+    }
     return $value
 }
 function Require-Healthy($State) {
@@ -66,10 +69,12 @@ $config.provenance += '; Paired online inventory date migration to 2021; verifie
 $candidateConfig = Join-Path $backup 'lobby-bootstrap.candidate.json'
 [IO.File]::WriteAllText($candidateConfig,($config | ConvertTo-Json -Depth 30),(New-Object Text.UTF8Encoding($false)))
 $onlineBackup = Invoke-Control 'database.backup'
-if (!$onlineBackup.path -or !(Test-Path -LiteralPath $onlineBackup.path -PathType Leaf)) { throw 'Online database backup was not produced.' }
+$onlineBackupPath = [string]$onlineBackup.path
+if ([string]::IsNullOrWhiteSpace($onlineBackupPath)) { throw 'Online backup response path is empty.' }
+if (!(Test-Path -LiteralPath $onlineBackupPath -PathType Leaf)) { throw 'Online database backup was not produced.' }
 # 在线备份可以在停服前预检；停服后仍必须重新规划，不能把预检快照当作最终数据。
 $planPath = Join-Path $backup 'online-preflight.json'
-& $Migrator plan $onlineBackup.path $VerifiedClient | Out-File -LiteralPath $planPath -Encoding UTF8
+& $Migrator plan $onlineBackupPath $VerifiedClient | Out-File -LiteralPath $planPath -Encoding UTF8
 if ($LASTEXITCODE -ne 0) { throw 'Online backup migration preflight failed; live service is unchanged.' }
 $plan = Get-Content -LiteralPath $planPath -Raw -Encoding UTF8 | ConvertFrom-Json
 if (!$plan.ready -or @($plan.unresolved).Count -ne 0) { throw 'Migration contains unresolved records.' }
@@ -122,7 +127,7 @@ try {
     if ($loaded.Count -ne 1) { throw 'New runtime did not confirm the paired mall policy.' }
     $receipt = [ordered]@{ operation=$id; releaseId=$release.releaseId; sourceCommit=$release.sourceCommit;
         exeSha256=$ExpectedExeSha256; clientSha256=$ClientSha256; migratorSha256=$MigratorSha256;
-        backupDirectory=$backup; onlineDatabaseBackup=$onlineBackup.path; dataDirectory=$data;
+        backupDirectory=$backup; onlineDatabaseBackup=$onlineBackupPath; dataDirectory=$data;
         configSha256=(Get-FileHash -LiteralPath $configPath).Hash; migratedDatabaseSha256=$migration.migrated_sha256;
         inventoryDateVersion='compat_2021_v1'; unlockBossMaps=[bool]$config.unlock_all_boss_maps_for_testing;
         activatedUtc=[DateTime]::UtcNow.ToString('o'); status=$next }
