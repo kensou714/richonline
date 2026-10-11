@@ -26,3 +26,12 @@
 ## 验证范围与剩余工作
 
 按用户约束仅静态逆向、代码审阅、固定快照Release编译及Lua语法编译；不新增或运行测试，不启动本机服务/客户端。支付协调器及持久扣费核心复用现有实现，本轮没有更改账号数据结构或金豆价格。完整经典生产provider、押金绑定、其余地图/卡牌/NPC业务仍待接通，不能据编译成功称经典局已正常开放。
+
+## 发布记录
+
+- 源码`a725e4127506843eaacffb93d3e22e519b084fb8`已推送GitHub main；固定树`d995263a2c8b46585a95a570a77d16bb71c68123`的Release及166份Lua语法编译成功。
+- 线上release `a725e4127506`，PID4796，instanceId `4796-95199439004500`；实际进程及计划任务执行`D:\richonline\releases\a725e4127506\RichOnline.Server.exe`。
+- EXE SHA256：`246E6824D051641082147ECF235EA94F0C91967E4CD6AEE979EE384FBC0B46F2`，本机同哈希；166份Lua与发布包逐文件相符，本机没有启动服务。
+- 已在线备份数据库后通过ExpectedInstance正常关闭旧版，持久数据仍在`D:\richonline\shared\data`；商城日期兼容及全BOSS地图测试开关保留。
+- 六类监听ready，六公网端口18600/18602/18604/18605/18606/18680连通，两份服务器列表HTTP200。完整私有收据`server/build-goal-resume/release-a725e4127506-receipt.json`。
+- 未运行玩法测试、未声明付费玩法实机验收；经典生产入口仍关闭。
