@@ -321,15 +321,31 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_runtime(
                         selected_drop=std::optional<std::size_t>{},log]() mutable {
                         if(!selected_drop) {
                             Json entries=Json::array();std::uint32_t total=0;
-                            for(const auto& drop:drops) {entries.push_back({{"weight",drop.weight}});total+=drop.weight;}
+                            for(const auto& drop:drops) {
+                                if(!drop.weight || drop.weight>2147483647U-total)
+                                    throw CodecError("richonline_boss_chest_weight_invalid");
+                                entries.push_back({{"weight",drop.weight}});total+=drop.weight;
+                            }
+                            if(!total) throw CodecError("richonline_boss_chest_weight_invalid");
+                            // 核心固定一次抽样，并按原始权重复核Lua结果；脚本不能跳过抽样、
+                            // 重抽或返回另一个合法索引后直接把错误奖品写入账号。
+                            const auto ticket=uniform_choice(total);
+                            auto remainder=ticket;
+                            std::size_t expected=0;
+                            for(;expected<drops.size();++expected) {
+                                if(remainder<drops[expected].weight) break;
+                                remainder-=drops[expected].weight;
+                            }
+                            bool sampled=false;
                             const auto draw=script->call("boss.chest_select",{{"drops",entries}},
-                                {{"boss.chest_random",[total](const LuaValue& args) {
-                                    if(args.at("bound")!=total || !total) throw CodecError("richonline_boss_chest_weight_invalid");
-                                    return LuaValue(uniform_choice(total));
+                                {{"boss.chest_random",[&](const LuaValue& args) {
+                                    if(sampled || args!=LuaValue{{"bound",total}})
+                                        throw CodecError("richonline_boss_chest_random_invalid");
+                                    sampled=true;return LuaValue(ticket);
                                 }}});
-                            if(!draw.is_number_integer() || draw<0 || draw>=drops.size())
+                            if(!sampled || expected>=drops.size() || !draw.is_number_integer() || draw!=expected)
                                 throw CodecError("richonline_boss_chest_selection_invalid");
-                            selected_drop=draw.get<std::size_t>();
+                            selected_drop=expected;
                         }
                         const auto& drop=drops[*selected_drop];
                         const auto now=std::chrono::duration_cast<std::chrono::seconds>(
