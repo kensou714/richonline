@@ -45,3 +45,20 @@ group1真实消费/持久化尚未实现，不能通过固定返回true伪造准
 
 验证仅限静态源码/客户端字节审阅、固定提交Release构建与全部Lua语法编译；
 按用户要求不新增或运行测试，不启动本机服务和客户端。发布结果另行追加。
+
+## 发布结果
+
+- 源码`e531062ac7349e4055eb4bf9c8696157b5e8473c`，tree`45f856c3a36b087b3418b668d0e1a74a9063f561`，已推送GitHub main。
+- 固定源码Release构建、167份Lua语法编译通过；未新增或运行测试。
+- 线上release`e531062ac734`，PID9156，instance`9156-101210489056000`，实际进程及
+  计划任务路径均为`D:\richonline\releases\e531062ac734\RichOnline.Server.exe`。
+- EXE SHA256 `D60BD017BA9BB7D021975FAE6CEFC36D9F0A9742AE12B1A5F1664F03834821C2`；
+  本机server目录EXE同哈希，167份Lua逐文件同代校验通过，未启动本机服务。
+- 数据库备份`D:\richonline\shared\data\backups\accounts-1791730884019413.sqlite3`，
+  数据目录仍为`D:\richonline\shared\data`，保留商城日期兼容及全部BOSS地图测试配置。
+- 六监听ready，18600/18602/18604/18605/18606/18680公网TCP成功，两份服务器列表HTTP200。
+- 本地收据`server/build-goal-resume/release-e531062ac734-receipt.json`及同代
+  verified/process/bootstrap-after文件；发布记录提交不改变二进制源码版本。
+
+本次也只读复核了原线上ce1456046d55的金豆券修复已在运行版本中；新包继承该修复。
+尚无用户实机成功反馈，不将上线或端口检查写成金豆券、经典建筑玩法验收。
