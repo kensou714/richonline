@@ -2,6 +2,8 @@
 #include "richonline_actor_status.hpp"
 #include "richonline_boss_turns.hpp"
 #include "richonline_game_ledger.hpp"
+#include <functional>
+#include <span>
 
 namespace richnet {
 struct RichonlineChanceLandingEntry {
@@ -34,9 +36,13 @@ struct RichonlineChanceLandingAttempt {
     std::optional<RichonlinePreparedChanceLanding> prepared;
     std::vector<std::string> excluded_events;
 };
+// Lua 只决定已准备、已过滤候选中的加权序号；核心仍复核抽样结果，
+// 并独占资金、库存、状态及回包事务。
+using RichonlineChanceLandingSelector=std::function<std::size_t(
+    std::span<const RichonlineChanceLandingEntry>,std::size_t)>;
 // Explicit policy: blue68/red69/yellow70 use BwNews columns0/1/2 as eligibility.
-// Equal server weights and uniform integer/card choices remain native policy;
-// original server probabilities are not recovered from the skipped columns.
+// Equal server weights and uniform integer/card choices are explicit server policy;
+// Lua selects the prepared event, but skipped columns do not prove original probabilities.
 RichonlineChanceLandingPolicy make_richonline_closed_chance_policy(
     const RichonlineChanceEventTable&,std::string_view map,
     std::vector<std::int16_t> playable_cards,bool motion_status,
@@ -51,5 +57,6 @@ RichonlineChanceLandingAttempt prepare_richonline_chance_landing(
     const RichonlineStatusRules&,const RichonlineChanceLandingPolicy&,
     const RichonlineLandingContext&,std::uint16_t game_id,
     const RichonlineGameFundsSnapshot&,const RichonlineChanceInventory&,
-    const RichonlineRouteChooser& random);
+    const RichonlineRouteChooser& random,
+    const RichonlineChanceLandingSelector& selector={});
 }

@@ -234,15 +234,25 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         const auto status_rules=RichonlineStatusRules::load(resources);
         const auto chance_policy=make_richonline_closed_chance_policy(*event_table,stage.map_name,
             rules.cards->tile_reward_cards(),map_chance.enable_motion_status,policy.cards->opaque6_7);
-        rules.chance_landing=[event_table,status_rules,chance_policy,chance,ledger,cards=rules.cards,
+        rules.chance_landing=[event_table,status_rules,chance_policy,chance,ledger,cards=rules.cards,script,
             random=policy.random,game=startup.init.game_server_id,log,package_id,key=startup.room.key]
             (const RichonlineLandingContext& context)->std::optional<RichonlineLandingResult> {
             // Only road events with no subsequent property or actor collision
             // can proceed directly to the shared final-junction phase.
             if (context.property_ref!=-1 || (context.occupied_by_other_actor && !context.collision_resolved) || context.road_degree==0 || context.road_degree>4)
                 return {};
+            RichonlineChanceLandingSelector selector;
+            if(script) selector=[script,type=context.static_type](std::span<const RichonlineChanceLandingEntry> options,
+                std::size_t draw) {
+                nlohmann::json entries=nlohmann::json::array();
+                for(const auto& option:options) entries.push_back({{"event",option.event},{"weight",option.server_weight}});
+                const auto selected=script->call("tile.news_select",{{"type",type},{"draw",draw},{"options",entries}});
+                if(!selected.is_number_integer() || selected<0 || selected>=options.size())
+                    throw CodecError("lua_news_selection_invalid");
+                return selected.get<std::size_t>();
+            };
             auto attempt=prepare_richonline_chance_landing(*event_table,*chance,status_rules,chance_policy,
-                context,game,ledger->snapshot(context.actor_slot),cards->inventory(),random);
+                context,game,ledger->snapshot(context.actor_slot),cards->inventory(),random,selector);
             if (attempt.disposition==RichonlineChanceLandingDisposition::not_applicable) return {};
             if (!attempt.prepared) throw CodecError("richonline_chance_no_closed_event");
             auto& prepared=*attempt.prepared;

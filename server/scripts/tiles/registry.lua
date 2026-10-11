@@ -30,4 +30,9 @@ function M.land(request)
     if tile then return tile.land(request) end
     return core.call("tile.native")
 end
+function M.select_news(request)
+    local tile = modules[request.type]
+    assert(tile and tile.select_news, "新闻格类型无选择规则")
+    return tile.select_news(request)
+end
 return M

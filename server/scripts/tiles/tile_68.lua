@@ -1,7 +1,6 @@
--- 静态格类型 68 的独立落点入口；type 是 EMP 静态类型，不是道路位置编号。
--- 此事件在移动/NPC/传送阶段处理后进入，核心已提供 actor、position 与 map。
--- tile.native 必须恰好调用一次：它拥有库存/资金事务以及后续交互阶段，不能伪造完成。
--- 自定义奖励应通过核心事务返回协议响应，不能只发客户端提示而漏改权威状态。
-local M = { type = 68, implementation = "native_compatibility" }
+-- 蓝色新闻格：Lua 选择已准备候选；核心负责 BwNews 颜色过滤与事务提交。
+local news = require("tiles.news_select")
+local M = { type = 68, implementation = "lua_selection_native_transaction" }
 function M.land(request) return core.call("tile.native") end
+function M.select_news(request) return news.select(request, M.type) end
 return M

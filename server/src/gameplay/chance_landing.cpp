@@ -67,7 +67,8 @@ RichonlineChanceLandingPolicy make_richonline_closed_chance_policy(const Richonl
 RichonlineChanceLandingAttempt prepare_richonline_chance_landing(const RichonlineChanceEventTable& table,
     const RichonlineChanceResources& resources,const RichonlineStatusRules& status_rules,
     const RichonlineChanceLandingPolicy& policy,const RichonlineLandingContext& context,std::uint16_t game,
-    const RichonlineGameFundsSnapshot& funds,const RichonlineChanceInventory& inventory,const RichonlineRouteChooser& random) {
+    const RichonlineGameFundsSnapshot& funds,const RichonlineChanceInventory& inventory,const RichonlineRouteChooser& random,
+    const RichonlineChanceLandingSelector& selector) {
     const auto column=news_column(context.static_type);
     if(!column || !richonline_news_landing_allowed(context) ||
         std::find(policy.static_types.begin(),policy.static_types.end(),context.static_type)==policy.static_types.end())
@@ -147,11 +148,22 @@ RichonlineChanceLandingAttempt prepare_richonline_chance_landing(const Richonlin
         total_weight+=entry.server_weight; options.push_back({std::move(plan),entry.server_weight});
     }
     if(options.empty()) return attempt;
-    auto selected=choose(random,total_weight);
-    for(auto& option:options) {
-        if(selected<option.weight) { attempt.disposition=RichonlineChanceLandingDisposition::prepared; attempt.prepared=std::move(option.plan); return attempt; }
-        selected-=option.weight;
+    const auto draw=choose(random,total_weight);
+    auto remaining=draw;
+    std::size_t selected_index=0;
+    for(;selected_index<options.size();++selected_index) {
+        if(remaining<options[selected_index].weight) break;
+        remaining-=options[selected_index].weight;
     }
-    throw CodecError("richonline_chance_landing_weight_invalid");
+    if(selected_index==options.size()) throw CodecError("richonline_chance_landing_weight_invalid");
+    if(selector) {
+        std::vector<RichonlineChanceLandingEntry> eligible;
+        eligible.reserve(options.size());
+        for(const auto& option:options) eligible.push_back({option.plan.event,option.weight});
+        if(selector(eligible,draw)!=selected_index) throw CodecError("richonline_chance_landing_selection_mismatch");
+    }
+    attempt.disposition=RichonlineChanceLandingDisposition::prepared;
+    attempt.prepared=std::move(options[selected_index].plan);
+    return attempt;
 }
 }
