@@ -20,6 +20,7 @@
 #include "richonline_classic_weapon_treaty.hpp"
 #include "richonline_classic_property_card.hpp"
 #include "richonline_classic_trade.hpp"
+#include "richonline_classic_computer.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -1030,6 +1031,7 @@ struct Session {
         const auto owner=*property.owner;
         const auto possession=*statuses[actor].possession;
         const auto quote=trade_result ? trade_result->quote : suppressed || possession==0 ? 0 :
+            property.kind==5 ? richonline_classic_computer_quote(property,monetary_scale(),rules.script) :
             world.property->rent_quote(property.id,monetary_scale());
         auto amount=possession==1 ? std::bit_cast<std::int32_t>(static_cast<std::uint32_t>(quote)*2U) : quote;
         if(amount<0) throw CodecError("richonline_classic_rent_negative_unsupported");
@@ -1107,6 +1109,7 @@ struct Session {
         // 4013或4027已触发客户端6060/6061；只镜像账本/手牌，不发第二笔扣款或扣卡包。
         if(rules.log) rules.log(std::string(hotel ? "richonline_classic_hotel_payment actor=" :
             trade_result ? "richonline_classic_trade_payment actor=" :
+            property.kind==5 ? "richonline_classic_computer_payment actor=" :
             "richonline_classic_rent actor=")+std::to_string(actor)+
             " owner="+std::to_string(owner)+" property="+std::to_string(property.id)+
             " sequence="+std::to_string(sequence)+" charged="+std::to_string(charged)+" outcome="+outcome);
@@ -1561,9 +1564,9 @@ struct Session {
             const auto property=world.property->snapshot(current.landing.property_ref);
             if(property.kind!=0 && property.kind!=1 && !(property.sprite_type==12 && property.kind==-1) &&
                 !(property.kind==2 && world.research) && !(property.kind==3 && rules.trade_result) &&
-                !(property.kind==4 && rules.hotel))
+                !(property.kind==4 && rules.hotel) && property.kind!=5)
                 throw CodecError("richonline_classic_property_landing_unimplemented");
-            if(property.owner && *property.owner!=actor && (property.kind==0 || property.kind==1))
+            if(property.owner && *property.owner!=actor && (property.kind==0 || property.kind==1 || property.kind==5))
                 return property_payment(property);
             if(property.owner && *property.owner!=actor && (property.kind==3 || property.kind==4)) return begin_trade(property);
             // 大型空地、他人研究所不收住宅租金，仍保留附加效果及同格续行。
