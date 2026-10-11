@@ -93,6 +93,26 @@ struct Turns {
     std::uint8_t chest_turns_left=0;
     std::vector<std::array<std::uint16_t,2>> chest_stops{};
 
+    void sync_boss_frenzy(std::vector<Bytes>& messages,bool renew=false) {
+        if(!rules.boss_frenzy || !rules.ledger || !active[1] || boss_chest ||
+            phase==Phase::finished || phase==Phase::closed) return;
+        auto after=status[1];
+        const auto hp=rules.ledger->snapshot(1).funds.cash;
+        auto packets=rules.boss_frenzy(init.game_server_id,after,hp,active[1],renew);
+        if(packets.empty()) return;
+        const auto triggered=!status[1].boss_frenzy && after.boss_frenzy.has_value();
+        const auto detail=triggered ? "richonline_boss_frenzy_trigger hp="+std::to_string(hp)+
+            " source=turn attack=1.5 incoming_damage=1.75" : std::string{};
+        messages.reserve(messages.size()+packets.size());
+        status[1]=after;
+        messages.insert(messages.end(),std::make_move_iterator(packets.begin()),std::make_move_iterator(packets.end()));
+        if(triggered && rules.log) rules.log(detail);
+    }
+    std::vector<Bytes> finish_response(std::vector<Bytes> messages) {
+        // 普通资金/地产/NPC路径也能使HP越过阈值；本轮动作未结束时立即同步。
+        sync_boss_frenzy(messages);
+        return messages;
+    }
     LuaValue boss_skill(const char* event) {
         if(!rules.script) return nullptr;
         return rules.script->call("boss.skill",{{"map",rules.script_map},{"event",event},
@@ -315,6 +335,7 @@ struct Turns {
         pending_decision.reset();
     }
     std::vector<Bytes> advance(std::vector<Bytes> messages) {
+        sync_boss_frenzy(messages);
         retire_decision();
         richonline_status_finish_previous_turn(status[actor]);
         if(boss_chest) {
@@ -784,6 +805,8 @@ struct Turns {
                 " turn="+std::to_string(turn_sequence)+" amount="+std::to_string(equipment_heal)+
                 " before="+std::to_string((*healed_cash)[0])+" after="+std::to_string((*healed_cash)[1]));
         }
+        // 4214的第二组倍率会在客户端行动阶段递减；每个轮首静默续期，永久技能不重复触发。
+        sync_boss_frenzy(messages,true);
         if(rules.fire_traps) {
             const auto tick=plan_richonline_fire_trap_tick(rules.ground->snapshot(),actor,actor==1,active);
             auto ground=rules.ground->prepare(tick.expected_ground,tick.after_ground);
@@ -1480,6 +1503,7 @@ struct Turns {
             auto refs=combat_refs(landing.position);
             auto effect=rules.combat->fire_landing(refs,actor,landing.position,rules.fire_traps->npc26_damage,
                 [&]{auto context=landing_context(landing.position);context.actor_status=status[actor];rules.npc_landing_preflight(context);});
+            messages.insert(messages.end(),std::make_move_iterator(effect.packets.begin()),std::make_move_iterator(effect.packets.end()));
             if(!effect.bankrupt_actors.empty())
                 return terminal(std::move(messages),std::move(effect.bankrupt_actors),RichonlineTerminalReason::fire_trap);
         }
@@ -2677,9 +2701,12 @@ struct Turns {
             }
             if(script_consumption) {
                 if(messages.empty()) throw CodecError("lua_card_response_required");
-                for(const auto& packet:messages)
+                for(const auto& packet:messages) {
+                    // 上方已逐字节核验共享战斗计划；其BOSS台词600A没有game字段。
+                    if(script_attack && packet.size()==16 && read_le(View(packet).first(2))==0x600a) continue;
                     if(packet.size()<4 || read_le(View(packet).subspan(2,2))!=init.game_server_id)
                         throw CodecError("lua_card_response_game_mismatch");
+                }
             }
         } catch(const std::exception& error) {
             // 新 Lua 卡牌的计划尚未提交，可安全恢复操作；原生接口执行后禁止自动重试。
@@ -3668,9 +3695,9 @@ RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& st
     state->active_counter=static_cast<std::uint16_t>(startup.snapshot.calendar_counter);
     return {startup.init,startup.snapshot,startup.envelope,
         [state] { return state->opening(); },
-        [state](const Envelope299&,View plain) { return state->script_action(plain); },
+        [state](const Envelope299&,View plain) { return state->finish_response(state->script_action(plain)); },
         [state] { state->phase = Phase::closed; state->route = {}; },
-        [state] { return state->poll(); },
+        [state] { return state->finish_response(state->poll()); },
         [state](View plain) { return state->retired(plain); }};
 }
 }

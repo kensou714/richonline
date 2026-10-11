@@ -449,6 +449,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         if (!rules.cards || !rules.terminal || !startup.human_profile_slots || !package.combat)
             throw CodecError("richonline_boss_combat_session_capability_required");
         auto combat_policy=*policy.combat;
+        combat_policy.initial_boss_cash=ledger->snapshot(1).funds.cash;
         combat_policy.equipment_terms=[equipment_terms](std::uint8_t slot) {
             if(slot>=equipment_terms->size()) throw CodecError("richonline_equipment_cached_actor_invalid");
             return (*equipment_terms)[slot];
@@ -463,6 +464,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         };
         auto world=make_richonline_combat_world(resources,topology,stage,*startup.human_profile_slots,
             *package.combat,property,std::move(combat_policy));
+        rules.boss_frenzy=world.world.boss_frenzy;
         rules.combat=std::make_shared<RichonlineCombatBridge>(startup.init.game_server_id,ledger,rules.cards,
             ground,property,std::move(world.world),std::move(world.boss));
         rules.combat_random=[random=policy.random] {

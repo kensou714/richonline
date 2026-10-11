@@ -99,6 +99,7 @@ struct RichonlineCombatWorld {
     std::function<std::int16_t(std::span<const std::int16_t>,std::size_t)> select_missile_base_target{};
     std::function<std::vector<std::int16_t>(const RichonlineCombatSessionView&)> mine_burst_targets{};
     std::optional<std::array<std::uint16_t,2>> mine_burst_talk{};
+    std::function<std::vector<Bytes>(std::uint16_t,RichonlineActorStatus&,std::uint32_t,bool,bool)> boss_frenzy{};
 };
 struct RichonlineBossAttackRandomness {
     // Independent categorical draws: 0..79 none,80..89 mine,90..99 projectile.

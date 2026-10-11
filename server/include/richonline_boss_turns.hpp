@@ -125,6 +125,7 @@ struct RichonlineBossTurnRules {
     // Effective normal BOSS dice count from the selected BossWar stage; human
     // vehicle/dice-count equipment is not inferred from this stage field.
     std::uint8_t boss_dice_count=1;
+    std::function<std::vector<Bytes>(std::uint16_t,RichonlineActorStatus&,std::uint32_t,bool,bool)> boss_frenzy{};
     std::shared_ptr<RichonlineNpcSession> npcs{};
     // Pure validation of the shared landing continuation, before an NPC can
     // commit ground, inventory, possession or money changes.

@@ -29,6 +29,8 @@ struct RichonlineCombatWorldPolicy {
     // 原客户端在4010回合入口刷新装备数值；同回合连续伤害共用该缓存。
     // 会话提供已刷新的值，建筑和状态倍率仍由战斗快照即时解析。
     std::function<RichonlineEquipmentCombatTerms(std::uint8_t)> equipment_terms{};
+    // 初始化已应用装备后的实际血量，不能用未加成的BossWar基础现金替代。
+    std::optional<std::uint32_t> initial_boss_cash{};
 };
 struct RichonlineCombatWorldFactoryResult {
     RichonlineCombatWorld world;

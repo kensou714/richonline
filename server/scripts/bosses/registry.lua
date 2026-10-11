@@ -5,6 +5,12 @@ local bosses = {
     kid_ken = require("bosses.kid_ken"), zhao_linger = require("bosses.zhao_linger"),
 }
 local M = {}
+function M.frenzy_rules(request)
+    local map = assert(maps[request.map], "未注册地图：" .. request.map)
+    local boss = assert(bosses[map.boss], "未注册 BOSS")
+    local stage = assert(tonumber(request.map:match("BS_%d+_(%d+)%.emp$")), "BOSS关卡编号无效")
+    return boss.frenzy_rules and boss.frenzy_rules(stage) or nil
+end
 function M.probabilities(request)
     local map = assert(maps[request.map], "未注册地图：" .. request.map)
     local boss = assert(bosses[map.boss], "未注册 BOSS")

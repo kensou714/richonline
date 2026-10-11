@@ -23,6 +23,8 @@ struct RichonlineActorStatus {
     std::optional<std::int8_t> timed_bomb_owner;
     std::int32_t possession_strength1740=0;
     float possession_multiplier1744=0.0F;
+    // 已触发的BOSS永久技能；通过4214续期客户端第二组倍率，不复用新闻状态槽。
+    std::optional<std::array<float,2>> boss_frenzy{};
     bool operator==(const RichonlineActorStatus&) const = default;
 };
 void richonline_detach_possession(RichonlineActorStatus&) noexcept;

@@ -63,6 +63,7 @@ local handlers = {
     ["stock.quote"] = stock.quote, ["stock.market"] = stock.market,
     ["boss.can_attack"] = bosses.can_attack,
     ["boss.probabilities"] = bosses.probabilities,
+    ["boss.frenzy_rules"] = bosses.frenzy_rules,
     ["boss.skill"] = boss_skills.plan,
     ["card.lottery_award"] = lottery.award,
     ["card.rent_transfer"] = rent_transfer.rent,

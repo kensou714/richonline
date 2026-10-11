@@ -129,6 +129,48 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
     RichonlineCombatWorldFactoryResult result;
     const auto script=LuaServer::create();
     if(script) {
+        const auto frenzy=script->call("boss.frenzy_rules",{{"map",stage.map_name}});
+        if(!frenzy.is_null()) {
+            if(!policy.initial_boss_cash || !*policy.initial_boss_cash)
+                throw CodecError("richonline_boss_frenzy_initial_hp_required");
+            const auto field=[&](const char* name,int maximum) {
+                const auto& value=frenzy.at(name);
+                if(!value.is_number_integer() || value<1 || value>maximum)
+                    throw CodecError("lua_boss_frenzy_rule_invalid");
+                return static_cast<std::uint32_t>(value.get<int>());
+            };
+            const auto threshold=field("hp_percent",100),attack=field("attack_percent",1000),
+                damage=field("damage_percent",1000),group=field("talk_group",7),index=field("talk_index",16);
+            result.world.boss_frenzy=[maximum_hp=*policy.initial_boss_cash,threshold,attack,damage,group,index]
+                (std::uint16_t game,RichonlineActorStatus& status,std::uint32_t hp,bool active,bool renew) {
+                std::vector<Bytes> packets;
+                if(!active || !hp) return packets;
+                const bool triggered=!status.boss_frenzy && static_cast<std::uint64_t>(hp)*100<
+                    static_cast<std::uint64_t>(maximum_hp)*threshold;
+                if(!triggered && (!status.boss_frenzy || !renew)) return packets;
+                const std::array factors{static_cast<float>(100+attack)/100.0F,
+                    static_cast<float>(100+damage)/100.0F};
+                if(status.boss_frenzy && *status.boss_frenzy!=factors)
+                    throw CodecError("richonline_boss_frenzy_state_mismatch");
+                // 4214四个分支互斥，必须两包分别设置攻击与受伤倍率；+13是角色槽。
+                // 计时BYTE必须为正数；-1不会被原客户端倍率消费者视为有效。
+                for(const bool defending:{false,true}) {
+                    Bytes packet;append_le(packet,0x4214,2);append_le(packet,game,2);
+                    append_le(packet,defending ? 0 : attack,2);append_le(packet,defending ? damage : 0,2);
+                    packet.insert(packet.end(),{static_cast<std::uint8_t>(!defending),0,0,
+                        static_cast<std::uint8_t>(defending),127,1});
+                    packets.push_back(std::move(packet));
+                }
+                if(triggered) {
+                    Bytes talk;append_le(talk,0x600a,2);append_le(talk,group,2);append_le(talk,index,2);
+                    append_le(talk,0,2);append_le(talk,1,4);talk.push_back(1);talk.resize(16,0);
+                    packets.push_back(std::move(talk));
+                }
+                // 所有回包先完成分配；调用者再将状态与本次伤害一起提交。
+                status.boss_frenzy=factors;
+                return packets;
+            };
+        }
         const auto chances=script->call("boss.probabilities",{{"map",stage.map_name}});
         if(!chances.is_null()) {
             if(!chances.is_array() || chances.size()!=3) throw CodecError("lua_boss_probability_invalid");
@@ -222,6 +264,12 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         (const RichonlineCombatActorView& actor,const RichonlineCombatSessionView& state) {
         if(actor.slot>=equipment.size()) throw CodecError("richonline_combat_world_actor_invalid");
         auto terms=extra?extra(actor,state):richonline_possession_combat_terms(actor,state);
+        if(actor.status.boss_frenzy) {
+            if(terms.attack.secondary_status_multiplier!=1.0F || terms.defense.secondary_status_multiplier!=1.0F)
+                throw CodecError("richonline_combat_secondary_term_duplicated");
+            terms.attack.secondary_status_multiplier=(*actor.status.boss_frenzy)[0];
+            terms.defense.secondary_status_multiplier=(*actor.status.boss_frenzy)[1];
+        }
         if(terms.attack.building_multiplier!=1.0F || terms.defense.building_multiplier!=1.0F)
             throw CodecError("richonline_combat_world_building_term_duplicated");
         const auto attributes=cached ? cached(actor.slot) :

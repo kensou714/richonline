@@ -187,8 +187,14 @@ void chain(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& world,std
     std::erase_if(state.mines.mines,[&](const auto& mine) { return contains(graph.detonated_mines,mine.position); });
     std::erase_if(state.dynamic_npcs,[&](const auto& npc) { return contains(graph.affected_positions,npc.position); });
 }
+void react_boss_frenzy(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& world) {
+    if(!world.boss_frenzy || !plan.after.actors[1]) return;
+    auto& actor=*plan.after.actors[1];
+    auto packets=world.boss_frenzy(plan.after.game_id,actor.status,actor.funds.funds.cash,actor.active,false);
+    plan.packets.insert(plan.packets.end(),std::make_move_iterator(packets.begin()),std::make_move_iterator(packets.end()));
+}
 void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& world,
-    std::uint8_t boss,RichonlineCombatEffect effect,std::int16_t target) {
+    std::uint8_t boss,RichonlineCombatEffect effect,std::int16_t target,bool react=true) {
     auto& state=plan.after;
     refresh_terms(state,world);
     const auto footprint=richonline_attack_footprint(effect,target,world.width,world.height,world.resources);
@@ -252,6 +258,9 @@ void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& worl
     for (const auto& mine:state.mines.mines) if (contains(footprint,mine.position)) roots.push_back(mine.position);
     // Client attack animation emits its own mine animation. No extra 4017.
     for (const auto root:roots) if (mine_exists(state,root)) chain(plan,world,root);
+    // 一发投射武器及它触发的整条雷链作为一个客户端效果完成，随后才能改倍率。
+    // 基地下一发则读取更新后的状态；真人Lua卡在共享提交器追加这些回包。
+    if(react) react_boss_frenzy(plan,world);
 }
 std::size_t select(const RichonlineBossAttackRandomness& randomness,std::size_t bound) {
     if (!bound || !randomness.bounded) throw CodecError("richonline_combat_session_random_missing");
@@ -441,6 +450,7 @@ RichonlineCombatTurnPlan prepare_richonline_combat_mine_day(const RichonlineComb
     for (const auto& mine:clock.expired) if (mine_exists(plan.after,mine.position)) {
         plan.packets.push_back(encode_richonline_mine_explosion4017(before.game_id,mine.position));
         chain(plan,world,mine.position);
+        react_boss_frenzy(plan,world);
     }
     finish(plan,true);
     return plan;
@@ -465,6 +475,7 @@ RichonlineCombatTurnPlan prepare_richonline_combat_detonate(const RichonlineComb
     for(const auto root:roots) if(mine_exists(plan.after,root)) {
         plan.packets.push_back(encode_richonline_mine_explosion4017(before.game_id,root));
         chain(plan,world,root);
+        react_boss_frenzy(plan,world);
     }
     plan.packets.push_back(encode_richonline_dice_recovery400b(before.game_id));
     finish(plan,true);
@@ -523,7 +534,7 @@ RichonlineCombatTurnPlan prepare_richonline_combat_human_card(const RichonlineCo
             plan.packets.push_back(encode_richonline_safe_nuclear40d5(before.game_id,request,static_cast<std::int8_t>(actor)));break;
         default:throw CodecError("richonline_combat_human_card_kind_invalid");
         }
-        projectile(plan,world,actor,effect,request.target);
+        projectile(plan,world,actor,effect,request.target,false);
     }
     finish(plan,true);return plan;
 }
