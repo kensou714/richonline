@@ -53,3 +53,16 @@ Lua兑换金额表和持久层道具白名单同步补齐到十二档，沿用�
 只扩大有明确兑换说明的金豆券集合；105–107宝袋、108–112抽奖卡不进入金豆兑换分支。
 资源证据更新为全部十二档，金额来自各自说明，不从价格或奖盘槽位推算。
 按用户要求仅做静态核对、固定源码Release构建及Lua语法编译，不新增或运行测试，不启动本机服务或客户端。
+
+### 十二档金豆券发布结果
+
+- 源码 `f8bda757b4e763e0c97b900e19e548aad07ab424`，tree `2da3170ecbdf61a338eb38ccc30183d1dcffaaa5`，已推送GitHub main。
+- 固定源码Release构建成功，167份Lua语法编译通过。发布包Prop.kpd与资源取证文件SHA256相同。
+- 线上release `f8bda757b4e7`，PID `12276`，instance `12276-98003879653200`。
+  真实进程与计划任务均使用 `D:\richonline\releases\f8bda757b4e7\RichOnline.Server.exe`。
+- EXE SHA256 `D52673E3C2AB9A03255EE81A6042E71E216573D2D411416F33F7FE8B47F56B5D`，本机已同代同步且未启动。
+- 安装器数据库备份 `D:\richonline\shared\data\backups\accounts-1791727677397020.sqlite3`；
+  持久数据仍位于 `D:\richonline\shared\data`，商城日期兼容和全BOSS地图测试配置保留。
+- 六类监听ready，18600/18602/18604/18605/18606/18680公网TCP成功，两个服务器列表HTTP200。
+- 收据 `server/build-goal-resume/release-f8bda757b4e7-receipt.json`，另有同版本verified/process/bootstrap-after记录。
+  发布证据提交不改变二进制源码版本。尚无用户对本版金豆券使用的实机成功反馈。
