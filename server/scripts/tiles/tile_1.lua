@@ -1,5 +1,5 @@
 -- 经典机会/新闻格。抽取策略来自已绑定当前地图的宿主，不能套用BOSS的4096表。
--- 本文件只准备金额和报文；产权/股票回收、全员结算由会话统一提交。
+-- 本文件只准备金额、停走和报文；状态、产权/股票回收、全员结算由会话统一提交。
 local protocol = require("core.protocol")
 local M = {}
 local income = {[0x406d] = true, [0x406e] = true}
@@ -10,6 +10,21 @@ local pictured = {[0x406e] = true, [0x4071] = true, [0x4077] = true, [0x407a] = 
 function M.land(request)
     if not request.classic_news_available then return core.call("tile.native") end
     local event = core.call("tile.classic_news.prepare")
+    if event.opcode == 0x4072 then
+        assert(math.type(event.duration) == "integer" and event.duration >= 1 and event.duration <= 127,
+            "豪雨停走必须使用GValue中的有效时长")
+        local stays = {}
+        for index, player in ipairs(event.players) do
+            local eligible = player.active and player.hotel == -1 and player.hospital == -1
+                and player.jail == -1 and player.kidnapped == -1
+            -- 原事件直接覆盖1496；不加一，不叠加，也不检查攻击卡免疫。
+            stays[index] = eligible and event.duration or player.stay
+        end
+        return {stays = stays, messages = {
+            protocol.inner(0x4013, request.game_id, string.pack("<i2", request.position)),
+            protocol.inner(0x4072, request.game_id, ""),
+        }}
+    end
     if event.opcode == 0x4078 then
         local tickets, inventory = event.tickets, {}
         assert(#event.slots == 8, "新闻变卖必须提供八个手牌槽")

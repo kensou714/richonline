@@ -18,7 +18,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,roll,moving,bank,property,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,roll,stationary,moving,bank,property,rent_transfer,event,junction,settling,closed };
 struct Retired {
     std::uint8_t actor;
     Bytes request;
@@ -216,13 +216,23 @@ struct Session {
         // 每条非重播4010加一次日历WORD；轮数只在完整绕回显式起始槽后加一。
         auto packet=encode_richonline_turn4010({board.game_server_id,static_cast<std::int8_t>(actor),
             static_cast<std::int8_t>(round_anchor),0},rules.opaque_turn7);
+        // 4010只执行轮首更新；420F(-1)排608A阶段4，才进入掷骰或停走分支。
+        std::vector<Bytes> messages{std::move(packet),encode_richonline_empty_turn420f(board.game_server_id)};
+        if(statuses[actor].stay && movement_sequence==std::numeric_limits<std::uint64_t>::max())
+            throw CodecError("richonline_classic_movement_sequence_overflow");
         ++sequence;calendar=static_cast<std::uint16_t>(calendar+1U);
         static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
         phase=Phase::roll;pending_opcode.reset();
+        if(statuses[actor].stay) {
+            // 客户端不掷骰、不发4011；每个连接直接回报0011和当前原位置。
+            route={};route_cursor=0;phase=Phase::stationary;
+            movement=RichonlineSharedMovementWait{++movement_sequence,calendar,
+                board.participants[actor].position,actor,0x11};
+        }
         if(rules.log) rules.log("richonline_classic_turn actor="+std::to_string(actor)+
             " sequence="+std::to_string(sequence)+" calendar="+std::to_string(calendar));
-        return {std::move(packet)};
+        return messages;
     }
     std::vector<Bytes> opening() {
         if(phase!=Phase::loading) throw CodecError("richonline_classic_opening_repeated");
@@ -540,6 +550,13 @@ struct Session {
         if(bankrupt) {collision_pending=false;return advance(std::move(messages));}
         return property_effects(std::move(messages));
     }
+    std::vector<RichonlineClassicRainActor> rain_actors() const {
+        std::vector<RichonlineClassicRainActor> result;
+        result.reserve(active.size());
+        for(std::uint8_t slot=0;slot<active.size();++slot)
+            result.push_back({active[slot]!=0,raw->actor(slot),statuses[slot]});
+        return result;
+    }
     std::vector<Bytes> money_news(const RichonlineClassicTurnContext& current) {
         if(!rules.news || current.landing.property_ref!=-1)
             throw CodecError("richonline_classic_news_authority_missing");
@@ -550,7 +567,19 @@ struct Session {
         for(std::uint8_t slot=0;slot<active.size();++slot) all_funds.push_back(world.ledger->snapshot(slot));
         const auto& before=all_funds[actor];
         const auto inventory_before=world.cards[actor]->inventory();
+        const auto rain_before=rain_actors();
         const auto event=rules.news->select(current,before,fines_before);
+        if(event.opcode==0x4072) {
+            if(event.amount!=0 || event.picture) throw CodecError("richonline_classic_news_parameters_invalid");
+            if(!rules.motion_cards) throw CodecError("richonline_classic_rain_rules_missing");
+            auto plan=prepare_richonline_classic_rain_news(board.game_server_id,current.landing,
+                rain_before,*rules.motion_cards,rules.script);
+            // 全部准备完成才写入；同一共享对局锁下复核每人的原始状态和计时器。
+            if(rain_actors()!=plan.before || board.participants[actor].position!=current.landing.position)
+                throw CodecError("richonline_classic_news_commit_stale");
+            for(std::size_t slot=0;slot<statuses.size();++slot) statuses[slot].stay=plan.after[slot].status.stay;
+            return complete(std::move(plan.messages));
+        }
         if(event.opcode==0x4078) {
             if(event.amount!=0 || event.picture) throw CodecError("richonline_classic_news_parameters_invalid");
             auto plan=prepare_richonline_classic_card_sale_news(board.game_server_id,current.landing,before,
@@ -917,6 +946,15 @@ struct Session {
                 auto move=prepare_move();std::vector<Bytes> messages{std::move(move.packet)};
                 remember(sender,request);commit_move(std::move(move));return messages;
             }
+        }
+        if(phase==Phase::stationary && opcode==0x11) {
+            const auto stopped=std::get<RichonlineMoveStop11>(parse_richonline_movement_request(request));
+            if(!movement || movement->opcode!=0x11 || stopped.endpoint!=movement->endpoint ||
+                stopped.endpoint!=board.participants[actor].position)
+                throw CodecError("richonline_classic_endpoint_mismatch");
+            remember(sender,request);movement.reset();
+            // 零步仍按原位置触发落点、同格效果及岔路；不能直接跳到下一角色。
+            return land();
         }
         if(phase==Phase::moving && (opcode==0x11 || opcode==0x28)) {
             const auto decoded=parse_richonline_movement_request(request);

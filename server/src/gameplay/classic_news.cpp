@@ -1,6 +1,7 @@
 #include "richonline_classic_news.hpp"
 #include "richonline_boss_landing.hpp"
 #include "richonline_shop_catalog.hpp"
+#include "richonline_motion_card.hpp"
 #include "lua_wire.hpp"
 #include <algorithm>
 #include <array>
@@ -19,6 +20,53 @@ void validate_context(const RichonlineLandingContext& context) {
         (context.occupied_by_other_actor && !context.collision_resolved && !context.phase6_collision_authorized))
         throw CodecError("richonline_classic_news_context_invalid");
 }
+}
+RichonlineClassicRainNewsPlan prepare_richonline_classic_rain_news(std::uint16_t game,
+    const RichonlineLandingContext& context,std::span<const RichonlineClassicRainActor> before,
+    const RichonlineMotionCardRules& rules,const std::shared_ptr<LuaServer>& script) {
+    validate_context(context);
+    if(before.size()<2 || before.size()>4 || context.actor_slot>=before.size() ||
+        !before[context.actor_slot].active || before[context.actor_slot].status!=context.actor_status)
+        throw CodecError("richonline_classic_news_roster_invalid");
+    if(!rules.stay_turns || rules.stay_turns>127)
+        throw CodecError("richonline_classic_rain_duration_invalid");
+    RichonlineClassicRainNewsPlan plan{{before.begin(),before.end()},{before.begin(),before.end()},{}};
+    LuaValue players=LuaValue::array(),expected_stays=LuaValue::array();
+    for(std::size_t slot=0;slot<before.size();++slot) {
+        const auto& player=before[slot];
+        const auto& raw=player.raw;
+        // 未知与-1有不同含义；活动角色四项都必须有已核实的原始值。
+        if(player.active && (!raw.hotel1493 || !raw.hospital1494 || !raw.jail1495 || !raw.kidnapped1497))
+            throw CodecError("richonline_classic_rain_actor_unknown");
+        const bool eligible=player.active && raw.hotel1493==-1 && raw.hospital1494==-1 &&
+            raw.jail1495==-1 && raw.kidnapped1497==-1;
+        if(eligible) plan.after[slot].status.stay=rules.stay_turns;
+        players.push_back({{"active",player.active},{"hotel",raw.hotel1493.value_or(-1)},
+            {"hospital",raw.hospital1494.value_or(-1)},{"jail",raw.jail1495.value_or(-1)},
+            {"kidnapped",raw.kidnapped1497.value_or(-1)},{"stay",player.status.stay}});
+        expected_stays.push_back(plan.after[slot].status.stay);
+    }
+    Bytes stop;append_le(stop,0x4013,2);append_le(stop,game,2);
+    append_le(stop,static_cast<std::uint16_t>(context.position),2);
+    Bytes packet;append_le(packet,0x4072,2);append_le(packet,game,2);
+    plan.messages={std::move(stop),std::move(packet)};
+    if(script) {
+        bool prepared=false;
+        const LuaBindings api{{"tile.classic_news.prepare",[&](const LuaValue&) {
+            if(prepared) throw CodecError("lua_classic_news_already_prepared");
+            prepared=true;
+            return LuaValue{{"opcode",0x4072},{"duration",rules.stay_turns},{"players",players}};
+        }}};
+        const auto result=script->call("tile.land",{{"type",1},{"game_id",game},
+            {"position",context.position},{"actor",context.actor_slot},{"classic_news_available",true}},api);
+        LuaValue messages=LuaValue::array();
+        for(const auto& message:plan.messages) messages.push_back(lua_bytes(View(message)));
+        const LuaValue expected{{"stays",expected_stays},{"messages",messages}};
+        if(!prepared || result!=expected) throw CodecError("lua_classic_news_plan_invalid");
+        for(const auto& stay:result.at("stays"))
+            if(!stay.is_number_integer()) throw CodecError("lua_classic_news_plan_invalid");
+    }
+    return plan;
 }
 RichonlineClassicCardSaleNewsPlan prepare_richonline_classic_card_sale_news(std::uint16_t game,
     const RichonlineLandingContext& context,const RichonlineGameFundsSnapshot& before,

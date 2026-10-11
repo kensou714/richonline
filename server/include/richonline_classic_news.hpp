@@ -2,9 +2,11 @@
 #include "richonline_boss_turns.hpp"
 #include "richonline_game_ledger.hpp"
 #include "richonline_chance.hpp"
+#include "richonline_raw_authority.hpp"
 
 namespace richnet {
 class RichonlineShopCatalog;
+struct RichonlineMotionCardRules;
 // NEW 64F2A0 -> 7D9C70在每次开局将G+C80设为5000，与地图起始现金无关。
 inline constexpr std::uint32_t richonline_classic_initial_news_fines=5000;
 struct RichonlineClassicMoneyNews {
@@ -31,6 +33,20 @@ struct RichonlineClassicCardSaleNewsPlan {
     std::uint32_t tickets_received;
     std::vector<Bytes> messages;
 };
+struct RichonlineClassicRainActor {
+    bool active;
+    RichonlineRawActorState raw;
+    RichonlineActorStatus status;
+    bool operator==(const RichonlineClassicRainActor&) const = default;
+};
+struct RichonlineClassicRainNewsPlan {
+    std::vector<RichonlineClassicRainActor> before,after;
+    std::vector<Bytes> messages;
+};
+// 4072只筛活动及四个原始收容状态；直接覆盖stay，不使用攻击卡免疫或额外加一。
+RichonlineClassicRainNewsPlan prepare_richonline_classic_rain_news(std::uint16_t game,
+    const RichonlineLandingContext&,std::span<const RichonlineClassicRainActor>,
+    const RichonlineMotionCardRules&,const std::shared_ptr<LuaServer>&);
 // 4078整槽变卖：每个非空槽只计一次priceG，清掉整叠；不乘数量、不打半价。
 RichonlineClassicCardSaleNewsPlan prepare_richonline_classic_card_sale_news(std::uint16_t game,
     const RichonlineLandingContext&,const RichonlineGameFundsSnapshot&,
