@@ -33,7 +33,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,feast_exit,lottery_draw,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,hotel_wait,hotel_exit,moving,bank,shop,lottery,property,research,trade,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,feast_exit,lottery_draw,turn_event,roll,frozen_wait,stationary,kidnap_wait,confinement_wait,confinement_exit,hotel_wait,hotel_exit,moving,bank,shop,lottery,property,research,trade,rent_transfer,event,junction,settling,closed };
 enum class Confinement { hospital,jail };
 struct Retired {
     std::uint8_t actor;
@@ -131,6 +131,10 @@ struct Session {
     std::optional<std::chrono::steady_clock::time_point> lottery_draw_deadline;
     Bytes lottery_draw_packet;
     std::vector<bool> lottery_draw_sent;
+    std::array<std::optional<std::array<std::uint8_t,6>>,8> accepted_hibernate{};
+    std::optional<std::chrono::steady_clock::time_point> frozen_deadline;
+    Bytes frozen_wait_packet;
+    std::vector<bool> frozen_wait_sent;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -141,6 +145,11 @@ struct Session {
         const auto count=board.participants.size();
         hotel_visits.resize(count);
         hotel_wait_sent.resize(count,false);
+        frozen_wait_sent.resize(count,false);
+        if(rules.frozen_turn_delay<std::chrono::milliseconds{1} ||
+            rules.frozen_turn_delay>std::chrono::minutes{5} ||
+            (rules.hibernate && (!rules.hibernate->frozen_turns || rules.hibernate->frozen_turns>127)))
+            throw CodecError("richonline_classic_hibernate_policy_invalid");
         if(count<2 || count>4 || source.players.size()!=count || source.recipients.size()!=count ||
             actor>=count || dice.size()!=count || rules.opening_hands.size()!=count ||
             !rules.random || !rules.now || !rules.card_resources || !rules.resale || !rules.services ||
@@ -419,6 +428,7 @@ struct Session {
         ++sequence;calendar=static_cast<std::uint16_t>(calendar+1U);
         static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
+        accepted_hibernate={};frozen_deadline.reset();frozen_wait_packet.clear();
         phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
         hotel_deadline.reset();hotel_wait_packet.clear();hotel_exit_roll_requested=false;hotel_exit_effects=false;
         confinement_exit_roll_requested=false;
@@ -646,6 +656,17 @@ struct Session {
             return messages;
         }
         messages.push_back(encode_richonline_empty_turn420f(board.game_server_id));
+        if(statuses[actor].frozen) {
+            // 7C0C50先递减1500，再于阶段4排1800ms提示并返回；不发送0011。
+            // 冰冻优先于停走/梦游，不触发本格落点或同格碰撞，等待由整局持有。
+            phase=Phase::frozen_wait;route={};route_cursor=0;movement.reset();
+            frozen_wait_packet=messages.back();frozen_deadline.reset();
+            std::fill(frozen_wait_sent.begin(),frozen_wait_sent.end(),false);
+            calendar_roll_requested=false;
+            if(rules.log) rules.log("richonline_classic_frozen_turn actor="+std::to_string(actor)+
+                " remaining="+std::to_string(statuses[actor].frozen)+" sequence="+std::to_string(sequence));
+            return messages;
+        }
         if(statuses[actor].stay) {
             // 客户端不掷骰、不发4011；每个连接直接回报0011和当前原位置。
             route={};route_cursor=0;phase=Phase::stationary;
@@ -2143,6 +2164,118 @@ struct Session {
             " card="+std::to_string(plan->transferred_card())+" sequence="+std::to_string(sequence));
         return messages;
     }
+    RichonlineHibernateSnapshot hibernate_snapshot() const {
+        RichonlineHibernateSnapshot snapshot{};
+        snapshot.game_id=board.game_server_id;snapshot.calendar=calendar;
+        snapshot.active_actor=static_cast<std::int8_t>(actor);snapshot.roll_phase=phase==Phase::roll;
+        snapshot.active_actor_can_act=active[actor] && !richonline_landing_controlled(statuses[actor]) &&
+            !statuses[actor].stay && raw->game().scripted_event83830==-1;
+        for(std::uint8_t slot=0;slot<active.size();++slot) {
+            const auto& owner=world.cards[slot];
+            if(!owner || owner->actor_slot()!=slot || owner->game_id()!=board.game_server_id || owner->game_mode()!=0)
+                throw CodecError("richonline_classic_hibernate_inventory_owner_invalid");
+            auto& target=snapshot.actors[slot];
+            target.present=active[slot];target.status=statuses[slot];
+            target.inventory={slot,slot,owner->inventory(),std::nullopt,false};
+            // 经典结盟入口尚未开放，关系保持开局全零，不能读取另一局或BOSS的关系。
+            // 接入结盟时须将关系权威一并传入本快照及提交，而非继续使用此空关系前提。
+            if(!target.present) continue;
+            const auto& state=raw->actor(slot);
+            if(!state.hotel1493 || !state.hospital1494 || !state.jail1495 || !state.kidnapped1497)
+                throw CodecError("richonline_classic_hibernate_raw_unknown");
+            target.raw1493=*state.hotel1493;target.raw1494=*state.hospital1494;
+            target.raw1495=*state.jail1495;target.raw1497=*state.kidnapped1497;
+        }
+        return snapshot;
+    }
+    std::vector<Bytes> hibernate_card(View request) {
+        // 164没有请求序号。同一回合相同槽位报文按重发处理，不能重复扣506/1071。
+        if(request.size()==6 && request[4]<accepted_hibernate.size() && accepted_hibernate[request[4]] &&
+            std::ranges::equal(request,*accepted_hibernate[request[4]])) return {};
+        const auto before_sequence=sequence;
+        const auto owners=world.cards;
+        std::optional<RichonlineHibernatePlan> plan;
+        std::array<std::uint8_t,6> accepted{};
+        std::vector<Bytes> messages;
+        try {
+            if(!rules.hibernate) throw CodecError("richonline_classic_hibernate_rules_missing");
+            const auto use=decode_richonline_hibernate164(request);
+            const auto before=hibernate_snapshot();
+            const auto consumption=owners[actor]->prepare_consumption(use.inventory_slot,506);
+            if(!consumption) throw CodecError("richonline_classic_hibernate_not_owned");
+            plan=plan_richonline_hibernate(use,board.game_server_id,static_cast<std::int8_t>(actor),
+                startup.map_name,*rules.card_resources,*rules.hibernate,before);
+            if(consumption->remaining_inventory!=plan->after.actors[actor].inventory.main)
+                throw CodecError("richonline_classic_hibernate_consumption_mismatch");
+            // 复用真实1071保护。主手牌未抵挡且地图允许时，必须证明第二套没有保护卡；
+            // 未知不能当作无卡，否则会出现客户端抵挡、服务端却冻结的分歧。
+            for(std::uint8_t slot=0;slot<active.size();++slot)
+                if(plan->effects[slot]==RichonlineHibernateEffect::frozen &&
+                    rules.card_resources->automatic_card_eligible(startup.map_name,1071) &&
+                    (!rules.secondary_sleep_protection_absent || !rules.secondary_sleep_protection_absent(slot)))
+                    throw CodecError("richonline_classic_hibernate_secondary_protection_unknown");
+            if(rules.script) {
+                bool consumed=false,snapshot_read=false,prepared=false,invalid=false;
+                const auto reject=[&]() -> LuaValue {
+                    invalid=true;throw CodecError("lua_classic_hibernate_plan_invalid");
+                };
+                const LuaBindings bindings{
+                    {"card.prepare",[&](const LuaValue& args) {
+                        if(consumed || args!=LuaValue{{"card",506}} || !args.at("card").is_number_integer())
+                            return reject();
+                        consumed=true;return LuaValue{{"slot",use.inventory_slot},{"bank",0}};
+                    }},
+                    {"hibernate.snapshot",[&](const LuaValue&) {
+                        if(!consumed || snapshot_read) return reject();
+                        snapshot_read=true;auto actors=LuaValue::array();
+                        for(std::size_t slot=0;slot<before.actors.size();++slot) {
+                            const auto& target=before.actors[slot];
+                            actors.push_back({{"slot",slot},{"present",target.present},{"hotel",target.raw1493},
+                                {"hospital",target.raw1494},{"jail",target.raw1495},{"kidnapped",target.raw1497},
+                                {"frozen",target.status.frozen}});
+                        }
+                        return LuaValue{{"actor",actor},{"actors",std::move(actors)},
+                            {"frozen_turns",rules.hibernate->frozen_turns}};
+                    }},
+                    {"hibernate.prepare",[&](const LuaValue& args) {
+                        if(!snapshot_read || prepared) return reject();
+                        auto targets=LuaValue::array();
+                        for(std::size_t slot=0;slot<plan->effects.size();++slot)
+                            if(plan->effects[slot]!=RichonlineHibernateEffect::ineligible &&
+                                plan->effects[slot]!=RichonlineHibernateEffect::requester) targets.push_back(slot);
+                        if(args!=LuaValue{{"targets",targets},{"frozen_turns",rules.hibernate->frozen_turns}} ||
+                            !args.at("frozen_turns").is_number_integer() ||
+                            !std::ranges::all_of(args.at("targets"),[](const auto& value){return value.is_number_integer();}))
+                            return reject();
+                        prepared=true;return LuaValue{};
+                    }}
+                };
+                const auto response=rules.script->call("game.action",{{"payload",lua_bytes(request)},
+                    {"opcode",164},{"mode",0},{"map",startup.map_name},{"actor",actor},
+                    {"calendar",calendar},{"game_id",board.game_server_id}},bindings);
+                if(invalid || !consumed || !snapshot_read || !prepared || !response.is_array() ||
+                    response.size()!=1 || !response[0].is_string() || lua_bytes(response[0])!=plan->response40f4)
+                    throw CodecError("lua_classic_hibernate_response_invalid");
+            }
+            std::copy(request.begin(),request.end(),accepted.begin());messages={plan->response40f4};
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_hibernate_refused actor="+std::to_string(actor)+
+                " reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        if(sequence!=before_sequence || world.cards!=owners || hibernate_snapshot()!=plan->before)
+            throw CodecError("richonline_classic_hibernate_snapshot_stale");
+        remember(actor,request);
+        // 全部玩家及保护卡先核对；提交段不再分配、调用Lua或外部库存提供者。
+        for(std::uint8_t slot=0;slot<active.size();++slot) {
+            owners[slot]->commit_inventory(plan->after.actors[slot].inventory.main);
+            statuses[slot]=plan->after.actors[slot].status;
+        }
+        accepted_hibernate[accepted[4]]=accepted;
+        if(rules.log) rules.log("richonline_classic_hibernate actor="+std::to_string(actor)+
+            " sequence="+std::to_string(sequence)+" turns="+std::to_string(rules.hibernate->frozen_turns));
+        return messages;
+    }
     std::vector<Bytes> property_card(View request) {
         const auto before_actor=actor;
         const auto before_calendar=calendar;
@@ -2464,6 +2597,7 @@ struct Session {
             if(opcode==116) return theft_card(request);
             if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
             if(opcode==142) return weapon_treaty(request);
+            if(opcode==164) return hibernate_card(request);
             if(opcode==96 || opcode==97 || opcode==98 || opcode==99 || opcode==100 || opcode==101 || opcode==102 ||
                 opcode==119 || opcode==120 || opcode==123 || opcode==134 || (opcode>=125 && opcode<=129))
                 return property_card(request);
@@ -2525,6 +2659,10 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
+        if(phase==Phase::frozen_wait) {
+            if(!frozen_deadline || rules.now()<*frozen_deadline) return {};
+            frozen_deadline.reset();frozen_wait_packet.clear();return advance({});
+        }
         if(phase==Phase::hotel_wait || phase==Phase::hotel_exit) {
             if(!hotel_deadline || rules.now()<*hotel_deadline) return {};
             if(phase==Phase::hotel_exit) {
@@ -2598,6 +2736,12 @@ struct Session {
     }
     void sent(std::uint8_t sender,View packet) {
         if(terminal) terminal->sent(sender,packet);
+        if(phase==Phase::frozen_wait && std::ranges::equal(packet,frozen_wait_packet)) {
+            if(sender>=frozen_wait_sent.size()) throw CodecError("richonline_classic_frozen_delivery_actor_invalid");
+            frozen_wait_sent[sender]=true;
+            if(!frozen_deadline && std::ranges::all_of(frozen_wait_sent,[](bool value){return value;}))
+                frozen_deadline=rules.now()+rules.frozen_turn_delay;
+        }
         if((phase==Phase::hotel_wait || phase==Phase::hotel_exit) && std::ranges::equal(packet,hotel_wait_packet)) {
             if(sender>=hotel_wait_sent.size()) throw CodecError("richonline_hotel_delivery_actor_invalid");
             hotel_wait_sent[sender]=true;
@@ -2619,6 +2763,7 @@ struct Session {
         hotel_deadline.reset();hotel_wait_packet.clear();hotel_visits.clear();hotel_exit_effects=false;hotel_exit_roll_requested=false;
         feast_exits.clear();calendar_roll_requested=false;
         lottery_draw_deadline.reset();lottery_draw_packet.clear();
+        frozen_deadline.reset();frozen_wait_packet.clear();accepted_hibernate={};
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
         if(services.disconnected) services.disconnected(sender);
     }

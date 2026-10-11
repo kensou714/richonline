@@ -12,6 +12,7 @@
 #include "richonline_classic_news.hpp"
 #include "richonline_game_payment.hpp"
 #include "richonline_classic_hotel.hpp"
+#include "richonline_hibernate_card.hpp"
 
 namespace richnet {
 class RichonlineShopCatalog;
@@ -198,6 +199,11 @@ struct RichonlineClassicSessionRules {
         std::chrono::milliseconds entry_delay{12000},turn_delay{1800},controlled_exit_delay{2000},exit_timeout{30000};
     };
     std::optional<HotelPolicy> hotel;
+    // 冬眠计数来自同代GValue30；未提供资源时拒绝506，不猜文案中的回合数。
+    std::optional<RichonlineHibernateRules> hibernate;
+    // 冰冻阶段无移动ACK。全员420F发送完成后按此服务端策略续到下一回合；
+    // 1800ms对应原生提示时长，不代表已经获知客户端动画播放完成。
+    std::chrono::milliseconds frozen_turn_delay{1800};
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。
