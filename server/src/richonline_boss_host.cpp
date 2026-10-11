@@ -137,7 +137,8 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_host(Storage& storage,
         if (!config.contains("richonline_boss_game")) return {};
         if (storage.client_profile() != ClientProfile::richonline) throw CodecError("richonline_boss_host_client_profile_invalid");
         if (!strategy) throw CodecError("richonline_boss_host_strategy_required");
-        if(classic && (!classic->create ||
+        if(classic && (!classic->create || !classic->loading.now ||
+            classic->loading.timeout<std::chrono::seconds{1} || classic->loading.timeout>std::chrono::minutes{10} ||
             (classic->spawn_policy!=RichonlineMapSpawnPolicy::all_candidates_connected &&
              classic->spawn_policy!=RichonlineMapSpawnPolicy::largest_adjacent_component)))
             throw CodecError("richonline_classic_host_strategy_invalid");
@@ -186,8 +187,19 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_host(Storage& storage,
                         0,selected.wire.opaque_header_byte,{}};
                     const auto startup=build_richonline_classic_startup(selected.resources,room,std::move(header),
                         selected.wire.calendar_counter,players,classic->spawn_policy,random_spawn);
-                    auto plans=bind_richonline_room_game_plans(room,startup.recipients,
-                        classic->create(startup,selected.wire.envelope),
+                    auto loading=classic->loading;
+                    std::vector<RichonlineBoardInit> inits;
+                    for(const auto& recipient:startup.recipients) inits.push_back(recipient.init);
+                    auto callbacks=classic->create(startup,selected.wire.envelope);
+                    if(!callbacks.movement_wait) {
+                        // 拒绝缺少多客户端0011汇合的工厂，释放其已创建的每个成员状态。
+                        if(callbacks.disconnected) for(const auto& init:inits)
+                            try { callbacks.disconnected(init.local_slot); } catch(...) {}
+                        throw CodecError("richonline_classic_host_movement_wait_required");
+                    }
+                    auto shared=make_richonline_shared_startups(std::move(inits),startup.recipients.front().snapshot,
+                        selected.wire.envelope,std::move(callbacks),std::move(loading));
+                    auto plans=bind_richonline_room_game_plans(room,startup.recipients,std::move(shared),
                         selected.wire.envelope,redirect_factory,random_bytes,game_log);
                     if(log) log("richonline_classic_plan_prepared",{{"channel",room.channel},{"room",room.key},
                         {"players",players.size()},{"settings_revision",settings.at("revision")},

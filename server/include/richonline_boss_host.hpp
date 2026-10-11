@@ -6,14 +6,16 @@
 #include "richonline_boss_startup.hpp"
 #include "richonline_game_startup.hpp"
 #include "richonline_classic_startup.hpp"
+#include "richonline_shared_startup.hpp"
 
 namespace richnet {
 using RichonlineBossStrategyFactory = std::function<RichonlineStartupPlan(const RichonlineBossStartup&)>;
-// 必须返回与startup.recipients同序的共享会话计划，使用shared_startups协调全员收发。
+// 业务只返回一份整局回调，宿主统一创建shared_startups并协调全员收发与移动上报。
 // 生产端未提供完整经典玩法工厂时，mode0仍明确拒绝，不发送半成品棋盘。
 struct RichonlineClassicHostStrategy {
     RichonlineMapSpawnPolicy spawn_policy;
-    std::function<std::vector<RichonlineStartupPlan>(const RichonlineClassicStartup&,RichonlineBoardEnvelope)> create;
+    RichonlineMapLoadPolicy loading;
+    std::function<RichonlineSharedCallbacks(const RichonlineClassicStartup&,RichonlineBoardEnvelope)> create;
 };
 
 std::optional<RichonlineRuntimeGame> load_richonline_boss_host(

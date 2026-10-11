@@ -19,6 +19,16 @@ struct Request {
     Bytes plain;
     std::optional<RichonlineStockRequest> stock;
 };
+struct IncomingCallbacks {
+    RichonlineSharedCallbacks& callbacks;
+    std::array<bool,8> actors{};
+    bool owned=true;
+    ~IncomingCallbacks() {
+        if(!owned || !callbacks.disconnected) return;
+        for(std::uint8_t actor=0;actor<actors.size();++actor) if(actors[actor])
+            try { callbacks.disconnected(actor); } catch(...) {}
+    }
+};
 struct Shared {
     std::mutex mutex;
     std::uint16_t game;
@@ -26,6 +36,75 @@ struct Shared {
     std::vector<std::optional<Peer>> peers;
     std::deque<Request> requests;
     bool started=false,failed=false;
+    std::function<RichonlineMapLoadPolicy::Clock::time_point()> now;
+    struct Movement {
+        RichonlineSharedMovementWait entry;
+        std::optional<RichonlineMapLoadPolicy::Clock::time_point> deadline;
+        std::array<bool,8> reported{};
+        std::optional<Request> controller;
+    };
+    std::optional<Movement> movement;
+    std::optional<std::uint64_t> last_movement_sequence;
+    std::deque<RichonlineSharedMovementWait> retired_movements;
+    ~Shared() {
+        // 计划已创建但尚未交给注册表时也拥有清理责任；显式断开的槽不重复通知。
+        if(!callbacks.disconnected) return;
+        for(std::uint8_t actor=0;actor<peers.size();++actor) if(peers[actor] && peers[actor]->connected) {
+            peers[actor]->connected=false;
+            try { callbacks.disconnected(actor); } catch(...) {}
+        }
+    }
+
+    static bool matches_movement(const RichonlineSharedMovementWait& entry,View plain) {
+        return plain.size()==6 && read_le(plain.first(2))==0x11 &&
+            read_le(plain.subspan(2,2))==entry.calendar &&
+            read_le(plain.subspan(4,2))==static_cast<std::uint16_t>(entry.endpoint);
+    }
+    bool retired_movement(std::uint8_t actor,View plain) const {
+        if(actor>=peers.size() || !peers[actor]) return false;
+        return std::any_of(retired_movements.begin(),retired_movements.end(),[&](const auto& entry) {
+            return matches_movement(entry,plain);
+        });
+    }
+    void retire_movement() {
+        retired_movements.push_back(movement->entry);
+        if(retired_movements.size()>64) retired_movements.pop_front();
+        movement.reset();
+    }
+    void sync_movement() {
+        if(!callbacks.movement_wait) return;
+        const auto current=callbacks.movement_wait();
+        if(current && (current->endpoint<0 || current->controller>=peers.size() ||
+            !peers[current->controller] || !peers[current->controller]->connected))
+            throw CodecError("richonline_shared_movement_wait_invalid");
+        if(movement && current && *current==movement->entry) return;
+        // 业务撤销移动时仅保留迟到回报指纹，不能据此调用落点或补齐未收到的回报。
+        if(movement) retire_movement();
+        if(!current) return;
+        if(last_movement_sequence && current->sequence<=*last_movement_sequence)
+            throw CodecError("richonline_shared_movement_sequence_not_advanced");
+        movement=Movement{*current,{},{},{}};
+        last_movement_sequence=current->sequence;
+    }
+    std::optional<Request> accept_movement(Request request) {
+        if(!callbacks.movement_wait || request.stock || request.plain.size()<2 ||
+            read_le(View(request.plain).first(2))!=0x11) return request;
+        if(!movement || !matches_movement(movement->entry,request.plain)) {
+            if(retired_movement(request.actor,request.plain)) return {};
+            if(movement) throw CodecError("richonline_shared_movement_report_mismatch");
+            return request; // 未声明此等待时仍交给业务明确处理，不吞未知0011。
+        }
+        const auto sender=request.actor;
+        if(movement->reported[sender]) return {};
+        if(sender==movement->entry.controller) movement->controller=std::move(request);
+        movement->reported[sender]=true;
+        for(std::size_t actor=0;actor<peers.size();++actor)
+            if(peers[actor] && peers[actor]->connected && !movement->reported[actor]) return {};
+        if(!movement->controller) throw CodecError("richonline_shared_movement_controller_missing");
+        auto confirmed=std::move(movement->controller);
+        retire_movement();
+        return confirmed;
+    }
 
     Peer& peer(std::uint8_t actor) {
         if(actor>=peers.size() || !peers[actor] || !peers[actor]->connected)
@@ -86,15 +165,26 @@ struct Shared {
         healthy();
         if(!ready() && !started) return;
         if(!started) { publish(callbacks.opening());started=true; }
+        sync_movement();
+        if(movement && movement->deadline && now()>=*movement->deadline)
+            throw CodecError("richonline_shared_movement_report_timeout");
         if(!drained()) return;
+        // 全员完整发包确认后才开始计上报时限；网络发送中的时间不算客户端动画超时。
+        if(movement && !movement->deadline) movement->deadline=now()+callbacks.movement_timeout;
         // 收包按到达顺序处理；有输出即等待整批发送，不丢弃期间收到的合法操作。
         while(!requests.empty() && drained()) {
             auto request=std::move(requests.front());requests.pop_front();
             if(!peers[request.actor]->connected) continue;
-            publish(request.stock ? callbacks.stock_action(request.actor,*request.stock) :
-                callbacks.action(request.actor,request.envelope,request.plain));
+            auto accepted=accept_movement(std::move(request));
+            if(!accepted) continue;
+            publish(accepted->stock ? callbacks.stock_action(accepted->actor,*accepted->stock) :
+                callbacks.action(accepted->actor,accepted->envelope,accepted->plain));
+            sync_movement();
         }
-        if(timer && drained() && callbacks.poll) publish(callbacks.poll());
+        if(timer && drained() && callbacks.poll) {
+            publish(callbacks.poll());
+            sync_movement();
+        }
     }
     std::vector<Bytes> take(std::uint8_t actor) {
         auto& p=peer(actor);
@@ -139,7 +229,8 @@ struct Shared {
         if(!p.connected) return;
         p.connected=false;p.pending.clear();p.in_flight.clear();
         std::erase_if(requests,[&](const auto& request){return request.actor==actor;});
-        if(!started) failed=true;
+        // 不能因一个必需客户端离线而把“全员一致”缩成剩余玩家一致。
+        if(!started || callbacks.movement_wait) failed=true;
         try { callbacks.disconnected(actor); }
         catch(...) { failed=true;throw; }
     }
@@ -148,13 +239,18 @@ struct Shared {
 std::vector<RichonlineStartupPlan> make_richonline_shared_startups(
     std::vector<RichonlineBoardInit> inits,RichonlineBoardSnapshot snapshot,
     RichonlineBoardEnvelope envelope,RichonlineSharedCallbacks callbacks,RichonlineMapLoadPolicy loading) {
+    IncomingCallbacks cleanup{callbacks};
+    for(const auto& init:inits) if(init.local_slot<cleanup.actors.size()) cleanup.actors[init.local_slot]=true;
     if(inits.empty() || inits.size()>4 || !callbacks.opening || !callbacks.action || !callbacks.disconnected ||
-        !loading.now || loading.timeout<std::chrono::seconds{1} || loading.timeout>std::chrono::minutes{10})
+        !loading.now || loading.timeout<std::chrono::seconds{1} || loading.timeout>std::chrono::minutes{10} ||
+        (callbacks.movement_wait && (callbacks.movement_timeout<std::chrono::seconds{1} ||
+            callbacks.movement_timeout>std::chrono::minutes{5})))
         throw CodecError("richonline_shared_configuration_invalid");
     const auto initial_snapshot=encode_richonline_board_snapshot(snapshot);
     const auto reference=encode_richonline_board_init(inits.front());
     auto state=std::make_shared<Shared>();state->game=snapshot.game_server_id;
-    state->callbacks=std::move(callbacks);state->peers.resize(inits.front().participants.size());
+    state->now=loading.now;
+    state->peers.resize(inits.front().participants.size());
     for(const auto& init:inits) {
         if(init.game_server_id!=snapshot.game_server_id || init.participants.size()!=snapshot.slots.size())
             throw CodecError("richonline_shared_board_mismatch");
@@ -168,6 +264,8 @@ std::vector<RichonlineStartupPlan> make_richonline_shared_startups(
     for(std::size_t i=0;i<state->peers.size();++i)
         if((inits.front().participants[i].lobby_identity>=0)!=state->peers[i].has_value())
             throw CodecError("richonline_shared_membership_mismatch");
+    state->callbacks=std::move(callbacks);
+    cleanup.owned=false;
     std::vector<RichonlineStartupPlan> result;
     for(auto& init:inits) {
         const auto actor=init.local_slot;
@@ -185,8 +283,11 @@ std::vector<RichonlineStartupPlan> make_richonline_shared_startups(
         if(state->callbacks.stock_action) plan.stock_action=[state,actor](const RichonlineStockRequest& request) {
             return state->guarded([&] {return state->enqueue({actor,{}, {},request});});
         };
-        if(state->callbacks.retired_action) plan.retired_action=[state,actor](View plain) {
-            return state->guarded([&] {return state->callbacks.retired_action(actor,plain);});
+        if(state->callbacks.retired_action || state->callbacks.movement_wait) plan.retired_action=[state,actor](View plain) {
+            return state->guarded([&] {
+                return state->retired_movement(actor,plain) ||
+                    (state->callbacks.retired_action && state->callbacks.retired_action(actor,plain));
+            });
         };
         if(state->callbacks.game_finished) plan.game_finished=[state,actor] {
             const std::lock_guard lock(state->mutex);

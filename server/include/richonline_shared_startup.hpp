@@ -9,6 +9,15 @@ struct RichonlineSharedMessage {
     Bytes plain;
 };
 using RichonlineSharedMessages=std::vector<RichonlineSharedMessage>;
+struct RichonlineSharedMovementWait {
+    // 对局业务提供严格递增的移动序号，不用会回绕的日历WORD充当唯一编号。
+    std::uint64_t sequence;
+    std::uint16_t calendar;
+    std::int16_t endpoint;
+    // 齐备后提交此真人连接实际送来的请求；合成角色可由其控制连接报告。
+    std::uint8_t controller;
+    bool operator==(const RichonlineSharedMovementWait&) const = default;
+};
 struct RichonlineSharedCallbacks {
     std::function<RichonlineSharedMessages()> opening;
     std::function<RichonlineSharedMessages(std::uint8_t,const Envelope299&,View)> action;
@@ -20,6 +29,12 @@ struct RichonlineSharedCallbacks {
     std::function<bool(std::uint8_t)> game_finished = {};
     std::function<void(std::uint8_t,const Frame&)> lobby_sent = {};
     std::function<bool(std::uint8_t)> terminal_pending = {};
+    // 普通0011会由各客户端的公共移动动画产生；业务公布真实待决终点后，
+    // 共享层等待全体连接一致，再把控制连接的请求交给action一次。仅覆盖0011。
+    // 完成或取消后返回空值；新的移动必须使用更大sequence。回调不得重入共享层。
+    std::function<std::optional<RichonlineSharedMovementWait>()> movement_wait = {};
+    // 全员完整收到当前批消息后开始计时。缺失上报时使整局失败，不伪造完成或推进回合。
+    std::chrono::milliseconds movement_timeout{30000};
 };
 // 每个真人一份4000，只有local_slot不同，4004相同。返回顺序与inits相同。
 // 回调在整局互斥锁内执行，不得反调本适配器。业务仍负责回合、库存、资产和结算。
