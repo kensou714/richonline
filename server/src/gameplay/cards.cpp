@@ -2,6 +2,7 @@
 #include "richonline_fixed_step_card.hpp"
 #include "richonline_cosmetic_card.hpp"
 #include "richonline_shop_catalog.hpp"
+#include "richonline_boss_landing.hpp"
 
 #include <utility>
 #include <string_view>
@@ -59,21 +60,41 @@ void RichonlineBossCards::configure_tile_rewards(std::vector<std::int16_t> playa
     tile_random_=std::move(random);
 }
 
-std::optional<RichonlineLandingResult> RichonlineBossCards::land(const RichonlineLandingContext& context) {
+std::vector<std::int16_t> RichonlineBossCards::tile_candidates(std::int8_t type) const {
+    if(type==8) {
+        if(tile_reward_cards_.empty()) throw CodecError("richonline_card_tile_policy_required");
+        return tile_reward_cards_;
+    }
+    if(const auto fixed=fixed_tile_reward(type)) {
+        if(!resources_->automatic_card_eligible(award_.map(),*fixed))
+            throw CodecError("richonline_card_tile_reward_not_eligible");
+        return {*fixed};
+    }
+    throw CodecError("richonline_card_tile_kind_invalid");
+}
+std::optional<RichonlineBossCards::PreparedLanding> RichonlineBossCards::prepare_landing(
+    const RichonlineLandingContext& context,std::optional<std::int16_t> selected_card) const {
     if (context.actor_slot != 0 || context.game_mode != 3 || context.synthetic_actor ||
+        richonline_landing_controlled(context.actor_status) ||
         (context.static_type != 68 && !richonline_boss_card_reward_tile(context.static_type)) ||
         context.property_ref != -1 || context.road_degree == 0 || context.road_degree > 4 ||
         (context.occupied_by_other_actor && !context.collision_resolved) || context.position < 0) return {};
     auto next = inventory_;
     auto card = fixed_tile_reward(context.static_type).value_or(award_.card_id());
+    if(selected_card) {
+        const auto candidates=tile_candidates(context.static_type);
+        if(std::ranges::find(candidates,*selected_card)==candidates.end())
+            throw CodecError("richonline_card_tile_selected_card_invalid");
+        card=*selected_card;
+    }
     if(fixed_tile_reward(context.static_type) && !resources_->automatic_card_eligible(award_.map(),card))
         throw CodecError("richonline_card_tile_reward_not_eligible");
-    if(context.static_type==8) {
+    if(context.static_type==8 && !selected_card) {
         const auto reward=prepare_random_reward();
         card=reward.card;
         next=reward.inventory;
     }
-    try { if(context.static_type!=8) next = context.static_type == 68 ? resources_->insert(award_,inventory_) : prepare_add(card); }
+    try { if(context.static_type!=8 || selected_card) next = context.static_type == 68 ? resources_->insert(award_,inventory_) : prepare_add(card); }
     catch (const CodecError& error) {
         if (std::string_view(error.what()) != "richonline_chance_inventory_full") throw;
     }
@@ -85,10 +106,17 @@ std::optional<RichonlineLandingResult> RichonlineBossCards::land(const Richonlin
         append_le(reward,game_id_,2);
         append_le(reward,static_cast<std::uint16_t>(card),2);
     } else reward = encode_richonline_chance_single_card(game_id_,award_,opaque6_7_);
-    std::optional<RichonlineLandingResult> result{RichonlineLandingResult{
-        {std::move(stop),std::move(reward)},RichonlineLandingProgress::complete}};
-    inventory_ = next;
-    return result;
+    return PreparedLanding{inventory_,next,{{std::move(stop),std::move(reward)},RichonlineLandingProgress::complete}};
+}
+void RichonlineBossCards::commit_landing(const PreparedLanding& prepared) {
+    if(inventory_!=prepared.source_inventory) throw CodecError("richonline_card_tile_inventory_changed");
+    inventory_=prepared.remaining_inventory;
+}
+std::optional<RichonlineLandingResult> RichonlineBossCards::land(const RichonlineLandingContext& context) {
+    auto prepared=prepare_landing(context);
+    if(!prepared) return {};
+    commit_landing(*prepared);
+    return std::move(prepared->result);
 }
 RichonlineChanceInventory RichonlineBossCards::prepare_reward() const {
     return resources_->insert(award_,inventory_);

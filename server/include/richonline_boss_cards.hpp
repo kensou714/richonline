@@ -47,6 +47,10 @@ public:
         std::int16_t card;
         RichonlineChanceInventory inventory;
     };
+    struct PreparedLanding {
+        RichonlineChanceInventory source_inventory,remaining_inventory;
+        RichonlineLandingResult result;
+    };
     RichonlineBossCards(std::shared_ptr<const RichonlineChanceResources> resources,
         std::uint16_t game_id, const RichonlineBossCardPolicy& policy);
     void configure_tile_rewards(std::vector<std::int16_t> playable_cards,RichonlineRouteChooser random);
@@ -71,6 +75,10 @@ public:
     // Resolve map/visibility/status/damage rules before committing and encoding its confirmation.
     void commit_target_effect(const PendingTargetEffect& pending);
     void commit_inventory(const RichonlineChanceInventory& inventory) noexcept;
+    std::vector<std::int16_t> tile_candidates(std::int8_t type) const;
+    std::optional<PreparedLanding> prepare_landing(const RichonlineLandingContext& context,
+        std::optional<std::int16_t> selected_card={}) const;
+    void commit_landing(const PreparedLanding& prepared);
     std::optional<RichonlineLandingResult> land(const RichonlineLandingContext& context);
     std::optional<PreparedUse> prepare_use(const RichonlineCardDiceRequest103& request) const;
     void commit_use(const PreparedUse& prepared) noexcept;

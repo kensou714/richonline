@@ -1125,12 +1125,54 @@ struct Turns {
         };
         std::optional<RichonlineLandingResult> scripted_result;
         if(rules.script) {
+            std::optional<RichonlineBossCards::PreparedLanding> reward_plan;
+            std::optional<std::int16_t> selected_reward;
+            bool native_called=false,random_called=false;
+            const auto require_reward=[&] {
+                if(native_called || reward_plan || !rules.cards || context.actor_slot!=0 || context.synthetic_actor ||
+                    context.game_mode!=3 || context.property_ref!=-1 || richonline_landing_controlled(context.actor_status) ||
+                    !richonline_boss_card_reward_tile(context.static_type))
+                    throw CodecError("lua_tile_reward_out_of_scope");
+            };
             const LuaBindings api{{"tile.native",[&](const LuaValue&) {
-                if(scripted_result) throw CodecError("lua_native_landing_already_called");
+                if(native_called || reward_plan || random_called) throw CodecError("lua_native_landing_already_called");
+                native_called=true;
                 scripted_result=native_landing();return LuaValue(true);
+            }},{"tile.cards.candidates",[&](const LuaValue&) {
+                require_reward();return LuaValue(rules.cards->tile_candidates(context.static_type));
+            }},{"tile.random",[&](const LuaValue& args) {
+                require_reward();
+                const auto candidates=rules.cards->tile_candidates(context.static_type);
+                if(random_called || context.static_type!=8 || !args.at("upper").is_number_integer() ||
+                    args.at("upper")!=candidates.size()) throw CodecError("lua_tile_random_bound_invalid");
+                random_called=true;
+                const auto chosen=rules.random(candidates.size());
+                if(chosen>=candidates.size()) throw CodecError("lua_tile_random_invalid");
+                selected_reward=candidates[chosen];
+                return LuaValue(chosen);
+            }},{"tile.cards.prepare",[&](const LuaValue& args) {
+                require_reward();const auto& card=args.at("card");
+                if(!card.is_number_integer() || card<=0 || card>32767) throw CodecError("lua_tile_card_invalid");
+                if(context.static_type==8 && (!selected_reward || card!=*selected_reward))
+                    throw CodecError("lua_tile_random_selection_mismatch");
+                reward_plan=rules.cards->prepare_landing(context,card.get<std::int16_t>());
+                if(!reward_plan) throw CodecError("lua_tile_reward_unavailable");
+                return LuaValue(true);
             }}};
-            rules.script->call("tile.land",{{"type",context.static_type},{"position",context.position},
-                {"actor",context.actor_slot},{"map",rules.script_map}},api);
+            const auto response=rules.script->call("tile.land",{{"type",context.static_type},{"position",context.position},
+                {"actor",context.actor_slot},{"map",rules.script_map},{"game_id",init.game_server_id},
+                {"card_reward_allowed",rules.cards && context.actor_slot==0 && !context.synthetic_actor &&
+                    context.game_mode==3 && context.property_ref==-1 && !richonline_landing_controlled(context.actor_status)}},api);
+            if(reward_plan) {
+                if(!response.is_array() || response.size()!=reward_plan->result.messages.size())
+                    throw CodecError("lua_tile_reward_response_invalid");
+                std::vector<Bytes> messages;
+                for(const auto& packet:response) messages.push_back(lua_bytes(packet));
+                if(messages!=reward_plan->result.messages) throw CodecError("lua_tile_reward_response_mismatch");
+                // Lua回包全部解析并核对后才提交；语法、序列或卡号错误不改变库存。
+                rules.cards->commit_landing(*reward_plan);
+                scripted_result=std::move(reward_plan->result);
+            }
             if(!scripted_result) throw CodecError("lua_landing_continuation_required");
         } else scripted_result=native_landing();
         auto result=std::move(*scripted_result);
