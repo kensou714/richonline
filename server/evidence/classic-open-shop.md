@@ -44,4 +44,12 @@ reward_enabled保持false，避免仅因经典接入就向BOSS奖励池发放没
 静态审阅覆盖自己/他人目标、无主地、空地、大型地产、已有商店、保护地、查封中住宅、
 高等级住宅转换、无地脚下施放、错误槽/组/计数和准备后快照变化；不将审阅表述为测试通过。
 按用户要求不新增或运行测试，不启动服务或游戏，不部署或重启线上。
-固定源码Release构建、Lua语法编译和本机同代交付结果完成后补记。
+固定tree `ee7749b85abaad8763e3dbb577aec9fcb021fc41`的独立Release构建成功，
+BUILD_TESTING=OFF，178个Lua模块语法编译通过。源码提交
+`784b2a8f26287df7aae8473ac59fde47c6c83ab1`已推送并核对GitHub main引用。
+
+本机未运行服务端时备份并更新`server/RichOnline.Server.exe`，SHA256为
+`DA88C3A78BDDCF145B45A55A266568CC860B92F51EE7BF8DE17F645DCBD88248`。
+本机178个Lua文件与固定源码和构建输出逐项哈希相同，文件数量一致。
+旧EXE保存在`server/build-classic-open-shop-fixed/RichOnline.Server.before-784b2a8.exe`。
+以上为编译及文件交付证据，不是多人实机验收；完整goal保持进行中。
