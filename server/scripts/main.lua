@@ -28,6 +28,7 @@ local handlers = {
     ["property.construct"] = property.construct, ["property.upgrade"] = property.upgrade,
     ["property.research"] = property.research,
     ["stock.trade"] = stock.trade,
+    ["stock.open"] = stock.open,
     ["boss.can_attack"] = bosses.can_attack,
     ["card.lottery_award"] = lottery.award,
     ["boss.attack"] = bosses.attack,

@@ -2,6 +2,18 @@
 -- 无数据库或移动状态能力：成交不推进回合，失败也不能发送会推进6080的4206。
 local protocol = require("core.protocol")
 local M = {}
+function M.open(request)
+    -- 4200同步大盘，随后每个槽一份4201；重复历史包会追加历史，不能拿作心跳。
+    local messages = {protocol.inner(0x4200, request.game_id,
+        string.pack("<fff", request.previous_index, request.current_index, request.factor))}
+    for _, row in ipairs(request.history) do
+        assert(#row.prices == 30, "股票历史必须有30点")
+        local body = string.pack("<i2I2", row.slot, 0)
+        for _, price in ipairs(row.prices) do body = body .. string.pack("<f", price) end
+        messages[#messages + 1] = protocol.inner(0x4201, request.game_id, body)
+    end
+    return messages
+end
 function M.trade(request)
     local reason, deposit = "accepted", request.deposit
     local buy, quantity = request.buy, request.quantity
