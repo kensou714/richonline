@@ -18,3 +18,16 @@
 原版 `RnClient.exe` SHA256 为 `feeeac1bf9605690e8a774452456320125d7d3dbaa2dc73d529f8230c0677bc7`。`classic-motion-cards-client.json` 记录16个函数的完整 IDA chunk，并逐字节与磁盘 PE 核对一致：请求构造器 `692510/692540/692570/6925A0/692CA0/692D90`，卡处理器 `66CF50/66D2B0/66D500/66DA60/674BF0/6755F0`，静态格和途中银行门 `7C54B0/7F5D90`，请求发送点 `657680/657B30`。客户端行为还参照既有的地产选择及回合继续专题；未将资源台词或配置值当作未证实的协议字段。
 
 验证范围：静态逆向、源代码复核、Release 构建和 Lua 语法编译。依用户要求未新增或运行玩法测试，未启动本机服务或客户端；线上效果需后续实机验证。
+
+## 发布回执
+
+2026-10-12（本地时区）源码提交 `deea46c59ee847da09fd9eb0844398c055ece28b` 已推送 GitHub main；固定 tree `4e8126168a96571115f021f89cab46a08ede29c7` 独立构建，BUILD_TESTING=OFF。此回执的后续文档提交不改变二进制源码身份。
+
+- 线上 release `deea46c59ee8`，PID `7628`，instance `7628-117287032147100`；实际进程与计划任务均使用该 release 的 EXE，任务 Running。
+- EXE SHA256 `3F02A350C59C2A112FBC6DBD57C4D3E2F2F6D7B80BC12B7D5172B20DCC784BCF`。
+- ZIP SHA256 `1F73CC560B365BA58F44B82A1243E9240DFA44D0C2B3B34619800BE2EA903103`；208个文件含173个Lua，ZIP条目长度与哈希逐项匹配 manifest。
+- 持久数据仍为 `D:\richonline\shared\data`；在线 DB 备份 `D:\richonline\shared\data\backups\accounts-1791746960584262.sqlite3`，部署备份 `D:\richonline\backups\20261011192920-deea46c59ee8`。正常停止指定旧实例，没有覆盖数据库。
+- 六项 Ready、18600/18602/18604/18605/18606/18680 公网 TCP 均通过；两份大厅列表 HTTP 200，CP950 三频道均指向 `103.156.25.81:18600`。
+- 商城日期兼容与全 BOSS 测试地图解锁配置保留；本机 EXE 已备份替换为同哈希文件，173个本地 Lua 与发布包逐项同代，未启动。
+
+本轮同时复核 BOSS 原生回血：此前线上 `6cbfca40f44f` 已包含 `4a1b52e92770` 的原生恢复及狂暴镜像，本次继续继承。该实例末2000条日志未找到原生回血事件，不能据此认定用户那一局已完成实机验证；详细规则见 `native-boss-recovery.md`。经典生产准入仍关闭，整体 goal 继续。
