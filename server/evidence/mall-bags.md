@@ -86,3 +86,16 @@ Prop中的奖励期限、装备属性及实际拥有键构造仍需进一步核�
 只读解包完整AwardLB确认资源除105～107外还含108～111等宝袋，旧加载条件把这些合法但未开放的
 奖盘误当成全局错误；改为跳过范围外奖盘，并要求已开放三张奖盘完整。未开放宝袋仍由使用入口拒绝。
 这是静态资源核对及线上启动失败定位，不是运行游戏测试。
+
+## 修正版发布核验
+
+- 源码d5e248104872b9ecef98efd34cdbc0f78daa2ca6已推送GitHub main，固定树
+  d2d98e793c5f636b0c6af5331d72f1a8462fa17a的Release构建及171份Lua语法编译通过。
+- 线上release d5e248104872，PID4180，instance 4180-106997729023000；任务及实际进程路径均为
+  D:\richonline\releases\d5e248104872\RichOnline.Server.exe。数据库保持D:\richonline\shared\data。
+- 正常切换前备份D:\richonline\shared\data\backups\accounts-1791736671247937.sqlite3，
+  发布备份目录D:\richonline\backups\20261011163751-d5e248104872。
+- EXE SHA256：860C8F3879EA65B4ABD8122C773A6F62EA7200F19BB2C2A5E0FEE841C2A95548；
+  ZIP SHA256：F347F8EB1ECA47249635D21C3B2793FEC0C9DA55A150919B644D7D22E5E963CB，206文件。
+- 六类监听ready，18600/18602/18604/18605/18606/18680公网TCP均可连接，两个gameinfo入口HTTP200。
+  本机EXE已备份后同步，171份脚本哈希匹配；未启动本机服务或客户端，未运行游戏测试。
