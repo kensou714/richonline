@@ -24,3 +24,13 @@
 候选Release构建及Lua语法编译通过，git diff空白检查通过。按用户要求不新增/运行测试，不启动本机服务或客户端。尚无实机狂暴演出或联机伤害验收；最终固定提交、线上PID和哈希另记录发布回执。
 
 本次仅实现黑贝贝1-4自定义狂暴。第3章客户端既有自动狂暴的服务端镜像、多真人BOSS宿主及所有真人各一次宝箱机会、经典总资产地产估值仍是完整goal待办，不属于本次完成范围。
+
+## 发布回执
+
+- 源码提交`d9b7cabaec1d05ac18d24209b121dc64bb9cfdb5`，源码树`f4034380eba9dbcd9f55677b11a4086e8dad2b4a`；已推送并核对GitHub main。独立固定提交Release构建和172个Lua语法编译成功，BUILD_TESTING=OFF。
+- 线上release为`d9b7cabaec1d`；实际进程PID `3464`、instance `3464-110534403540900`。计划任务Running；通过Win32_Process核对实际进程执行路径为`D:\richonline\releases\d9b7cabaec1d\RichOnline.Server.exe`。
+- EXE SHA256：`2BC3A6F38EC72BBF088DF15C672449CE36CC700C78E26627110352CBDE0C2E3F`；ZIP SHA256：`52CA1FACCB7E5BB56F963B9F1F8D937658F6FF9C427795A1FAAB6995340F4914`。发布包207文件，保留Stock/AwardLB资源。
+- 数据目录仍为`D:\richonline\shared\data`；在线数据库备份`backups\accounts-1791740207912528.sqlite3`；部署备份`D:\richonline\backups\20261011173647-d9b7cabaec1d`。沿用中断授权，通过ExpectedInstance正常停止旧实例，不覆盖玩家数据库。
+- 六项ready均为true；18600/18602/18604/18605/18606/18680公网TCP连接成功。RichNetLogin.txt和RichNetServer.txt均HTTP200；商城日期兼容和全BOSS地图开放配置保持。
+- 本机`server/RichOnline.Server.exe`与线上哈希一致，172个工作区Lua与发布包逐个哈希匹配。未启动本机服务或游戏，未运行玩法测试。`gameReady=false`仍反映完整玩法未全部实现，不能用监听检查代替实机验收。
+- 后续本回执提交仅更新证据，不改变上述线上源码版本。完整goal保持active。
