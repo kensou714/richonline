@@ -16,6 +16,7 @@
 #include "richonline_fixed_step_card.hpp"
 #include "richonline_motion_card.hpp"
 #include "richonline_card_protection.hpp"
+#include "richonline_classic_funds_card.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -1902,6 +1903,57 @@ struct Session {
             " card="+std::to_string(plan->transferred_card())+" sequence="+std::to_string(sequence));
         return messages;
     }
+    std::vector<Bytes> funds_card(View request) {
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto owner=world.cards[actor];
+        const auto before_status=statuses[actor];
+        const auto before_raw=raw->actor(actor);
+        const auto before_position=board.participants[actor].position;
+        const auto before_heading=board.participants[actor].direction;
+        std::optional<RichonlineClassicFundsCardPlan> plan;
+        std::optional<std::uint8_t> target;
+        RichonlineRawActorState target_raw{};
+        const auto available=[](const RichonlineRawActorState& state) {
+            return state.hotel1493 && state.hospital1494 && state.jail1495 && state.kidnapped1497 &&
+                *state.hotel1493==-1 && *state.hospital1494==-1 && *state.jail1495==-1 && *state.kidnapped1497==-1;
+        };
+        try {
+            if(phase!=Phase::roll || !active[actor] || owner->actor_slot()!=actor ||
+                owner->game_id()!=board.game_server_id || owner->game_mode()!=0 ||
+                richonline_landing_controlled(before_status) || before_status.stay ||
+                !available(before_raw) || raw->game().scripted_event83830!=-1)
+                throw CodecError("richonline_classic_funds_card_unavailable");
+            const auto use=decode_richonline_classic_funds_card(request);
+            target=use.target;
+            if(target) {
+                if(*target>=active.size() || *target==actor || !active[*target])
+                    throw CodecError("richonline_classic_funds_card_target_invalid");
+                target_raw=raw->actor(*target);
+                // 查税/均贫使用64FF10的选人门；冰冻、梦游目标不在四种收容排除项内。
+                if(!available(target_raw)) throw CodecError("richonline_classic_funds_card_target_unavailable");
+            }
+            plan=prepare_richonline_classic_funds_card(request,calendar,*owner,*world.ledger,active,rules.script);
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_funds_card_refused actor="+std::to_string(actor)+
+                " reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        std::vector<Bytes> messages{plan->response()};
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            world.cards[actor]!=owner || statuses[actor]!=before_status || raw->actor(actor)!=before_raw ||
+            board.participants[actor].position!=before_position || board.participants[actor].direction!=before_heading ||
+            raw->game().scripted_event83830!=-1 || (target && raw->actor(*target)!=target_raw))
+            throw CodecError("richonline_classic_funds_card_stale");
+        remember(actor,request);
+        if(!commit_richonline_classic_funds_card(*owner,*world.ledger,active,*plan))
+            throw CodecError("richonline_classic_funds_card_commit_stale");
+        if(rules.log) rules.log("richonline_classic_funds_card actor="+std::to_string(actor)+
+            " opcode="+std::to_string(read_le(request.first(2)))+" sequence="+std::to_string(sequence));
+        // 三张卡均由确认包本地恢复操作；零现金/存款不在这里生成破产或结束回合。
+        return messages;
+    }
     std::vector<Bytes> stock_card(View request) {
         const auto opcode=read_le(request.first(2));
         // use只由已认证的当前行动者在roll阶段进入；与无日历的0200/0201分开。
@@ -2050,6 +2102,7 @@ struct Session {
                 return {encode_richonline_dice_recovery400b(board.game_server_id)};
             if(opcode==22) return paid_move(request);
             if(opcode==116) return theft_card(request);
+            if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103 || (opcode>=137 && opcode<=140)) return immediate_move_card(request);
             if((opcode>=104 && opcode<=107) || opcode==136 || opcode==141) return motion_card(request);

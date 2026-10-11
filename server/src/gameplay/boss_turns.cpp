@@ -2633,6 +2633,7 @@ struct Turns {
                 if(rules.cards) for(const auto& slot:rules.cards->inventory())
                     inventory.push_back({{"card",slot.card_id},{"count",slot.count}});
                 return LuaValue{{"actors",actors},{"inventory",inventory},{"actor",actor},
+                    {"mode",game_mode},
                     {"calendar",active_counter},{"round",complete_rounds},{"game_id",init.game_server_id},
                     {"can_act",active[actor] && !richonline_landing_controlled(status[actor])}};
             }},
