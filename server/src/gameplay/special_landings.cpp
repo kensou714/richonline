@@ -15,9 +15,13 @@ std::optional<RichonlinePreparedSpecialLanding> prepare_richonline_special_landi
     const RichonlineSpecialLandingContext& context,const RichonlineGameFundsSnapshot& funds) {
     const auto& cell=context.landing;
     if(cell.static_type!=57 && cell.static_type!=58) return {};
-    if(cell.game_mode!=3 || cell.actor_slot>1 || cell.synthetic_actor!=(cell.actor_slot==1) || cell.position<0 ||
+    const bool actor_valid=cell.game_mode==3 ?
+        cell.actor_slot<2 && cell.synthetic_actor==(cell.actor_slot==1) :
+        cell.game_mode==0 && cell.static_type==57 && cell.actor_slot<4 && !cell.synthetic_actor;
+    if(!actor_valid || cell.position<0 ||
         cell.property_ref!=-1 || cell.road_degree==0 || cell.road_degree>4 ||
-        (cell.occupied_by_other_actor && !cell.collision_resolved))
+        (cell.occupied_by_other_actor && !cell.collision_resolved &&
+            !(cell.game_mode==0 && cell.phase6_collision_authorized)))
         throw CodecError("richonline_special_landing_context_invalid");
     check_funds(funds.funds);
     RichonlinePreparedSpecialLanding result;result.actor_=cell.actor_slot;result.status_=cell.actor_status;

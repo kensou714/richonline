@@ -28,7 +28,8 @@ struct RichonlineTicketLandingPlan {
     RichonlineGameFundsUpdate funds;
     RichonlineLandingResult result;
 };
-// 仅准备5/6/7点券格。Lua指定增量；省略时供原生回退使用。
+// 准备mode0真人或mode3的5/6/7点券格。Lua指定增量；省略时供原生回退使用。
+// 调用方先确认无脚本事件；经典同格由宿主授权并在静态效果之后执行phase6。
 // 金额必须匹配客户端4013后自算的规则，准备过程不改账本。
 RichonlineTicketLandingPlan prepare_richonline_ticket_landing(std::uint16_t game_id,
     const RichonlineLandingContext& context,const RichonlineGameFundsSnapshot& funds,

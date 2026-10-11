@@ -8,7 +8,9 @@
 #include "richonline_game_end.hpp"
 #include "richonline_classic_terminal.hpp"
 #include "richonline_portal_landing.hpp"
+#include "richonline_special_landings.hpp"
 #include "lua_server.hpp"
+#include "lua_wire.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -906,6 +908,72 @@ struct Session {
             " sequence="+std::to_string(sequence)+(chosen ? " policy=native-uniform-walkable-road-v1" : " policy=emp-pair"));
         return advance(std::move(prepared.messages));
     }
+    std::optional<std::vector<Bytes>> local_reward_landing(const RichonlineLandingContext& landing) {
+        const bool tickets=landing.static_type>=5 && landing.static_type<=7;
+        if(!tickets && landing.static_type!=57) return {};
+        // 这些格由客户端4013后的静态分派本地改钱；服务器只记同一笔账，不追加增量包。
+        // 混合地产格仍未证明完整续接，不能完成静态格后直接越过其phase2。
+        if(landing.property_ref!=-1) throw CodecError("richonline_classic_reward_property_unimplemented");
+        const auto scripted=raw->game().scripted_event83830;
+        if(!scripted || *scripted!=-1) throw CodecError("richonline_classic_reward_scripted_unavailable");
+        const auto before=world.ledger->snapshot(actor);
+        std::optional<RichonlineTicketLandingPlan> ticket_plan;
+        std::optional<RichonlinePreparedSpecialLanding> merchant_plan;
+        if(tickets) ticket_plan=prepare_richonline_ticket_landing(board.game_server_id,landing,before);
+        else merchant_plan=prepare_richonline_special_landing(board.game_server_id,{landing,false},before);
+        if(!ticket_plan && !merchant_plan) throw CodecError("richonline_classic_reward_plan_missing");
+        const auto& after=ticket_plan ? ticket_plan->funds.after : merchant_plan->after();
+        auto messages=ticket_plan ? ticket_plan->result.messages : merchant_plan->messages();
+        if(rules.script) {
+            bool prepared=false;
+            const LuaBindings api{{"tile.tickets.prepare",[&](const LuaValue& args) {
+                if(prepared || !ticket_plan) throw CodecError("lua_classic_ticket_out_of_scope");
+                const auto& amount=args.at("amount");
+                if(!amount.is_number_integer() || amount!=after.tickets-before.funds.tickets)
+                    throw CodecError("lua_classic_ticket_amount_mismatch");
+                prepared=true;return LuaValue(true);
+            }},{"tile.merchant.prepare",[&](const LuaValue&) {
+                if(prepared || !merchant_plan) throw CodecError("lua_classic_merchant_out_of_scope");
+                prepared=true;return LuaValue{{"tickets",before.funds.tickets},{"scripted",false}};
+            }}};
+            const auto response=rules.script->call("tile.land",{{"type",landing.static_type},
+                {"position",landing.position},{"actor",actor},{"map",startup.map_name},{"game_id",board.game_server_id},
+                {"ticket_landing_available",tickets},{"merchant_landing_available",!tickets},
+                {"synthetic_actor",false},{"controlled",richonline_landing_controlled(landing.actor_status)}},api);
+            if(!prepared) throw CodecError("lua_classic_reward_prepare_required");
+            if(merchant_plan) {
+                if(!response.is_object() || response.size()!=3 || !response.contains("cash_credit") ||
+                    !response.contains("ticket_cost") || !response.contains("messages"))
+                    throw CodecError("lua_classic_merchant_response_invalid");
+                const auto& credit=response.at("cash_credit");const auto& cost=response.at("ticket_cost");
+                if(!credit.is_number_integer() || !cost.is_number_integer() ||
+                    credit!=after.cash-before.funds.cash || cost!=before.funds.tickets-after.tickets)
+                    throw CodecError("lua_classic_merchant_amount_mismatch");
+            }
+            const auto& packets=ticket_plan ? response : response.at("messages");
+            if(!packets.is_array() || packets.size()!=messages.size())
+                throw CodecError("lua_classic_reward_response_invalid");
+            for(std::size_t index=0;index<messages.size();++index)
+                if(lua_bytes(packets[index])!=messages[index])
+                    throw CodecError("lua_classic_reward_response_mismatch");
+        }
+        const auto diagnostic="richonline_classic_local_reward actor="+std::to_string(actor)+
+            " type="+std::to_string(landing.static_type)+" position="+std::to_string(landing.position)+
+            " tickets_before="+std::to_string(before.funds.tickets)+" tickets_after="+std::to_string(after.tickets)+
+            " cash_before="+std::to_string(before.funds.cash)+" cash_after="+std::to_string(after.cash);
+        const auto authorize=[&]() noexcept {
+            return active[actor] && statuses[actor]==landing.actor_status && collision_pending &&
+                board.participants[actor].position==landing.position && raw->game().scripted_event83830==scripted;
+        };
+        // 完整Lua输出先核对，账本提交再核资金版本与真实状态；原生路径使用同一个计划。
+        if(ticket_plan) {
+            const std::array updates{ticket_plan->funds};
+            if(!world.ledger->commit_batch(updates,authorize)) throw CodecError("richonline_classic_reward_stale");
+        } else if(!commit_richonline_special_landing(*world.ledger,*merchant_plan,statuses[actor],authorize))
+            throw CodecError("richonline_classic_reward_stale");
+        if(rules.log) rules.log(diagnostic);
+        return complete(std::move(messages));
+    }
     std::vector<Bytes> land() {
         if(collision_pending) throw CodecError("richonline_classic_phase6_already_pending");
         static_cast<void>(collision_actors());
@@ -914,6 +982,7 @@ struct Session {
         if(auto messages=portal_landing(current.landing)) return std::move(*messages);
         // 先完成静态/地产业务，同格效果由complete统一在phase6执行，不能提前抢卡。
         if(auto result=services.landing(current)) return accept_result(std::move(*result));
+        if(auto messages=local_reward_landing(current.landing)) return std::move(*messages);
         if(current.landing.static_type==1 && rules.news) return money_news(current);
         if(current.landing.static_type==9) {
             if(current.landing.property_ref!=-1)

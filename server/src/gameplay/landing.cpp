@@ -44,9 +44,13 @@ std::array<std::uint32_t,2> RichonlineBossLandingState::points() const {
 RichonlineTicketLandingPlan prepare_richonline_ticket_landing(std::uint16_t game_id,
     const RichonlineLandingContext& context,const RichonlineGameFundsSnapshot& funds,
     std::optional<std::uint32_t> reward) {
-    if(context.game_mode!=3 || context.actor_slot>=2 || context.synthetic_actor!=(context.actor_slot==1) ||
+    const bool actor_valid=context.game_mode==3 ?
+        context.actor_slot<2 && context.synthetic_actor==(context.actor_slot==1) :
+        context.game_mode==0 && context.actor_slot<4 && !context.synthetic_actor;
+    if(!actor_valid ||
         context.position<0 || context.property_ref!=-1 || context.road_degree==0 || context.road_degree>4 ||
-        (context.occupied_by_other_actor && !context.collision_resolved) ||
+        (context.occupied_by_other_actor && !context.collision_resolved &&
+            !(context.game_mode==0 && context.phase6_collision_authorized)) ||
         context.static_type<5 || context.static_type>7)
         throw CodecError("richonline_ticket_landing_context_invalid");
     // NEW7C54B0在4013后本地执行6062。这里约束脚本金额，不能通过重复发包修改奖励。

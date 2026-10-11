@@ -35,7 +35,7 @@ private:
     friend bool commit_richonline_special_landing(RichonlineGameLedger&,RichonlinePreparedSpecialLanding&,
         const RichonlineActorStatus&,const std::function<bool()>&);
 };
-// Mode3 static57 and58 only. Preparation never mutates funds/status. A57
+// Mode3 static57/58 and mode0 static57. Preparation never mutates funds/status. A57
 // response contains only4013: NEW locally exchanges25 tickets for2000 cash;
 // sending an additional monetary delta would apply the exchange twice.
 std::optional<RichonlinePreparedSpecialLanding> prepare_richonline_special_landing(
