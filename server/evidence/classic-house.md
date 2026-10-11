@@ -35,4 +35,20 @@
 建屋不改变产权、不解除研究登记，不触发资金事务；不复制BOSS专有规则到经典模式。
 随机池开关沿用card_1062.lua既有配置，不在本轮扩大其他模式的可用范围。
 
-编译和本机交付结果将在完成固定快照构建后记录。编译通过不等于实机玩法验收。
+## 固定构建与本机交付
+
+源码提交`6dae9fe7eacd3aee40589d07dd564dcab52acd1c`，固定tree
+`8526c3a1a2c80ecf392fd7a2ed1c771ada9ad9d3`，已推送并核对GitHub main远端引用。
+本回执的后续文档提交不改变该二进制的源码身份。
+
+从该tree导出`server/build-classic-house-source/server`，独立构建到
+`server/build-classic-house-fixed`。Clang22、Ninja、Release、BUILD_TESTING=OFF，
+构建目标RichOnline.Server退出0，包含全部178个Lua模块的语法编译。
+静态diff检查通过，未新增或运行测试，未启动服务或客户端，未部署或重启线上。
+
+交付前检查本机服务进程，目标EXE未运行；备份到
+`server/build-classic-house-fixed/RichOnline.Server.before-6dae9fe.exe`后更新
+`server/RichOnline.Server.exe`。固定构建与本机EXE SHA256均为
+`25CA77389E4BEB4192EB8C2025238068299687C2E62307BFF2FDA061BF8BE2B9`。
+178个本机Lua文件与固定源码、构建输出逐项哈希一致，文件数量一致。
+编译通过不等于实机玩法验收；生产经典准入仍未开放，完整服务端goal继续推进。
