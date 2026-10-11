@@ -10,6 +10,15 @@ local pictured = {[0x406e] = true, [0x4071] = true, [0x4077] = true, [0x407a] = 
 function M.land(request)
     if not request.classic_news_available then return core.call("tile.native") end
     local event = core.call("tile.classic_news.prepare")
+    if event.opcode == 0x4081 then
+        assert(math.type(event.days) == "integer" and event.days >= 1 and event.days <= 127,
+            "绑架天数必须为正的signed BYTE")
+        -- 动画14只写1497并清stay；没有免罪、保险、清附身或转移产权。
+        return {kidnapped = event.days, stay = 0, messages = {
+            protocol.inner(0x4013, request.game_id, string.pack("<i2", request.position)),
+            protocol.inner(0x4081, request.game_id, string.pack("<i2b", event.picture, event.days)),
+        }}
+    end
     if event.opcode >= 0x408b and event.opcode <= 0x408f then
         local kind, level = event.kind, event.level
         if level > 0 and kind ~= 8 and kind ~= 9 and kind ~= 10 then
@@ -100,5 +109,12 @@ function M.land(request)
         protocol.inner(0x4013, request.game_id, string.pack("<i2", request.position)),
         protocol.inner(event.opcode, request.game_id, payload),
     }}
+end
+function M.return_kidnapped(request)
+    assert(math.type(request.position) == "integer" and request.position >= 0 and request.position <= 32767,
+        "绑架返回位置超出signed WORD")
+    -- 4008先排606C重定位，再用反向动画14清1497，最后608A阶段6恢复行动。
+    return {position = request.position, kidnapped = -1,
+        message = protocol.inner(0x4008, request.game_id, string.pack("<i2", request.position))}
 end
 return M

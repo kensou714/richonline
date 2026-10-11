@@ -58,10 +58,18 @@ struct RichonlineClassicNewsPolicy {
     // 支持单人金额、406F并列最高存款、4078整槽变卖及4072豪雨停走。
     // 4072/4078要求amount=0且无图片；4072还须提供同代GValue的motion_cards。
     // 408B..408F要求显式property和amount=0；408F无图，其余带已加载图索引。
+    // 4081要求days、图片、amount=0及kidnap策略；不使用免罪卡或保险卡。
     // 获奖名单、手牌与实际变卖点券由共享会话计算，不能由选择策略指定。
     // 概率和图片映射不得由BOSS新闻表替代。
     std::function<RichonlineClassicMoneyNews(const RichonlineClassicTurnContext&,
         const RichonlineGameFundsSnapshot&,std::uint32_t)> select;
+};
+struct RichonlineClassicKidnapPolicy {
+    // 原服返回位置选择尚无证据，必须由地图业务显式选择；不得猜原地或随机分布。
+    // 在被绑角色天数归零的自身回合调用，只读，返回当前地图合法道路格。
+    std::function<std::int16_t(const RichonlineClassicTurnContext&)> return_position;
+    // 服务端排队节奏，不冒充客户端动画ACK或原服超时。客户端仍按消息队列消费。
+    std::chrono::milliseconds entry_delay{6150},turn_delay{1800};
 };
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
@@ -93,6 +101,7 @@ struct RichonlineClassicSessionRules {
     std::function<std::uint32_t(const RichonlineClassicSubscriptionContext&)> subscription_quantity;
     std::optional<RichonlineClassicNewsPolicy> news;
     std::shared_ptr<const RichonlineMotionCardRules> motion_cards;
+    std::optional<RichonlineClassicKidnapPolicy> kidnap;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

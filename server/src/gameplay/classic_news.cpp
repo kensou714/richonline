@@ -21,13 +21,60 @@ void validate_context(const RichonlineLandingContext& context) {
         throw CodecError("richonline_classic_news_context_invalid");
 }
 }
+Bytes prepare_richonline_classic_kidnap_return(std::uint16_t game,std::int16_t position,
+    const std::shared_ptr<LuaServer>& script) {
+    if(position<0) throw CodecError("richonline_classic_kidnap_return_position_invalid");
+    Bytes packet;append_le(packet,0x4008,2);append_le(packet,game,2);
+    append_le(packet,static_cast<std::uint16_t>(position),2);
+    if(script) {
+        const auto result=script->call("tile.classic_kidnap_return",{{"game_id",game},{"position",position}});
+        const LuaValue expected{{"position",position},{"kidnapped",-1},{"message",lua_bytes(View(packet))}};
+        if(result!=expected || !result.at("position").is_number_integer() ||
+            !result.at("kidnapped").is_number_integer()) throw CodecError("lua_classic_kidnap_return_invalid");
+    }
+    return packet;
+}
+RichonlineClassicKidnapNewsPlan prepare_richonline_classic_kidnap_news(std::uint16_t game,
+    const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
+    const RichonlineRawActorState& raw,const std::shared_ptr<LuaServer>& script) {
+    validate_context(context);
+    if(event.opcode!=0x4081 || event.amount!=0 || event.property || !event.days ||
+        *event.days<1 || *event.days>127 || !event.picture ||
+        std::ranges::find(news_pictures,*event.picture)==news_pictures.end())
+        throw CodecError("richonline_classic_news_parameters_invalid");
+    if(raw.hotel1493!=-1 || raw.hospital1494!=-1 || raw.jail1495!=-1 || raw.kidnapped1497!=-1)
+        throw CodecError("richonline_classic_kidnap_actor_unavailable");
+    auto after=context.actor_status;after.stay=0;
+    Bytes stop;append_le(stop,0x4013,2);append_le(stop,game,2);
+    append_le(stop,static_cast<std::uint16_t>(context.position),2);
+    Bytes packet;append_le(packet,0x4081,2);append_le(packet,game,2);
+    append_le(packet,static_cast<std::uint16_t>(*event.picture),2);packet.push_back(*event.days);
+    RichonlineClassicKidnapNewsPlan plan{raw,context.actor_status,after,*event.days,
+        {std::move(stop),std::move(packet)}};
+    if(script) {
+        bool prepared=false;
+        const LuaBindings api{{"tile.classic_news.prepare",[&](const LuaValue&) {
+            if(prepared) throw CodecError("lua_classic_news_already_prepared");
+            prepared=true;
+            return LuaValue{{"opcode",event.opcode},{"picture",*event.picture},{"days",*event.days}};
+        }}};
+        const auto result=script->call("tile.land",{{"type",1},{"game_id",game},
+            {"position",context.position},{"actor",context.actor_slot},{"classic_news_available",true}},api);
+        LuaValue wire=LuaValue::array();
+        for(const auto& message:plan.messages) wire.push_back(lua_bytes(View(message)));
+        const LuaValue expected{{"kidnapped",plan.days},{"stay",0},{"messages",wire}};
+        if(!prepared || result!=expected || !result.at("kidnapped").is_number_integer() ||
+            !result.at("stay").is_number_integer()) throw CodecError("lua_classic_news_plan_invalid");
+    }
+    return plan;
+}
 std::vector<Bytes> prepare_richonline_classic_disaster_news(std::uint16_t game,
     const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
     const RichonlineClassicProperty::Disaster& plan,const std::shared_ptr<LuaServer>& script) {
     validate_context(context);
     const auto& before=plan.before();const auto& after=plan.after();
     const bool pictured=event.opcode!=0x408f;
-    if(event.opcode<0x408b || event.opcode>0x408f || event.amount!=0 ||
+    if(event.opcode<0x408b || event.opcode>0x408f || event.amount!=0 || event.days ||
         event.property!=before.id || before.id<0 || pictured!=event.picture.has_value() ||
         (event.picture && std::ranges::find(news_pictures,*event.picture)==news_pictures.end()) ||
         plan.levels()!=(event.opcode==0x408b ? 1 : 5))
@@ -155,7 +202,7 @@ RichonlineClassicSavingsNewsPlan prepare_richonline_classic_savings_news(std::ui
     std::span<const RichonlineGameFundsSnapshot> before,std::span<const std::uint8_t> active,
     const std::shared_ptr<LuaServer>& script) {
     validate_context(context);
-    if(event.opcode!=0x406f || event.property || event.amount>32767 || !event.picture ||
+    if(event.opcode!=0x406f || event.property || event.days || event.amount>32767 || !event.picture ||
         std::ranges::find(news_pictures,*event.picture)==news_pictures.end())
         throw CodecError("richonline_classic_news_parameters_invalid");
     if(before.size()<2 || before.size()>4 || active.size()!=before.size() ||
@@ -225,7 +272,7 @@ RichonlineClassicNewsPlan prepare_richonline_classic_money_news(std::uint16_t ga
     case 0x4094: case 0x4095: pictured=true;break;
     default: throw CodecError("richonline_classic_news_opcode_unsupported");
     }
-    if(event.property || event.amount>32767 || pictured!=event.picture.has_value() ||
+    if(event.property || event.days || event.amount>32767 || pictured!=event.picture.has_value() ||
         (event.picture && std::ranges::find(news_pictures,*event.picture)==news_pictures.end()))
         throw CodecError("richonline_classic_news_parameters_invalid");
     constexpr auto maximum=static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max());

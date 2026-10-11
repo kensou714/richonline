@@ -17,6 +17,8 @@ struct RichonlineClassicMoneyNews {
     std::optional<std::int16_t> picture;
     // 408B..408F的地产表索引；不是道路格号、角色槽或金额。
     std::optional<std::int16_t> property{};
+    // 处罚状态独立于金额；4081直接写入signed BYTE天数，不从固定文案推导。
+    std::optional<std::uint8_t> days{};
 };
 struct RichonlineClassicNewsPlan {
     RichonlineGameFundsUpdate funds;
@@ -46,6 +48,17 @@ struct RichonlineClassicRainNewsPlan {
     std::vector<RichonlineClassicRainActor> before,after;
     std::vector<Bytes> messages;
 };
+struct RichonlineClassicKidnapNewsPlan {
+    RichonlineRawActorState raw_before;
+    RichonlineActorStatus before,after;
+    std::uint8_t days;
+    std::vector<Bytes> messages;
+};
+RichonlineClassicKidnapNewsPlan prepare_richonline_classic_kidnap_news(std::uint16_t game,
+    const RichonlineLandingContext&,const RichonlineClassicMoneyNews&,
+    const RichonlineRawActorState&,const std::shared_ptr<LuaServer>&);
+Bytes prepare_richonline_classic_kidnap_return(std::uint16_t game,std::int16_t position,
+    const std::shared_ptr<LuaServer>&);
 // 返回已验证报文；产权变更仍由会话在所有准备完成后提交。
 std::vector<Bytes> prepare_richonline_classic_disaster_news(std::uint16_t game,
     const RichonlineLandingContext&,const RichonlineClassicMoneyNews&,

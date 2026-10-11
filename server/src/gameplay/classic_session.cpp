@@ -18,7 +18,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,roll,stationary,moving,bank,property,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,roll,stationary,kidnap_wait,moving,bank,property,rent_transfer,event,junction,settling,closed };
 struct Retired {
     std::uint8_t actor;
     Bytes request;
@@ -66,6 +66,7 @@ struct Session {
     std::unique_ptr<RichonlineClassicTerminal> terminal;
     std::vector<Bytes> stock_opening;
     std::uint32_t news_fines=richonline_classic_initial_news_fines;
+    std::optional<std::chrono::steady_clock::time_point> kidnap_deadline;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -108,6 +109,10 @@ struct Session {
             if(!rules.news->select)
                 throw CodecError("richonline_classic_news_policy_invalid");
         }
+        if(rules.kidnap && (!rules.kidnap->return_position ||
+            rules.kidnap->entry_delay<std::chrono::seconds{1} || rules.kidnap->entry_delay>std::chrono::seconds{30} ||
+            rules.kidnap->turn_delay<std::chrono::seconds{1} || rules.kidnap->turn_delay>std::chrono::seconds{30}))
+            throw CodecError("richonline_classic_kidnap_policy_invalid");
         raw=std::make_unique<RichonlineRawAuthority>(static_cast<std::uint8_t>(count),board.game_server_id);
         raw->initialize_game();
         for(std::uint8_t slot=0;slot<count;++slot) raw->initialize_actor(slot);
@@ -157,7 +162,8 @@ struct Session {
         for(const auto& neighbor:cell.neighbors) if(neighbor) ++degree;
         bool occupied=false;
         for(std::size_t other=0;other<board.participants.size();++other)
-            if(other!=actor && active[other] && board.participants[other].position==tile) occupied=true;
+            if(other!=actor && active[other] && raw->actor(static_cast<std::uint8_t>(other)).kidnapped1497==-1 &&
+                board.participants[other].position==tile) occupied=true;
         return {board.game_server_id,calendar,sequence,completed_rounds,
             {actor,tile,cell.static_type,cell.property_ref,0,false,degree,occupied,statuses[actor],false,collision_pending},
             board.participants,statuses,active};
@@ -217,13 +223,42 @@ struct Session {
         auto packet=encode_richonline_turn4010({board.game_server_id,static_cast<std::int8_t>(actor),
             static_cast<std::int8_t>(round_anchor),0},rules.opaque_turn7);
         // 4010只执行轮首更新；420F(-1)排608A阶段4，才进入掷骰或停走分支。
-        std::vector<Bytes> messages{std::move(packet),encode_richonline_empty_turn420f(board.game_server_id)};
+        std::vector<Bytes> messages{std::move(packet)};
         if(statuses[actor].stay && movement_sequence==std::numeric_limits<std::uint64_t>::max())
             throw CodecError("richonline_classic_movement_sequence_overflow");
         ++sequence;calendar=static_cast<std::uint16_t>(calendar+1U);
         static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
-        phase=Phase::roll;pending_opcode.reset();
+        phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();
+        const auto kidnapped=raw->actor(actor).kidnapped1497;
+        if(!kidnapped) throw CodecError("richonline_classic_kidnap_state_unknown");
+        if(*kidnapped>=0) {
+            if(!rules.kidnap) throw CodecError("richonline_classic_kidnap_policy_missing");
+            route={};route_cursor=0;movement.reset();
+            if(*kidnapped==0) {
+                const auto before=context();
+                const auto raw_before=raw->actor(actor);
+                const auto position=rules.kidnap->return_position(before);
+                const auto& cell=startup.topology.cell(position);
+                if(!cell.walkable || std::ranges::none_of(cell.neighbors,[](const auto& next){return next.has_value();}))
+                    throw CodecError("richonline_classic_kidnap_return_position_invalid");
+                auto returning=prepare_richonline_classic_kidnap_return(board.game_server_id,position,rules.script);
+                messages.push_back(std::move(returning));
+                if(raw->actor(actor)!=raw_before || statuses[actor]!=before.landing.actor_status ||
+                    board.participants[actor].position!=before.landing.position)
+                    throw CodecError("richonline_classic_kidnap_return_stale");
+                raw->exit_kidnapped(actor);board.participants[actor].position=position;
+                // 4008已经排阶段6行动界面；不重复420F，不触发返回格的落点效果。
+            } else {
+                messages.push_back(encode_richonline_empty_turn420f(board.game_server_id));
+                phase=Phase::kidnap_wait;kidnap_deadline=rules.now()+rules.kidnap->turn_delay;
+            }
+            if(rules.log) rules.log("richonline_classic_kidnap_turn actor="+std::to_string(actor)+
+                " sequence="+std::to_string(sequence)+" days="+std::to_string(*kidnapped)+
+                " position="+std::to_string(board.participants[actor].position));
+            return messages;
+        }
+        messages.push_back(encode_richonline_empty_turn420f(board.game_server_id));
         if(statuses[actor].stay) {
             // 客户端不掷骰、不发4011；每个连接直接回报0011和当前原位置。
             route={};route_cursor=0;phase=Phase::stationary;
@@ -569,6 +604,24 @@ struct Session {
         const auto inventory_before=world.cards[actor]->inventory();
         const auto rain_before=rain_actors();
         const auto event=rules.news->select(current,before,fines_before);
+        if(event.opcode==0x4081) {
+            if(!rules.kidnap) throw CodecError("richonline_classic_kidnap_policy_missing");
+            auto plan=prepare_richonline_classic_kidnap_news(board.game_server_id,current.landing,event,
+                rain_before[actor].raw,rules.script);
+            const auto deadline=rules.now()+rules.kidnap->entry_delay;
+            const auto detail="richonline_classic_kidnap_news actor="+std::to_string(actor)+
+                " sequence="+std::to_string(sequence)+" days="+std::to_string(plan.days);
+            if(active!=active_before || raw->actor(actor)!=plan.raw_before || statuses[actor]!=plan.before ||
+                board.participants[actor].position!=current.landing.position)
+                throw CodecError("richonline_classic_news_commit_stale");
+            raw->enter_kidnapped(actor,static_cast<std::int8_t>(plan.days));statuses[actor]=plan.after;
+            collision_pending=false;movement.reset();route={};route_cursor=0;
+            pending_opcode.reset();phase=Phase::kidnap_wait;kidnap_deadline=deadline;
+            if(rules.log) rules.log(detail);
+            // 4081无stage2/0015回报：本次落点已结束，不再执行同格抢卡或岔路。
+            return std::move(plan.messages);
+        }
+        if(event.days) throw CodecError("richonline_classic_news_parameters_invalid");
         if(event.opcode>=0x408b && event.opcode<=0x408f) {
             if(!event.property) throw CodecError("richonline_classic_news_property_missing");
             const auto plan=world.property->prepare_disaster(*event.property,event.opcode==0x408b ? 1 : 5);
@@ -1015,6 +1068,11 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
+        if(phase==Phase::kidnap_wait) {
+            if(!kidnap_deadline) throw CodecError("richonline_classic_kidnap_deadline_missing");
+            if(rules.now()<*kidnap_deadline) return {};
+            kidnap_deadline.reset();return advance({});
+        }
         if(phase==Phase::bank) {
             if(auto result=bank->poll()) return bank_result(std::move(*result));
         } else if(phase==Phase::rent_transfer) {
@@ -1036,7 +1094,7 @@ struct Session {
         if(sender>=disconnected.size() || disconnected[sender]) return;
         disconnected[sender]=true;
         if(!terminal || !terminal->committed())phase=Phase::closed;
-        movement.reset();rent_transfer.reset();
+        movement.reset();rent_transfer.reset();kidnap_deadline.reset();
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
         if(services.disconnected) services.disconnected(sender);
     }
