@@ -59,6 +59,11 @@ public:
     RichonlineMallPurchaseResult purchase_mall_item(const std::string& username,std::int64_t role_id,
         const RichonlineMallCatalog& catalog,const RichonlineMallPurchase& purchase,std::int64_t unix_now);
     void require_inventory_date_version(RichonlineInventoryDateVersion version);
+    void use_mall_bag(const std::string& username,std::int64_t role_id,
+        const RichonlineMallCatalog& catalog,const RichonlineMallUse41& request,
+        std::int64_t unix_now,RichonlineInventoryDateVersion version,const std::string& operation_id,
+        std::uint32_t ignored_word0,std::uint32_t ignored_word2,const RichonlineMallBagRoll& roll,
+        const RichonlineMallBagPrepare& prepare);
     nlohmann::json use_mall_gold_voucher(const std::string& username,std::int64_t role_id,
         const RichonlineMallCatalog& catalog,const RichonlineMallUse41& request,std::uint32_t gold,
         std::int64_t unix_now,RichonlineInventoryDateVersion version,const std::string& operation_id,

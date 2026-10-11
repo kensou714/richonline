@@ -65,12 +65,13 @@ std::size_t inventory_bucket(const RichonlineMallProduct& product) {
     throw StorageError("mall_inventory_category_invalid");
 }
 bool has_inventory_space(sqlite3* db,const std::string& username,const RichonlineMallCatalog& catalog,
-    const RichonlineMallProduct& product,std::int64_t now) {
+    const RichonlineMallProduct& product,std::int64_t now,std::optional<std::int64_t> excluded={}) {
     const auto bucket=inventory_bucket(product);const std::size_t capacity=bucket==3?32U:8U;
     std::size_t count=0;
-    Statement items(db,"SELECT encoded_item FROM lobby_inventory WHERE username=? AND (expires_at=0 OR expires_at>?)");
+    Statement items(db,"SELECT encoded_item,inventory_id FROM lobby_inventory WHERE username=? AND (expires_at=0 OR expires_at>?)");
     items.bind(1,username);items.bind(2,now);
     while(items.row()) {
+        if(excluded && items.integer(1)==*excluded) continue;
         const auto item=items.integer(0);
         if(item<=0||item>std::numeric_limits<std::uint32_t>::max())throw StorageError("mall_inventory_key_invalid");
         const auto found=catalog.products().find(static_cast<std::uint16_t>(static_cast<std::uint32_t>(item)&4095U));
@@ -134,6 +135,72 @@ RichonlineMallPurchaseResult Storage::purchase_mall_item(const std::string& user
 void Storage::require_inventory_date_version(RichonlineInventoryDateVersion version) {
     if(profile_!=ClientProfile::richonline)throw StorageError("mall_profile_invalid");
     const std::lock_guard lock(mutex_);date_mode(db_,version);
+}
+void Storage::use_mall_bag(const std::string& username,std::int64_t role_id,
+    const RichonlineMallCatalog& catalog,const RichonlineMallUse41& request,
+    std::int64_t now,RichonlineInventoryDateVersion version,const std::string& operation,
+    std::uint32_t ignored_word0,std::uint32_t ignored_word2,const RichonlineMallBagRoll& roll,
+    const RichonlineMallBagPrepare& prepare) {
+    if(profile_!=ClientProfile::richonline || now<0 || operation.empty() || operation.size()>256 ||
+        operation.find('\0')!=std::string::npos || !roll || !prepare || request.target!=0xffffffffU)
+        throw StorageError("mall_bag_context_invalid");
+    const auto id=static_cast<std::uint16_t>(request.owned_key&4095U);
+    const auto found=catalog.products().find(id);
+    if(id<105 || id>107 || found==catalog.products().end() || !found->second.enabled ||
+        found->second.type!="FUNC" || found->second.subtype!="FUNC_DT" || (request.owned_key&0x40010000U)!=0)
+        throw StorageError("mall_bag_product_unavailable");
+    const auto& slots=catalog.bag_slots(id);
+    const std::lock_guard lock(mutex_);Transaction transaction(db_);date_mode(db_,version);
+    const auto current=role(db_,username,role_id);
+    Statement prior(db_,"SELECT 1 FROM audit WHERE operation_id=? AND source='native-mall' LIMIT 1");
+    prior.bind(1,operation);
+    if(prior.row()) throw StorageError("mall_use_operation_reused");
+    if(current.at("level").get<std::int64_t>()<found->second.level)
+        throw StorageError("mall_use_level_insufficient");
+    Statement owned(db_,"SELECT inventory_id,expires_at FROM lobby_inventory WHERE username=? AND encoded_item=? AND (expires_at=0 OR expires_at>?) ORDER BY inventory_id LIMIT 1");
+    owned.bind(1,username);owned.bind(2,request.owned_key);owned.bind(3,now);
+    if(!owned.row()) throw StorageError("mall_use_item_missing_or_expired");
+    const auto instance=owned.integer(0);validate_key_date(request.owned_key,owned.integer(1),version);
+    Statement equipped(db_,"SELECT 1 FROM lobby_equipment e JOIN roles r ON r.role_id=e.role_id WHERE r.username=? AND e.encoded_item=? LIMIT 1");
+    equipped.bind(1,username);equipped.bind(2,request.owned_key);
+    if(equipped.row()) throw StorageError("mall_use_item_equipped");
+    std::array<RichonlineMallGrant,16> grants;
+    std::array<bool,4> checked{};
+    constexpr auto evidence="mall-bag-three-fair-dice-gift-term-v1";
+    // 先验证整个奖盘再掷骰。容量不足不能根据抽中结果免费重抽，消耗本袋会释放一个FUNC槽。
+    for(std::size_t index=0;index<slots.size();++index) {
+        const auto& slot=slots[index];const auto& product=catalog.products().at(slot.product);
+        if(slot.needs_activation) throw StorageError("mall_bag_inactive_gift_unproven");
+        const auto category=inventory_bucket(product);
+        if(!checked[category] && !has_inventory_space(db_,username,catalog,product,now,instance))
+            throw StorageError("mall_bag_reward_inventory_full");
+        checked[category]=true;
+        const auto term=catalog.gift_term(slot.product);
+        const auto expiry=term.years || term.months || term.days ?
+            richonline_inventory_calendar_expiry(now,term.years,term.months,term.days) : 0;
+        const auto key=richonline_inventory_key_from_expiry(slot.product,expiry,version);
+        grants[index]={key,expiry,ignored_word0,ignored_word2,evidence};
+    }
+    const auto dice=roll();std::uint32_t sum=0;
+    for(const auto face:dice) {if(face<1 || face>6) throw StorageError("mall_bag_dice_invalid");sum+=face;}
+    const RichonlineMallBagAward award{dice,grants[sum-3]};
+    std::vector<std::uint32_t> inventory;
+    Statement items(db_,"SELECT inventory_id,encoded_item FROM lobby_inventory WHERE username=? AND (expires_at=0 OR expires_at>?) ORDER BY inventory_id");
+    items.bind(1,username);items.bind(2,now);
+    while(items.row()) if(items.integer(0)!=instance) inventory.push_back(static_cast<std::uint32_t>(items.integer(1)));
+    inventory.push_back(award.grant.owned_key);
+    prepare(award,inventory);
+    Statement remove(db_,"DELETE FROM lobby_inventory WHERE username=? AND inventory_id=?");
+    remove.bind(1,username);remove.bind(2,instance);remove.row();
+    if(sqlite3_changes(db_)!=1) throw StorageError("mall_use_inventory_changed");
+    Statement added(db_,"INSERT INTO lobby_inventory(username,encoded_item,expires_at) VALUES(?,?,?)");
+    added.bind(1,username);added.bind(2,award.grant.owned_key);added.bind(3,award.grant.expires_at);added.row();
+    const auto granted_instance=sqlite3_last_insert_rowid(db_);
+    audit(db_,username,role_id,operation,"lobby_inventory.bag_award",
+        {{"inventory_id",instance},{"owned_key",request.owned_key}},
+        {{"inventory_id",granted_instance},{"owned_key",award.grant.owned_key},{"expires_at",award.grant.expires_at},
+            {"dice",dice},{"sum",sum},{"award_opaque",slots[sum-3].opaque}},evidence);
+    transaction.commit();
 }
 nlohmann::json Storage::use_mall_gold_voucher(const std::string& username,std::int64_t role_id,
     const RichonlineMallCatalog& catalog,const RichonlineMallUse41& request,std::uint32_t gold,

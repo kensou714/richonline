@@ -35,6 +35,13 @@ struct RichonlineMallGrant {
     std::uint32_t opaque_word0,opaque_word2;
     std::string evidence;
 };
+struct RichonlineMallBagAward {
+    std::array<std::uint32_t,3> dice;
+    RichonlineMallGrant grant;
+};
+// 在Storage事务持锁期间调用；仅准备消息，不能重入Storage或发送网络回复。
+using RichonlineMallBagPrepare=std::function<void(const RichonlineMallBagAward&,const std::vector<std::uint32_t>&)>;
+using RichonlineMallBagRoll=std::function<std::array<std::uint32_t,3>()>;
 struct RichonlineMallPurchase {
     std::string operation_id;
     RichonlineMallPurchase18 request;

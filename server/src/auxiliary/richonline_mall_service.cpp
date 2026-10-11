@@ -3,8 +3,25 @@
 #include "lua_server.hpp"
 #include <bit>
 #include <limits>
+#include <windows.h>
+#include <bcrypt.h>
 
 namespace richnet {
+namespace {
+std::array<std::uint32_t,3> roll_bag_dice() {
+    std::array<std::uint32_t,3> dice{};
+    // 排除0..3后剩余32位取值数能被6整除，避免直接取模产生偏差。
+    for(auto& face:dice) {
+        std::uint32_t random=0;
+        do {
+            if(BCryptGenRandom(nullptr,reinterpret_cast<PUCHAR>(&random),sizeof(random),
+                BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0) throw CodecError("mall_bag_random_failed");
+        } while(random<4);
+        face=random%6U+1U;
+    }
+    return dice;
+}
+}
 RichonlineMallService::RichonlineMallService(const RichonlineMallCatalog& catalog,std::string prefix,
     RichonlineMallCompatibilityPolicy policy):catalog_(catalog),operation_prefix_(std::move(prefix)),policy_(std::move(policy)) {
     if(operation_prefix_.empty()||operation_prefix_.size()>220||operation_prefix_.find('\0')!=std::string::npos||
@@ -37,6 +54,41 @@ std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage
         try {
             const auto request=decode_richonline_mall_use41(frame.payload);
             if(!script_) return reject("mall_consumable_policy_unavailable");
+            const auto product=static_cast<std::uint16_t>(request.owned_key&4095U);
+            if(product>=105 && product<=107) {
+                if(role<0 || role>std::numeric_limits<std::uint32_t>::max()) throw CodecError("mall_use_role_invalid");
+                if(sequence_==std::numeric_limits<std::uint64_t>::max()) throw CodecError("mall_operation_sequence_exhausted");
+                std::array<std::uint16_t,16> products{};
+                const auto& slots=catalog_.bag_slots(product);
+                for(std::size_t index=0;index<slots.size();++index) products[index]=slots[index].product;
+                std::vector<Frame> prepared;prepared.reserve(3);
+                const auto prepare=[&](const RichonlineMallBagAward& award,const std::vector<std::uint32_t>& inventory) {
+                    const auto sum=award.dice[0]+award.dice[1]+award.dice[2];
+                    const auto& slot=catalog_.bag_slots(product)[sum-3];
+                    const auto plan=script_->call("mall.bag_award",{{"bag",product},{"dice",award.dice},
+                        {"products",products},{"owned_key",award.grant.owned_key}});
+                    const LuaValue expected{{"slot",sum},{"quantity",1},{"product",slot.product},
+                        {"owned_key",award.grant.owned_key}};
+                    if(plan!=expected) throw CodecError("lua_mall_bag_award_invalid");
+                    for(const auto* field:{"slot","quantity","product","owned_key"})
+                        if(!plan.at(field).is_number_integer()) throw CodecError("lua_mall_bag_award_invalid");
+                    // 先删旧实例再加新实例，抽回同种宝袋时也不会删错奖励。98只负责显示。
+                    Frame used{212,{}};append_le(used.payload,static_cast<std::uint32_t>(role),4);
+                    append_le(used.payload,request.owned_key,4);append_le(used.payload,request.target,4);
+                    prepared.push_back(std::move(used));
+                    prepared.push_back(encode_richonline_mall_added77(award.grant));
+                    Frame reveal{98,{}};
+                    for(const auto face:award.dice) append_le(reveal.payload,face,4);
+                    append_le(reveal.payload,award.grant.owned_key,4);prepared.push_back(std::move(reveal));
+                    reply.diagnostic="bag_awarded bag="+std::to_string(product)+" slot="+std::to_string(sum)+
+                        " product="+std::to_string(slot.product)+" policy=three-fair-dice-gift-term-v1";
+                    if(prepare_use) prepare_use(inventory);
+                };
+                storage.use_mall_bag(username,role,catalog_,request,now,policy_.date_version,
+                    operation_prefix_+":"+std::to_string(++sequence_),policy_.ignored_word0,policy_.ignored_word2,
+                    roll_bag_dice,prepare);
+                reply.frames=std::move(prepared);reply.inventory_consumed=true;return reply;
+            }
             const auto plan=script_->call("mall.consumable_policy",{{"product",request.owned_key&4095U}});
             if(!plan.at("allowed").get<bool>()) return reject("mall_consumable_effect_unimplemented");
             const auto& amount=plan.at("gold");

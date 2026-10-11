@@ -57,7 +57,7 @@ RichonlineMallTerm term(const Fields& fields,const char* year,const char* month,
     return {optional_integer(fields,year),optional_integer(fields,month),optional_integer(fields,day)};
 }
 }
-RichonlineMallCatalog RichonlineMallCatalog::parse(View props,View sale) {
+RichonlineMallCatalog RichonlineMallCatalog::parse(View props,View sale,View awards) {
     RichonlineMallCatalog result;
     for(auto& section:sections(props)) {
         if(section.name!="PROP")throw CodecError("mall_resource_prop_section_invalid");
@@ -83,11 +83,34 @@ RichonlineMallCatalog RichonlineMallCatalog::parse(View props,View sale) {
         // 801680 appends every section in order, including repeated offers.
         result.offers_.push_back({group,product,group.back()=='J'?RichonlineMallCurrency::m_points:RichonlineMallCurrency::gold});
     }
+    if(!awards.empty()) for(const auto& section:sections(awards)) {
+        if(section.name!="AWARD") throw CodecError("mall_bag_section_invalid");
+        const auto bag=integer(required(section.fields,"bagID"));
+        if(bag<105 || bag>107 || !result.products_.contains(static_cast<std::uint16_t>(bag)))
+            throw CodecError("mall_bag_id_unsupported");
+        std::array<RichonlineMallBagSlot,16> slots{};
+        for(std::size_t index=0;index<slots.size();++index) {
+            const auto name="item"+std::to_string(index+3);
+            auto text=required(section.fields,name.c_str());
+            const auto first=text.find_first_of(" \t");
+            if(first==text.npos) throw CodecError("mall_bag_slot_invalid");
+            const auto product=integer(text.substr(0,first));text=trim(text.substr(first));
+            const auto second=text.find_first_of(" \t");
+            if(second==text.npos) throw CodecError("mall_bag_slot_invalid");
+            const auto opaque=integer(text.substr(0,second));text=trim(text.substr(second));
+            if(product==0 || product>4095 || !result.products_.contains(static_cast<std::uint16_t>(product)) ||
+                (text!="true" && text!="false")) throw CodecError("mall_bag_slot_invalid");
+            slots[index]={static_cast<std::uint16_t>(product),opaque,text=="true"};
+        }
+        if(!result.bags_.emplace(static_cast<std::uint16_t>(bag),slots).second)
+            throw CodecError("mall_bag_duplicate");
+    }
     return result;
 }
 RichonlineMallCatalog RichonlineMallCatalog::load(const std::filesystem::path& root) {
     const auto props=load_original_kpd(root/"Data"/"Prop.kpd",limit),sale=load_original_kpd(root/"Data"/"SellProp.kpd",limit);
-    return parse(props,sale);
+    const auto awards=load_original_kpd(root/"Data"/"AwardLB.kpd",limit);
+    return parse(props,sale,awards);
 }
 const RichonlineMallProduct& RichonlineMallCatalog::purchasable(std::uint32_t key) const {
     if((key&0xffff0000U)!=0)throw CodecError("mall_purchase_metadata_unproven");
@@ -120,5 +143,16 @@ std::uint32_t RichonlineMallCatalog::activation_days(std::uint32_t key) const {
     if(found==products_.end())throw CodecError("mall_activation_product_missing");
     static constexpr std::array<const char*,3> names{"jhDayP","jhDayJ","jhDayR"};
     return optional_integer(found->second.source_fields,names.at(source));
+}
+const std::array<RichonlineMallBagSlot,16>& RichonlineMallCatalog::bag_slots(std::uint16_t bag) const {
+    const auto found=bags_.find(bag);
+    if(found==bags_.end()) throw CodecError("mall_bag_awards_missing");
+    return found->second;
+}
+RichonlineMallTerm RichonlineMallCatalog::gift_term(std::uint16_t id) const {
+    const auto found=products_.find(id);
+    if(found==products_.end() || !found->second.enabled) throw CodecError("mall_gift_product_unavailable");
+    // 沿用BOSS宝箱赠品政策；不把购买价格、fold或AwardLB第二字段当作奖励期限。
+    return term(found->second.source_fields,"yearP","monthP","dayP");
 }
 }

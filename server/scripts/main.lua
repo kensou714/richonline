@@ -28,9 +28,11 @@ local forced_sale = require("cards.card_1124")
 local subscription = require("cards.card_1123")
 local mall_purchase = require("mall.purchase")
 local mall_consumables = require("mall.consumables")
+local mall_bags = require("mall.bags")
 local equipment = require("mall.equipment")
 local equipment_effects = require("mall.equipment_effects")
 local handlers = {
+    ["mall.bag_award"] = mall_bags.award,
     ["lobby.login"] = lobby.login, ["lobby.request"] = lobby.request,
     ["lobby.poll"] = lobby.poll, ["lobby.sent"] = lobby.sent, ["lobby.disconnected"] = lobby.disconnected,
     ["network.game"] = network.request, ["network.admitted"] = network.admitted,
