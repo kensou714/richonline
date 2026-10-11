@@ -180,6 +180,9 @@ struct RichonlineClassicSessionRules {
     // 开启13槽节日仍须turn_start处理开奖等剩余日历业务，不能以节日完成冒充完整日历。
     std::optional<RichonlineClassicFeastPolicy> feasts;
     std::optional<RichonlineClassicLotteryPolicy> lottery;
+    // 抢夺的1074自动防盗先查主手牌；未命中时由准入证明第二套没有可用防盗卡。
+    // 缺席或返回false表示未知/尚不支持，拒绝本次抢夺且双方均不扣卡。
+    std::function<bool(std::uint8_t)> secondary_theft_protection_absent;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

@@ -11,6 +11,7 @@
 #include "richonline_special_landings.hpp"
 #include "richonline_boss_shop.hpp"
 #include "richonline_combat_resources.hpp"
+#include "richonline_theft_card.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -1589,6 +1590,46 @@ struct Session {
             " deposit_before="+std::to_string(*before.funds.deposit)+" deposit_after="+std::to_string(*after.funds.deposit));
         return messages;
     }
+    std::vector<Bytes> theft_card(View request) {
+        std::optional<RichonlineTheftPlan> plan;
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        std::uint8_t target=0;
+        try {
+            const auto use=decode_richonline_theft_request(request);
+            target=use.target;
+            if(use.calendar!=calendar || target>=active.size() || target==actor || !active[target] ||
+                richonline_landing_controlled(statuses[actor]) || raw->game().scripted_event83830!=-1)
+                throw CodecError("richonline_classic_theft_unavailable");
+            const auto& source=raw->actor(actor);
+            if(source.hotel1493!=-1 || source.hospital1494!=-1 || source.jail1495!=-1 || source.kidnapped1497!=-1)
+                throw CodecError("richonline_classic_theft_actor_unavailable");
+            const auto& victim=raw->actor(target);
+            // 6552A0的64FF10选人守卫排除旅馆、医院、监狱和绑架；不额外排除冰冻目标。
+            if(victim.hotel1493!=-1 || victim.hospital1494!=-1 || victim.jail1495!=-1 || victim.kidnapped1497!=-1)
+                throw CodecError("richonline_classic_theft_target_unavailable");
+            const bool needs_secondary=rules.card_resources->automatic_card_eligible(startup.map_name,1074) &&
+                std::ranges::none_of(world.cards[target]->inventory(),[](const auto& slot){return slot.card_id==1074;});
+            const bool secondary_absent=!needs_secondary || (rules.secondary_theft_protection_absent &&
+                rules.secondary_theft_protection_absent(target));
+            plan=prepare_richonline_theft(use,*world.cards[actor],*world.cards[target],
+                *rules.card_resources,secondary_absent,rules.script);
+        } catch(const CodecError& error) {
+            if(rules.log) rules.log("richonline_classic_theft_refused actor="+std::to_string(actor)+" reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        std::vector<Bytes> messages{plan->response()};
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            !active[actor] || !active[target]) throw CodecError("richonline_classic_theft_context_stale");
+        remember(actor,request);
+        if(!commit_richonline_theft(*world.cards[actor],*world.cards[target],*plan))
+            throw CodecError("richonline_classic_theft_inventory_stale");
+        if(rules.log) rules.log("richonline_classic_theft actor="+std::to_string(actor)+
+            " target="+std::to_string(target)+" blocked="+std::to_string(plan->protected_by_card())+
+            " card="+std::to_string(plan->transferred_card())+" sequence="+std::to_string(sequence));
+        return messages;
+    }
     std::vector<Bytes> stock_card(View request) {
         const auto opcode=read_le(request.first(2));
         // use只由已认证的当前行动者在roll阶段进入；与无日历的0200/0201分开。
@@ -1732,6 +1773,7 @@ struct Session {
         }
         if(phase==Phase::roll) {
             if(opcode==22) return paid_move(request);
+            if(opcode==116) return theft_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103) {
                 const auto use=std::get<RichonlineCardDiceRequest103>(parse_richonline_controlled_dice_request(request));
