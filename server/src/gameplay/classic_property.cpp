@@ -93,8 +93,11 @@ RichonlineClassicProperty::Retirement RichonlineClassicProperty::prepare_retirem
     Retirement result;result.owner_=this;result.actor_=actor;result.before_=properties_;
     return result;
 }
+bool RichonlineClassicProperty::matches(const Retirement& plan) const noexcept {
+    return plan.owner_==this && !pending_ && properties_==plan.before_;
+}
 bool RichonlineClassicProperty::commit_retirement(const Retirement& plan) noexcept {
-    if(plan.owner_!=this || pending_ || properties_!=plan.before_) return false;
+    if(!matches(plan)) return false;
     for(auto& [id,property]:properties_) {
         static_cast<void>(id);
         if(property.owner==plan.actor_) property.owner.reset();

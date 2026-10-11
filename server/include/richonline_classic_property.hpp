@@ -66,6 +66,7 @@ public:
         friend class RichonlineClassicProperty;
     };
     Retirement prepare_retirement(std::uint8_t actor) const;
+    bool matches(const Retirement&) const noexcept;
     // 全图产权快照须一致且不能有未决购地。提交只清owner，保留种类/等级/价格。
     bool commit_retirement(const Retirement&) noexcept;
     // 返回应等待的C2S opcode；不支持的选择抛错，不伪造成功或跳过落点。

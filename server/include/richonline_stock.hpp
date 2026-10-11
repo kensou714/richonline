@@ -51,6 +51,20 @@ public:
     RichonlineStockHolding holding(std::uint8_t actor,std::uint16_t slot) const;
     RichonlineStockQuote quote(std::uint16_t slot) const;
     RichonlineStockIndex index() const noexcept {return index_;}
+    class Retirement final {
+    private:
+        Retirement()=default;
+        const RichonlineStockMarket* owner_=nullptr;
+        std::uint64_t revision_=0;
+        std::uint8_t actor_=0;
+        std::array<std::uint32_t,10> supply_{};
+        friend class RichonlineStockMarket;
+    };
+    // 400E的7F9950清持仓/成本并归还市场，不按现价卖出，也不增加存款。
+    Retirement prepare_retirement(std::uint8_t actor) const;
+    bool matches(const Retirement&) const noexcept;
+    // 由上层和地产/资金一起在共享对局锁及账本提交回调内执行。
+    bool commit(const Retirement&) noexcept;
     void set_restricted(bool restricted);
     class QuoteUpdate final {
     public:

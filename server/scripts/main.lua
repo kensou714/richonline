@@ -44,6 +44,7 @@ local handlers = {
     ["game.classic_retirement"] = classic_retirement.plan,
     ["game.classic_settlement"] = classic_settlement.plan,
     ["stock.trade"] = stock.trade,
+    ["stock.retire"] = stock.retire,
     ["stock.open"] = stock.open,
     ["stock.quote"] = stock.quote, ["stock.market"] = stock.market,
     ["boss.can_attack"] = bosses.can_attack,

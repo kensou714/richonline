@@ -29,6 +29,10 @@ struct PendingRentTransfer {
     std::uint64_t sequence;
     std::chrono::steady_clock::time_point deadline;
 };
+struct PreparedRetirement {
+    RichonlineClassicProperty::Retirement property;
+    std::optional<RichonlineStockMarket::Retirement> stocks;
+};
 struct Session {
     RichonlineClassicStartup startup;
     RichonlineClassicSessionRules rules;
@@ -59,6 +63,7 @@ struct Session {
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_rent_transfers;
     std::vector<bool> disconnected;
     std::unique_ptr<RichonlineClassicTerminal> terminal;
+    std::vector<Bytes> stock_opening;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -102,6 +107,13 @@ struct Session {
         for(std::uint8_t slot=0;slot<count;++slot) raw->initialize_actor(slot);
         world.property=std::make_shared<RichonlineClassicProperty>(board.game_server_id,source.topology,
             source.properties,world.ledger,rules.now,rules.decision_timeout,rules.script);
+        if(rules.stocks) {
+            const auto& policy=*rules.stocks;
+            if(!policy.resources) throw CodecError("richonline_classic_stock_resources_missing");
+            auto opening=prepare_richonline_stock_opening(board.game_server_id,*policy.resources,source.stocks,
+                policy.history,policy.previous_index,policy.current_index,policy.factor,world.ledger,rules.script);
+            world.stocks=std::move(opening.market);stock_opening=std::move(opening.messages);
+        }
         if(rules.bank_wire) bank=std::make_unique<RichonlineGameBank>(board.game_server_id,
             *rules.bank_wire,rules.now,rules.script);
         opening_hands=prepare_richonline_player_opening_hands(board.game_server_id,rules.opening_hands,*rules.card_resources);
@@ -209,6 +221,8 @@ struct Session {
     std::vector<Bytes> opening() {
         if(phase!=Phase::loading) throw CodecError("richonline_classic_opening_repeated");
         auto messages=opening_hands.synchronization;
+        // 全员收齐4200及每槽4201后，共享宿主才调用stock_action；只发送一次历史。
+        messages.insert(messages.end(),stock_opening.begin(),stock_opening.end());
         append(messages,begin_turn());
         for(std::size_t slot=0;slot<world.cards.size();++slot)
             world.cards[slot]->commit_inventory(opening_hands.inventories[slot]);
@@ -338,7 +352,7 @@ struct Session {
                 throw CodecError("richonline_classic_rent_transfer_funds_stale");
         auto plan=plan_richonline_rent_transfer(pending.state,choice,timed_out,rules.script);
         auto messages=std::vector<Bytes>{std::move(plan.response)};
-        std::optional<RichonlineClassicProperty::Retirement> retirement;
+        std::optional<PreparedRetirement> retirement;
         if(plan.bankrupt) {
             retirement=prepare_bankruptcy(plan.payer);
             if(std::ranges::count(active,std::uint8_t{1})>2)
@@ -349,7 +363,7 @@ struct Session {
         if(!world.ledger->commit_sequence(plan.funds,[&]() {
             if(world.cards[actor]->inventory()!=pending.state.inventory ||
                 world.property->snapshot(pending.property.id)!=pending.property) return false;
-            if(retirement && !world.property->commit_retirement(*retirement)) return false;
+            if(retirement && !commit_retirement(*retirement)) return false;
             if(retirement) retire_actor(plan.payer);
             world.cards[actor]->commit_inventory(plan.inventory);return true;
         })) throw CodecError("richonline_classic_rent_transfer_commit_stale");
@@ -364,7 +378,7 @@ struct Session {
         if(!active[actor]) {collision_pending=false;return advance(std::move(messages));}
         return property_effects(std::move(messages));
     }
-    RichonlineClassicProperty::Retirement prepare_bankruptcy(std::uint8_t bankrupt) const {
+    PreparedRetirement prepare_bankruptcy(std::uint8_t bankrupt) const {
         if(bankrupt>=active.size() || !active[bankrupt])
             throw CodecError("richonline_classic_bankruptcy_actor_invalid");
         const auto count=std::ranges::count(active,std::uint8_t{1});
@@ -390,7 +404,16 @@ struct Session {
             if(result!=expected || !result.at("anchor").is_number_integer() || !result.at("next").is_number_integer())
                 throw CodecError("lua_classic_retirement_invalid");
         }
-        return world.property->prepare_retirement(bankrupt);
+        return {world.property->prepare_retirement(bankrupt),world.stocks ?
+            std::optional{world.stocks->prepare_retirement(bankrupt)} : std::nullopt};
+    }
+    bool commit_retirement(const PreparedRetirement& plan) noexcept {
+        // 先核对全部参与者，再执行无分配写入；不能先回收地产再发现股票计划过期。
+        if(!world.property->matches(plan.property) ||
+            (plan.stocks && (!world.stocks || !world.stocks->matches(*plan.stocks)))) return false;
+        if(!world.property->commit_retirement(plan.property)) std::terminate();
+        if(plan.stocks && !world.stocks->commit(*plan.stocks)) std::terminate();
+        return true;
     }
     std::vector<Bytes> finish_last_survivor(std::vector<Bytes> messages,std::uint8_t bankrupt) {
         if(!terminal)throw CodecError("richonline_classic_terminal_missing");
@@ -406,7 +429,8 @@ struct Session {
         if(round_anchor==bankrupt) {
             do {round_anchor=static_cast<std::uint8_t>((round_anchor+1U)%active.size());} while(!active[round_anchor]);
         }
-        // 7BE160不清手牌和票券。当前会话尚无股票持仓、关系卡和建筑增益写入口。
+        // 7BE160不清手牌和票券。股票已在同一提交回调内回收，不按卖出给破产者存款。
+        // 当前会话尚无关系卡和建筑增益写入口。
         // 7F9560仅清已实现的移动状态；原始住院/监狱等字段不借破产擅自重置。
         auto& state=statuses[bankrupt];
         state.one_step=state.six_steps=state.turtle=state.stay=state.sleepwalking=state.frozen=0;
@@ -480,7 +504,7 @@ struct Session {
         if(std::string_view(outcome)=="transfer_pending")
             return begin_rent_transfer(property,static_cast<std::uint32_t>(amount),inventory,payer,payee);
         const bool bankrupt=std::string_view(outcome)=="bankrupt";
-        std::optional<RichonlineClassicProperty::Retirement> retirement;
+        std::optional<PreparedRetirement> retirement;
         if(bankrupt) retirement=prepare_bankruptcy(actor);
         const auto charged=bankrupt ? payer.funds.cash+*payer.funds.deposit :
             std::string_view(outcome)=="paid" ? static_cast<std::uint32_t>(amount) : 0U;
@@ -496,7 +520,7 @@ struct Session {
             RichonlineGameFundsUpdate{owner,payee,payee_after}};
         if(!world.ledger->commit_batch(updates,[&]() {
             if(world.cards[actor]->inventory()!=inventory || world.property->snapshot(property.id)!=property) return false;
-            if(retirement && !world.property->commit_retirement(*retirement)) return false;
+            if(retirement && !commit_retirement(*retirement)) return false;
             if(retirement) retire_actor(actor);
             if(free_card) world.cards[actor]->commit_inventory(free_card->remaining_inventory);
             return true;
@@ -637,6 +661,45 @@ struct Session {
         }
         return complete(std::move(result.messages));
     }
+    std::vector<Bytes> stock_action(std::uint8_t sender,const RichonlineStockRequest& request) {
+        healthy();
+        if(!world.stocks || sender>=active.size() || phase==Phase::loading)
+            throw CodecError("richonline_classic_stock_context_invalid");
+        // 股票窗口不依赖走子者，没有日历/请求序号；相同买卖可连续成交，不能去重。
+        // 已淘汰或结算中的迟到交易不触发移动、不发4206、不改变已冻结的结算资产。
+        if(!active[sender] || phase==Phase::settling) {
+            if(rules.log) rules.log("richonline_classic_stock_refused actor="+std::to_string(sender)+" reason=inactive_or_settling");
+            return {};
+        }
+        const auto before=world.ledger->snapshot(sender);
+        const bool waiting_bank=phase==Phase::bank && actor==sender;
+        if(waiting_bank && (!bank_funds || *bank_funds!=before || !before.funds.deposit ||
+            !bank->matches_balance(sender,{before.funds.cash,*before.funds.deposit})))
+            throw CodecError("richonline_classic_stock_bank_stale");
+        if(rent_transfer && rent_transfer->state.funds[sender]!=before)
+            throw CodecError("richonline_classic_stock_rent_stale");
+        const auto trade=world.stocks->prepare(sender,request);
+        if(!trade.accepted()) {
+            if(rules.log) rules.log("richonline_classic_stock_refused actor="+std::to_string(sender)+" reason="+trade.reason());
+            return {};
+        }
+        std::vector<Bytes> messages{trade.response()};
+        if(!world.stocks->commit(trade)) throw CodecError("richonline_classic_stock_commit_stale");
+        const auto after=world.ledger->snapshot(sender);
+        // 只承认这笔已提交的成交导致的余额变化；未知写入仍按旧快照冲突拒绝。
+        // 保留银行期限、租金金额与选择资格，不重新打开窗口，也不重算已同步的租金。
+        if(waiting_bank) {
+            if(!bank->synchronize_balance(sender,{before.funds.cash,*before.funds.deposit},
+                {after.funds.cash,*after.funds.deposit})) std::terminate();
+            bank_funds=after;
+        }
+        if(rent_transfer) rent_transfer->state.funds[sender]=after;
+        if(rules.log) rules.log("richonline_classic_stock_trade actor="+std::to_string(sender)+
+            " slot="+std::to_string(request.slot)+" quantity="+std::to_string(request.quantity)+
+            " buy="+std::to_string(request.action==RichonlineStockAction::buy)+
+            " deposit_before="+std::to_string(*before.funds.deposit)+" deposit_after="+std::to_string(*after.funds.deposit));
+        return messages;
+    }
     std::vector<Bytes> action(std::uint8_t sender,View request) {
         healthy();
         if(request.size()<4 || sender>=board.participants.size())
@@ -764,6 +827,9 @@ RichonlineSharedCallbacks make_richonline_classic_session(const RichonlineClassi
     callbacks.opening=[session] {return broadcast(session->opening());};
     callbacks.action=[session](std::uint8_t actor,const Envelope299&,View request) {
         return broadcast(session->action(actor,request));
+    };
+    if(session->world.stocks) callbacks.stock_action=[session](std::uint8_t actor,const RichonlineStockRequest& request) {
+        return broadcast(session->stock_action(actor,request));
     };
     callbacks.poll=[session] {return broadcast(session->poll());};
     callbacks.disconnected=[session](std::uint8_t actor) {session->disconnect(actor);};

@@ -121,6 +121,14 @@ RichonlineGameBankResult RichonlineGameBank::handle(View plain) {
     pending_.reset();
     return result;
 }
+bool RichonlineGameBank::matches_balance(std::uint8_t actor,RichonlineGameBankBalance expected) const noexcept {
+    return pending_ && pending_->entry.actor_slot==actor && pending_->entry.balance==expected;
+}
+bool RichonlineGameBank::synchronize_balance(std::uint8_t actor,RichonlineGameBankBalance expected,
+    RichonlineGameBankBalance after) noexcept {
+    if(!matches_balance(actor,expected) || after.cash>2147483647U || after.deposit>2147483647U) return false;
+    pending_->entry.balance=after;return true;
+}
 std::optional<RichonlineGameBankResult> RichonlineGameBank::poll() {
     if (!pending_ || now_()<pending_->deadline) return {};
     auto result=transaction(pending_->entry,

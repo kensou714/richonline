@@ -61,6 +61,10 @@ public:
     RichonlineGameBankResult handle(View request);
     std::optional<RichonlineGameBankResult> poll();
     bool active() const noexcept { return pending_.has_value(); }
+    // 同一局的已确认股票成交会改变存款。只同步等待中的余额，不重开UI/延长期限。
+    bool matches_balance(std::uint8_t actor,RichonlineGameBankBalance expected) const noexcept;
+    bool synchronize_balance(std::uint8_t actor,RichonlineGameBankBalance expected,
+        RichonlineGameBankBalance after) noexcept;
 private:
     struct Pending { RichonlineGameBankEntry entry; Clock::time_point deadline; };
     std::uint16_t game_id_;

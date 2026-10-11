@@ -15,6 +15,7 @@ struct RichonlineClassicWorld {
     std::shared_ptr<RichonlineGameLedger> ledger;
     std::shared_ptr<RichonlineClassicProperty> property;
     std::vector<std::shared_ptr<RichonlinePlayerCards>> cards;
+    std::shared_ptr<RichonlineStockMarket> stocks;
 };
 struct RichonlineClassicTurnContext {
     std::uint16_t game_id,calendar;
@@ -32,9 +33,16 @@ struct RichonlineClassicServices {
     std::function<std::optional<RichonlineLandingResult>(const RichonlineClassicTurnContext&)> landing;
     // 购地、升级、取消、余额不足后均进入这里；不能把4020/4021等同于回合结束。
     std::function<RichonlineLandingResult(const RichonlineClassicTurnContext&)> property_effects;
+    // 股票成交独立于当前行动者及落点选择。待决事件提交时须重新读取world.ledger，
+    // 不把打开选择框时的余额当作不可变资金；事件固定金额/资格仍由业务自己复核。
     std::function<RichonlineLandingResult(const RichonlineClassicTurnContext&,View)> event;
     std::function<std::optional<RichonlineLandingResult>(const RichonlineClassicTurnContext&)> poll;
     std::function<void(std::uint8_t)> disconnected;
+};
+struct RichonlineClassicStockPolicy {
+    std::shared_ptr<const RichonlineStockResources> resources;
+    std::vector<RichonlineStockHistory> history;
+    float previous_index,current_index,factor;
 };
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
@@ -59,6 +67,8 @@ struct RichonlineClassicSessionRules {
     std::function<bool(std::uint8_t)> secondary_rent_cards_absent;
     // 由受信任准入层绑定全部账号、实际押金及经典奖励策略。缺席时不开放最终结算。
     std::function<std::unique_ptr<RichonlineClassicTerminal>(const RichonlineClassicWorld&)> settlement;
+    // 准入层明确提供按地图槽排列的真实初始行情；缺席时不开放股票，不生成假历史。
+    std::optional<RichonlineClassicStockPolicy> stocks;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

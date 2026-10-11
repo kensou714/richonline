@@ -46,4 +46,10 @@ function M.trade(request)
     end
     return {accepted = accepted, reason = reason, deposit = deposit, message = message}
 end
+function M.retire(request)
+    -- 破产归还股数，不发普通卖出包，不把市值补回已经清零的存款。
+    local supply = {}
+    for slot, stock in ipairs(request.stocks) do supply[slot] = stock.supply + stock.quantity end
+    return supply
+end
 return M

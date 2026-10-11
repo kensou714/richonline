@@ -86,6 +86,35 @@ void RichonlineStockMarket::set_restricted(bool restricted) {
     if(restricted_==restricted) return;
     available_revision(revision_);restricted_=restricted;++revision_;
 }
+RichonlineStockMarket::Retirement RichonlineStockMarket::prepare_retirement(std::uint8_t actor) const {
+    if(actor>=ledger_->actor_count()) throw CodecError("richonline_stock_retirement_actor_invalid");
+    available_revision(revision_);
+    Retirement result;result.owner_=this;result.revision_=revision_;result.actor_=actor;
+    auto rows=LuaValue::array();auto expected=LuaValue::array();
+    for(std::size_t slot=0;slot<quotes_.size();++slot) {
+        const auto quantity=holdings_[actor][slot].quantity,supply=quotes_[slot].supply;
+        if(quantity>maximum-supply) throw CodecError("richonline_stock_retirement_supply_overflow");
+        result.supply_[slot]=supply+quantity;
+        if(script_) {rows.push_back({{"quantity",quantity},{"supply",supply}});expected.push_back(supply+quantity);}
+    }
+    if(script_) {
+        const auto response=script_->call("stock.retire",{{"stocks",std::move(rows)}});
+        if(response!=expected || !response.is_array() ||
+            std::any_of(response.begin(),response.end(),[](const auto& value){return !value.is_number_integer();}))
+            throw CodecError("lua_stock_retirement_invalid");
+    }
+    return result;
+}
+bool RichonlineStockMarket::matches(const Retirement& plan) const noexcept {
+    return plan.owner_==this && plan.revision_==revision_ && revision_!=std::numeric_limits<std::uint64_t>::max();
+}
+bool RichonlineStockMarket::commit(const Retirement& plan) noexcept {
+    if(!matches(plan)) return false;
+    for(std::size_t slot=0;slot<quotes_.size();++slot) {
+        quotes_[slot].supply=plan.supply_[slot];holdings_[plan.actor_][slot]={};
+    }
+    ++revision_;return true;
+}
 Bytes RichonlineStockMarket::change_price(std::uint16_t slot,float price) {
     auto update=prepare_price(slot,price);
     if(!commit(update)) throw CodecError("richonline_stock_quote_conflict");
