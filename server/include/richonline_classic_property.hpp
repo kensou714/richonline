@@ -4,6 +4,8 @@
 #include "richonline_game_ledger.hpp"
 #include "richonline_property_resources.hpp"
 #include "richonline_route.hpp"
+#include "richonline_construction_resources.hpp"
+#include "richonline_player_cards.hpp"
 #include <chrono>
 #include <map>
 #include <memory>
@@ -11,8 +13,16 @@
 namespace richnet {
 class LuaServer;
 enum class RichonlineClassicPropertyChoice { purchase, upgrade };
-enum class RichonlineClassicPropertyOutcome { accepted, declined, timed_out, insufficient_funds };
-enum class RichonlineClassicPropertyContinuation { property_effects };
+enum class RichonlineClassicPropertyOutcome { accepted, declined, timed_out, insufficient_funds, licence_missing };
+enum class RichonlineClassicPropertyContinuation { property_effects, building_choice };
+struct RichonlineClassicBuildingPolicy {
+    std::shared_ptr<const RichonlineClassicConstructionResources> resources;
+    // 与会话其余玩法共用的group0手牌。不能复制为建筑模块的私有库存。
+    std::vector<std::shared_ptr<RichonlinePlayerCards>> cards;
+    // group1尚未接入事务；准入层须同步只读地证明指定许可证不可从group1使用。
+    // 缺少证明表示未知，不能把局内8槽没有许可证当作全部背包没有许可证。
+    std::function<bool(std::uint8_t,std::int16_t)> secondary_licence_absent;
+};
 struct RichonlineClassicPropertyState {
     std::int16_t id;
     std::int8_t sprite_type,kind;
@@ -38,7 +48,7 @@ struct RichonlineClassicPropertyResult {
     RichonlineClassicPropertyState before,after;
     RichonlineClassicPropertyOutcome outcome;
     std::uint32_t charged;
-    // 4020/4021均先续行附加效果；这里完成选择不代表已经完成落点或回合。
+    // 4021可转UI13；终态4020/4021/4025才续行附加效果，均不等于回合结束。
     RichonlineClassicPropertyContinuation continuation=RichonlineClassicPropertyContinuation::property_effects;
 };
 // mode0真人2..4的单局地产所有权。由共享对局锁串行调用，禁止每个连接复制一份。
@@ -50,7 +60,8 @@ public:
     using Now=std::function<Clock::time_point()>;
     RichonlineClassicProperty(std::uint16_t game_id,RichonlineRoadTopology topology,
         const RichonlinePropertyResources& resources,std::shared_ptr<RichonlineGameLedger> ledger,
-        Now now,std::chrono::milliseconds timeout,std::shared_ptr<LuaServer> script={});
+        Now now,std::chrono::milliseconds timeout,std::shared_ptr<LuaServer> script={},
+        std::optional<RichonlineClassicBuildingPolicy> buildings={});
     RichonlineClassicProperty(const RichonlineClassicProperty&)=delete;
     RichonlineClassicProperty& operator=(const RichonlineClassicProperty&)=delete;
     RichonlineClassicPropertyState snapshot(std::int16_t property) const;
@@ -103,6 +114,7 @@ private:
         RichonlineClassicPropertyState property;
         std::uint32_t cost;
         Clock::time_point deadline;
+        bool building_choice=false;
     };
     std::uint16_t game_id_;
     RichonlineRoadTopology topology_;
@@ -110,11 +122,14 @@ private:
     Now now_;
     std::chrono::milliseconds timeout_;
     std::shared_ptr<LuaServer> script_;
+    std::optional<RichonlineClassicBuildingPolicy> buildings_;
     std::map<std::int16_t,RichonlineClassicPropertyState> properties_;
     std::map<std::int16_t,std::int16_t> districts_;
     std::optional<Pending> pending_;
     void validate_entry(const RichonlineClassicPropertyEntry&) const;
     void validate_pending(const RichonlineClassicPropertyEntry&) const;
     RichonlineClassicPropertyResult finish(bool requested,bool timed_out);
+    RichonlineClassicPropertyResult finish_building(std::int8_t kind,bool timed_out);
+    void validate_building_inventory(std::uint8_t actor) const;
 };
 }

@@ -165,8 +165,6 @@ struct Session {
         raw=std::make_unique<RichonlineRawAuthority>(static_cast<std::uint8_t>(count),board.game_server_id);
         raw->initialize_game();
         for(std::uint8_t slot=0;slot<count;++slot) raw->initialize_actor(slot);
-        world.property=std::make_shared<RichonlineClassicProperty>(board.game_server_id,source.topology,
-            source.properties,world.ledger,rules.now,rules.decision_timeout,rules.script);
         if(rules.stocks) {
             const auto& policy=*rules.stocks;
             if(!policy.resources) throw CodecError("richonline_classic_stock_resources_missing");
@@ -182,6 +180,11 @@ struct Session {
             cards->configure_tile_rewards(rules.random_reward_cards,rules.random,*rules.resale);
             world.cards.push_back(std::move(cards));
         }
+        std::optional<RichonlineClassicBuildingPolicy> buildings;
+        if(rules.buildings) buildings=RichonlineClassicBuildingPolicy{rules.buildings,world.cards,
+            rules.secondary_building_licence_absent};
+        world.property=std::make_shared<RichonlineClassicProperty>(board.game_server_id,source.topology,
+            source.properties,world.ledger,rules.now,rules.decision_timeout,rules.script,std::move(buildings));
         services=rules.services(world);
         if(!services.landing || !services.property_effects || !services.event || !services.poll) {
             release_members();
@@ -466,7 +469,7 @@ struct Session {
             throw CodecError("richonline_classic_continuation_invalid");
         if(result.pending_opcode && (*result.pending_opcode==0x10 || *result.pending_opcode==0x11 ||
             *result.pending_opcode==0x14 || *result.pending_opcode==0x20 || *result.pending_opcode==0x21 ||
-            *result.pending_opcode==0x27 || *result.pending_opcode==0x28 || *result.pending_opcode==0x34 ||
+            *result.pending_opcode==0x23 || *result.pending_opcode==0x27 || *result.pending_opcode==0x28 || *result.pending_opcode==0x34 ||
             *result.pending_opcode==0x76))
             throw CodecError("richonline_classic_continuation_reserved_opcode");
         if(result.status_change) {
@@ -1107,10 +1110,12 @@ struct Session {
         }
         if(current.landing.property_ref>=0) {
             const auto property=world.property->snapshot(current.landing.property_ref);
-            if(property.kind!=0 && property.kind!=1)
+            if(property.kind!=0 && property.kind!=1 && !(property.sprite_type==12 && property.kind==-1))
                 throw CodecError("richonline_classic_property_landing_unimplemented");
-            if(property.owner && *property.owner!=actor)
+            if(property.owner && *property.owner!=actor && property.kind!=-1)
                 return rent(property);
+            // 大型空地没有建筑租金，仍保留地产业务附加效果及同格续行。
+            if(property.owner && *property.owner!=actor) return property_effects({stop()});
             const bool purchase=!property.owner;
             auto entry=property_entry();
             std::uint32_t cost=purchase ? property.price : property.sprite_type==11 ? 500U : 1500U;
@@ -1132,6 +1137,14 @@ struct Session {
         if(current.landing.static_type!=-1)
             throw CodecError("richonline_classic_static_landing_unimplemented");
         return complete({stop()});
+    }
+    std::vector<Bytes> property_result(RichonlineClassicPropertyResult result) {
+        if(result.continuation==RichonlineClassicPropertyContinuation::building_choice) {
+            if(!world.property->active()) throw CodecError("richonline_classic_building_wait_missing");
+            pending_opcode=0x23;return {std::move(result.message)};
+        }
+        if(world.property->active()) throw CodecError("richonline_classic_property_wait_remaining");
+        pending_opcode.reset();return property_effects({std::move(result.message)});
     }
     struct PreparedMove { RichonlineRoute route;Bytes packet;RichonlineSharedMovementWait wait; };
     PreparedMove prepare_move(std::optional<std::uint8_t> selected={},std::int32_t charge=0,
@@ -1500,7 +1513,7 @@ struct Session {
         }
         if(phase==Phase::property && pending_opcode==opcode) {
             auto result=world.property->handle(sender,request,property_entry());
-            remember(sender,request);pending_opcode.reset();return property_effects({std::move(result.message)});
+            remember(sender,request);return property_result(std::move(result));
         }
         if(phase==Phase::junction && opcode==0x34) {
             auto result=junction.decide(request,rules.now());remember(sender,request);
@@ -1536,7 +1549,7 @@ struct Session {
             if(rules.now()>=rent_transfer->deadline) return finish_rent_transfer({calendar,-1,0},true);
         } else if(phase==Phase::property) {
             if(auto result=world.property->poll(property_entry())) {
-                pending_opcode.reset();return property_effects({std::move(result->message)});
+                return property_result(std::move(*result));
             }
         } else if(phase==Phase::junction) {
             if(auto result=junction.poll(rules.now())) {

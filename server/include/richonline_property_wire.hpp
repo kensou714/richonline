@@ -24,4 +24,12 @@ struct RichonlinePropertyUpgradeRequest {
 RichonlinePropertyUpgradeRequest decode_richonline_property_upgrade_request(View plain);
 // 普通升级使用0021/4021；与BOSS特殊建筑的0038/403E分开。
 Bytes richonline_property_upgrade_response(std::uint16_t game_id, bool accept);
+struct RichonlinePropertyBuildingRequest {
+    std::uint16_t calendar;
+    std::int8_t kind;
+    std::uint8_t opaque_tail;
+};
+// UI13发送0023，但建筑选择应答为4025；4023是另一种奖励消息。
+RichonlinePropertyBuildingRequest decode_richonline_property_building_request(View plain);
+Bytes richonline_property_building_response(std::uint16_t game_id,std::int8_t kind);
 }

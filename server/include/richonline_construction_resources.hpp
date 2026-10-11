@@ -7,6 +7,15 @@
 
 namespace richnet {
 struct RichonlineBossStage;
+class RichonlineClassicConstructionResources final {
+public:
+    static RichonlineClassicConstructionResources parse(std::string_view build);
+    static RichonlineClassicConstructionResources load(const std::filesystem::path& client_root);
+    std::int16_t licence(std::int8_t kind) const;
+private:
+    explicit RichonlineClassicConstructionResources(std::array<std::int16_t,5> ids):licence_ids_(ids) {}
+    std::array<std::int16_t,5> licence_ids_;
+};
 struct RichonlineConstructionResources {
     std::int8_t default_kind;
     std::array<std::int16_t,10> licence_ids;

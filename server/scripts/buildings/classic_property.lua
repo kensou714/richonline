@@ -14,13 +14,31 @@ function M.choose(request)
     end
     local owner, level = request.owner, request.level
     -- 状态2确认后仍花费现金，但产权和等级保持原状。
-    if accepted and request.possession ~= 2 then
+    if accepted and not request.select_building and request.possession ~= 2 then
         if request.choice == 0x20 then owner = request.actor else level = level + 1 end
     end
     return {
-        accepted = accepted, charged = accepted and request.cost or 0, outcome = outcome,
+        accepted = accepted, charged = accepted and not request.select_building and request.cost or 0, outcome = outcome,
         owner = owner, level = level,
         message = string.pack("<I2I2B", request.choice + 0x4000, request.game_id, accepted and 1 or 0),
+    }
+end
+-- 普通升级第二阶段：4025只带选择；客户端据此自行扣钱、扣许可证并排6073。
+function M.building(request)
+    local selected = request.timed_out and 3 or request.requested
+    assert(selected == -1 or (selected >= 2 and selected <= 6), "建筑种类无效")
+    local outcome = request.timed_out and "timed_out" or (selected == -1 and "declined" or "accepted")
+    if selected ~= -1 and request.cash <= request.cost then
+        selected, outcome = -1, "insufficient_funds"
+    elseif selected ~= -1 and request.licence_required and not request.licence_owned then
+        selected, outcome = -1, "licence_missing"
+    end
+    local kind, level = request.kind, request.level
+    if selected ~= -1 and request.possession ~= 2 then kind, level = selected, level + 1 end
+    return {
+        selected = selected, charged = selected ~= -1 and request.cost or 0, outcome = outcome,
+        kind = kind, level = level, consume = selected ~= -1 and request.licence_required,
+        message = string.pack("<I2I2b", 0x4025, request.game_id, selected),
     }
 end
 -- NEW x86每次乘法取低32位，住宅先逐块有符号除1000，最后累加。

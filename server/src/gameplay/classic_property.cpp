@@ -19,14 +19,24 @@ std::uint16_t opcode(RichonlineClassicPropertyChoice choice) {
 }
 RichonlineClassicProperty::RichonlineClassicProperty(std::uint16_t game_id,RichonlineRoadTopology topology,
     const RichonlinePropertyResources& resources,std::shared_ptr<RichonlineGameLedger> ledger,
-    Now now,std::chrono::milliseconds timeout,std::shared_ptr<LuaServer> script)
+    Now now,std::chrono::milliseconds timeout,std::shared_ptr<LuaServer> script,
+    std::optional<RichonlineClassicBuildingPolicy> buildings)
     :game_id_(game_id),topology_(std::move(topology)),ledger_(std::move(ledger)),now_(std::move(now)),
-     timeout_(timeout),script_(std::move(script)) {
+     timeout_(timeout),script_(std::move(script)),buildings_(std::move(buildings)) {
     if(!ledger_ || ledger_->actor_count()<2 || ledger_->actor_count()>4)
         throw CodecError("richonline_classic_property_ledger_invalid");
     // 超时时长为调用者显式配置的服务端恢复策略，不冒充原服务器超时证据。
     if(!now_ || timeout_.count()<=0 || timeout_>std::chrono::minutes{10})
         throw CodecError("richonline_classic_property_clock_invalid");
+    if(buildings_) {
+        if(!buildings_->resources || buildings_->cards.size()!=ledger_->actor_count())
+            throw CodecError("richonline_classic_building_policy_invalid");
+        for(std::size_t actor=0;actor<buildings_->cards.size();++actor) {
+            const auto& cards=buildings_->cards[actor];
+            if(!cards || cards->game_id()!=game_id_ || cards->actor_slot()!=actor || cards->game_mode()!=0)
+                throw CodecError("richonline_classic_building_cards_mismatch");
+        }
+    }
     if(resources.width!=topology_.width() || resources.height!=topology_.height())
         throw CodecError("richonline_classic_property_map_mismatch");
     for(const auto& property:resources.properties) {
@@ -155,9 +165,9 @@ std::uint16_t RichonlineClassicProperty::begin(RichonlineClassicPropertyChoice c
     } else {
         if(property.owner!=entry.actor || property.level>=5 || property.kind==1 || entry.sealed)
             throw CodecError("richonline_classic_property_upgrade_ineligible");
-        // sprite12空地确认会转入UI13/0023，而不是扣费增级；未接该选择前明确拒绝。
+        // 打开UI13前先证明所有可选许可证来源可处理，避免选了group1道具后才拒绝。
         if(property.sprite_type!=11 && (property.kind<2 || property.kind>6))
-            throw CodecError("richonline_classic_property_building_choice_required");
+            validate_building_inventory(entry.actor);
         cost=property.sprite_type==11 ? 500 : 1500;
     }
     if(entry.land_equipment>0) cost/=2;
@@ -166,6 +176,19 @@ std::uint16_t RichonlineClassicProperty::begin(RichonlineClassicPropertyChoice c
         throw CodecError("richonline_classic_property_cash_ineligible");
     pending_=Pending{choice,entry,property,cost,now_()+timeout_};
     return request_opcode;
+}
+void RichonlineClassicProperty::validate_building_inventory(std::uint8_t actor) const {
+    if(!buildings_) throw CodecError("richonline_classic_property_building_policy_missing");
+    const auto& inventory=buildings_->cards.at(actor)->inventory();
+    for(std::int8_t kind=2;kind<=6;++kind) {
+        const auto licence=buildings_->resources->licence(kind);
+        if(licence==-1) continue;
+        bool found=false;
+        for(const auto& slot:inventory) if(slot.card_id==licence && slot.count>0) {found=true;break;}
+        if(!found && (!buildings_->secondary_licence_absent ||
+            !buildings_->secondary_licence_absent(actor,licence)))
+            throw CodecError("richonline_classic_building_secondary_inventory_unknown");
+    }
 }
 void RichonlineClassicProperty::validate_pending(const RichonlineClassicPropertyEntry& current) const {
     if(!pending_) throw CodecError("richonline_classic_property_not_pending");
@@ -187,10 +210,14 @@ RichonlineClassicPropertyResult RichonlineClassicProperty::finish(bool requested
             outcome=RichonlineClassicPropertyOutcome::insufficient_funds;reason="insufficient_funds";
         } else { accepted=true;outcome=RichonlineClassicPropertyOutcome::accepted;reason="accepted"; }
     }
-    const auto charged=accepted ? pending.cost : 0U;
+    const bool select_building=accepted && pending.choice==RichonlineClassicPropertyChoice::upgrade &&
+        pending.property.sprite_type!=11 && (pending.property.kind<2 || pending.property.kind>6);
+    if(select_building) validate_building_inventory(pending.entry.actor);
+    const auto next_deadline=select_building ? now_()+timeout_ : pending.deadline;
+    const auto charged=accepted && !select_building ? pending.cost : 0U;
     auto after=pending.property;
     // 原版普通模式状态2只扣费，不移交产权/增级；不能在这里自动退款。
-    if(accepted && *pending.entry.status.possession!=2) {
+    if(accepted && !select_building && *pending.entry.status.possession!=2) {
         if(pending.choice==RichonlineClassicPropertyChoice::purchase) after.owner=pending.entry.actor;
         else ++after.level;
     }
@@ -201,7 +228,8 @@ RichonlineClassicPropertyResult RichonlineClassicProperty::finish(bool requested
             {"choice",opcode(pending.choice)},{"requested",requested},{"timed_out",timed_out},
             {"cash",before_funds.funds.cash},{"cost",pending.cost},
             {"actor",pending.entry.actor},{"owner",pending.property.owner ? static_cast<int>(*pending.property.owner) : -1},
-            {"level",pending.property.level},{"possession",*pending.entry.status.possession}});
+            {"level",pending.property.level},{"possession",*pending.entry.status.possession},
+            {"select_building",select_building}});
         const LuaValue expected{{"accepted",accepted},{"charged",charged},{"outcome",reason},
             {"owner",after.owner ? static_cast<int>(*after.owner) : -1},{"level",after.level},
             {"message",lua_bytes(View(message))}};
@@ -210,6 +238,7 @@ RichonlineClassicPropertyResult RichonlineClassicProperty::finish(bool requested
             throw CodecError("lua_classic_property_choice_invalid");
     }
     RichonlineClassicPropertyResult result{std::move(message),pending.entry,pending.property,after,outcome,charged};
+    if(select_building) result.continuation=RichonlineClassicPropertyContinuation::building_choice;
     auto after_funds=before_funds.funds;
     after_funds.cash-=charged;
     const std::array updates{RichonlineGameFundsUpdate{pending.entry.actor,before_funds,after_funds}};
@@ -218,15 +247,81 @@ RichonlineClassicPropertyResult RichonlineClassicProperty::finish(bool requested
     if(!ledger_->commit_batch(updates,[&]() {
         if(state!=pending.property) return false;
         state=after;
-        pending_.reset();
+        if(select_building) { pending_->building_choice=true;pending_->deadline=next_deadline; }
+        else pending_.reset();
         return true;
     })) throw CodecError("richonline_classic_property_commit_stale");
+    return result;
+}
+RichonlineClassicPropertyResult RichonlineClassicProperty::finish_building(std::int8_t requested,bool timed_out) {
+    const auto pending=*pending_;
+    if(!pending.building_choice || !buildings_)
+        throw CodecError("richonline_classic_building_not_pending");
+    const auto before_funds=ledger_->snapshot(pending.entry.actor);
+    if(before_funds.funds.cash>maximum_cash) throw CodecError("richonline_classic_property_cash_invalid");
+    // UI13原自动选择为3（贸易中心）；服务端超时长度仍是显式恢复策略。
+    auto kind=timed_out ? std::int8_t{3} : requested;
+    auto outcome=timed_out ? RichonlineClassicPropertyOutcome::timed_out :
+        kind==-1 ? RichonlineClassicPropertyOutcome::declined : RichonlineClassicPropertyOutcome::accepted;
+    const char* reason=timed_out ? "timed_out" : kind==-1 ? "declined" : "accepted";
+    auto& cards=*buildings_->cards.at(pending.entry.actor);
+    const auto inventory=cards.inventory();
+    std::optional<RichonlinePlayerCards::PreparedConsumption> consumption;
+    if(kind!=-1 && before_funds.funds.cash<=pending.cost) {
+        kind=-1;outcome=RichonlineClassicPropertyOutcome::insufficient_funds;reason="insufficient_funds";
+    }
+    const auto licence=kind==-1 ? std::int16_t{-1} : buildings_->resources->licence(kind);
+    if(licence!=-1) {
+        for(std::int8_t slot=0;slot<8;++slot) {
+            consumption=cards.prepare_consumption(slot,licence);
+            if(consumption) break;
+        }
+        if(!consumption) {
+            if(!buildings_->secondary_licence_absent ||
+                !buildings_->secondary_licence_absent(pending.entry.actor,licence))
+                throw CodecError("richonline_classic_building_secondary_inventory_unknown");
+            kind=-1;outcome=RichonlineClassicPropertyOutcome::licence_missing;reason="licence_missing";
+        }
+    }
+    const auto charged=kind==-1 ? 0U : pending.cost;
+    auto after=pending.property;
+    if(kind!=-1 && *pending.entry.status.possession!=2) { after.kind=kind;++after.level; }
+    auto message=richonline_property_building_response(game_id_,kind);
+    if(script_) {
+        const auto plan=script_->call("property.classic_building",{{"game_id",game_id_},
+            {"requested",requested},{"timed_out",timed_out},{"cash",before_funds.funds.cash},
+            {"cost",pending.cost},{"licence_required",licence!=-1},{"licence_owned",consumption.has_value()},
+            {"kind",pending.property.kind},{"level",pending.property.level},
+            {"possession",*pending.entry.status.possession}});
+        const LuaValue expected{{"selected",kind},{"charged",charged},{"outcome",reason},
+            {"kind",after.kind},{"level",after.level},{"consume",consumption.has_value()},
+            {"message",lua_bytes(View(message))}};
+        if(plan!=expected || !plan.at("selected").is_number_integer() ||
+            !plan.at("charged").is_number_integer() || !plan.at("kind").is_number_integer() ||
+            !plan.at("level").is_number_integer()) throw CodecError("lua_classic_building_invalid");
+    }
+    RichonlineClassicPropertyResult result{std::move(message),pending.entry,pending.property,after,outcome,charged};
+    auto after_funds=before_funds.funds;after_funds.cash-=charged;
+    const std::array updates{RichonlineGameFundsUpdate{pending.entry.actor,before_funds,after_funds}};
+    auto& state=properties_.at(pending.entry.property);
+    // Lua、响应、库存计划均在提交前准备；同一回调扣许可证、写地产、清等待。
+    if(!ledger_->commit_batch(updates,[&]() {
+        if(state!=pending.property || cards.inventory()!=inventory) return false;
+        if(consumption) cards.commit_inventory(consumption->remaining_inventory);
+        state=after;pending_.reset();return true;
+    })) throw CodecError("richonline_classic_building_commit_stale");
     return result;
 }
 RichonlineClassicPropertyResult RichonlineClassicProperty::handle(std::uint8_t sender_actor,View request,
     const RichonlineClassicPropertyEntry& current) {
     validate_pending(current);
     if(sender_actor!=pending_->entry.actor) throw CodecError("richonline_classic_property_sender_mismatch");
+    if(pending_->building_choice) {
+        const auto decoded=decode_richonline_property_building_request(request);
+        if(decoded.calendar!=pending_->entry.calendar)
+            throw CodecError("richonline_classic_property_calendar_mismatch");
+        return finish_building(decoded.kind,now_()>=pending_->deadline);
+    }
     std::uint16_t calendar;
     bool accept;
     if(pending_->choice==RichonlineClassicPropertyChoice::purchase) {
@@ -244,6 +339,7 @@ std::optional<RichonlineClassicPropertyResult> RichonlineClassicProperty::poll(
     if(!pending_) return {};
     validate_pending(current);
     if(now_()<pending_->deadline) return {};
+    if(pending_->building_choice) return finish_building(3,true);
     return finish(false,true);
 }
 }

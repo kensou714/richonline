@@ -27,7 +27,7 @@ std::int32_t integer(std::string_view text) {
         throw CodecError("richonline_construction_resource_integer_invalid");
     return value;
 }
-std::array<std::int16_t,10> licences(std::string_view text) {
+std::array<std::int16_t,21> all_licences(std::string_view text) {
     if (text.empty() || text.size() > text_limit || text.find('\0') != text.npos)
         throw CodecError("richonline_construction_resource_text_invalid");
     struct Section { std::string_view name; OriginalSourceFields fields; };
@@ -57,7 +57,7 @@ std::array<std::int16_t,10> licences(std::string_view text) {
         integer(required(sections.front().fields,"num")) != 21)
         throw CodecError("richonline_construction_resource_count_invalid");
     std::set<std::int32_t> indices;
-    std::array<std::int16_t,10> result{};
+    std::array<std::int16_t,21> result{};
     for (std::size_t i = 1; i < sections.size(); ++i) {
         const auto& section = sections[i];
         if (section.name != "[BUILD]") throw CodecError("richonline_construction_resource_section_invalid");
@@ -65,13 +65,37 @@ std::array<std::int16_t,10> licences(std::string_view text) {
         const auto licence = integer(required(section.fields,"licence"));
         if (index < 0 || index > 20 || !indices.insert(index).second)
             throw CodecError("richonline_construction_resource_index_invalid");
-        if (index >= 11) {
-            if (licence != 498+index) throw CodecError("richonline_construction_resource_licence_changed");
-            result[static_cast<std::size_t>(index-11)] = static_cast<std::int16_t>(licence);
-        }
+        if(licence< -1 || licence>32767) throw CodecError("richonline_construction_resource_licence_invalid");
+        result[static_cast<std::size_t>(index)]=static_cast<std::int16_t>(licence);
     }
     return result;
 }
+std::array<std::int16_t,10> licences(std::string_view text) {
+    const auto all=all_licences(text);
+    std::array<std::int16_t,10> result{};
+    for(std::size_t i=0;i<result.size();++i) {
+        if(all[i+11]!=509+static_cast<int>(i))
+            throw CodecError("richonline_construction_resource_licence_changed");
+        result[i]=all[i+11];
+    }
+    return result;
+}
+}
+RichonlineClassicConstructionResources RichonlineClassicConstructionResources::parse(std::string_view build) {
+    const auto all=all_licences(build);
+    const std::array<std::int16_t,5> expected{1064,-1,1066,1067,1068};
+    std::array<std::int16_t,5> result{};
+    std::copy_n(all.begin()+2,result.size(),result.begin());
+    if(result!=expected) throw CodecError("richonline_classic_construction_licences_changed");
+    return RichonlineClassicConstructionResources(result);
+}
+RichonlineClassicConstructionResources RichonlineClassicConstructionResources::load(const std::filesystem::path& root) {
+    const auto build=load_original_kpd(root/"Data"/"Build.kpd",text_limit);
+    return parse({reinterpret_cast<const char*>(build.data()),build.size()});
+}
+std::int16_t RichonlineClassicConstructionResources::licence(std::int8_t kind) const {
+    if(kind<2 || kind>6) throw CodecError("richonline_classic_construction_kind_invalid");
+    return licence_ids_[static_cast<std::size_t>(kind-2)];
 }
 RichonlineConstructionResources RichonlineConstructionResources::parse(std::string_view build, std::string_view boss) {
     const auto licence_ids = licences(build);

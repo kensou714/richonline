@@ -148,6 +148,9 @@ struct RichonlineClassicSessionRules {
     std::optional<RichonlineClassicAssetPolicy> asset_settlement;
     std::optional<RichonlineClassicShopPolicy> shop;
     std::optional<RichonlineClassicPaymentPolicy> payment;
+    // 大型空地的UI13流程；group0使用world.cards，group1必须由库存准入提供无可用证明。
+    std::shared_ptr<const RichonlineClassicConstructionResources> buildings;
+    std::function<bool(std::uint8_t,std::int16_t)> secondary_building_licence_absent;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。
