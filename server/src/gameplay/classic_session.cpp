@@ -20,6 +20,7 @@
 #include "richonline_classic_weapon_treaty.hpp"
 #include "richonline_classic_property_card.hpp"
 #include "richonline_classic_clear_status.hpp"
+#include "richonline_classic_relocation.hpp"
 #include "richonline_classic_trade.hpp"
 #include "richonline_classic_computer.hpp"
 #include "lua_server.hpp"
@@ -2165,6 +2166,48 @@ struct Session {
             " card="+std::to_string(plan->transferred_card())+" sequence="+std::to_string(sequence));
         return messages;
     }
+    std::vector<RichonlineClassicRelocationActor> relocation_snapshot() const {
+        std::vector<RichonlineClassicRelocationActor> result;
+        result.reserve(active.size());
+        for(std::uint8_t slot=0;slot<active.size();++slot) {
+            const auto& person=board.participants[slot];
+            result.push_back({person.position,person.direction,active[slot]!=0,raw->actor(slot),statuses[slot]});
+        }
+        return result;
+    }
+    std::vector<Bytes> swap_positions_card(View request) {
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto owner=world.cards[actor];
+        std::optional<RichonlineClassicRelocationPlan> plan;
+        try {
+            if(phase!=Phase::roll || !owner || owner->actor_slot()!=actor || owner->game_id()!=board.game_server_id ||
+                !active[actor] || richonline_landing_controlled(statuses[actor]) || statuses[actor].stay ||
+                raw->game().scripted_event83830!=-1 || movement)
+                throw CodecError("richonline_classic_swap_positions_unavailable");
+            plan=prepare_richonline_classic_swap_positions(request,calendar,*owner,startup.topology,
+                relocation_snapshot(),rules.script);
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_swap_positions_refused actor="+std::to_string(actor)+
+                " reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        std::vector<Bytes> messages{plan->response()};
+        const auto current=relocation_snapshot();
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            world.cards[actor]!=owner || movement || raw->game().scripted_event83830!=-1 ||
+            !matches_richonline_classic_relocation(*owner,current,*plan))
+            throw CodecError("richonline_classic_swap_positions_stale");
+        remember(actor,request);
+        if(!commit_richonline_classic_relocation(*owner,board.participants,current,*plan))
+            throw CodecError("richonline_classic_swap_positions_commit_stale");
+        if(rules.log) rules.log("richonline_classic_swap_positions actor="+std::to_string(actor)+
+            " sequence="+std::to_string(sequence));
+        // 40F1动画39只轮换坐标并恢复操作，不发4011/4013，不触发新位置的地产或地面物。
+        // 经典宠物尚未装配；接入时须按7F7990同时准备各宠物跟随格，不能只写人物坐标。
+        return messages;
+    }
     std::vector<Bytes> clear_status_card(View request) {
         const auto before_actor=actor;
         const auto before_calendar=calendar;
@@ -2643,6 +2686,7 @@ struct Session {
             if(opcode==142) return weapon_treaty(request);
             if(opcode==164) return hibernate_card(request);
             if(opcode==135) return clear_status_card(request);
+            if(opcode==161) return swap_positions_card(request);
             if(opcode==96 || opcode==97 || opcode==98 || opcode==99 || opcode==100 || opcode==101 || opcode==102 ||
                 opcode==119 || opcode==120 || opcode==123 || opcode==134 || (opcode>=125 && opcode<=129))
                 return property_card(request);
