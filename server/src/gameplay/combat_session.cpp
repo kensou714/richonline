@@ -204,10 +204,10 @@ void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& worl
     for (auto& entry:state.actors) if (entry && contains(footprint,entry->position) &&
         richonline_attack_hits_actor(effect,static_cast<std::int8_t>(boss),static_cast<std::int8_t>(entry->slot),
             entry->active,entry->in_hospital,entry->in_prison,entry->status.frozen!=0)) {
-        if(entry->slot==1) entry->status.boss_restore_eligible=true;
         auto helmet=world.helmet?world.helmet(*entry,state):std::nullopt;
         if (helmet && helmet->source_inventory!=entry->inventory)
             throw CodecError("richonline_combat_session_helmet_stale");
+        if(entry->slot==1 && !helmet) entry->status.boss_restore_eligible=true;
         const RichonlineCombatDamageTerms terms{world.resources.base_damage(effect),attacker.flat_attack,
             entry->flat_defense,false,attacker.active && attacker.attack_modifiers_enabled,
             std::array{attacker.attack_modifiers,entry->defense_modifiers}};

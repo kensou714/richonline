@@ -271,10 +271,10 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
             terms.defense.secondary_status_multiplier=(*actor.status.boss_frenzy)[1];
         }
         if(actor.status.native_boss_frenzy) {
-            if(terms.attack.secondary_status_multiplier!=1.0F || terms.defense.secondary_status_multiplier!=1.0F)
-                throw CodecError("richonline_combat_secondary_term_duplicated");
-            terms.attack.secondary_status_multiplier=(*actor.status.native_boss_frenzy)[0];
-            terms.defense.secondary_status_multiplier=(*actor.status.native_boss_frenzy)[1];
+            if(terms.attack.special_multiplier!=1.0F || terms.defense.special_multiplier!=1.0F)
+                throw CodecError("richonline_combat_special_term_duplicated");
+            terms.attack.special_multiplier=(*actor.status.native_boss_frenzy)[0];
+            terms.defense.special_multiplier=(*actor.status.native_boss_frenzy)[1];
         }
         if(terms.attack.building_multiplier!=1.0F || terms.defense.building_multiplier!=1.0F)
             throw CodecError("richonline_combat_world_building_term_duplicated");

@@ -745,11 +745,17 @@ struct Turns {
         // 客户端已在4010本地执行同一链；服务端只镜像伤害、恢复和控制状态。
         if(actor==1 && complete_rounds>0 && rules.native_boss_recovery && !status[1].native_boss_frenzy &&
             complete_rounds+1==rules.native_boss_recovery->frenzy_bout) {
-            status[1].native_boss_frenzy=rules.native_boss_recovery->frenzy_factors;
-            status[1].protected_from_status=true;
-            status[1].one_step=status[1].six_steps=status[1].turtle=status[1].stay=0;
-            status[1].sleepwalking=status[1].frozen=0;
-            if(status[1].possession==7) richonline_detach_possession(status[1]);
+            auto after=status[1];
+            after.native_boss_frenzy=rules.native_boss_recovery->frenzy_factors;
+            after.protected_from_status=true;
+            after.one_step=after.six_steps=after.turtle=after.stay=0;
+            after.sleepwalking=after.frozen=0;
+            if(after.possession==7) richonline_detach_possession(after);
+            if(rules.npcs) {
+                auto change=rules.npcs->prepare_status_change(1,status[1],after);
+                if(!rules.npcs->commit_status_change(change,status[1]))
+                    throw CodecError("richonline_native_boss_frenzy_status_stale");
+            } else status[1]=after;
             if(rules.log) rules.log("richonline_native_boss_frenzy day="+
                 std::to_string(complete_rounds+1));
         }
@@ -802,8 +808,9 @@ struct Turns {
             if(before.funds.cash<rules.native_boss_cash_cap) {
                 auto amount=rules.native_boss_recovery->amount;
                 if(status[1].native_boss_frenzy) {
-                    const auto scaled=static_cast<float>(amount)*(*status[1].native_boss_frenzy)[2]+0.5F;
-                    if(!std::isfinite(scaled) || scaled>static_cast<float>(std::numeric_limits<std::int32_t>::max()))
+                    const auto scaled=static_cast<double>(static_cast<float>(amount))*
+                        static_cast<double>((*status[1].native_boss_frenzy)[2])+0.5;
+                    if(!std::isfinite(scaled) || scaled>static_cast<double>(std::numeric_limits<std::int32_t>::max()))
                         throw CodecError("richonline_native_boss_restore_overflow");
                     amount=static_cast<std::uint32_t>(scaled);
                 }
