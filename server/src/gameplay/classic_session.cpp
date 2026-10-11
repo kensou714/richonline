@@ -23,7 +23,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,property,research,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,feast_exit,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,property,research,rent_transfer,event,junction,settling,closed };
 enum class Confinement { hospital,jail };
 struct Retired {
     std::uint8_t actor;
@@ -39,6 +39,15 @@ struct PendingRentTransfer {
 struct PreparedRetirement {
     RichonlineClassicProperty::Retirement property;
     std::optional<RichonlineStockMarket::Retirement> stocks;
+};
+struct PendingFeastExit {
+    std::uint8_t actor;
+    RichonlineFeastRelease kind;
+    RichonlineRawActorState before;
+    std::int16_t entry,exit;
+    std::uint8_t heading;
+    bool controlled,complete=false;
+    std::chrono::steady_clock::time_point deadline;
 };
 struct Session {
     RichonlineClassicStartup startup;
@@ -82,6 +91,9 @@ struct Session {
     std::optional<std::chrono::steady_clock::time_point> confinement_deadline;
     bool confinement_exit_roll_requested=false;
     Confinement confinement=Confinement::hospital;
+    std::optional<std::chrono::sys_days> last_feast_day;
+    std::vector<PendingFeastExit> feast_exits;
+    bool feast_roll_requested=false;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -166,6 +178,15 @@ struct Session {
         raw=std::make_unique<RichonlineRawAuthority>(static_cast<std::uint8_t>(count),board.game_server_id);
         raw->initialize_game();
         for(std::uint8_t slot=0;slot<count;++slot) raw->initialize_actor(slot);
+        if(rules.feasts) {
+            const auto& policy=*rules.feasts;
+            if(!policy.resources || policy.controlled_exit_delay<std::chrono::milliseconds{1} ||
+                policy.controlled_exit_delay>std::chrono::minutes{5} ||
+                policy.exit_timeout<policy.controlled_exit_delay || policy.exit_timeout>std::chrono::minutes{5})
+                throw CodecError("richonline_classic_feast_policy_invalid");
+            static_cast<void>(policy.resources->find({std::chrono::year{board.year},
+                std::chrono::month{board.month},std::chrono::day{board.day}}));
+        }
         if(rules.stocks) {
             const auto& policy=*rules.stocks;
             if(!policy.resources) throw CodecError("richonline_classic_stock_resources_missing");
@@ -191,7 +212,7 @@ struct Session {
             rules.now,rules.decision_timeout,rules.script);
         services=rules.services(world);
         if(!services.landing || !services.property_effects || !services.event || !services.poll ||
-            (world.research && !services.turn_start)) {
+            ((world.research || rules.feasts) && !services.turn_start)) {
             release_members();
             throw CodecError("richonline_classic_session_services_incomplete");
         }
@@ -253,7 +274,7 @@ struct Session {
                 board.participants[other].position==tile) occupied=true;
         return {board.game_server_id,calendar,sequence,completed_rounds,
             {actor,tile,cell.static_type,cell.property_ref,0,false,degree,occupied,statuses[actor],false,collision_pending},
-            board.participants,statuses,active};
+            board.participants,statuses,active,round_anchor};
     }
     std::vector<RichonlineCollisionActor> collision_actors() const {
         const auto scripted=raw->game().scripted_event83830;
@@ -328,11 +349,84 @@ struct Session {
         richonline_status_begin_active_turn(statuses[actor]);
         phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
         confinement_exit_roll_requested=false;
+        feast_roll_requested=false;
+        return begin_feast(std::move(messages));
+    }
+    std::vector<Bytes> after_feast(std::vector<Bytes> messages) {
         if(services.turn_start) return turn_start_result(std::move(messages),services.turn_start(context()));
         return finish_turn_start(std::move(messages));
     }
+    std::vector<Bytes> begin_feast(std::vector<Bytes> messages) {
+        if(!rules.feasts || actor!=round_anchor) return after_feast(std::move(messages));
+        if(!feast_exits.empty()) throw CodecError("richonline_classic_feast_exit_pending");
+        const auto scripted=raw->game().scripted_event83830;
+        if(!scripted) throw CodecError("richonline_classic_feast_game_unknown");
+        if(*scripted!=-1) return after_feast(std::move(messages));
+        const std::chrono::sys_days start{std::chrono::year{board.year}/board.month/board.day};
+        const std::chrono::sys_days last{std::chrono::year{2034}/12/31};
+        if(completed_rounds>static_cast<std::uint64_t>((last-start).count()))
+            throw CodecError("richonline_feast_date_unsupported");
+        const auto date=start+std::chrono::days{static_cast<std::int64_t>(completed_rounds)};
+        if(last_feast_day==date) return after_feast(std::move(messages));
+        const auto slot=rules.feasts->resources->find(std::chrono::year_month_day{date});
+        if(!slot) {last_feast_day=date;return after_feast(std::move(messages));}
+        const auto plan=prepare_richonline_classic_feast(*slot,board.game_server_id,active,statuses,
+            *raw,*world.ledger,world.cards,rules.random,rules.script);
+        std::vector<PendingFeastExit> exits;
+        std::vector<RichonlineGameFundsUpdate> funds;
+        const auto now=rules.now();
+        for(const auto& change:plan.changes) {
+            funds.push_back({change.actor,change.before_funds,change.after_funds});
+            if(change.release==RichonlineFeastRelease::none) continue;
+            const auto pair=change.release==RichonlineFeastRelease::hospital ?
+                startup.topology.hospital_positions() : startup.topology.jail_positions();
+            if(!pair || board.participants[change.actor].position!=(*pair)[0] ||
+                !startup.topology.cell((*pair)[1]).walkable)
+                throw CodecError("richonline_classic_feast_exit_geometry");
+            const auto width=static_cast<std::int32_t>(startup.topology.width());
+            const auto dx=(*pair)[1]%width-(*pair)[0]%width,dy=(*pair)[1]/width-(*pair)[0]/width;
+            const auto controlled=change.after_status.possession==7 || change.after_status.sleepwalking!=0;
+            exits.push_back({change.actor,change.release,change.before_raw,(*pair)[0],(*pair)[1],
+                static_cast<std::uint8_t>(dy>0 ? 0 : dx<0 ? 1 : dy<0 ? 2 : 3),controlled,false,
+                now+(controlled ? rules.feasts->controlled_exit_delay : rules.feasts->exit_timeout)});
+        }
+        // 所有准备和消息分配均在提交前完成。各人独立手牌及本地状态与资金同笔生效。
+        messages.insert(messages.end(),plan.messages.begin(),plan.messages.end());
+        for(const auto& change:plan.changes)
+            if(raw->actor(change.actor)!=change.before_raw || statuses[change.actor]!=change.before_status ||
+                world.cards[change.actor]->inventory()!=change.before_inventory)
+                throw CodecError("richonline_classic_feast_state_stale");
+        if(!world.ledger->commit_batch(funds,[&]() noexcept {
+            for(const auto& change:plan.changes) {
+                world.cards[change.actor]->commit_inventory(change.after_inventory);
+                statuses[change.actor]=change.after_status;
+            }
+            return true;
+        })) throw CodecError("richonline_classic_feast_funds_stale");
+        last_feast_day=date;feast_exits.swap(exits);
+        if(rules.log) rules.log("richonline_classic_feast slot="+std::to_string(*slot)+
+            " round="+std::to_string(completed_rounds)+" anchor="+std::to_string(round_anchor)+
+            " exits="+std::to_string(feast_exits.size())+" response_count="+std::to_string(plan.messages.size()));
+        if(feast_exits.empty()) return after_feast(std::move(messages));
+        phase=Phase::feast_exit;return messages;
+    }
+    void complete_feast_exit(PendingFeastExit& exit) {
+        if(exit.complete || !active[exit.actor] || raw->actor(exit.actor)!=exit.before ||
+            board.participants[exit.actor].position!=exit.entry)
+            throw CodecError("richonline_classic_feast_exit_stale");
+        // 631640/631D20清收容，631800/631EE0归位出口；不触发出口格或推进日历。
+        if(exit.kind==RichonlineFeastRelease::hospital) raw->exit_hospital(exit.actor);
+        else raw->exit_jail(exit.actor);
+        board.participants[exit.actor].position=exit.exit;
+        board.participants[exit.actor].direction=exit.heading;
+        exit.complete=true;
+    }
+    std::vector<Bytes> continue_feast_exits() {
+        if(std::ranges::any_of(feast_exits,[](const auto& exit){return !exit.complete;})) return {};
+        feast_exits.clear();return after_feast({});
+    }
     static bool reserved_event(std::uint16_t opcode) noexcept {
-        return opcode==0x10 || opcode==0x11 || opcode==0x14 || opcode==0x20 || opcode==0x21 ||
+        return opcode==0x10 || opcode==0x11 || opcode==0x14 || opcode==0x15 || opcode==0x20 || opcode==0x21 ||
             opcode==0x23 || opcode==0x24 || opcode==0x27 || opcode==0x28 || opcode==0x34 || opcode==0x76;
     }
     std::vector<Bytes> turn_start_result(std::vector<Bytes> prefix,RichonlineLandingResult result) {
@@ -341,7 +435,9 @@ struct Session {
             (result.pending_opcode && reserved_event(*result.pending_opcode)) || result.temple_change || result.status_change)
             throw CodecError("richonline_classic_turn_continuation_invalid");
         for(const auto& packet:result.messages) {
-            if(packet.size()<2 || read_le(View(packet).first(2))==0x4010 || read_le(View(packet).first(2))==0x420f)
+            if(packet.size()<2) throw CodecError("richonline_classic_turn_continuation_packet_invalid");
+            const auto opcode=read_le(View(packet).first(2));
+            if(opcode==0x4010 || opcode==0x420f || (rules.feasts && (opcode==0x40a0 || opcode==0x40a1)))
                 throw CodecError("richonline_classic_turn_continuation_packet_invalid");
         }
         append(prefix,std::move(result.messages));
@@ -417,6 +513,7 @@ struct Session {
         }
         if(rules.log) rules.log("richonline_classic_turn actor="+std::to_string(actor)+
             " sequence="+std::to_string(sequence)+" calendar="+std::to_string(calendar));
+        if(std::exchange(feast_roll_requested,false) && phase==Phase::roll) append(messages,random_move({}));
         return messages;
     }
     bool confinement_controlled() const noexcept {
@@ -1495,7 +1592,25 @@ struct Session {
             if(was_retired(sender,request)) return {};
             throw CodecError("richonline_classic_inactive_actor_request");
         }
+        // 节日会同时释放非当前行动者；0015来自各角色自己的连接，不由轮首玩家代报。
+        if(opcode==0x15 && request.size()==4) {
+            if(phase==Phase::feast_exit) {
+                auto exit=std::ranges::find_if(feast_exits,[&](const auto& entry){return entry.actor==sender;});
+                if(exit!=feast_exits.end() && !exit->controlled) {
+                    if(exit->complete) return {};
+                    if(rules.now()>=exit->deadline) throw CodecError("richonline_classic_feast_exit_timeout");
+                    remember(sender,request);complete_feast_exit(*exit);return continue_feast_exits();
+                }
+            }
+            // 非行动者的重复节日确认也须在行动槽门之前去重。
+            if(was_retired(sender,request)) return {};
+        }
         if(sender!=actor) throw CodecError("richonline_classic_sender_not_active");
+        if(phase==Phase::feast_exit && opcode==0x10) {
+            const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
+            if(roll.parameter!=0) throw CodecError("richonline_classic_roll_parameter_unsupported");
+            feast_roll_requested=true;remember(sender,request);return {};
+        }
         if(phase==Phase::turn_event && pending_opcode==opcode) {
             auto result=services.event(context(),request);remember(sender,request);
             return turn_start_result({},std::move(result));
@@ -1602,6 +1717,14 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
+        if(phase==Phase::feast_exit) {
+            const auto now=rules.now();
+            for(auto& exit:feast_exits) if(!exit.complete && now>=exit.deadline) {
+                if(!exit.controlled) throw CodecError("richonline_classic_feast_exit_timeout");
+                complete_feast_exit(exit);
+            }
+            return continue_feast_exits();
+        }
         if(phase==Phase::turn_event) {
             if(auto result=services.poll(context())) return turn_start_result({},std::move(*result));
             return {};
@@ -1648,6 +1771,7 @@ struct Session {
         disconnected[sender]=true;
         if(!terminal || !terminal->committed())phase=Phase::closed;
         movement.reset();rent_transfer.reset();kidnap_deadline.reset();confinement_deadline.reset();
+        feast_exits.clear();feast_roll_requested=false;
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
         if(services.disconnected) services.disconnected(sender);
     }

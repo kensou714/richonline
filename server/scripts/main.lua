@@ -11,6 +11,7 @@ local collision = require("game.collision")
 local classic_retirement = require("game.classic_retirement")
 local classic_settlement = require("game.classic_settlement")
 local feasts = require("events.feasts")
+local classic_feasts = require("events.classic_feasts")
 local tiles = require("tiles.registry")
 local classic_news = require("tiles.tile_1")
 local bank = require("tiles.tile_9")
@@ -34,6 +35,7 @@ local handlers = {
     ["network.game"] = network.request, ["network.admitted"] = network.admitted,
     ["network.poll"] = network.poll, ["network.sent"] = network.sent, ["network.disconnected"] = network.disconnected,
     ["game.action"] = game.action, ["rewards.pool"] = rewards.pool, ["feast.tickets"] = feasts.tickets,
+    ["feast.classic"] = classic_feasts.plan,
     ["tile.land"] = tiles.land, ["tile.news_select"] = tiles.select_news,
     ["tile.classic_kidnap_return"] = classic_news.return_kidnapped,
     ["bank.open"] = bank.open, ["bank.transaction"] = bank.transaction,

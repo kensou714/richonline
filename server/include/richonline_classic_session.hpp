@@ -3,6 +3,7 @@
 #include "richonline_classic_startup.hpp"
 #include "richonline_classic_property.hpp"
 #include "richonline_classic_research.hpp"
+#include "richonline_classic_feasts.hpp"
 #include "richonline_player_cards.hpp"
 #include "richonline_shared_startup.hpp"
 #include "richonline_opening_hand.hpp"
@@ -31,6 +32,7 @@ struct RichonlineClassicTurnContext {
     std::span<const RichonlineActorStatus> statuses;
     // 破产保留槽位及网络成员，只有活动资格清零；业务选择必须排除非活动槽。
     std::span<const std::uint8_t> active;
+    std::uint8_t round_anchor;
 };
 struct RichonlineClassicServices {
     // 传送格由会话独立续接；其余特殊格和复杂地产先由业务接管。
@@ -46,7 +48,8 @@ struct RichonlineClassicServices {
     std::function<void(std::uint8_t)> disconnected;
     // 同步原子扣费，由准入层绑定账号及同一金豆支付协调器；缺席则不开放付费刷新。
     std::function<bool(std::uint8_t,std::uint32_t)> shop_refresh;
-    // 4010已排队后处理轮首日历/开奖。complete明确表示可执行本次7E4C50扫描，
+    // 4010已排队后处理轮首日历/开奖；配置feasts时内置节日及出院/出狱等待已完成，
+    // 此回调只补剩余日历业务，不再重复发节日奖励。complete明确表示可执行本次7E4C50扫描，
     // await_event则由既有event/poll完成日历恢复。不得自己扫描research、发420F、
     // 发第二个4010或执行落点phase6；开启研究所必须提供此检查点，不能把日历等待跳掉。
     std::function<RichonlineLandingResult(const RichonlineClassicTurnContext&)> turn_start;
@@ -117,6 +120,12 @@ struct RichonlineClassicPaymentPolicy {
     std::shared_ptr<const RichonlineCombatModifierResources> equipment;
     std::vector<RichonlineClassicAccountPayment> actors;
 };
+struct RichonlineClassicFeastPolicy {
+    std::shared_ptr<const RichonlineFeastResources> resources;
+    // 普通角色必须由本人0015确认，超时不伪造；受控角色无该回包，按独立服务端排队策略等待。
+    // 等待覆盖本地节日通知及前面角色的退出动画，不宣称是原服计时或客户端动画ACK。
+    std::chrono::milliseconds controlled_exit_delay{30000},exit_timeout{90000};
+};
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
     std::uint8_t first_actor,opaque_turn7;
@@ -158,6 +167,8 @@ struct RichonlineClassicSessionRules {
     std::shared_ptr<const RichonlineClassicConstructionResources> buildings;
     std::function<bool(std::uint8_t,std::int16_t)> secondary_building_licence_absent;
     bool research=false;
+    // 开启13槽节日仍须turn_start处理开奖等剩余日历业务，不能以节日完成冒充完整日历。
+    std::optional<RichonlineClassicFeastPolicy> feasts;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。
