@@ -13,6 +13,7 @@
 #include "richonline_combat_resources.hpp"
 #include "richonline_theft_card.hpp"
 #include "richonline_classic_interest.hpp"
+#include "richonline_fixed_step_card.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -1518,6 +1519,87 @@ struct Session {
         route_cursor=0;movement_sequence=move.wait.sequence;movement=move.wait;
         phase=Phase::moving;
     }
+    std::vector<Bytes> immediate_move_card(View request) {
+        const auto opcode=read_le(request.first(2));
+        const auto owner=world.cards[actor];
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto before_movement=movement_sequence;
+        const auto before_position=board.participants[actor].position;
+        const auto before_heading=board.participants[actor].direction;
+        const auto before_status=statuses[actor];
+        const auto before_raw=raw->actor(actor);
+        std::optional<RichonlineFixedStepCardPlan> card;
+        std::optional<PreparedMove> move;
+        std::vector<Bytes> messages;
+        try {
+            if(phase!=Phase::roll || !active[actor] || owner->actor_slot()!=actor ||
+                owner->game_id()!=board.game_server_id || owner->game_mode()!=0 ||
+                richonline_landing_controlled(before_status) || before_status.stay ||
+                raw->game().scripted_event83830!=-1 || before_raw.hotel1493!=-1 ||
+                before_raw.hospital1494!=-1 || before_raw.jail1495!=-1 || before_raw.kidnapped1497!=-1)
+                throw CodecError("richonline_classic_move_card_unavailable");
+            if(opcode==103) {
+                const auto use=std::get<RichonlineCardDiceRequest103>(parse_richonline_controlled_dice_request(request));
+                if(use.calendar_counter!=calendar) throw CodecError("richonline_classic_move_card_calendar_mismatch");
+                const auto consumed=owner->prepare_consumption(use.inventory_slot,1038);
+                if(!consumed) throw CodecError("richonline_classic_move_card_not_owned");
+                card=RichonlineFixedStepCardPlan{encode_richonline_card_used40b7(
+                    {board.game_server_id,use.inventory_slot,use.inventory_bank}),*consumed,use.selected_die};
+            } else {
+                card=plan_richonline_fixed_step_card(board.game_server_id,
+                    parse_richonline_fixed_step_card(request),calendar,*owner);
+            }
+            if(rules.script) {
+                bool consumed=false,routed=false,invalid_call=false;
+                // 只开放两个准备接口。脚本不能调用旧game.native、数据库或其他状态写接口。
+                const LuaBindings bindings{
+                    {"card.prepare",[&](const LuaValue& args) {
+                        if(consumed || routed || args!=LuaValue{{"card",card->consumption.card_id}} ||
+                            !args.at("card").is_number_integer()) {
+                            invalid_call=true;
+                            throw CodecError("lua_classic_move_card_consumption_invalid");
+                        }
+                        consumed=true;
+                        return LuaValue{{"slot",card->consumption.slot},{"bank",0}};
+                    }},
+                    {"route.prepare_move",[&](const LuaValue& args) {
+                        if(!consumed || routed || args!=LuaValue{{"steps",card->steps}} ||
+                            !args.at("steps").is_number_integer()) {
+                            invalid_call=true;
+                            throw CodecError("lua_classic_move_card_steps_invalid");
+                        }
+                        routed=true;move=prepare_move(card->steps);
+                        return LuaValue::array({lua_bytes(View(move->packet))});
+                    }}
+                };
+                const auto result=rules.script->call("game.action",{{"payload",lua_bytes(request)},
+                    {"opcode",opcode},{"map",startup.map_name},{"actor",actor},
+                    {"calendar",calendar},{"game_id",board.game_server_id}},bindings);
+                if(invalid_call || !consumed || !routed || !move || !result.is_array() || result.size()!=2 ||
+                    !result[0].is_string() || !result[1].is_string() ||
+                    lua_bytes(result[0])!=card->confirmation || lua_bytes(result[1])!=move->packet)
+                    throw CodecError("lua_classic_move_card_response_invalid");
+            } else move=prepare_move(card->steps);
+            // 始终先确认扣卡，再广播同一条4011。准备途中失败不能只扣卡而没有移动。
+            messages={card->confirmation,move->packet};
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_move_card_refused actor="+std::to_string(actor)+
+                " opcode="+std::to_string(opcode)+" reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            movement_sequence!=before_movement || !active[actor] || world.cards[actor]!=owner ||
+            owner->inventory()!=card->consumption.source_inventory || statuses[actor]!=before_status ||
+            raw->actor(actor)!=before_raw || board.participants[actor].position!=before_position ||
+            board.participants[actor].direction!=before_heading)
+            throw CodecError("richonline_classic_move_card_stale");
+        remember(actor,request);
+        owner->commit_consumption(card->consumption);
+        commit_move(std::move(*move));
+        return messages;
+    }
     std::optional<std::size_t> next_bank() const {
         // 最后一格使用0011和落点4013，只有尚未走完的中间格使用0028。
         if(!bank) return {};
@@ -1798,14 +1880,7 @@ struct Session {
             if(opcode==22) return paid_move(request);
             if(opcode==116) return theft_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
-            if(opcode==103) {
-                const auto use=std::get<RichonlineCardDiceRequest103>(parse_richonline_controlled_dice_request(request));
-                const auto prepared=world.cards[actor]->prepare_use(use);
-                if(!prepared) return {encode_richonline_dice_recovery400b(board.game_server_id)};
-                auto move=prepare_move(prepared->die);
-                std::vector<Bytes> messages{prepared->confirmation40b7,std::move(move.packet)};
-                remember(sender,request);world.cards[actor]->commit_use(*prepared);commit_move(std::move(move));return messages;
-            }
+            if(opcode==103 || (opcode>=137 && opcode<=140)) return immediate_move_card(request);
             if(opcode==0x10) {
                 const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
                 if(roll.parameter!=0) throw CodecError("richonline_classic_roll_parameter_unsupported");
