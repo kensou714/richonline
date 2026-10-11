@@ -37,7 +37,30 @@ RichonlineBossLandingState::RichonlineBossLandingState(std::uint16_t game_id,std
 std::array<std::uint32_t,2> RichonlineBossLandingState::points() const {
     return {ledger_->snapshot(0).funds.tickets,ledger_->snapshot(1).funds.tickets};
 }
+RichonlineTicketLandingPlan prepare_richonline_ticket_landing(std::uint16_t game_id,
+    const RichonlineLandingContext& context,const RichonlineGameFundsSnapshot& funds,
+    std::optional<std::uint32_t> reward) {
+    if(context.game_mode!=3 || context.actor_slot>=2 || context.synthetic_actor!=(context.actor_slot==1) ||
+        context.position<0 || context.property_ref!=-1 || context.road_degree==0 || context.road_degree>4 ||
+        (context.occupied_by_other_actor && !context.collision_resolved) ||
+        context.static_type<5 || context.static_type>7)
+        throw CodecError("richonline_ticket_landing_context_invalid");
+    // NEW7C54B0在4013后本地执行6062。这里约束脚本金额，不能通过重复发包修改奖励。
+    const auto expected=context.synthetic_actor || richonline_landing_controlled(context.actor_status) ? 0U :
+        context.static_type==5 ? 80U : context.static_type==6 ? 50U : 30U;
+    if(reward && *reward!=expected) throw CodecError("richonline_ticket_landing_reward_mismatch");
+    if(funds.funds.tickets>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max())-expected)
+        throw CodecError("richonline_boss_points_out_of_range");
+    auto after=funds.funds;after.tickets+=expected;
+    Bytes stop;append_le(stop,0x4013,2);append_le(stop,game_id,2);
+    append_le(stop,static_cast<std::uint16_t>(context.position),2);
+    return {{context.actor_slot,funds,after},{{std::move(stop)},RichonlineLandingProgress::complete}};
+}
 void RichonlineBossLandingState::validate_landing(const RichonlineLandingContext& context) const {
+    if(context.static_type>=5 && context.static_type<=7) {
+        (void)prepare_richonline_ticket_landing(game_id_,context,ledger_->snapshot(context.actor_slot));
+        return;
+    }
     if(resolve_richonline_controlled_static_landing(game_id_,context)) return;
     if (context.synthetic_actor) {
         static_cast<void>(resolve_richonline_empty_boss_landing(game_id_,context));
@@ -45,25 +68,22 @@ void RichonlineBossLandingState::validate_landing(const RichonlineLandingContext
     }
     if (context.game_mode!=3 || context.actor_slot!=0 || context.position<0 || context.property_ref!=-1 ||
         (context.occupied_by_other_actor && !context.collision_resolved) || context.road_degree==0 || context.road_degree>4 ||
-        (context.static_type!=-1 && context.static_type!=5 && context.static_type!=6 && context.static_type!=7))
+        context.static_type!=-1)
         throw CodecError("richonline_boss_landing_unsupported");
-    // NEW7C54B0 applies80/50/30 locally on5/6/7 after4013, without another ACK.
-    const std::uint32_t reward=context.static_type==5 ? 80U : context.static_type==6 ? 50U : context.static_type==7 ? 30U : 0U;
-    const auto funds=ledger_->snapshot(0);
-    if (funds.funds.tickets>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max())-reward)
-        throw CodecError("richonline_boss_points_out_of_range");
 }
 RichonlineLandingResult RichonlineBossLandingState::land(const RichonlineLandingContext& context) {
+    if(context.static_type>=5 && context.static_type<=7) {
+        auto plan=prepare_richonline_ticket_landing(game_id_,context,ledger_->snapshot(context.actor_slot));
+        ledger_->commit(plan.funds.actor,plan.funds.before,plan.funds.after);
+        return std::move(plan.result);
+    }
     validate_landing(context);
     if(auto controlled=resolve_richonline_controlled_static_landing(game_id_,context)) return std::move(*controlled);
     if (context.synthetic_actor) return resolve_richonline_empty_boss_landing(game_id_,context);
-    const std::uint32_t reward=context.static_type==5 ? 80U : context.static_type==6 ? 50U : context.static_type==7 ? 30U : 0U;
-    const auto funds=ledger_->snapshot(0);
     Bytes packet;
     append_le(packet,0x4013,2); append_le(packet,game_id_,2);
     append_le(packet,static_cast<std::uint16_t>(context.position),2);
     RichonlineLandingResult result{{std::move(packet)},RichonlineLandingProgress::complete};
-    ledger_->adjust(0,funds,{0,0,reward,0});
     return result;
 }
 void RichonlineBossLandingState::commit_points(std::uint8_t actor,std::uint32_t expected,std::uint32_t updated) {

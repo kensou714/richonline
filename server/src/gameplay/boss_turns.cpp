@@ -1126,16 +1126,17 @@ struct Turns {
         std::optional<RichonlineLandingResult> scripted_result;
         if(rules.script) {
             std::optional<RichonlineBossCards::PreparedLanding> reward_plan;
+            std::optional<RichonlineTicketLandingPlan> ticket_plan;
             std::optional<std::int16_t> selected_reward;
             bool native_called=false,random_called=false;
             const auto require_reward=[&] {
-                if(native_called || reward_plan || !rules.cards || context.actor_slot!=0 || context.synthetic_actor ||
+                if(native_called || reward_plan || ticket_plan || !rules.cards || context.actor_slot!=0 || context.synthetic_actor ||
                     context.game_mode!=3 || context.property_ref!=-1 || richonline_landing_controlled(context.actor_status) ||
                     !richonline_boss_card_reward_tile(context.static_type))
                     throw CodecError("lua_tile_reward_out_of_scope");
             };
             const LuaBindings api{{"tile.native",[&](const LuaValue&) {
-                if(native_called || reward_plan || random_called) throw CodecError("lua_native_landing_already_called");
+                if(native_called || reward_plan || ticket_plan || random_called) throw CodecError("lua_native_landing_already_called");
                 native_called=true;
                 scripted_result=native_landing();return LuaValue(true);
             }},{"tile.cards.candidates",[&](const LuaValue&) {
@@ -1158,9 +1159,20 @@ struct Turns {
                 reward_plan=rules.cards->prepare_landing(context,card.get<std::int16_t>());
                 if(!reward_plan) throw CodecError("lua_tile_reward_unavailable");
                 return LuaValue(true);
+            }},{"tile.tickets.prepare",[&](const LuaValue& args) {
+                if(native_called || reward_plan || ticket_plan || random_called || !rules.ledger)
+                    throw CodecError("lua_tile_ticket_out_of_scope");
+                const auto& amount=args.at("amount");
+                if(!amount.is_number_integer() || amount<0 || amount>80)
+                    throw CodecError("lua_tile_ticket_amount_invalid");
+                ticket_plan=prepare_richonline_ticket_landing(init.game_server_id,context,
+                    rules.ledger->snapshot(context.actor_slot),amount.get<std::uint32_t>());
+                return LuaValue(true);
             }}};
             const auto response=rules.script->call("tile.land",{{"type",context.static_type},{"position",context.position},
                 {"actor",context.actor_slot},{"map",rules.script_map},{"game_id",init.game_server_id},
+                {"ticket_landing_available",rules.ledger && context.game_mode==3 && context.property_ref==-1},
+                {"synthetic_actor",context.synthetic_actor},{"controlled",richonline_landing_controlled(context.actor_status)},
                 {"card_reward_allowed",rules.cards && context.actor_slot==0 && !context.synthetic_actor &&
                     context.game_mode==3 && context.property_ref==-1 && !richonline_landing_controlled(context.actor_status)}},api);
             if(reward_plan) {
@@ -1172,6 +1184,20 @@ struct Turns {
                 // Lua回包全部解析并核对后才提交；语法、序列或卡号错误不改变库存。
                 rules.cards->commit_landing(*reward_plan);
                 scripted_result=std::move(reward_plan->result);
+            }
+            if(ticket_plan) {
+                if(!response.is_array() || response.size()!=ticket_plan->result.messages.size())
+                    throw CodecError("lua_tile_ticket_response_invalid");
+                std::vector<Bytes> messages;
+                for(const auto& packet:response) messages.push_back(lua_bytes(packet));
+                if(messages!=ticket_plan->result.messages) throw CodecError("lua_tile_ticket_response_mismatch");
+                const auto& funds=ticket_plan->funds;
+                // 整份Lua回包校验后才提交版本化账本；不再调用原生落点重复加点。
+                rules.ledger->commit(funds.actor,funds.before,funds.after);
+                scripted_result=std::move(ticket_plan->result);
+                if(rules.log) rules.log("lua_tile_tickets_committed actor="+std::to_string(funds.actor)+
+                    " type="+std::to_string(context.static_type)+" position="+std::to_string(context.position)+
+                    " before="+std::to_string(funds.before.funds.tickets)+" after="+std::to_string(funds.after.tickets));
             }
             if(!scripted_result) throw CodecError("lua_landing_continuation_required");
         } else scripted_result=native_landing();

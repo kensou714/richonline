@@ -24,6 +24,15 @@ std::optional<RichonlineLandingResult> resolve_richonline_controlled_static_land
 // 合成 BOSS 的商店采用无卡包规则：4031(-1) 结束访问。
 RichonlineLandingResult resolve_richonline_empty_boss_landing(std::uint16_t game_server_id,
     const RichonlineLandingContext& context);
+struct RichonlineTicketLandingPlan {
+    RichonlineGameFundsUpdate funds;
+    RichonlineLandingResult result;
+};
+// 仅准备5/6/7点券格。Lua指定增量；省略时供原生回退使用。
+// 金额必须匹配客户端4013后自算的规则，准备过程不改账本。
+RichonlineTicketLandingPlan prepare_richonline_ticket_landing(std::uint16_t game_id,
+    const RichonlineLandingContext& context,const RichonlineGameFundsSnapshot& funds,
+    std::optional<std::uint32_t> reward={});
 class RichonlineBossLandingState final {
 public:
     RichonlineBossLandingState(std::uint16_t game_id,std::array<std::uint32_t,2> points);
