@@ -1,4 +1,5 @@
 #include "richonline_boss_turns.hpp"
+#include "richonline_boss_recovery.hpp"
 #include "richonline_boss_cards.hpp"
 #include "richonline_property_wire.hpp"
 #include "richonline_construction_wire.hpp"
@@ -786,6 +787,20 @@ struct Turns {
         }
         append_feast_response(messages);
         std::vector<RichonlineGameFundsUpdate> turn_funds;
+        std::optional<RichonlineBossRecoveryPlan> native_recovery;
+        std::uint32_t native_cash_before=0;
+        std::optional<std::array<std::uint32_t,2>> native_healed_cash;
+        if(actor==1 && rules.native_boss_recovery && active[1]) {
+            const auto before=rules.ledger->snapshot(1);
+            native_cash_before=before.funds.cash;
+            native_recovery=plan_richonline_boss_recovery(*rules.native_boss_recovery,
+                rules.native_boss_cash_cap,before.funds.cash,status[1],rules.script.get());
+            if(native_recovery->consume_eligibility) {
+                auto after=before.funds;after.cash+=native_recovery->amount;
+                native_healed_cash=std::array{before.funds.cash,after.cash};
+                turn_funds.push_back({1,before,after});
+            }
+        }
         std::vector<std::uint8_t> aura_bankrupt;
         if(status[actor].possession==4 || status[actor].possession==6) {
             if(!rules.npc_aura || !rules.npc_aura_raw_actor || !rules.ledger || !rules.terminal)
@@ -797,31 +812,13 @@ struct Turns {
             auto aura=plan_richonline_npc_aura(topology,*rules.npc_aura,
                 {game_mode,actor,1,status[actor].possession,
                     RichonlineNpcAuraEffect{status[actor].possession_strength1740,status[actor].possession_multiplier1744}},targets);
-            turn_funds=std::move(aura.updates);
+            // 7C0C50先排原生恢复，再排7CEA20光环。光环明确排除BOSS，故这些
+            // 快照与前一笔恢复互不冲突；玩家被光环击败也不能抹掉已排队的BOSS恢复。
+            turn_funds.insert(turn_funds.end(),std::make_move_iterator(aura.updates.begin()),
+                std::make_move_iterator(aura.updates.end()));
             aura_bankrupt=std::move(aura.bankrupt_actors);
         }
         std::optional<std::array<std::uint32_t,2>> healed_cash;
-        std::optional<std::array<std::uint32_t,2>> native_healed_cash;
-        if(actor==1 && rules.native_boss_recovery && status[1].boss_restore_eligible &&
-            active[1] && aura_bankrupt.empty()) {
-            const auto before=rules.ledger->snapshot(1);
-            if(before.funds.cash<rules.native_boss_cash_cap) {
-                auto amount=rules.native_boss_recovery->amount;
-                if(status[1].native_boss_frenzy) {
-                    const auto scaled=static_cast<double>(static_cast<float>(amount))*
-                        static_cast<double>((*status[1].native_boss_frenzy)[2])+0.5;
-                    if(!std::isfinite(scaled) || scaled>static_cast<double>(std::numeric_limits<std::int32_t>::max()))
-                        throw CodecError("richonline_native_boss_restore_overflow");
-                    amount=static_cast<std::uint32_t>(scaled);
-                }
-                amount=std::min(amount,rules.native_boss_cash_cap-before.funds.cash);
-                if(amount) {
-                    auto after=before.funds;after.cash+=amount;
-                    native_healed_cash=std::array{before.funds.cash,after.cash};
-                    turn_funds.push_back({1,before,after});
-                }
-            }
-        }
         if(equipment_heal && aura_bankrupt.empty()) {
             auto before=rules.ledger->snapshot(actor);
             for(const auto& update:turn_funds) if(update.actor==actor) {
@@ -838,9 +835,15 @@ struct Turns {
             after.cash+=equipment_heal;
             turn_funds.push_back({actor,before,after});
         }
-        // 光环和回血各算一笔收入，按队列顺序校验后原子提交，不能用净额抵消回血收入。
+        // 原生恢复、光环和装备恢复逐笔校验后原子提交，不能用净额抵消回血收入。
         if(!turn_funds.empty() && !rules.ledger->commit_sequence(turn_funds,[]{return true;}))
             throw CodecError("richonline_boss_turn_funds_rejected");
+        if(native_recovery && rules.log) rules.log("richonline_native_boss_restore_check game="+
+            std::to_string(init.game_server_id)+" turn="+std::to_string(turn_sequence)+
+            " day="+std::to_string(complete_rounds+1)+" eligible="+
+            std::to_string(status[1].boss_restore_eligible)+" cap="+std::to_string(rules.native_boss_cash_cap)+
+            " before="+std::to_string(native_cash_before)+" amount="+std::to_string(native_recovery->amount)+
+            " frenzy="+std::to_string(status[1].native_boss_frenzy.has_value()));
         if(native_healed_cash) {
             status[1].boss_restore_eligible=false;
             if(rules.log) rules.log("richonline_native_boss_restore before="+
