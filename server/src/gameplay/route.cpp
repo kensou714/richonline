@@ -33,6 +33,12 @@ std::optional<std::int16_t> RichonlineRoadTopology::portal_destination(std::int1
     throw CodecError("richonline_route_portal_pair_invalid");
 }
 
+std::optional<std::array<std::int16_t,2>> RichonlineRoadTopology::landing_portal_pair(std::int8_t type) const {
+    if(type==28) return landing_portals_;
+    if(type==61) return portals_;
+    throw CodecError("richonline_route_portal_type_invalid");
+}
+
 RichonlineRoadTopology richonline_road_topology(const OriginalEmp& emp) {
     const auto area = static_cast<std::uint64_t>(emp.width)*emp.height;
     if (emp.width == 0 || emp.height == 0 || area > 32768)
@@ -93,22 +99,25 @@ RichonlineRoadTopology richonline_road_topology(const OriginalEmp& emp) {
         }
         if(available && jail[0]!=jail[1]) result.jail_=jail;
     }
-    const auto portals=std::count_if(result.cells_.begin(),result.cells_.end(),
-        [](const auto& entry){return entry.walkable && entry.static_type==61;});
-    if(portals!=0) {
+    for(const auto type:std::array<std::int8_t,2>{28,61}) {
+        const auto portals=std::count_if(result.cells_.begin(),result.cells_.end(),
+            [type](const auto& entry){return entry.walkable && entry.static_type==type;});
+        if(portals==0) continue;
         if(portals!=2) throw CodecError("richonline_route_portal_pair_invalid");
-        require_array(payload,emp.tail_offset,24,4);
+        const auto offset=type==28 ? 64U : 80U;
+        require_array(payload,emp.tail_offset,offset+16U,1);
         std::array<std::int16_t,2> pair{};
         for(std::size_t i=0;i<pair.size();++i) {
-            const auto px=read_le(payload.subspan(emp.tail_offset+80+8*i,4));
-            const auto py=read_le(payload.subspan(emp.tail_offset+84+8*i,4));
+            const auto px=read_le(payload.subspan(emp.tail_offset+offset+8*i,4));
+            const auto py=read_le(payload.subspan(emp.tail_offset+offset+4+8*i,4));
             if(px>=emp.width || py>=emp.height) throw CodecError("richonline_route_portal_position_invalid");
             pair[i]=static_cast<std::int16_t>(py*emp.width+px);
             const auto& endpoint=result.cell(pair[i]);
-            if(!endpoint.walkable || endpoint.static_type!=61) throw CodecError("richonline_route_portal_pair_invalid");
+            if(!endpoint.walkable || endpoint.static_type!=type) throw CodecError("richonline_route_portal_pair_invalid");
         }
         if(pair[0]==pair[1]) throw CodecError("richonline_route_portal_pair_invalid");
-        result.portals_=pair;
+        if(type==28) result.landing_portals_=pair;
+        else result.portals_=pair;
     }
     return result;
 }

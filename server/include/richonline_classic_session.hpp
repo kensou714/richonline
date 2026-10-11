@@ -28,7 +28,8 @@ struct RichonlineClassicTurnContext {
     std::span<const std::uint8_t> active;
 };
 struct RichonlineClassicServices {
-    // 特殊格和复杂地产先由业务接管。空值才进入普通路/卡片格/地产选择。
+    // 传送格由会话独立续接；其余特殊格和复杂地产先由业务接管。
+    // 空值才进入普通路/卡片格/地产选择，且表示业务没有提交副作用。
     // 同格phase6统一由会话在complete之后执行，业务不得提前提交或重复提交同格转移。
     std::function<std::optional<RichonlineLandingResult>(const RichonlineClassicTurnContext&)> landing;
     // 购地、升级、取消、余额不足后均进入这里；不能把4020/4021等同于回合结束。

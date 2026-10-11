@@ -7,6 +7,7 @@
 #include "richonline_rent_transfer.hpp"
 #include "richonline_game_end.hpp"
 #include "richonline_classic_terminal.hpp"
+#include "richonline_portal_landing.hpp"
 #include "lua_server.hpp"
 
 #include <algorithm>
@@ -534,11 +535,54 @@ struct Session {
         if(bankrupt) {collision_pending=false;return advance(std::move(messages));}
         return property_effects(std::move(messages));
     }
+    std::optional<RichonlinePortalLandingPlan> portal_plan(const RichonlineLandingContext& landing) const {
+        const auto scripted=raw->game().scripted_event83830;
+        if(!scripted) throw CodecError("richonline_classic_portal_game_unknown");
+        if(landing.static_type==58)
+            return plan_richonline_random_teleport_landing(board.game_server_id,startup.topology,landing,*scripted!=-1);
+        if(landing.static_type==28 || landing.static_type==61)
+            return plan_richonline_portal_landing(board.game_server_id,startup.topology,
+                startup.topology.landing_portal_pair(landing.static_type),landing,*scripted!=-1);
+        return {};
+    }
+    std::optional<std::vector<Bytes>> portal_landing(const RichonlineLandingContext& landing) {
+        const auto plan=portal_plan(landing);
+        if(!plan) return {};
+        const bool skip=plan->continuation==RichonlinePortalContinuation::property_phase2;
+        // 受控/脚本跳过传送时，有地产仍进入原phase2；本会话尚未开放这些状态写入口。
+        if(skip && landing.property_ref>=0) return {};
+        std::optional<std::size_t> chosen;
+        if(plan->continuation==RichonlinePortalContinuation::random_teleport) {
+            if(plan->random_destinations.empty()) throw CodecError("richonline_classic_portal_candidates_missing");
+            chosen=rules.random(plan->random_destinations.size());
+        }
+        auto prepared=prepare_richonline_portal_messages(board.game_server_id,startup.map_name,*plan,chosen,rules.script);
+        const auto current=portal_plan(context().landing);
+        if(!current || statuses[actor]!=plan->expected.actor_status ||
+            board.participants[actor].position!=plan->expected.position ||
+            current->continuation!=plan->continuation || current->authoritative_position!=plan->authoritative_position ||
+            current->confirmation!=plan->confirmation || current->random_destinations!=plan->random_destinations)
+            throw CodecError("richonline_classic_portal_plan_stale");
+        if(skip) return complete(std::move(prepared.messages));
+        const auto destination=prepared.destination;
+        if(!startup.topology.cell(destination).walkable || destination==landing.position ||
+            (landing.static_type==61 && startup.topology.portal_destination(landing.position)!=destination))
+            throw CodecError("richonline_classic_portal_destination_invalid");
+        // 7C54B0/67C080只重定位并等待服务器，没有出口phase2、phase6或岔路应答。
+        // 地面物和宠物还未装配到经典会话；以后接入时需单独处理出口地雷与宠物位置。
+        board.participants[actor].position=destination;
+        collision_pending=false;
+        if(rules.log) rules.log("richonline_classic_portal actor="+std::to_string(actor)+
+            " source="+std::to_string(landing.position)+" destination="+std::to_string(destination)+
+            " sequence="+std::to_string(sequence)+(chosen ? " policy=native-uniform-walkable-road-v1" : " policy=emp-pair"));
+        return advance(std::move(prepared.messages));
+    }
     std::vector<Bytes> land() {
         if(collision_pending) throw CodecError("richonline_classic_phase6_already_pending");
         static_cast<void>(collision_actors());
         collision_pending=true;
         const auto current=context();
+        if(auto messages=portal_landing(current.landing)) return std::move(*messages);
         // 先完成静态/地产业务，同格效果由complete统一在phase6执行，不能提前抢卡。
         if(auto result=services.landing(current)) return accept_result(std::move(*result));
         if(current.landing.static_type==9) {
@@ -588,9 +632,7 @@ struct Session {
         const auto& person=board.participants[actor];
         auto proposed=build_richonline_route(startup.topology,
             {person.position,person.direction,budget,{},true,static_cast<bool>(bank)},rules.random);
-        // 末端传送会改变落点，仍等待专用阶段；途中的银行按原路线检查点逐段汇合。
-        if(startup.topology.cell(proposed.landings.back()).static_type==61)
-            throw CodecError("richonline_classic_portal_landing_unimplemented");
+        // 最后一步仍停在入口，等0011全员汇合才传送；途中61由不可变路线处理。
         std::vector<RichonlineMoveDirection> directions;
         for(const auto direction:proposed.directions) directions.push_back(static_cast<RichonlineMoveDirection>(direction));
         auto packet=encode_richonline_route4011({board.game_server_id,person.position,count,faces,

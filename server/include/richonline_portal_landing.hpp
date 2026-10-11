@@ -25,4 +25,13 @@ std::optional<RichonlinePortalLandingPlan> plan_richonline_portal_landing(
 std::optional<RichonlinePortalLandingPlan> plan_richonline_random_teleport_landing(
     std::uint16_t game,const RichonlineRoadTopology&,
     const RichonlineLandingContext&,bool scripted_event_active);
+struct RichonlinePortalMessages {
+    std::int16_t destination;
+    std::vector<Bytes> messages;
+};
+// 只校验Lua意图并构包，不消费随机源、不提交位置。random_index由宿主抽一次。
+// 宿主在返回后仍须复核权威计划，并按传送或跳过传送选择不同的后继阶段。
+RichonlinePortalMessages prepare_richonline_portal_messages(std::uint16_t game,std::string_view map,
+    const RichonlinePortalLandingPlan&,std::optional<std::size_t> random_index,
+    const std::shared_ptr<LuaServer>& script);
 }

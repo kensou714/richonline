@@ -1091,41 +1091,10 @@ struct Turns {
     std::vector<Bytes> portal_messages(const PendingLanding& landing,const RichonlinePortalLandingPlan& plan,
         std::int16_t destination,std::optional<std::size_t> random_index,std::vector<Bytes> messages) {
         if(rules.script) {
-            bool prepared=false,random_read=false,native_called=false;
-            const auto kind=plan.continuation==RichonlinePortalContinuation::random_teleport ? "random" :
-                plan.continuation==RichonlinePortalContinuation::awaiting_server_continuation ? "paired" : "skip";
-            const LuaBindings api{{"tile.native",[&](const LuaValue&) {
-                // 旧模块只选择兼容路径；这里不更新位置，脚本返回后才执行原续接。
-                if(prepared || native_called) throw CodecError("lua_portal_native_already_called");
-                native_called=true;return LuaValue(true);
-            }},{"tile.portal.prepare",[&](const LuaValue&) {
-                if(prepared || native_called) throw CodecError("lua_portal_already_prepared");
-                prepared=true;
-                return LuaValue{{"kind",kind},{"destination",plan.authoritative_position},
-                    {"destinations",plan.random_destinations}};
-            }},{"tile.portal.random",[&](const LuaValue& args) {
-                if(!prepared || random_read || !random_index ||
-                    args!=LuaValue{{"bound",plan.random_destinations.size()}})
-                    throw CodecError("lua_portal_random_invalid");
-                random_read=true;return LuaValue(*random_index);
-            }}};
-            const auto response=rules.script->call("tile.land",{{"type",plan.expected.static_type},
-                {"position",landing.position},{"actor",actor},{"map",rules.script_map},
-                {"game_id",init.game_server_id},{"portal_landing_available",true}},api);
-            if(native_called) {
-                if(response!=true) throw CodecError("lua_portal_native_response_invalid");
-            } else {
-                if(!prepared || random_read!=random_index.has_value() || !response.is_object() || response.size()!=2 ||
-                    !response.contains("destination") || !response.contains("messages") ||
-                    !response.at("destination").is_number_integer() || response.at("destination")!=destination)
-                    throw CodecError("lua_portal_response_invalid");
-                const auto& packets=response.at("messages");
-                if(!packets.is_array() || packets.size()!=messages.size()) throw CodecError("lua_portal_packets_invalid");
-                std::vector<Bytes> scripted;
-                for(const auto& packet:packets) scripted.push_back(lua_bytes(packet));
-                if(scripted!=messages) throw CodecError("lua_portal_packets_mismatch");
-                messages=std::move(scripted);
-            }
+            auto prepared=prepare_richonline_portal_messages(init.game_server_id,rules.script_map,plan,random_index,rules.script);
+            if(prepared.destination!=destination || prepared.messages!=messages)
+                throw CodecError("lua_portal_packets_mismatch");
+            messages=std::move(prepared.messages);
             // 再读取脚本事件授权；此前仅准备/抽样，位置、宠物和出口地雷均未修改。
             const auto current=rules.portal_landing(plan.expected);
             if(status[actor]!=plan.expected.actor_status || !current ||
