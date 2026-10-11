@@ -57,6 +57,12 @@ public:
         const RichonlineBossCards::PreparedConsumption&,std::uint8_t envelope_opaque7) const;
     PreparedHumanAttack prepare_detonation_card(std::span<const RichonlineCombatActorRef>,
         const RichonlineBossCards::PreparedConsumption&) const;
+    PreparedHumanAttack prepare_poison_card(std::span<const RichonlineCombatActorRef>,
+        const RichonlineResearchCardRequest&,const RichonlineResearchCardContext&,std::uint32_t use_count,
+        const RichonlinePoisonRules&,std::span<const RichonlinePoisonCell>,std::span<const RichonlineRawActorState>,
+        std::span<const std::array<std::uint8_t,8>> relations) const;
+    RichonlineCombatBridgeResult commit_poison_card(std::span<const RichonlineCombatActorRef>,
+        PreparedHumanAttack&,std::uint32_t& use_count,std::span<std::array<std::uint8_t,8>> relations);
     RichonlineCombatBridgeResult commit_human_attack(std::span<const RichonlineCombatActorRef>,
         PreparedHumanAttack&,const std::function<void(const std::string&)>& log={});
     RichonlineCombatBridgeResult finish_round(std::span<const RichonlineCombatActorRef>,std::uint64_t day);

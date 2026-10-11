@@ -1490,6 +1490,7 @@ struct Turns {
             RichonlineChanceInventory consumed_inventory;
         };
         std::optional<ScriptAttack> script_attack;
+        std::optional<std::array<RichonlineRawActorState,8>> script_poison_raw;
         bool script_inventory_cleared=false;
         bool script_route_previewed=false;
         struct ScriptPosition {std::uint8_t slot;std::int16_t before,after;};
@@ -1563,6 +1564,41 @@ struct Turns {
                 auto prepared=rules.combat->prepare_human_attack(refs,request,active_counter,*script_consumption);
                 script_attack=ScriptAttack{std::move(prepared),actor,active_counter,turn_sequence,
                     script_consumption->remaining_inventory};
+                return LuaValue{};
+            }},
+            {"research.poison_rules",[&](const LuaValue&) {
+                if(!rules.poison || !rules.combat || !rules.poison_raw_actor)
+                    throw CodecError("richonline_boss_poison_authority_required");
+                return LuaValue{{"range",rules.poison->range}};
+            }},
+            {"combat.prepare_poison",[&](const LuaValue& args) {
+                require_local_controls();
+                if(called || database_called || !script_consumption || script_consumption->card_id!=1182 ||
+                    script_attack || !rules.poison || !rules.combat || !rules.poison_raw_actor ||
+                    phase!=Phase::roll || actor!=init.local_slot || plain.size()!=8 || read_le(plain.first(2))!=156)
+                    throw CodecError("lua_poison_prepare_out_of_scope");
+                const auto request=decode_richonline_research_card(plain);
+                const auto expected=richonline_poison_map_footprint(topology,init.participants[actor].position,rules.poison->range);
+                const auto& footprint=args.at("footprint");
+                if(!footprint.is_array() || footprint.size()!=expected.size())
+                    throw CodecError("lua_poison_footprint_invalid");
+                for(std::size_t i=0;i<expected.size();++i) {
+                    const auto& cell=footprint.at(i);
+                    if(!cell.at("position").is_number_integer() || !cell.at("layer").is_number_integer() ||
+                        cell.at("position")!=expected[i].position || cell.at("layer")!=expected[i].attenuation_layer)
+                        throw CodecError("lua_poison_footprint_mismatch");
+                }
+                const RichonlineResearchCardContext context{init.game_server_id,active_counter,
+                    static_cast<std::int8_t>(actor),static_cast<std::int8_t>(init.local_slot),true,
+                    active[actor] && !richonline_landing_controlled(status[actor])};
+                std::array<RichonlineRawActorState,8> raw{};
+                for(std::uint8_t slot=0;slot<active.size();++slot) raw[slot]=rules.poison_raw_actor(slot);
+                auto refs=combat_refs();
+                auto prepared=rules.combat->prepare_poison_card(refs,request,context,poison_use_count,
+                    *rules.poison,expected,raw,relations1472);
+                script_attack=ScriptAttack{std::move(prepared),actor,active_counter,turn_sequence,
+                    script_consumption->remaining_inventory};
+                script_poison_raw=std::move(raw);
                 return LuaValue{};
             }},
             {"combat.prepare_detonation",[&](const LuaValue&) {
@@ -2295,12 +2331,18 @@ struct Turns {
                 turn_sequence!=script_attack->turn)
                 throw CodecError("lua_attack_turn_changed");
             auto refs=combat_refs();
-            auto attack=rules.combat->commit_human_attack(refs,script_attack->prepared,rules.log);
+            if(script_poison_raw) for(std::uint8_t slot=0;slot<active.size();++slot)
+                if(rules.poison_raw_actor(slot)!=(*script_poison_raw)[slot])
+                    throw CodecError("lua_poison_raw_state_changed");
+            auto attack=script_poison_raw ?
+                rules.combat->commit_poison_card(refs,script_attack->prepared,poison_use_count,relations1472) :
+                rules.combat->commit_human_attack(refs,script_attack->prepared,rules.log);
             if(rules.log) rules.log("lua_card_committed card="+std::to_string(script_consumption->card_id)+
                 " slot="+std::to_string(script_consumption->slot)+" combat=1");
             // 核心已一起提交扣卡、保护卡、资金和地产；不能再走通用库存提交覆盖战斗结果。
             if(!attack.bankrupt_actors.empty())
-                return terminal(std::move(attack.packets),std::move(attack.bankrupt_actors),RichonlineTerminalReason::human_attack);
+                return terminal(std::move(attack.packets),std::move(attack.bankrupt_actors),
+                    script_poison_raw ? RichonlineTerminalReason::poison_card : RichonlineTerminalReason::human_attack);
             return std::move(attack.packets);
         }
         if(script_hibernate) {

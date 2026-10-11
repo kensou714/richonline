@@ -155,6 +155,11 @@ struct RichonlineCombatBridge::PreparedHumanAttack::Data {
     Snapshot before;
     RichonlineCombatTurnPlan plan;
     bool consumed=false;
+    struct Poison {
+        std::uint32_t before_count,after_count;
+        std::array<std::array<std::uint8_t,8>,2> before_relations,after_relations;
+    };
+    std::optional<Poison> poison{};
 };
 RichonlineCombatBridge::PreparedHumanAttack::PreparedHumanAttack(std::shared_ptr<Data> data)
     :data_(std::move(data)) {}
@@ -173,7 +178,7 @@ RichonlineCombatBridge::PreparedHumanAttack RichonlineCombatBridge::prepare_huma
 RichonlineCombatBridgeResult RichonlineCombatBridge::commit_human_attack(
     std::span<const RichonlineCombatActorRef> refs,PreparedHumanAttack& prepared,
     const std::function<void(const std::string&)>& log) {
-    if(!prepared.data_ || prepared.data_->owner!=this || prepared.data_->consumed)
+    if(!prepared.data_ || prepared.data_->owner!=this || prepared.data_->consumed || prepared.data_->poison)
         throw CodecError("richonline_attack_plan_owner_or_consumed");
     // 即使提交被快照校验拒绝，也不能复用已经移动过内容的计划再次扣卡。
     auto& data=*prepared.data_;data.consumed=true;
@@ -278,6 +283,39 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::fire_landing(std::span<cons
     auto plan=prepare_richonline_combat_fire_landing(before.combat,world_,owner,victim,position,base);
     if(plan.bankrupt_actors.empty()) preflight();
     return apply(refs,before,std::move(plan));
+}
+RichonlineCombatBridge::PreparedHumanAttack RichonlineCombatBridge::prepare_poison_card(
+    std::span<const RichonlineCombatActorRef> refs,const RichonlineResearchCardRequest& request,
+    const RichonlineResearchCardContext& context,std::uint32_t count,const RichonlinePoisonRules& rules,
+    std::span<const RichonlinePoisonCell> footprint,std::span<const RichonlineRawActorState> raw,
+    std::span<const std::array<std::uint8_t,8>> relations) const {
+    if(context.actor!=0 || relations.size()!=2) throw CodecError("richonline_poison_bridge_actor_invalid");
+    auto before=snapshot(refs);
+    const std::array expected_relations{relations[0],relations[1]};
+    auto planned=prepare_richonline_combat_poison(before.combat,world_,request,context,count,rules,footprint,raw);
+    auto after_relations=expected_relations;
+    for(const auto victim:planned.hit_actors) {
+        if(victim>=after_relations.size()) throw CodecError("richonline_poison_bridge_victim_invalid");
+        if(static_cast<std::int8_t>(after_relations[0][victim])>0)
+            after_relations[0][victim]=after_relations[victim][0]=0;
+    }
+    return PreparedHumanAttack{std::make_shared<PreparedHumanAttack::Data>(PreparedHumanAttack::Data{
+        this,std::move(before),std::move(planned.combat),false,
+        PreparedHumanAttack::Data::Poison{count,planned.after_use_count,expected_relations,after_relations}})};
+}
+RichonlineCombatBridgeResult RichonlineCombatBridge::commit_poison_card(
+    std::span<const RichonlineCombatActorRef> refs,PreparedHumanAttack& prepared,
+    std::uint32_t& count,std::span<std::array<std::uint8_t,8>> relations) {
+    if(!prepared.data_ || prepared.data_->owner!=this || prepared.data_->consumed || !prepared.data_->poison)
+        throw CodecError("richonline_poison_plan_owner_or_consumed");
+    auto& data=*prepared.data_;const auto& poison=*data.poison;
+    if(relations.size()!=2 || count!=poison.before_count || relations[0]!=poison.before_relations[0] ||
+        relations[1]!=poison.before_relations[1]) throw CodecError("richonline_poison_bridge_stale");
+    data.consumed=true;
+    // 毒气不产生地产日志；提交资金/库存后不再调用可失败回调，直接写入次数和关系。
+    auto result=apply(refs,data.before,std::move(data.plan));
+    count=poison.after_count;relations[0]=poison.after_relations[0];relations[1]=poison.after_relations[1];
+    return result;
 }
 RichonlineCombatBridgeResult RichonlineCombatBridge::poison_card(std::span<const RichonlineCombatActorRef> refs,
     const RichonlineResearchCardRequest& request,const RichonlineResearchCardContext& context,std::uint32_t& count,
