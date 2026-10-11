@@ -87,6 +87,20 @@ void RichonlineClassicProperty::validate_entry(const RichonlineClassicPropertyEn
     if(!cell.walkable || cell.property_ref!=entry.property || !properties_.contains(entry.property))
         throw CodecError("richonline_classic_property_landing_mismatch");
 }
+RichonlineClassicProperty::Retirement RichonlineClassicProperty::prepare_retirement(std::uint8_t actor) const {
+    if(actor>=ledger_->actor_count() || pending_)
+        throw CodecError("richonline_classic_property_retirement_invalid");
+    Retirement result;result.owner_=this;result.actor_=actor;result.before_=properties_;
+    return result;
+}
+bool RichonlineClassicProperty::commit_retirement(const Retirement& plan) noexcept {
+    if(plan.owner_!=this || pending_ || properties_!=plan.before_) return false;
+    for(auto& [id,property]:properties_) {
+        static_cast<void>(id);
+        if(property.owner==plan.actor_) property.owner.reset();
+    }
+    return true;
+}
 std::uint16_t RichonlineClassicProperty::begin(RichonlineClassicPropertyChoice choice,
     const RichonlineClassicPropertyEntry& entry) {
     if(pending_) throw CodecError("richonline_classic_property_already_pending");

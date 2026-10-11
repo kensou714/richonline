@@ -22,6 +22,8 @@ struct RichonlineClassicTurnContext {
     // 完整位置和各人的状态来自同一局，不能用当前连接的local_slot替代行动槽。
     std::span<const RichonlineBoardParticipant> participants;
     std::span<const RichonlineActorStatus> statuses;
+    // 破产保留槽位及网络成员，只有活动资格清零；业务选择必须排除非活动槽。
+    std::span<const std::uint8_t> active;
 };
 struct RichonlineClassicServices {
     // 特殊格和复杂地产先由业务接管。空值才进入普通路/卡片格/地产选择。

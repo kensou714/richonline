@@ -5,6 +5,7 @@
 #include "richonline_collision.hpp"
 #include "richonline_raw_authority.hpp"
 #include "richonline_rent_transfer.hpp"
+#include "richonline_game_end.hpp"
 #include "lua_server.hpp"
 
 #include <algorithm>
@@ -34,6 +35,7 @@ struct Session {
     RichonlineClassicServices services;
     RichonlineBoardInit board;
     std::vector<RichonlineActorStatus> statuses;
+    std::vector<std::uint8_t> active;
     std::vector<std::uint8_t> dice;
     RichonlinePlayerOpeningHands opening_hands;
     RichonlineJunction junction;
@@ -45,7 +47,7 @@ struct Session {
     std::optional<std::size_t> bank_checkpoint;
     std::size_t route_cursor=0;
     Phase phase=Phase::loading;
-    std::uint8_t actor;
+    std::uint8_t actor,round_anchor;
     std::uint16_t calendar;
     std::uint64_t sequence=0,completed_rounds=0,movement_sequence=0;
     std::optional<std::uint16_t> pending_opcode;
@@ -58,8 +60,8 @@ struct Session {
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
-         statuses(board.participants.size()),dice(rules.maximum_dice),
-         junction(board.game_server_id),actor(rules.first_actor),
+         statuses(board.participants.size()),active(board.participants.size(),1),dice(rules.maximum_dice),
+         junction(board.game_server_id),actor(rules.first_actor),round_anchor(rules.first_actor),
          calendar(static_cast<std::uint16_t>(source.recipients.front().snapshot.calendar_counter)),
          disconnected(board.participants.size(),false) {
         const auto count=board.participants.size();
@@ -128,10 +130,10 @@ struct Session {
         for(const auto& neighbor:cell.neighbors) if(neighbor) ++degree;
         bool occupied=false;
         for(std::size_t other=0;other<board.participants.size();++other)
-            if(other!=actor && board.participants[other].position==tile) occupied=true;
+            if(other!=actor && active[other] && board.participants[other].position==tile) occupied=true;
         return {board.game_server_id,calendar,sequence,completed_rounds,
             {actor,tile,cell.static_type,cell.property_ref,0,false,degree,occupied,statuses[actor],false,collision_pending},
-            board.participants,statuses};
+            board.participants,statuses,active};
     }
     std::vector<RichonlineCollisionActor> collision_actors() const {
         const auto scripted=raw->game().scripted_event83830;
@@ -145,7 +147,7 @@ struct Session {
                 throw CodecError("richonline_classic_collision_actor_unknown");
             // 碰撞核心的nullopt约定为无附身；在适配层先证明原始值确为-1，
             // 不能把回合状态中的未知optional直接当作无附身。
-            actors.push_back({slot,board.participants[slot].position,true,false,*state.kidnapped1497!=-1,
+            actors.push_back({slot,board.participants[slot].position,active[slot]!=0,false,*state.kidnapped1497!=-1,
                 *possession==-1 ? std::nullopt : possession,world.cards[slot]->inventory()});
         }
         return actors;
@@ -181,11 +183,12 @@ struct Session {
         if(phase==Phase::closed) throw CodecError("richonline_classic_session_closed");
     }
     std::vector<Bytes> begin_turn() {
+        if(!active[actor] || !active[round_anchor]) throw CodecError("richonline_classic_turn_inactive");
         if(sequence==std::numeric_limits<std::uint64_t>::max())
             throw CodecError("richonline_classic_turn_sequence_overflow");
         // 每条非重播4010加一次日历WORD；轮数只在完整绕回显式起始槽后加一。
         auto packet=encode_richonline_turn4010({board.game_server_id,static_cast<std::int8_t>(actor),
-            static_cast<std::int8_t>(rules.first_actor),0},rules.opaque_turn7);
+            static_cast<std::int8_t>(round_anchor),0},rules.opaque_turn7);
         ++sequence;calendar=static_cast<std::uint16_t>(calendar+1U);
         static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
@@ -203,14 +206,20 @@ struct Session {
         return messages;
     }
     std::vector<Bytes> advance(std::vector<Bytes> messages) {
-        const auto next=static_cast<std::uint8_t>((actor+1U)%board.participants.size());
+        auto next=actor;
+        for(std::size_t step=0;step<active.size();++step) {
+            next=static_cast<std::uint8_t>((next+1U)%active.size());
+            if(active[next]) break;
+        }
+        if(!active[next] || std::ranges::count(active,std::uint8_t{1})<2)
+            throw CodecError("richonline_classic_last_survivor_settlement_unimplemented");
         // 月数在客户端转为BYTE天数；结算业务尚未装配时明确停在边界，不无限续局。
         const auto limit=static_cast<std::uint8_t>(startup.game_months*30U);
-        if(next==rules.first_actor && limit && completed_rounds+2>limit)
+        if(next==round_anchor && limit && completed_rounds+2>limit)
             throw CodecError("richonline_classic_month_settlement_unimplemented");
         richonline_status_finish_previous_turn(statuses[actor]);
         actor=next;
-        if(actor==rules.first_actor) ++completed_rounds;
+        if(actor==round_anchor) ++completed_rounds;
         append(messages,begin_turn());return messages;
     }
     std::vector<Bytes> complete(std::vector<Bytes> messages) {
@@ -278,7 +287,7 @@ struct Session {
                 throw CodecError("richonline_classic_rent_transfer_target_unknown");
             // 7174B0与7BC100都只排除原付款者及四种原始状态；不额外排除地主、
             // 冻结或梦游，不重用普通租金的“地主暂停收租”资格判断。
-            eligible[slot]=slot!=actor && !disconnected[slot] && *state.hotel1493==-1 &&
+            eligible[slot]=slot!=actor && active[slot] && !disconnected[slot] && *state.hotel1493==-1 &&
                 *state.hospital1494==-1 && *state.jail1495==-1 && *state.kidnapped1497==-1;
         }
         return eligible;
@@ -319,13 +328,19 @@ struct Session {
             if(world.ledger->snapshot(slot)!=pending.state.funds[slot])
                 throw CodecError("richonline_classic_rent_transfer_funds_stale");
         auto plan=plan_richonline_rent_transfer(pending.state,choice,timed_out,rules.script);
-        if(plan.bankrupt) throw CodecError("richonline_classic_rent_bankruptcy_unimplemented");
         auto messages=std::vector<Bytes>{std::move(plan.response)};
+        std::optional<RichonlineClassicProperty::Retirement> retirement;
+        if(plan.bankrupt) {
+            retirement=prepare_bankruptcy(plan.payer);
+            messages.push_back(richonline_eliminate_actor(board.game_server_id,static_cast<std::int8_t>(plan.payer)));
+        }
         retired_rent_transfers.emplace_back(actor,calendar);
         if(retired_rent_transfers.size()>64) retired_rent_transfers.pop_front();
         if(!world.ledger->commit_sequence(plan.funds,[&]() {
             if(world.cards[actor]->inventory()!=pending.state.inventory ||
                 world.property->snapshot(pending.property.id)!=pending.property) return false;
+            if(retirement && !world.property->commit_retirement(*retirement)) return false;
+            if(retirement) retire_actor(plan.payer);
             world.cards[actor]->commit_inventory(plan.inventory);return true;
         })) throw CodecError("richonline_classic_rent_transfer_commit_stale");
         rent_transfer.reset();pending_opcode.reset();
@@ -334,7 +349,46 @@ struct Session {
             " target="+std::to_string(plan.target)+" timed_out="+std::to_string(timed_out)+
             " sequence="+std::to_string(sequence));
         // 40C6(type0)排6080(2,5)，只进入附加效果，不再调用租金入口或补第二条4013。
+        if(!active[actor]) {collision_pending=false;return advance(std::move(messages));}
         return property_effects(std::move(messages));
+    }
+    RichonlineClassicProperty::Retirement prepare_bankruptcy(std::uint8_t bankrupt) const {
+        if(bankrupt>=active.size() || !active[bankrupt])
+            throw CodecError("richonline_classic_bankruptcy_actor_invalid");
+        // 胜者奖励、全员战绩和大厅投递尚未装配，最后一人边界在扣款前拒绝。
+        // 不借用单人BOSS奖励，也不发送一条胜利包假装已经完成持久结算。
+        if(std::ranges::count(active,std::uint8_t{1})<=2)
+            throw CodecError("richonline_classic_last_survivor_settlement_unimplemented");
+        auto after=active;after[bankrupt]=0;
+        auto anchor=round_anchor;
+        if(anchor==bankrupt) {
+            do {anchor=static_cast<std::uint8_t>((anchor+1U)%after.size());} while(!after[anchor]);
+        }
+        auto next=actor;
+        do {next=static_cast<std::uint8_t>((next+1U)%after.size());} while(!after[next]);
+        const auto limit=static_cast<std::uint8_t>(startup.game_months*30U);
+        if(next==anchor && limit && completed_rounds+2>limit)
+            throw CodecError("richonline_classic_month_settlement_unimplemented");
+        if(rules.script) {
+            const auto result=rules.script->call("game.classic_retirement",{{"active",active},{"bankrupt",bankrupt},
+                {"actor",actor},{"anchor",round_anchor}});
+            const LuaValue expected{{"active",after},{"anchor",anchor},{"next",next}};
+            if(result!=expected || !result.at("anchor").is_number_integer() || !result.at("next").is_number_integer())
+                throw CodecError("lua_classic_retirement_invalid");
+        }
+        return world.property->prepare_retirement(bankrupt);
+    }
+    void retire_actor(std::uint8_t bankrupt) noexcept {
+        active[bankrupt]=0;
+        // 明确的服务端轮序政策：先手淘汰时改为其后的首个存活槽，并通过4010+5
+        // 同步；日历与租金周期只按这个真实锚点推进，不把已经淘汰的槽继续当先手。
+        if(round_anchor==bankrupt) {
+            do {round_anchor=static_cast<std::uint8_t>((round_anchor+1U)%active.size());} while(!active[round_anchor]);
+        }
+        // 7BE160不清手牌和票券。当前会话尚无股票持仓、关系卡和建筑增益写入口。
+        // 7F9560仅清已实现的移动状态；原始住院/监狱等字段不借破产擅自重置。
+        auto& state=statuses[bankrupt];
+        state.one_step=state.six_steps=state.turtle=state.stay=state.sleepwalking=state.frozen=0;
     }
     std::vector<Bytes> rent(const RichonlineClassicPropertyState& property) {
         if(!property.owner || *property.owner>=statuses.size() || *property.owner==actor)
@@ -404,19 +458,24 @@ struct Session {
         // 先识别等待/破产再提交，未实现的后继不得吞卡、扣光余额后伪造4010。
         if(std::string_view(outcome)=="transfer_pending")
             return begin_rent_transfer(property,static_cast<std::uint32_t>(amount),inventory,payer,payee);
-        if(std::string_view(outcome)=="bankrupt")
-            throw CodecError("richonline_classic_rent_bankruptcy_unimplemented");
-        const auto charged=std::string_view(outcome)=="paid" ? static_cast<std::uint32_t>(amount) : 0U;
+        const bool bankrupt=std::string_view(outcome)=="bankrupt";
+        std::optional<RichonlineClassicProperty::Retirement> retirement;
+        if(bankrupt) retirement=prepare_bankruptcy(actor);
+        const auto charged=bankrupt ? payer.funds.cash+*payer.funds.deposit :
+            std::string_view(outcome)=="paid" ? static_cast<std::uint32_t>(amount) : 0U;
         auto payer_after=payer.funds,payee_after=payee.funds;
         if(charged>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max())-*payee_after.deposit)
             throw CodecError("richonline_classic_rent_recipient_overflow");
         const auto cash_paid=std::min(charged,payer_after.cash);
         payer_after.cash-=cash_paid;*payer_after.deposit-=charged-cash_paid;*payee_after.deposit+=charged;
         auto messages=std::vector<Bytes>{stop()};
+        if(bankrupt) messages.push_back(richonline_eliminate_actor(board.game_server_id,static_cast<std::int8_t>(actor)));
         const std::array updates{RichonlineGameFundsUpdate{actor,payer,payer_after},
             RichonlineGameFundsUpdate{owner,payee,payee_after}};
         if(!world.ledger->commit_batch(updates,[&]() {
             if(world.cards[actor]->inventory()!=inventory || world.property->snapshot(property.id)!=property) return false;
+            if(retirement && !world.property->commit_retirement(*retirement)) return false;
+            if(retirement) retire_actor(actor);
             if(free_card) world.cards[actor]->commit_inventory(free_card->remaining_inventory);
             return true;
         })) throw CodecError("richonline_classic_rent_commit_stale");
@@ -424,6 +483,7 @@ struct Session {
         if(rules.log) rules.log("richonline_classic_rent actor="+std::to_string(actor)+
             " owner="+std::to_string(owner)+" property="+std::to_string(property.id)+
             " sequence="+std::to_string(sequence)+" charged="+std::to_string(charged)+" outcome="+outcome);
+        if(bankrupt) {collision_pending=false;return advance(std::move(messages));}
         return property_effects(std::move(messages));
     }
     std::vector<Bytes> land() {
@@ -569,6 +629,10 @@ struct Session {
             const auto choice=std::get<RichonlineDiceChoice14>(parse_richonline_movement_request(request));
             if(choice.count>rules.maximum_dice[sender]) throw CodecError("richonline_classic_dice_not_available");
             dice[sender]=choice.count;return {};
+        }
+        if(!active[sender]) {
+            if(was_retired(sender,request)) return {};
+            throw CodecError("richonline_classic_inactive_actor_request");
         }
         if(sender!=actor) throw CodecError("richonline_classic_sender_not_active");
         if(phase==Phase::roll) {

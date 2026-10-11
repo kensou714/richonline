@@ -57,6 +57,17 @@ public:
     // 只用于本对象持有的普通住宅/同类地产；当前对象尚无封闭、加倍卡写入口。
     // 按NEW的32位乘法、逐块有符号除法和累加顺序返回报价，负值不能当无租金。
     std::int32_t rent_quote(std::int16_t property,std::uint32_t monetary_scale) const;
+    class Retirement final {
+    private:
+        Retirement()=default;
+        const RichonlineClassicProperty* owner_=nullptr;
+        std::uint8_t actor_=0;
+        std::map<std::int16_t,RichonlineClassicPropertyState> before_;
+        friend class RichonlineClassicProperty;
+    };
+    Retirement prepare_retirement(std::uint8_t actor) const;
+    // 全图产权快照须一致且不能有未决购地。提交只清owner，保留种类/等级/价格。
+    bool commit_retirement(const Retirement&) noexcept;
     // 返回应等待的C2S opcode；不支持的选择抛错，不伪造成功或跳过落点。
     std::uint16_t begin(RichonlineClassicPropertyChoice,const RichonlineClassicPropertyEntry&);
     // sender_actor由已认证连接提供；current必须从当前权威回合读取，不能回传旧entry冒充。

@@ -8,6 +8,7 @@ local game = require("game.session")
 local rewards = require("game.rewards")
 local stock = require("game.stock")
 local collision = require("game.collision")
+local classic_retirement = require("game.classic_retirement")
 local feasts = require("events.feasts")
 local tiles = require("tiles.registry")
 local bank = require("tiles.tile_9")
@@ -39,6 +40,7 @@ local handlers = {
     ["property.classic_rent_quote"] = classic_property.rent_quote,
     ["property.classic_rent_payment"] = classic_property.rent_payment,
     ["collision.plan"] = collision.plan,
+    ["game.classic_retirement"] = classic_retirement.plan,
     ["stock.trade"] = stock.trade,
     ["stock.open"] = stock.open,
     ["stock.quote"] = stock.quote, ["stock.market"] = stock.market,
