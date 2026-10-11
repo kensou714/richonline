@@ -148,6 +148,9 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
                     if (log) log("richonline_property_landed",{{"room",key},{"actor_slot",landing.actor_slot},
                         {"property_ref",landing.property_ref},{"owner",property->owner(landing.property_ref).value_or(255)},
                         {"building_kind",building ? building->kind : -1},{"building_level",building ? building->level : 0},
+                        {"possession",landing.actor_status.possession.value_or(-1)},
+                        {"cash",property->cash().at(landing.actor_slot)},
+                        {"purchase_price",property->purchase_price(landing.property_ref,landing.actor_slot).value_or(0)},
                         {"pending_opcode",result->pending_opcode.value_or(0)},{"package",package_id},{"level","info"}});
                     return std::move(*result);
                 }

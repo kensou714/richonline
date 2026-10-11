@@ -1403,6 +1403,12 @@ struct Turns {
             if(!npc_landing) throw CodecError("richonline_boss_npc_landing_missing");
             const auto landing=*npc_landing;npc_landing.reset();
             auto following=finish_landing(landing);
+            // 只对本次地面NPC续接产生的地产等待延后一次；保留购地资格及取消语义。
+            // 正常选择仍立即处理，轮询和重复请求都不能继续延长期限。
+            if(phase==Phase::landing && rules.property && rules.property->defer_for_npc_presentation() && rules.log)
+                rules.log("richonline_property_npc_presentation actor="+std::to_string(actor)+
+                    " position="+std::to_string(landing.position)+" npc="+
+                    std::to_string(status[actor].possession.value_or(-1))+" grace_ms=15000");
             result.messages.insert(result.messages.end(),std::make_move_iterator(following.begin()),
                 std::make_move_iterator(following.end()));
             return std::move(result.messages);

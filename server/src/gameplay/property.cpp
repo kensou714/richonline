@@ -259,6 +259,13 @@ void RichonlineBossProperty::enable_human_decisions(std::chrono::milliseconds ti
     timeout_ = timeout;
     now_ = std::move(now);
 }
+bool RichonlineBossProperty::defer_for_npc_presentation() noexcept {
+    if(!deadline_) return false;
+    // 6051附身、前置提示以及4023/4024的提示/表情先于地产窗口消费。
+    // 15秒是服务端恢复余量，不改变客户端选择倒计时，也不是原版动画总时长。
+    *deadline_+=std::chrono::seconds{15};
+    return true;
+}
 RichonlineLandingResult RichonlineBossProperty::complete_decision(bool accept) {
     if (!deadline_ || !pending_property_) throw CodecError("richonline_property_no_pending_decision");
     auto& property=properties_.at(*pending_property_);

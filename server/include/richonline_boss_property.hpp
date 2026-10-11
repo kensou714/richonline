@@ -24,6 +24,8 @@ public:
     bool validate_landing(const RichonlineLandingContext& context) const;
     std::optional<RichonlineLandingResult> land(const RichonlineLandingContext& context);
     void enable_human_decisions(std::chrono::milliseconds timeout,Now now);
+    // NPC落点前置动画没有独立就绪回包；只在该次落点续接时追加有界恢复缓冲。
+    bool defer_for_npc_presentation() noexcept;
     // Enable only when the turn owner has an authoritative NPC clock coordinator.
     void enable_temple_possession(std::uint8_t maximum_days,bool aura_summons=false,
         std::array<bool,4> higher_summons={});
