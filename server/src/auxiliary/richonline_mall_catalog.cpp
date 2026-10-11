@@ -86,8 +86,11 @@ RichonlineMallCatalog RichonlineMallCatalog::parse(View props,View sale,View awa
     if(!awards.empty()) for(const auto& section:sections(awards)) {
         if(section.name!="AWARD") throw CodecError("mall_bag_section_invalid");
         const auto bag=integer(required(section.fields,"bagID"));
-        if(bag<105 || bag>107 || !result.products_.contains(static_cast<std::uint16_t>(bag)))
-            throw CodecError("mall_bag_id_unsupported");
+        // 原奖盘还含未开放的其他宝袋；只加载本轮有完整使用协议的105～107。
+        // 其他宝袋继续由使用入口拒绝，不能让资源中的合法扩展阻止全服启动。
+        if(bag<105 || bag>107) continue;
+        if(!result.products_.contains(static_cast<std::uint16_t>(bag)))
+            throw CodecError("mall_bag_product_missing");
         std::array<RichonlineMallBagSlot,16> slots{};
         for(std::size_t index=0;index<slots.size();++index) {
             const auto name="item"+std::to_string(index+3);
@@ -105,6 +108,7 @@ RichonlineMallCatalog RichonlineMallCatalog::parse(View props,View sale,View awa
         if(!result.bags_.emplace(static_cast<std::uint16_t>(bag),slots).second)
             throw CodecError("mall_bag_duplicate");
     }
+    if(!awards.empty() && result.bags_.size()!=3) throw CodecError("mall_bag_awards_incomplete");
     return result;
 }
 RichonlineMallCatalog RichonlineMallCatalog::load(const std::filesystem::path& root) {
