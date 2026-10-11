@@ -29,3 +29,15 @@ BOSS地产加载器当前只接收sprite12且空地或kind11～20，已经排除
 ## 验证边界
 
 工作区Release/Lua语法编译通过。只修改server目录，未新增/运行测试，未启动本机服务或客户端。固定提交构建、部署及本机同代交付结果在上线后追加；监听健康检查不代表玩法实机验收。完整goal仍未完成。
+
+## 上线回执
+
+2026-10-12（本地时区）已部署源码提交`5b6718c3ca7b08ea29b3cb1ebd6922ea67a9fecd`，固定源码tree `1f689bf0043330e920023b58ed442b32f1eba6ba`，线上release `5b6718c3ca7b`。本回执是后续文档提交，不改变二进制源码身份。
+
+- 固定提交独立Release构建和Lua语法编译通过，`BUILD_TESTING=OFF`；ZIP内208个文件逐项核对大小与SHA256，其中173个Lua文件。
+- EXE SHA256：`16E6A0C78A7B0D4078BDF9003AF0D7A08A2BEBC6E4490707858B2DF95E8B4E0D`；ZIP SHA256：`2C868ECC3C7DA37D6278FECADD044F1EB3488F03D54D2993723294D8A2DCCE4E`。
+- 线上实际PID `6724`，instance `6724-120624259705700`；进程与Running计划任务均指向`D:\richonline\releases\5b6718c3ca7b\RichOnline.Server.exe`。
+- 在线DB备份为`D:\richonline\shared\data\backups\accounts-1791750297788944.sqlite3`；部署备份为`D:\richonline\backups\20261011202457-5b6718c3ca7b`。备份后按ExpectedInstance正常停止旧实例；持久数据继续使用`D:\richonline\shared\data`，未覆盖数据库。
+- lobby/http/gameListener/black/intro/inquiry六项Ready均为true；18600/18602/18604/18605/18606/18680公网TCP通过。两个大厅列表HTTP 200，CP950中文正常，均含三个指向103.156.25.81:18600的频道。
+- 商城日期兼容及测试全BOSS地图解锁配置保留。本机EXE备份后已替换为同哈希文件，173个Lua文件逐项与发布manifest一致，未启动本机服务或客户端。
+- 未新增/运行玩法测试；生产经典模式仍未开放，本轮只证明实现、编译与交付完成，不代表实机验收。
