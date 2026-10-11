@@ -63,3 +63,21 @@
 首轮工作区编译通过，后续固定快照构建与本机同代交付另附回执。
 已有赵灵儿证据与三份测试修改保留，不纳入本项提交。当前goal要求不擅自中断服务，
 所以本轮不部署重启线上实例。饭店动画、离店时序仍须日后实机验证。
+
+## 固定构建与本机交付回执
+
+2026-10-12：源码提交 `39e81649d099caab5ac28646fae544e487f1d706`，固定 tree
+`75924fe2d9f53a7b0f263b5879295f0c792c7ae0`，已推送并核对 GitHub main。
+`server/build-classic-hotel-fixed` 的独立 Release 构建完成，BUILD_TESTING=OFF；
+175 个 Lua 文件逐项与工作区脚本哈希一致，构建包含 Lua 语法编译。
+
+确认本机服务进程未运行后，旧 EXE 备份至
+`server/build-classic-hotel-fixed/RichOnline.Server.before-39e81649.exe`，
+固定构建 EXE 已复制至 `server/RichOnline.Server.exe`。两者 SHA256 均为
+`FF981990C4FFA71546780ADFCA4EF8039C3C4D8A7859DC802FFF54419849612B`。
+未启动服务或游戏，未新增或运行玩法测试，未部署或重启线上实例。
+
+本次只读核对线上 PID 5608 的路径为 `D:\richonline\releases\3255d79efe5d\RichOnline.Server.exe`，
+其 EXE SHA256 为 `E6A2CF541FFE9C68A703A06341F1E5571A2328BAA0BAD45E218F42D03C759CC2`。
+线上尚未包含本次饭店及前轮贸易中心改动；该源码已包含原生 BOSS 回血／狂暴修复
+`4a1b52e927709199854ce46e6ebe97e7da619968`。版本核对不替代玩法实机验收。
