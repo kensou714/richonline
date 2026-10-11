@@ -33,3 +33,27 @@
 本轮未开放生产经典准入，不能以利息接入代表完整经典玩法或完整日历已经完成。
 未修改BOSS回血逻辑；已发布的原生回血与狂暴修复由当前版本继承。
 按用户要求不新增/运行测试，不启动本机服务端或客户端；仅编译、静态核验及发布健康检查。
+
+## 编译及上线回执
+
+2026-10-12（本地时区）源码提交`0ce3a5d73bb6b087652dc53c3af7478b840dff0c`已推送GitHub
+main并核对远端引用。固定源码tree为`17fcb06bda5ca27c9a8b60a6292cd6bb3516a8a3`，
+独立Release构建和173个Lua模块语法编译通过，BUILD_TESTING=OFF。仅提交本轮9个文件，
+保留其他会话的文档、测试和旧利息证据。后续回执文档提交不改变二进制源码身份。
+
+- 线上release：`0ce3a5d73bb6`，实际PID `4712`，instance `4712-115147311625800`。
+  计划任务与Win32_Process路径均为`D:\richonline\releases\0ce3a5d73bb6\RichOnline.Server.exe`。
+- EXE SHA256：`C58F204A9EC4840D11FEC7DECBF9545A43DA7BB804B4692D3FCB226092DE5592`。
+- ZIP SHA256：`48DA4CCE29D9E96B69828AC9363F00CAC7CE3F5BE98510CA505C20EE0EA2FF93`。
+  208个运行文件的ZIP内容、长度和SHA256均与manifest一致。
+- 数据目录`D:\richonline\shared\data`；在线DB备份
+  `D:\richonline\shared\data\backups\accounts-1791744820830195.sqlite3`；部署备份
+  `D:\richonline\backups\20261011185340-0ce3a5d73bb6`。
+  安装器使用ExpectedInstance正常停止旧实例，未覆盖数据库。
+- lobby/http/gameListener/black/intro/inquiry均Ready；18600/18602/18604/18605/18606/18680
+  六个公网TCP连接成功，两份大厅列表HTTP 200；CP950解码的三个频道均为103.156.25.81:18600。
+- 兼容商城日期、全BOSS测试地图解锁及新release资源路径已核验。本机EXE经备份后替换为
+  同哈希文件，173个本机Lua文件逐项匹配发布manifest；未启动本机服务。
+
+这里只确认编译、发布完整性及健康状态，未执行玩法测试。经典生产准入继续关闭，
+`gameReady=false`仍代表整体能力边界，不能据此次部署宣称完整经典模式可玩。
