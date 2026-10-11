@@ -78,6 +78,7 @@ struct Turns {
     std::array<std::array<std::uint8_t,8>,2> relations1472{};
     std::optional<std::chrono::steady_clock::time_point> frozen_deadline{};
     std::optional<std::chrono::steady_clock::time_point> jail_deadline{};
+    bool jail_exit_roll_requested=false;
     std::optional<Decision> retired_jail_exit{};
     std::optional<std::uint64_t> retired_jail_exit_turn{};
     struct AcceptedHibernate { std::array<std::uint8_t,6> request; std::uint64_t turn; };
@@ -447,7 +448,7 @@ struct Turns {
         accepted_controlled_move=ControlledMove{active_counter};
         return commit_move(std::move(prepared));
     }
-    std::vector<Bytes> playable_turn(std::vector<Bytes> messages) {
+    std::vector<Bytes> playable_turn(std::vector<Bytes> messages,bool action_already_queued=false) {
         bool script_attack=true;
         if(!boss_chest && actor==1 && rules.combat && rules.script)
             script_attack=rules.script->call("boss.can_attack",{{"map",rules.script_map},
@@ -459,8 +460,10 @@ struct Turns {
             if(!attack.bankrupt_actors.empty())
                 return terminal(std::move(messages),std::move(attack.bankrupt_actors),RichonlineTerminalReason::boss_attack);
         }
-        messages.push_back(encode_richonline_empty_turn420f(init.game_server_id));
-        if(status[actor].stay) {
+        // 出狱的阶段4已经排好动画12及行动界面；重发420F会重复排队，
+        // 也会错误地重走原客户端在出狱分支跳过的stay判断。
+        if(!action_already_queued) messages.push_back(encode_richonline_empty_turn420f(init.game_server_id));
+        if(!action_already_queued && status[actor].stay) {
             route={};checkpoint_cursor=0;phase=Phase::stationary;
         } else if(actor==1) {
             auto movement=move();
@@ -468,22 +471,48 @@ struct Turns {
         } else await_roll();
         return messages;
     }
+    std::vector<Bytes> jailed_turn(std::vector<Bytes> messages) {
+        if(!rules.raw_authority || !topology.jail_positions())
+            throw CodecError("richonline_jail_positions_missing");
+        const auto days=rules.raw_authority->actor(actor).jail1495;
+        if(!days || *days<0) throw CodecError("richonline_jail_turn_state_invalid");
+        phase=*days==0 ? Phase::jail_exit : Phase::jailed;
+        route={};checkpoint_cursor=0;authenticated_steps=0;controlled_roll_deadline.reset();
+        jail_exit_roll_requested=false;
+        // 4010只推进轮首。420F(-1)才排608A阶段4，显示剩余刑期或启动退出动画。
+        messages.push_back(encode_richonline_empty_turn420f(init.game_server_id));
+        // 631EE0仅在本地槽、非幽灵且非梦游时发0015；其它分支不能等待此包。
+        if(phase==Phase::jailed || actor!=init.local_slot || controlled_roll_actor())
+            jail_deadline=rules.now()+rules.jail_animation_delay;
+        else jail_deadline.reset();
+        if(rules.log) rules.log("richonline_jail_turn actor="+std::to_string(actor)+
+            " counter="+std::to_string(active_counter)+" days="+std::to_string(*days)+
+            " continuation="+(jail_deadline ? std::string{"server_delay"} : std::string{"local_0015"}));
+        return messages;
+    }
     std::vector<Bytes> finish_jail_exit() {
         if(phase!=Phase::jail_exit || !rules.raw_authority || !topology.jail_positions())
             throw CodecError("richonline_jail_exit_state_invalid");
         const auto entry=(*topology.jail_positions())[0],exit=(*topology.jail_positions())[1];
-        const auto dx=exit%static_cast<std::int16_t>(topology.width())-entry%static_cast<std::int16_t>(topology.width());
-        const auto dy=exit/static_cast<std::int16_t>(topology.width())-entry/static_cast<std::int16_t>(topology.width());
+        const auto width=static_cast<std::int32_t>(topology.width());
+        const auto dx=exit%width-entry%width;
+        const auto dy=exit/width-entry/width;
         const auto heading=dy>0 ? 0U : dx<0 ? 1U : dy<0 ? 2U : 3U;
         rules.raw_authority->exit_jail(actor);
         init.participants[actor].position=exit;
         init.participants[actor].direction=static_cast<std::uint8_t>(heading);
         reset_pet(actor);
         jail_deadline.reset();
-        if(actor==init.local_slot) {
+        if(actor==init.local_slot && !controlled_roll_actor()) {
             retired_jail_exit=Decision{active_counter,21};retired_jail_exit_turn=turn_sequence;
         }
-        return playable_turn({});
+        const auto roll_requested=std::exchange(jail_exit_roll_requested,false);
+        auto messages=playable_turn({},true);
+        if(roll_requested) {
+            auto movement=controlled_move();
+            messages.insert(messages.end(),std::make_move_iterator(movement.begin()),std::make_move_iterator(movement.end()));
+        }
+        return messages;
     }
     std::chrono::sys_days game_date() const {
         const std::chrono::year_month_day start{std::chrono::year{init.year},
@@ -632,6 +661,7 @@ struct Turns {
             retired_jail_exit.reset();retired_jail_exit_turn.reset();
         }
         jail_deadline.reset();
+        jail_exit_roll_requested=false;
         if(rules.raw_authority) static_cast<void>(rules.raw_authority->apply_verified_actor_timer_phase(actor,turn_sequence));
         for(std::uint8_t other=0;other<active.size();++other)
             if(static_cast<std::int8_t>(relations1472[actor][other])>0) --relations1472[actor][other];
@@ -656,11 +686,7 @@ struct Turns {
             }
             if(rules.raw_authority) {
                 const auto& raw=rules.raw_authority->actor(actor);
-                if(raw.jail1495 && *raw.jail1495!=-1) {
-                    phase=*raw.jail1495==0 ? Phase::jail_exit : Phase::jailed;
-                    if(phase==Phase::jailed) jail_deadline=rules.now()+std::chrono::milliseconds{1800};
-                    return messages;
-                }
+                if(raw.jail1495 && *raw.jail1495!=-1) return jailed_turn(std::move(messages));
             }
             return playable_turn(std::move(messages));
         }
@@ -740,16 +766,7 @@ struct Turns {
         }
         if(rules.raw_authority) {
             const auto& raw=rules.raw_authority->actor(actor);
-            if(raw.jail1495 && *raw.jail1495!=-1) {
-                if(!topology.jail_positions()) throw CodecError("richonline_jail_positions_missing");
-                phase=*raw.jail1495==0 ? Phase::jail_exit : Phase::jailed;
-                route={};checkpoint_cursor=0;authenticated_steps=0;controlled_roll_deadline.reset();
-                // The human sends0015 (decimal21) after animation12. Synthetic actors have
-                // no sender, so their animation continuation uses a room timer.
-                if(phase==Phase::jailed || actor!=init.local_slot)
-                    jail_deadline=rules.now()+std::chrono::milliseconds{1800};
-                return messages;
-            }
+            if(raw.jail1495 && *raw.jail1495!=-1) return jailed_turn(std::move(messages));
         }
         if(status[actor].frozen) {
             // NEW7C0C50 already decremented above, then phase4 queues6003 and
@@ -2814,7 +2831,7 @@ struct Turns {
         try {
         switch (opcode) {
         case 21:
-            if(phase!=Phase::jail_exit || actor!=init.local_slot || plain.size()!=4 ||
+            if(phase!=Phase::jail_exit || actor!=init.local_slot || controlled_roll_actor() || plain.size()!=4 ||
                 read_le(plain.subspan(2,2))!=active_counter) throw CodecError("richonline_jail_exit_ack_invalid");
             return finish_jail_exit();
         case 116: case 117: case 121: case 122: case 132: case 135:
@@ -3099,9 +3116,15 @@ struct Turns {
             return finish_junction(junction->decide(plain,rules.now()));
         case 0x10: {
             const auto request = std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(plain));
-            if (phase != Phase::roll || actor != init.local_slot) throw CodecError("richonline_boss_roll_out_of_phase");
+            if (actor != init.local_slot) throw CodecError("richonline_boss_roll_out_of_phase");
             if (request.calendar_counter!=active_counter) throw CodecError("richonline_boss_roll_counter_mismatch");
             if (request.parameter != 0) throw CodecError("richonline_boss_roll_parameter_unsupported");
+            if(phase==Phase::jail_exit && controlled_roll_actor() && jail_deadline) {
+                // 自动0010可能先于房间延迟到达。只记一次意图，到期归位后才生成路线及扣费。
+                jail_exit_roll_requested=true;
+                return {};
+            }
+            if (phase != Phase::roll) throw CodecError("richonline_boss_roll_out_of_phase");
             return controlled_roll_actor() ? controlled_move() : random_move();
         }
         case 108: case 158: case 165: {
@@ -3531,6 +3554,9 @@ RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& st
     if(rules.controlled_roll_timeout<=std::chrono::milliseconds{0} ||
         rules.controlled_roll_timeout>std::chrono::minutes{5})
         throw CodecError("richonline_boss_controlled_roll_timeout_invalid");
+    if(rules.jail_animation_delay<=std::chrono::milliseconds{0} ||
+        rules.jail_animation_delay>std::chrono::minutes{5})
+        throw CodecError("richonline_boss_jail_animation_delay_invalid");
     if (rules.boss_dice_count<1 || rules.boss_dice_count>3)
         throw CodecError("richonline_boss_dice_count_invalid");
     if (startup.init.participants.size() != 2 || startup.init.local_slot != 0 ||

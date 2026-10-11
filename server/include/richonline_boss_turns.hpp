@@ -144,6 +144,8 @@ struct RichonlineBossTurnRules {
     // that client timer never fires, recover once with the same ordinary4011.
     // This duration is explicit server policy, not a recovered client timer.
     std::chrono::milliseconds controlled_roll_timeout{30000};
+    // 服务端排队策略，不是原服动画时长；正刑期、合成角色及无0015的受控出狱使用。
+    std::chrono::milliseconds jail_animation_delay{1800};
     std::shared_ptr<const RichonlineTimedBombTurnPolicy> timed_bombs{};
     std::shared_ptr<RichonlineGroundObjects> ground{};
     // Explicit server visibility policy; NEW sends no camera rectangle.
