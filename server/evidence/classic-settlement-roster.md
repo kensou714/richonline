@@ -27,3 +27,16 @@ validate_identity改收实际棋盘角色数组，保留局号、房间、人数
 静态核对唯一调用点与认证身份链，固定提交Release构建及整包Lua语法编译。
 按用户要求不新增或运行测试，不启动本机服务或客户端。
 这项修复不等于生产经典模式已开放，也不证明地产价值公式已经查明。
+
+## 发布结果
+
+- 源码`ce1456046d5518d34ae3b26c85dd0e51fa7f8245`，tree`d5451425ed207f4f43afa43e672e9f3017bbfe8f`，已推送GitHub main。
+- 固定提交Release构建及167份Lua语法编译通过；未新增或运行测试。
+- 线上release`ce1456046d55`，PID5888，instance`5888-99681269547600`，
+  真实进程与任务均指向`D:\richonline\releases\ce1456046d55\RichOnline.Server.exe`。
+- EXE SHA256 `E8A7CBA7C81BA0CD3C6235DADE8D0AC0203001DDE916A72587725A224EFF0A7C`；本机已同步相同版本，未启动。
+- 数据库备份`D:\richonline\shared\data\backups\accounts-1791729354820653.sqlite3`。
+  保留`D:\richonline\shared\data`、商城日期兼容及全部BOSS地图测试配置。
+- 六类监听ready；18600/18602/18604/18605/18606/18680公网TCP成功，两份服务器列表HTTP200。
+- 本地收据`server/build-goal-resume/release-ce1456046d55-receipt.json`及同版本verified/process/bootstrap-after文件。
+  后续证据提交不改变部署源码版本，亦不代表多人结算实机验收。
