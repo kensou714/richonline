@@ -41,5 +41,12 @@ game、turn、day、eligible、cap、before、amount、frenzy；成功恢复仍�
 
 ## 验证边界
 
-已完成客户端静态字节核对与源码审阅；构建与本机交付结果在完成后另记。
+已完成客户端静态字节核对与源码审阅。固定源码tree
+`58d2a0902fe2178f268dec976e88eefb6e14b180` 独立Release构建成功，
+构建目标`RichOnline.Server`内的全部178个Lua模块语法编译通过；源码提交
+`317f63a3447829fd7c06e4aed15e2a0de6c97764`已推送并核对GitHub main远端引用。
+本机`server/RichOnline.Server.exe`在未运行时备份旧文件并交付新同代文件，
+SHA256 `0FC813378E12D3265561F29811D00A497C20FD49F771A2B458691E79CBB9E95A`；
+178个本机Lua模块与固定源码及构建输出逐项哈希一致。旧EXE备份位于
+`server/build-native-recovery-order-fixed/RichOnline.Server.before-317f63a.exe`。
 按用户限制不新增或运行测试，不启动服务或游戏。不能将编译通过视为实机回血同步验收。
