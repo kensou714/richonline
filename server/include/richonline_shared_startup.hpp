@@ -16,6 +16,8 @@ struct RichonlineSharedMovementWait {
     std::int16_t endpoint;
     // 齐备后提交此真人连接实际送来的请求；合成角色可由其控制连接报告。
     std::uint8_t controller;
+    // 只允许已核实为各客户端共同上报的0011末端和0028途中银行暂停。
+    std::uint16_t opcode=0x11;
     bool operator==(const RichonlineSharedMovementWait&) const = default;
 };
 struct RichonlineSharedCallbacks {
@@ -29,8 +31,8 @@ struct RichonlineSharedCallbacks {
     std::function<bool(std::uint8_t)> game_finished = {};
     std::function<void(std::uint8_t,const Frame&)> lobby_sent = {};
     std::function<bool(std::uint8_t)> terminal_pending = {};
-    // 普通0011会由各客户端的公共移动动画产生；业务公布真实待决终点后，
-    // 共享层等待全体连接一致，再把控制连接的请求交给action一次。仅覆盖0011。
+    // 0011末端与0028银行暂停会由各客户端的公共移动动画产生；业务公布真实待决
+    // 操作码/位置后，共享层等待全体连接一致，再把控制连接的请求交给action一次。
     // 完成或取消后返回空值；新的移动必须使用更大sequence。回调不得重入共享层。
     std::function<std::optional<RichonlineSharedMovementWait>()> movement_wait = {};
     // 全员完整收到当前批消息后开始计时。缺失上报时使整局失败，不伪造完成或推进回合。

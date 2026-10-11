@@ -10,7 +10,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,roll,moving,property,event,junction,closed };
+enum class Phase { loading,roll,moving,bank,property,event,junction,closed };
 struct Retired {
     std::uint8_t actor;
     Bytes request;
@@ -26,6 +26,10 @@ struct Session {
     RichonlinePlayerOpeningHands opening_hands;
     RichonlineJunction junction;
     RichonlineRoute route;
+    std::unique_ptr<RichonlineGameBank> bank;
+    std::optional<RichonlineGameFundsSnapshot> bank_funds;
+    std::optional<std::size_t> bank_checkpoint;
+    std::size_t route_cursor=0;
     Phase phase=Phase::loading;
     std::uint8_t actor;
     std::uint16_t calendar;
@@ -33,6 +37,7 @@ struct Session {
     std::optional<std::uint16_t> pending_opcode;
     std::optional<RichonlineSharedMovementWait> movement;
     std::deque<Retired> retired;
+    std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_banks;
     std::vector<bool> disconnected;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
@@ -74,6 +79,8 @@ struct Session {
         world.ledger=std::make_shared<RichonlineGameLedger>(std::move(funds));
         world.property=std::make_shared<RichonlineClassicProperty>(board.game_server_id,source.topology,
             source.properties,world.ledger,rules.now,rules.decision_timeout,rules.script);
+        if(rules.bank_wire) bank=std::make_unique<RichonlineGameBank>(board.game_server_id,
+            *rules.bank_wire,rules.now,rules.script);
         opening_hands=prepare_richonline_player_opening_hands(board.game_server_id,rules.opening_hands,*rules.card_resources);
         for(std::uint8_t slot=0;slot<count;++slot) {
             auto cards=std::make_shared<RichonlinePlayerCards>(rules.card_resources,board.game_server_id,source.map_name,slot,0);
@@ -120,6 +127,12 @@ struct Session {
         if(retired.size()>64) retired.pop_front();
     }
     bool was_retired(std::uint8_t sender,View request) const {
+        // 服务端超时没有实际0027可保存。已关闭的银行允许格式正确的迟到选择，
+        // 但action总是先处理当前银行，不能吞掉同回合下一次银行的正常交易。
+        if(request.size()>=2 && read_le(request.first(2))==0x27) {
+            const auto choice=decode_richonline_game_bank_request(request);
+            if(std::ranges::find(retired_banks,std::pair{sender,choice.calendar_counter})!=retired_banks.end()) return true;
+        }
         return std::any_of(retired.begin(),retired.end(),[&](const auto& entry) {
             return entry.actor==sender && std::ranges::equal(entry.request,request);
         });
@@ -176,7 +189,7 @@ struct Session {
             throw CodecError("richonline_classic_continuation_invalid");
         if(result.pending_opcode && (*result.pending_opcode==0x10 || *result.pending_opcode==0x11 ||
             *result.pending_opcode==0x14 || *result.pending_opcode==0x20 || *result.pending_opcode==0x21 ||
-            *result.pending_opcode==0x34))
+            *result.pending_opcode==0x27 || *result.pending_opcode==0x28 || *result.pending_opcode==0x34))
             throw CodecError("richonline_classic_continuation_reserved_opcode");
         if(result.status_change) {
             if(result.status_change->expected!=statuses[actor])
@@ -209,6 +222,12 @@ struct Session {
         if(auto result=services.landing(current)) return accept_result(std::move(*result));
         if(current.landing.occupied_by_other_actor)
             throw CodecError("richonline_classic_collision_unimplemented");
+        if(current.landing.static_type==9) {
+            if(current.landing.property_ref!=-1)
+                throw CodecError("richonline_classic_bank_property_unimplemented");
+            auto messages=std::vector<Bytes>{stop()};
+            append(messages,open_bank(RichonlineGameBankVisit::landing));return messages;
+        }
         if(current.landing.property_ref>=0) {
             const auto property=world.property->snapshot(current.landing.property_ref);
             if(property.kind!=0 && property.kind!=1)
@@ -248,8 +267,9 @@ struct Session {
             faces[index]=static_cast<std::int8_t>(choice+1);budget+=faces[index];
         }
         const auto& person=board.participants[actor];
-        auto proposed=build_richonline_route(startup.topology,{person.position,person.direction,budget,{}},rules.random);
-        // 途经银行会产生0028，末端传送会改变落点；接通专用阶段前不可发布虚假的0011等待。
+        auto proposed=build_richonline_route(startup.topology,
+            {person.position,person.direction,budget,{},true,static_cast<bool>(bank)},rules.random);
+        // 末端传送会改变落点，仍等待专用阶段；途中的银行按原路线检查点逐段汇合。
         if(startup.topology.cell(proposed.landings.back()).static_type==61)
             throw CodecError("richonline_classic_portal_landing_unimplemented");
         std::vector<RichonlineMoveDirection> directions;
@@ -262,8 +282,64 @@ struct Session {
     }
     void commit_move(PreparedMove move) {
         route=std::move(move.route);
-        movement=RichonlineSharedMovementWait{++movement_sequence,calendar,route.landings.back(),actor};
+        route_cursor=0;wait_for_segment();
         phase=Phase::moving;
+    }
+    std::optional<std::size_t> next_bank() const {
+        // 最后一格使用0011和落点4013，只有尚未走完的中间格使用0028。
+        if(!bank) return {};
+        for(auto index=route_cursor;index+1<route.landings.size();++index)
+            if(startup.topology.cell(route.landings[index]).static_type==9) return index;
+        return {};
+    }
+    void wait_for_segment() {
+        if(route.landings.empty() || route_cursor>=route.landings.size() ||
+            movement_sequence==std::numeric_limits<std::uint64_t>::max())
+            throw CodecError("richonline_classic_movement_segment_invalid");
+        const auto checkpoint=next_bank();
+        const auto endpoint=route.landings[checkpoint.value_or(route.landings.size()-1)];
+        movement=RichonlineSharedMovementWait{++movement_sequence,calendar,endpoint,actor,
+            static_cast<std::uint16_t>(checkpoint ? 0x28 : 0x11)};
+    }
+    std::vector<Bytes> open_bank(RichonlineGameBankVisit visit,std::optional<std::size_t> checkpoint={}) {
+        if(!bank || bank_funds || bank_checkpoint || bank->active())
+            throw CodecError("richonline_classic_bank_unavailable");
+        const auto funds=world.ledger->snapshot(actor);
+        if(!funds.funds.deposit) throw CodecError("richonline_classic_bank_deposit_unknown");
+        auto result=bank->begin({actor,board.participants[actor].position,calendar,visit,
+            {funds.funds.cash,*funds.funds.deposit},false});
+        bank_funds=funds;bank_checkpoint=checkpoint;phase=Phase::bank;pending_opcode=0x27;
+        return bank_result(std::move(result));
+    }
+    std::vector<Bytes> bank_result(RichonlineGameBankResult result) {
+        if(!bank_funds || result.entry.actor_slot!=actor || result.entry.calendar_counter!=calendar ||
+            result.entry.position!=board.participants[actor].position ||
+            result.entry.balance.cash!=bank_funds->funds.cash || result.entry.balance.deposit!=bank_funds->funds.deposit ||
+            world.ledger->snapshot(actor)!=*bank_funds)
+            throw CodecError("richonline_classic_bank_snapshot_stale");
+        if(result.continuation==RichonlineGameBankContinuation::await_choice) return std::move(result.messages);
+        const bool passing=result.entry.visit==RichonlineGameBankVisit::passing;
+        if(passing!=bank_checkpoint.has_value() || (passing &&
+            (result.continuation!=RichonlineGameBankContinuation::resume_movement ||
+             *bank_checkpoint+1>=route.landings.size())) || (!passing &&
+            result.continuation!=RichonlineGameBankContinuation::continue_landing))
+            throw CodecError("richonline_classic_bank_continuation_invalid");
+        auto after=bank_funds->funds;after.cash=result.after.cash;after.deposit=result.after.deposit;
+        retired_banks.emplace_back(actor,calendar);
+        if(retired_banks.size()>64) retired_banks.pop_front();
+        world.ledger->commit(actor,*bank_funds,after);
+        bank_funds.reset();pending_opcode.reset();
+        if(rules.log) rules.log("richonline_classic_bank_completed actor="+std::to_string(actor)+
+            " calendar="+std::to_string(calendar)+" position="+std::to_string(result.entry.position)+
+            " cash="+std::to_string(after.cash)+" deposit="+std::to_string(*after.deposit)+
+            " passing="+std::to_string(passing));
+        if(passing) {
+            route_cursor=*bank_checkpoint+1;bank_checkpoint.reset();
+            // 402A已让每个客户端恢复缓存的4011，并自增路线游标。这里只换下一等待，
+            // 不重发4011、不重掷骰、不提前提交终点，也不重复扣指定骰点卡。
+            wait_for_segment();phase=Phase::moving;return std::move(result.messages);
+        }
+        return complete(std::move(result.messages));
     }
     std::vector<Bytes> action(std::uint8_t sender,View request) {
         healthy();
@@ -305,14 +381,25 @@ struct Session {
                 remember(sender,request);commit_move(std::move(move));return messages;
             }
         }
-        if(phase==Phase::moving && opcode==0x11) {
-            const auto stop_request=std::get<RichonlineMoveStop11>(parse_richonline_movement_request(request));
-            if(!movement || stop_request.endpoint!=movement->endpoint)
+        if(phase==Phase::moving && (opcode==0x11 || opcode==0x28)) {
+            const auto decoded=parse_richonline_movement_request(request);
+            const auto endpoint=opcode==0x11 ? std::get<RichonlineMoveStop11>(decoded).endpoint :
+                std::get<RichonlineMovePause28>(decoded).endpoint;
+            if(!movement || opcode!=movement->opcode || endpoint!=movement->endpoint)
                 throw CodecError("richonline_classic_endpoint_mismatch");
+            const auto checkpoint=next_bank();
+            if((opcode==0x28)!=checkpoint.has_value())
+                throw CodecError("richonline_classic_bank_checkpoint_mismatch");
+            const auto index=checkpoint.value_or(route.landings.size()-1);
             remember(sender,request);
-            board.participants[actor].position=route.landings.back();
-            board.participants[actor].direction=route.directions.back();
-            movement.reset();route={};return land();
+            board.participants[actor].position=route.landings[index];
+            board.participants[actor].direction=route.directions[index];
+            movement.reset();
+            if(checkpoint) return open_bank(RichonlineGameBankVisit::passing,checkpoint);
+            route={};route_cursor=0;return land();
+        }
+        if(phase==Phase::bank && opcode==0x27) {
+            auto result=bank->handle(request);remember(sender,request);return bank_result(std::move(result));
         }
         if(phase==Phase::property && pending_opcode==opcode) {
             auto result=world.property->handle(sender,request,property_entry());
@@ -330,7 +417,9 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
-        if(phase==Phase::property) {
+        if(phase==Phase::bank) {
+            if(auto result=bank->poll()) return bank_result(std::move(*result));
+        } else if(phase==Phase::property) {
             if(auto result=world.property->poll(property_entry())) {
                 pending_opcode.reset();return property_effects({std::move(result->message)});
             }

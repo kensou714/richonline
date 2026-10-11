@@ -56,7 +56,7 @@ struct Shared {
     }
 
     static bool matches_movement(const RichonlineSharedMovementWait& entry,View plain) {
-        return plain.size()==6 && read_le(plain.first(2))==0x11 &&
+        return plain.size()==6 && read_le(plain.first(2))==entry.opcode &&
             read_le(plain.subspan(2,2))==entry.calendar &&
             read_le(plain.subspan(4,2))==static_cast<std::uint16_t>(entry.endpoint);
     }
@@ -74,7 +74,8 @@ struct Shared {
     void sync_movement() {
         if(!callbacks.movement_wait) return;
         const auto current=callbacks.movement_wait();
-        if(current && (current->endpoint<0 || current->controller>=peers.size() ||
+        if(current && ((current->opcode!=0x11 && current->opcode!=0x28) ||
+            current->endpoint<0 || current->controller>=peers.size() ||
             !peers[current->controller] || !peers[current->controller]->connected))
             throw CodecError("richonline_shared_movement_wait_invalid");
         if(movement && current && *current==movement->entry) return;
@@ -88,11 +89,11 @@ struct Shared {
     }
     std::optional<Request> accept_movement(Request request) {
         if(!callbacks.movement_wait || request.stock || request.plain.size()<2 ||
-            read_le(View(request.plain).first(2))!=0x11) return request;
+            (read_le(View(request.plain).first(2))!=0x11 && read_le(View(request.plain).first(2))!=0x28)) return request;
         if(!movement || !matches_movement(movement->entry,request.plain)) {
             if(retired_movement(request.actor,request.plain)) return {};
             if(movement) throw CodecError("richonline_shared_movement_report_mismatch");
-            return request; // 未声明此等待时仍交给业务明确处理，不吞未知0011。
+            return request; // 未声明此等待时仍交给业务明确处理，不吞未知上报。
         }
         const auto sender=request.actor;
         if(movement->reported[sender]) return {};

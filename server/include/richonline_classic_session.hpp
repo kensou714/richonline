@@ -5,6 +5,7 @@
 #include "richonline_player_cards.hpp"
 #include "richonline_shared_startup.hpp"
 #include "richonline_opening_hand.hpp"
+#include "richonline_game_bank.hpp"
 
 namespace richnet {
 class RichonlineShopCatalog;
@@ -47,10 +48,12 @@ struct RichonlineClassicSessionRules {
     std::shared_ptr<LuaServer> script;
     std::function<RichonlineClassicServices(const RichonlineClassicWorld&)> services;
     GameLogSink log;
+    // 显式提供原协议未命名字节；缺席时维持银行未开放，不推测padding。
+    std::optional<RichonlineGameBankWirePolicy> bank_wire;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
-// 将action绑定到每条连接；0011由该共享层全员汇合后才允许提交位置和落点。
-// 生产接入仍须提供特殊格、银行途中暂停、租金、结算等完整业务，不能仅开放模式门。
+// 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。
+// 生产接入仍须提供特殊格、租金、结算等完整业务，不能仅开放模式门。
 RichonlineSharedCallbacks make_richonline_classic_session(const RichonlineClassicStartup&,
     RichonlineClassicSessionRules);
 }
