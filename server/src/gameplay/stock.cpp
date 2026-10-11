@@ -36,6 +36,15 @@ RichonlineStockForcedSaleRequest decode_richonline_stock_forced_sale_request(Vie
     return {static_cast<std::uint16_t>(read_le(plain.subspan(2,2))),
         static_cast<std::uint16_t>(slot),static_cast<std::int8_t>(plain[4])};
 }
+RichonlineStockSubscriptionRequest decode_richonline_stock_subscription_request(View plain) {
+    if(plain.size()!=10 || read_le(plain.first(2))!=0x96)
+        throw CodecError("richonline_stock_subscription_request_invalid");
+    const auto slot=read_le(plain.subspan(8,2));
+    if(plain[4]>=8 || plain[5]!=0 || plain[6]>=8 || slot>=10)
+        throw CodecError("richonline_stock_subscription_fields_invalid");
+    return {static_cast<std::uint16_t>(read_le(plain.subspan(2,2))),
+        static_cast<std::uint16_t>(slot),static_cast<std::int8_t>(plain[4]),plain[6]};
+}
 RichonlineStockMarket::RichonlineStockMarket(std::uint16_t game,std::shared_ptr<RichonlineGameLedger> ledger,
     std::vector<RichonlineStockQuote> quotes,float rise_limit,float fall_limit,std::shared_ptr<LuaServer> script)
     :game_(game),ledger_(std::move(ledger)),script_(std::move(script)),quotes_(std::move(quotes)),
@@ -218,6 +227,93 @@ bool RichonlineStockMarket::commit(const ForcedSale& plan,std::span<const std::u
             if(active[actor]) holdings_[actor][plan.slot_]={};
         quotes_[plan.slot_].supply=plan.supply_;++revision_;
         return true;
+    });
+}
+RichonlineStockMarket::Subscription RichonlineStockMarket::prepare_subscription(std::uint8_t actor,
+    const RichonlineStockSubscriptionRequest& request,std::uint32_t quantity,
+    std::span<const std::uint8_t> active,const RichonlineBossCards& cards) const {
+    if(active.size()!=ledger_->actor_count() || actor>=active.size() || request.target>=active.size() ||
+        actor==request.target || active[actor]!=1 || active[request.target]!=1 ||
+        std::any_of(active.begin(),active.end(),[](auto value){return value>1;}))
+        throw CodecError("richonline_stock_subscription_actors_invalid");
+    const auto market=quote(request.stock_slot);
+    const auto consumption=cards.prepare_consumption(request.inventory_slot,1123);
+    Subscription result;result.owner_=this;result.cards_=&cards;result.revision_=revision_;
+    result.slot_=request.stock_slot;result.quantity_=quantity;
+    std::copy(active.begin(),active.end(),result.active_.begin());
+    if(!consumption) {result.reason_="card_not_owned";return result;}
+    result.source_inventory_=consumption->source_inventory;
+    result.remaining_inventory_=quantity ? consumption->remaining_inventory : consumption->source_inventory;
+    const std::array participants{actor,request.target};
+    for(std::size_t index=0;index<participants.size();++index) {
+        const auto funds=ledger_->snapshot(participants[index]);
+        if(!funds.funds.deposit) throw CodecError("richonline_stock_deposit_unknown");
+        result.funds_[index]={participants[index],funds,funds.funds};
+        result.holdings_[index]=holding(participants[index],request.stock_slot);
+    }
+    const auto buyer=result.holdings_[0],seller=result.holdings_[1];
+    const float total=market.price*static_cast<float>(quantity);
+    const bool amount_valid=std::isfinite(total) && static_cast<double>(total)<=maximum;
+    const auto amount=amount_valid ? static_cast<std::uint32_t>(total) : 0U;
+    // 676C8C先把整数存成float，再在x87中乘0.75直接转整数，中间没有float写回。
+    const auto payout=static_cast<std::uint32_t>(static_cast<double>(static_cast<float>(amount))*0.75);
+    const auto buyer_deposit=*result.funds_[0].before.funds.deposit;
+    const auto seller_deposit=*result.funds_[1].before.funds.deposit;
+    const char* reason="accepted";
+    if(quantity>maximum) reason="quantity_limit";
+    else if(quantity==0 && seller.quantity!=0) reason="quantity_required";
+    else if(quantity>seller.quantity) reason="insufficient_holding";
+    else if(!amount_valid) reason="amount_limit";
+    else if(buyer_deposit<amount) reason="insufficient_deposit";
+    else if(payout>maximum-seller_deposit) reason="deposit_limit";
+    else if(quantity>maximum-buyer.quantity) reason="holding_limit";
+    result.reason_=reason;result.accepted_=result.reason_=="accepted";
+    if(result.accepted_) {
+        available_revision(revision_);
+        if(quantity) {
+            result.holdings_[0].quantity+=quantity;
+            // 7F9A00把包中的整数成交额计入成本，与普通买入的float总价不同。
+            result.holdings_[0].cost+=static_cast<float>(amount);
+            result.holdings_[1].quantity-=quantity;
+            result.holdings_[1].cost=(seller.cost/static_cast<float>(seller.quantity))*
+                static_cast<float>(result.holdings_[1].quantity);
+            for(const auto& entry:result.holdings_)
+                if(!std::isfinite(entry.cost) || entry.cost<0) throw CodecError("richonline_stock_cost_invalid");
+            *result.funds_[0].after.deposit-=amount;
+            *result.funds_[1].after.deposit+=payout;
+        }
+        append_le(result.response_,0x40e6,2);append_le(result.response_,game_,2);
+        append_le(result.response_,static_cast<std::uint8_t>(request.inventory_slot),1);
+        append_le(result.response_,0,1);append_le(result.response_,request.target,1);append_le(result.response_,0,1);
+        append_le(result.response_,request.stock_slot,2);append_le(result.response_,0,2);
+        append_le(result.response_,quantity,4);append_le(result.response_,amount,4);
+        append_le(result.response_,*result.funds_[0].after.deposit,4);
+        append_le(result.response_,*result.funds_[1].after.deposit,4);
+    }
+    if(script_) {
+        const auto plan=script_->call("card.stock_subscription",{{"game_id",game_},
+            {"inventory_slot",request.inventory_slot},{"stock_slot",request.stock_slot},{"target",request.target},
+            {"quantity",quantity},{"buyer_holding",buyer.quantity},{"seller_holding",seller.quantity},
+            {"buyer_deposit",buyer_deposit},{"seller_deposit",seller_deposit},
+            {"amount_valid",amount_valid},{"amount",amount}});
+        const LuaValue expected{{"accepted",result.accepted_},{"reason",result.reason_},
+            {"consumes_card",result.consumes_card()},{"message",lua_bytes(View(result.response_))}};
+        if(plan!=expected) throw CodecError("lua_stock_subscription_invalid");
+    }
+    return result;
+}
+bool RichonlineStockMarket::commit(const Subscription& plan,std::span<const std::uint8_t> active,
+    RichonlineBossCards& cards) {
+    if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.cards_!=&cards ||
+        active.size()!=ledger_->actor_count() || !std::equal(active.begin(),active.end(),plan.active_.begin()) ||
+        cards.inventory()!=plan.source_inventory_) return false;
+    available_revision(revision_);
+    return ledger_->commit_asset_exchange(plan.funds_,[&] {
+        cards.commit_inventory(plan.remaining_inventory_);
+        for(std::size_t index=0;index<plan.funds_.size();++index)
+            holdings_[plan.funds_[index].actor][plan.slot_]=plan.holdings_[index];
+        // 认购是双方之间转股；7F9A00/7F9B50均不增减市场剩余股数。
+        ++revision_;return true;
     });
 }
 }

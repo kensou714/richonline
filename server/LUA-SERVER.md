@@ -9,6 +9,7 @@
 - 股票成交底层在 `gameplay/stock.cpp` 和 `game/stock.lua`（`stock.trade`）：维护至多十槽的权威报价/剩余量与角色持仓成本，准备完整4204/4205，再与存款原子提交。**当前未挂接实际对局**；行情初始化、普通地图准入及六张股票卡仍未完成，不能据此认为股票已开放。边界见 `evidence/stock-trade-core.md`。
 - 股票资源与开局准备在 `resources/stock.cpp`（`stock.open`）：解析Stock.kpd及EMP的股票配置编号表，按客户端地图类型门禁接收每槽30点的明确历史，准备4200/4201并从末两点建立相同报价。此为待接入的开局准备器，没有伪造历史生成器或自动启用BOSS股票，详见 `evidence/stock-opening.md`。
 - 强抛卡1124新增 `card.stock_forced_sale` 准备事件：独立卡片Lua复核清仓金额边界和40E7，股票核心绑定原手牌、报价版本、在场槽及全体存款快照，原子提交扣卡与清仓。网络 `use` 入口仍拒绝，待普通股票对局工厂及路由接入；详见 `evidence/stock-forced-sale.md`。
+- 认购卡1123新增 `card.stock_subscription` 准备事件：按服务端明确提供的数量转移双方持仓，以现价计算成交额，并按客户端单精度转换后的75%给卖方入账；不增减市场剩余股数。零数量仅用于目标已卖光的恢复包，不扣卡。数量分配策略与实际路由仍待接入，详见 `evidence/stock-subscription.md`。
 - 大地产12的建造、升级、研究选择在 `tiles/tile_12.lua`，事件 `property.construct`、`property.upgrade`、`property.research`。核心提供真实产权/等级/场景上限/技能/许可证库存/研究空槽，逐项核对决策、续接类型和完整403D/403E/403F后才提交；BOSS自动建造升级也使用同一模块。落点分流、购地、神庙/花园及研究到期发卡仍在核心，详见 `evidence/lua-property-decisions.md`。
 - 银行格9的开窗和存取款业务在 `tiles/tile_9.lua`，事件 `bank.open`、`bank.transaction`。核心先认证请求日历、道路和待决账户，Lua决定存取款／取消／超时并组织4018、402A；完整回包、金额和余额通过核心复核后才关闭等待，再经共享账本提交。路过续行与落点续接仍由核心状态机负责，详见 `evidence/lua-bank-tile.md`。
 - 装备回合回血业务在 `mall/equipment_effects.lua`，事件 `mall.equipment_healing`；核心提供资源条件值并校验计划，通过共享资金顺序事务镜像客户端本地回血，各笔正收入分别累计、全部原子提交。
