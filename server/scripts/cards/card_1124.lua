@@ -1,6 +1,6 @@
 -- 强抛卡（资源编号 1124）。本文件是该卡的独立业务入口。
 -- C2S 操作号 151；request.payload 是未加密的完整内部报文，包含操作号。
--- 股票尚未接入实际对局：use仍恢复控件；liquidate供已绑定股票内核准备原子计划。
+-- 已配置股票的经典会话用liquidate原子清仓；BOSS的use仍拒绝并恢复控件。
 -- reward_enabled 只控制随机赠卡；还必须通过资源 enable、CARD 类型及地图允许列表。
 local M = { id = 1124, name = "强抛卡", opcode = 151, reward_enabled = false, implementation = "native_compatibility" }
 local protocol = require("core.protocol")

@@ -700,6 +700,53 @@ struct Session {
             " deposit_before="+std::to_string(*before.funds.deposit)+" deposit_after="+std::to_string(*after.funds.deposit));
         return messages;
     }
+    std::vector<Bytes> stock_card(View request) {
+        const auto opcode=read_le(request.first(2));
+        // use只由已认证的当前行动者在roll阶段进入；与无日历的0200/0201分开。
+        std::vector<Bytes> refused{encode_richonline_dice_recovery400b(board.game_server_id)};
+        const auto reject=[&](const std::string& reason) {
+            if(rules.log) rules.log("richonline_classic_stock_card_refused actor="+std::to_string(actor)+
+                " opcode="+std::to_string(opcode)+" reason="+reason);
+            return refused;
+        };
+        if(opcode==0x97) {
+            const auto use=decode_richonline_stock_forced_sale_request(request);
+            if(!world.stocks) return reject("stock_not_enabled");
+            const auto plan=world.stocks->prepare_forced_sale(actor,use,active,*world.cards[actor]);
+            if(!plan.accepted()) return reject(plan.reason());
+            std::vector<Bytes> messages{plan.response()};
+            remember(actor,request);
+            if(!world.stocks->commit(plan,active,*world.cards[actor]))
+                throw CodecError("richonline_classic_stock_forced_sale_stale");
+            if(rules.log) rules.log("richonline_classic_stock_forced_sale actor="+std::to_string(actor)+
+                " stock="+std::to_string(use.stock_slot)+" sequence="+std::to_string(sequence));
+            return messages;
+        }
+        const auto use=decode_richonline_stock_subscription_request(request);
+        if(!world.stocks) return reject("stock_not_enabled");
+        if(use.target>=active.size() || use.target==actor || !active[use.target])
+            return reject("target_not_active_opponent");
+        if(!world.cards[actor]->prepare_consumption(use.inventory_slot,1123)) return reject("card_not_owned");
+        const RichonlineClassicSubscriptionContext snapshot{actor,use.target,use.stock_slot,
+            world.stocks->quote(use.stock_slot),world.stocks->holding(actor,use.stock_slot),
+            world.stocks->holding(use.target,use.stock_slot),world.ledger->snapshot(actor),world.ledger->snapshot(use.target)};
+        std::uint32_t quantity=0;
+        if(snapshot.seller_holding.quantity) {
+            if(!rules.subscription_quantity) return reject("subscription_quantity_policy_missing");
+            quantity=rules.subscription_quantity(snapshot);
+        }
+        const auto plan=world.stocks->prepare_subscription(actor,use,quantity,active,*world.cards[actor]);
+        if(!plan.accepted()) return reject(plan.reason());
+        std::vector<Bytes> messages{plan.response()};
+        remember(actor,request);
+        if(!world.stocks->commit(plan,active,*world.cards[actor]))
+            throw CodecError("richonline_classic_stock_subscription_stale");
+        if(rules.log) rules.log("richonline_classic_stock_subscription actor="+std::to_string(actor)+
+            " target="+std::to_string(use.target)+" stock="+std::to_string(use.stock_slot)+
+            " quantity="+std::to_string(quantity)+" consumes_card="+std::to_string(plan.consumes_card())+
+            " sequence="+std::to_string(sequence));
+        return messages;
+    }
     std::vector<Bytes> action(std::uint8_t sender,View request) {
         healthy();
         if(request.size()<4 || sender>=board.participants.size())
@@ -727,6 +774,7 @@ struct Session {
         }
         if(sender!=actor) throw CodecError("richonline_classic_sender_not_active");
         if(phase==Phase::roll) {
+            if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==0x32) {
                 const auto discard=parse_richonline_card_discard50(request);
                 auto prepared=world.cards[actor]->prepare_discard(discard,static_cast<std::int8_t>(actor));

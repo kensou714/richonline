@@ -1,6 +1,7 @@
 -- 认购卡（资源编号 1123）。本文件是该卡的独立业务入口。
 -- C2S 操作号 150；request.payload 是未加密的完整内部报文，包含操作号。
--- 普通股票对局尚未接入；transfer接收核心明确的成交数量，不在这里猜测数量策略。
+-- 经典会话在已配置股票及数量策略时调用transfer；目标已卖光时零数量确认不扣卡。
+-- 数量由受信任准入策略明确提供，不在这里猜测全量或最大可负担量。
 -- reward_enabled 只控制随机赠卡；还必须通过资源 enable、CARD 类型及地图允许列表。
 local M = { id = 1123, name = "认购卡", opcode = 150, reward_enabled = false, implementation = "native_compatibility" }
 local protocol = require("core.protocol")

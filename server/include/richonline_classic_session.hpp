@@ -44,6 +44,13 @@ struct RichonlineClassicStockPolicy {
     std::vector<RichonlineStockHistory> history;
     float previous_index,current_index,factor;
 };
+struct RichonlineClassicSubscriptionContext {
+    std::uint8_t buyer,seller;
+    std::uint16_t stock_slot;
+    RichonlineStockQuote quote;
+    RichonlineStockHolding buyer_holding,seller_holding;
+    RichonlineGameFundsSnapshot buyer_funds,seller_funds;
+};
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
     std::uint8_t first_actor,opaque_turn7;
@@ -69,6 +76,9 @@ struct RichonlineClassicSessionRules {
     std::function<std::unique_ptr<RichonlineClassicTerminal>(const RichonlineClassicWorld&)> settlement;
     // 准入层明确提供按地图槽排列的真实初始行情；缺席时不开放股票，不生成假历史。
     std::optional<RichonlineClassicStockPolicy> stocks;
+    // 0096没有数量字段。策略只读本次快照并返回数量，不得修改市场/账本或发包。
+    // 缺席时仅支持已无持仓的40E6零数量确认；有持仓则恢复操作，不猜全量/最大数量。
+    std::function<std::uint32_t(const RichonlineClassicSubscriptionContext&)> subscription_quantity;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

@@ -1,5 +1,7 @@
 # 认购卡1123持仓转移（待数量策略和会话接入）
 
+后续经典共享会话已接入0096以及显式数量策略接口，见 `classic-stock-cards.md`；原版数量规则仍待确认。本文保留底层计划完成时的证据和边界。
+
 ## 本轮新核对的证据
 
 `stock-subscription-client.json` 保存九段只读取证：请求生产658510、40E6处理676BA0、转入7F9A00、转出7F9B50、存款getter63F650、现价getter692FA0、ftol2跳板/转换例程及0.75常量。每段IDB字节均与当前磁盘RnClient.exe映射的PE字节比较一致；当前EXE SHA256为 `feeeac1bf9605690e8a774452456320125d7d3dbaa2dc73d529f8230c0677bc7`。未修改客户端或IDB，不以旧IDB输入散列代替当前磁盘版本。
