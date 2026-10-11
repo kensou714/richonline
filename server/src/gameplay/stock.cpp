@@ -1,5 +1,7 @@
 #include "richonline_stock.hpp"
+#include "richonline_boss_cards.hpp"
 #include "lua_wire.hpp"
+#include <algorithm>
 #include <bit>
 #include <cmath>
 #include <limits>
@@ -24,6 +26,15 @@ RichonlineStockRequest decode_richonline_stock_request(View plain) {
     if(slot>=10 || quantity==0 || quantity>32767) throw CodecError("richonline_stock_request_fields_invalid");
     return {opcode==0x200 ? RichonlineStockAction::buy : RichonlineStockAction::sell,
         static_cast<std::uint16_t>(slot),static_cast<std::uint16_t>(quantity)};
+}
+RichonlineStockForcedSaleRequest decode_richonline_stock_forced_sale_request(View plain) {
+    if(plain.size()!=8 || read_le(plain.first(2))!=0x97)
+        throw CodecError("richonline_stock_forced_sale_request_invalid");
+    const auto slot=read_le(plain.subspan(6,2));
+    if(plain[4]>=8 || plain[5]!=0 || slot>=10)
+        throw CodecError("richonline_stock_forced_sale_fields_invalid");
+    return {static_cast<std::uint16_t>(read_le(plain.subspan(2,2))),
+        static_cast<std::uint16_t>(slot),static_cast<std::int8_t>(plain[4])};
 }
 RichonlineStockMarket::RichonlineStockMarket(std::uint16_t game,std::shared_ptr<RichonlineGameLedger> ledger,
     std::vector<RichonlineStockQuote> quotes,float rise_limit,float fall_limit,std::shared_ptr<LuaServer> script)
@@ -131,6 +142,80 @@ bool RichonlineStockMarket::commit(const Trade& plan) {
     return ledger_->commit_asset_exchange(updates,[&] {
         // 全部可能失败的计算、Lua和资金校验已完成；回调只写标量，不分配或回调账本。
         holdings_[plan.funds_.actor][plan.slot_]=plan.holding_;
+        quotes_[plan.slot_].supply=plan.supply_;++revision_;
+        return true;
+    });
+}
+RichonlineStockMarket::ForcedSale RichonlineStockMarket::prepare_forced_sale(std::uint8_t actor,
+    const RichonlineStockForcedSaleRequest& request,std::span<const std::uint8_t> active,
+    const RichonlineBossCards& cards) const {
+    if(active.size()!=ledger_->actor_count() || actor>=active.size() || active[actor]!=1 ||
+        std::any_of(active.begin(),active.end(),[](auto value){return value>1;}))
+        throw CodecError("richonline_stock_forced_sale_actors_invalid");
+    const auto market=quote(request.stock_slot);
+    const auto consumption=cards.prepare_consumption(request.inventory_slot,1124);
+    ForcedSale result;result.owner_=this;result.cards_=&cards;result.revision_=revision_;
+    result.slot_=request.stock_slot;result.supply_=market.supply;
+    std::copy(active.begin(),active.end(),result.active_.begin());
+    if(!consumption) {result.reason_="card_not_owned";return result;}
+    result.source_inventory_=consumption->source_inventory;
+    result.remaining_inventory_=consumption->remaining_inventory;
+    result.reason_="accepted";
+    LuaValue rows=LuaValue::array();
+    std::uint64_t returned=0;
+    for(std::size_t index=0;index<active.size();++index) {
+        const auto participant=static_cast<std::uint8_t>(index);
+        const auto funds=ledger_->snapshot(participant);
+        if(!funds.funds.deposit) throw CodecError("richonline_stock_deposit_unknown");
+        const auto before=holding(participant,request.stock_slot);
+        const float total=market.price*static_cast<float>(before.quantity);
+        const bool amount_valid=std::isfinite(total) && static_cast<double>(total)<=maximum;
+        const auto amount=amount_valid ? static_cast<std::uint32_t>(total) : 0U;
+        RichonlineGameFundsUpdate update{participant,funds,funds.funds};
+        if(active[index]) {
+            returned+=before.quantity;
+            if(!amount_valid) {
+                if(result.reason_=="accepted") result.reason_="amount_limit";
+            } else if(amount>maximum-*funds.funds.deposit) {
+                if(result.reason_=="accepted") result.reason_="deposit_limit";
+            } else *update.after.deposit+=amount;
+        }
+        result.funds_.push_back(update);
+        rows.push_back({{"active",active[index]!=0},{"quantity",before.quantity},
+            {"deposit",*funds.funds.deposit},{"amount_valid",amount_valid},{"amount",amount}});
+    }
+    if(result.reason_=="accepted" && returned>maximum-market.supply) result.reason_="supply_limit";
+    result.accepted_=result.reason_=="accepted";
+    if(result.accepted_) {
+        available_revision(revision_);
+        result.supply_+=static_cast<std::uint32_t>(returned);
+        append_le(result.response_,0x40e7,2);append_le(result.response_,game_,2);
+        append_le(result.response_,static_cast<std::uint8_t>(request.inventory_slot),1);
+        append_le(result.response_,0,1);append_le(result.response_,request.stock_slot,2);
+        // 677180按+8+4*原角色槽取存款；包括未活动槽，避免后续角色读错位。
+        for(const auto& update:result.funds_) append_le(result.response_,*update.after.deposit,4);
+    }
+    if(script_) {
+        const auto plan=script_->call("card.stock_forced_sale",{{"game_id",game_},
+            {"inventory_slot",request.inventory_slot},{"stock_slot",request.stock_slot},
+            {"supply",market.supply},{"actors",std::move(rows)}});
+        const LuaValue expected{{"accepted",result.accepted_},{"reason",result.reason_},
+            {"message",lua_bytes(View(result.response_))}};
+        if(plan!=expected) throw CodecError("lua_stock_forced_sale_invalid");
+    }
+    return result;
+}
+bool RichonlineStockMarket::commit(const ForcedSale& plan,std::span<const std::uint8_t> active,
+    RichonlineBossCards& cards) {
+    if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.cards_!=&cards ||
+        active.size()!=ledger_->actor_count() || !std::equal(active.begin(),active.end(),plan.active_.begin()) ||
+        cards.inventory()!=plan.source_inventory_) return false;
+    available_revision(revision_);
+    return ledger_->commit_asset_exchange(plan.funds_,[&] {
+        // 账本先校验所有快照；此后仅有不抛异常的库存/持仓标量写入。
+        cards.commit_inventory(plan.remaining_inventory_);
+        for(std::size_t actor=0;actor<active.size();++actor)
+            if(active[actor]) holdings_[actor][plan.slot_]={};
         quotes_[plan.slot_].supply=plan.supply_;++revision_;
         return true;
     });

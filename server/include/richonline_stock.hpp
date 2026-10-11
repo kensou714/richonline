@@ -2,10 +2,18 @@
 
 // 局内股票：市场槽与Stock.kpd配置编号分开，持仓与资金共享会话串行化边界。
 #include "richonline_game_ledger.hpp"
+#include "richonline_chance.hpp"
 #include "lua_server.hpp"
 #include <memory>
 
 namespace richnet {
+class RichonlineBossCards;
+struct RichonlineStockForcedSaleRequest {
+    std::uint16_t calendar_counter,stock_slot;
+    std::int8_t inventory_slot;
+};
+// 0097使用日历和主手牌槽；当前只支持已有主手牌库存，不接受未知分组。
+RichonlineStockForcedSaleRequest decode_richonline_stock_forced_sale_request(View);
 enum class RichonlineStockAction { buy, sell };
 struct RichonlineStockRequest {
     RichonlineStockAction action;
@@ -61,6 +69,32 @@ public:
     Trade prepare(std::uint8_t actor,const RichonlineStockRequest&) const;
     // 同一计划不能提交两次；价格/限制/持仓/资金变化均使旧计划失效。
     bool commit(const Trade&);
+    class ForcedSale final {
+    public:
+        bool accepted() const noexcept {return accepted_;}
+        const std::string& reason() const noexcept {return reason_;}
+        const Bytes& response() const noexcept {return response_;}
+    private:
+        ForcedSale()=default;
+        const RichonlineStockMarket* owner_=nullptr;
+        const RichonlineBossCards* cards_=nullptr;
+        std::uint64_t revision_=0;
+        bool accepted_=false;
+        std::string reason_;
+        Bytes response_;
+        std::uint16_t slot_=0;
+        std::uint32_t supply_=0;
+        std::array<std::uint8_t,8> active_{};
+        std::vector<RichonlineGameFundsUpdate> funds_;
+        RichonlineChanceInventory source_inventory_{},remaining_inventory_{};
+        friend class RichonlineStockMarket;
+    };
+    // 上层验证日历、当前操作者及手牌归属。active按原角色槽排列，不能压缩淘汰槽。
+    // 卡牌直接按现价清仓，不应用普通买卖的涨跌停/闭市门；零持仓也消耗1124。
+    ForcedSale prepare_forced_sale(std::uint8_t actor,const RichonlineStockForcedSaleRequest&,
+        std::span<const std::uint8_t> active,const RichonlineBossCards& cards) const;
+    // 会话串行化边界内重新核验活动角色、手牌、市场和账本，然后一次提交扣卡/清仓/资金。
+    bool commit(const ForcedSale&,std::span<const std::uint8_t> active,RichonlineBossCards& cards);
 private:
     std::uint16_t game_;
     std::shared_ptr<RichonlineGameLedger> ledger_;
