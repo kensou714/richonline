@@ -20,3 +20,13 @@
 账本提交前重新确认资金版本、行动角色状态、位置、活动资格、脚本状态及phase6授权。受控角色或兑换不足25点券只确认落点，不改金额；达到边界时按已有有符号资金范围拒绝溢出。共享移动上报仍先全员汇合后触发一次落点。日志`richonline_classic_local_reward`记录角色、位置和资金前后值。
 
 本轮不新增或运行测试，不启动本机服务/客户端；仅静态逆向、代码审阅、固定源码Release编译及Lua语法编译。完整经典准入、地产资产估值公式及其余业务仍需继续；NPC购地延时修复已在前一版本上线，弹窗恢复仍待用户实测。
+
+## 发布记录
+
+- 源码提交：`8c0121198b871ab64e87e49d5db33a5cc22b64cb`，已推送GitHub main；固定源码树`02cd569079cf32e9adaaacb427a4fe28bc7b5de8`的Release编译与166份Lua语法编译成功。
+- 线上release：`8c0121198b87`，PID12072，instanceId `12072-93392513914500`。
+- 实际进程与计划任务均为`D:\richonline\releases\8c0121198b87\RichOnline.Server.exe`；EXE SHA256为`88A8D80036D67448DC9054F8695BD6638245CF18D3DC6286BF13FD8EC428A4A7`。
+- 部署前已在线备份数据库并通过ExpectedInstance正常停止旧版；持久数据目录仍为`D:\richonline\shared\data`。
+- 六类监听ready，18600/18602/18604/18605/18606/18680公网TCP均连通，RichNetLogin.txt及RichNetServer.txt均HTTP200。
+- 保留商城compat_2021_v1、richonline-inventory-date-2021-v1及全部BOSS地图测试开关。本机EXE同哈希、166份运行Lua与发布包一致，未启动本机服务。
+- 私有完整收据见`server/build-goal-resume/release-8c0121198b87-receipt.json`；未运行玩法测试，未宣称经典生产玩法或NPC购地弹窗已获实机验收。
