@@ -21,7 +21,7 @@ std::optional<RichonlinePortalLandingPlan> plan_richonline_portal_landing(
     const std::optional<std::array<std::int16_t,2>>& pair,
     const RichonlineLandingContext&,bool scripted_event_active);
 // Native policy for static58: choose another nonisolated road on the map.
-// 4209 relocates without triggering effects at the destination.
+// 4209只重定位，不触发目标格静态事件；出口地雷由回合层显式检查并发送4017。
 std::optional<RichonlinePortalLandingPlan> plan_richonline_random_teleport_landing(
     std::uint16_t game,const RichonlineRoadTopology&,
     const RichonlineLandingContext&,bool scripted_event_active);

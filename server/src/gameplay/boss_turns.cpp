@@ -1081,8 +1081,58 @@ struct Turns {
         }
         return advance(std::move(messages));
     }
+    std::vector<Bytes> portal_messages(const PendingLanding& landing,const RichonlinePortalLandingPlan& plan,
+        std::int16_t destination,std::optional<std::size_t> random_index,std::vector<Bytes> messages) {
+        if(rules.script) {
+            bool prepared=false,random_read=false,native_called=false;
+            const auto kind=plan.continuation==RichonlinePortalContinuation::random_teleport ? "random" :
+                plan.continuation==RichonlinePortalContinuation::awaiting_server_continuation ? "paired" : "skip";
+            const LuaBindings api{{"tile.native",[&](const LuaValue&) {
+                // 旧模块只选择兼容路径；这里不更新位置，脚本返回后才执行原续接。
+                if(prepared || native_called) throw CodecError("lua_portal_native_already_called");
+                native_called=true;return LuaValue(true);
+            }},{"tile.portal.prepare",[&](const LuaValue&) {
+                if(prepared || native_called) throw CodecError("lua_portal_already_prepared");
+                prepared=true;
+                return LuaValue{{"kind",kind},{"destination",plan.authoritative_position},
+                    {"destinations",plan.random_destinations}};
+            }},{"tile.portal.random",[&](const LuaValue& args) {
+                if(!prepared || random_read || !random_index ||
+                    args!=LuaValue{{"bound",plan.random_destinations.size()}})
+                    throw CodecError("lua_portal_random_invalid");
+                random_read=true;return LuaValue(*random_index);
+            }}};
+            const auto response=rules.script->call("tile.land",{{"type",plan.expected.static_type},
+                {"position",landing.position},{"actor",actor},{"map",rules.script_map},
+                {"game_id",init.game_server_id},{"portal_landing_available",true}},api);
+            if(native_called) {
+                if(response!=true) throw CodecError("lua_portal_native_response_invalid");
+            } else {
+                if(!prepared || random_read!=random_index.has_value() || !response.is_object() || response.size()!=2 ||
+                    !response.contains("destination") || !response.contains("messages") ||
+                    !response.at("destination").is_number_integer() || response.at("destination")!=destination)
+                    throw CodecError("lua_portal_response_invalid");
+                const auto& packets=response.at("messages");
+                if(!packets.is_array() || packets.size()!=messages.size()) throw CodecError("lua_portal_packets_invalid");
+                std::vector<Bytes> scripted;
+                for(const auto& packet:packets) scripted.push_back(lua_bytes(packet));
+                if(scripted!=messages) throw CodecError("lua_portal_packets_mismatch");
+                messages=std::move(scripted);
+            }
+            // 再读取脚本事件授权；此前仅准备/抽样，位置、宠物和出口地雷均未修改。
+            const auto current=rules.portal_landing(plan.expected);
+            if(status[actor]!=plan.expected.actor_status || !current ||
+                current->continuation!=plan.continuation || current->authoritative_position!=plan.authoritative_position ||
+                current->confirmation!=plan.confirmation || current->random_destinations!=plan.random_destinations)
+                throw CodecError("lua_portal_plan_changed");
+        }
+        // 完整4013参与脚本校验；若NPC阶段已经发送，传输前只删掉这一帧。
+        if(landing.sent_stop) messages.erase(messages.begin());
+        return messages;
+    }
     std::vector<Bytes> finish_landing(PendingLanding landing) {
         const auto& cell=topology.cell(landing.position);
+        std::optional<RichonlineLandingResult> scripted_result;
         if (cell.static_type==9 && rules.bank && !richonline_landing_controlled(status[actor])) {
             if (cell.property_ref!=-1) throw CodecError("richonline_boss_bank_property_phase_unimplemented");
             for (std::size_t slot=0;slot<init.participants.size();++slot)
@@ -1125,11 +1175,11 @@ struct Turns {
                 const auto destination=portal->random_destinations[chosen];
                 if(destination==landing.position || !topology.cell(destination).walkable)
                     throw CodecError("richonline_random_teleport_destination_invalid");
-                std::vector<Bytes> messages;
-                if(!landing.sent_stop) messages.push_back(std::move(entrance));
+                std::vector<Bytes> messages{std::move(entrance)};
                 Bytes relocation;append_le(relocation,0x4209,2);append_le(relocation,init.game_server_id,2);
                 append_le(relocation,static_cast<std::uint16_t>(destination),2);
                 messages.push_back(std::move(relocation));
+                messages=portal_messages(landing,*portal,destination,chosen,std::move(messages));
                 if(rules.log) rules.log("richonline_random_teleport actor="+std::to_string(actor)+
                     " source="+std::to_string(landing.position)+" destination="+std::to_string(destination)+
                     " policy=native-uniform-walkable-road-v1");
@@ -1142,11 +1192,13 @@ struct Turns {
                     (cell.static_type==61 && topology.portal_destination(landing.position)!=portal->authoritative_position))
                     throw CodecError("richonline_boss_portal_destination_invalid");
                 return complete_portal_landing(landing,portal->authoritative_position,
-                    landing.sent_stop ? std::vector<Bytes>{} : std::vector<Bytes>{std::move(entrance)});
+                    portal_messages(landing,*portal,portal->authoritative_position,{}, {std::move(entrance)}));
             }
             if(portal->continuation!=RichonlinePortalContinuation::property_phase2 ||
                 portal->authoritative_position!=landing.position)
                 throw CodecError("richonline_boss_portal_continuation_invalid");
+            if(context.property_ref==-1) scripted_result=RichonlineLandingResult{
+                portal_messages(landing,*portal,landing.position,{}, {std::move(entrance)}),RichonlineLandingProgress::complete};
         }
         const auto context=landing_context(landing.position);
         const auto native_landing=[&]() {
@@ -1154,8 +1206,7 @@ struct Turns {
             if(!richonline_landing_controlled(status[actor]) && !card_result && rules.cards) card_result=rules.cards->land(context);
             return card_result ? std::move(*card_result) : rules.landed(context);
         };
-        std::optional<RichonlineLandingResult> scripted_result;
-        if(rules.script) {
+        if(!scripted_result && rules.script) {
             std::optional<RichonlineBossCards::PreparedLanding> reward_plan;
             std::optional<RichonlineTicketLandingPlan> ticket_plan;
             std::optional<RichonlinePreparedSpecialLanding> merchant_plan;
@@ -1298,7 +1349,7 @@ struct Turns {
                 scripted_result=rules.merchant->commit(context,*merchant_plan,merchant_scripted);
             }
             if(!scripted_result) throw CodecError("lua_landing_continuation_required");
-        } else scripted_result=native_landing();
+        } else if(!scripted_result) scripted_result=native_landing();
         auto result=std::move(*scripted_result);
         if(landing.sent_stop) {
             for(auto it=result.messages.begin();it!=result.messages.end();) {
