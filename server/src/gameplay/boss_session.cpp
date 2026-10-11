@@ -207,6 +207,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     rules.script_map=stage.map_name;
     rules.script_database=policy.script_database;
     rules.merchant=merchant;
+    rules.shop=shop;
     rules.research_turn_started=[property](std::uint8_t actor){property->advance_research(actor);};
     rules.cards=std::move(cards);
     rules.property=property;

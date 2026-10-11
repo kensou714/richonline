@@ -13,6 +13,26 @@ public:
     using Clock = std::chrono::steady_clock;
     using Now = std::function<Clock::time_point()>;
     using ChargeReserve = std::function<bool(std::uint32_t)>;
+    class PreparedLanding {
+    public:
+        const RichonlineLandingResult& result() const noexcept { return result_; }
+        const RichonlineShopStock& offers() const noexcept { return offers_; }
+        const std::array<std::uint8_t,2>& opaque() const noexcept { return opaque_; }
+        bool opens() const noexcept { return opens_; }
+        std::uint32_t points() const noexcept { return points_; }
+    private:
+        PreparedLanding()=default;
+        const RichonlineBossShop* owner_=nullptr;
+        std::uint64_t generation_=0;
+        std::optional<RichonlineGameFundsSnapshot> funds_;
+        RichonlineChanceInventory inventory_{};
+        RichonlineShopStock offers_{};
+        std::array<std::uint8_t,2> opaque_{};
+        RichonlineLandingResult result_{};
+        std::uint32_t points_=0;
+        bool opens_=false,committed_=false;
+        friend class RichonlineBossShop;
+    };
     // Live sessions pass their authoritative RNG here. An omitted chooser keeps
     // stable catalog order only for standalone deterministic compatibility callers.
     // 客户端未读取货架偏移 4/5 字节；这是显式兼容策略，没有已确认的游戏含义。
@@ -27,6 +47,10 @@ public:
     void configure_refresh(const RichonlineGoldCharges& client_values,ChargeReserve charge);
     // Pure preflight: false means this shop does not handle the landing; invalid state throws.
     bool validate_landing(const RichonlineLandingContext& context) const;
+    // 准备只抽货架；Lua回包校验后才开启等待、写货架和计时器。
+    std::optional<PreparedLanding> prepare_landing(const RichonlineLandingContext&,std::uint32_t points) const;
+    std::optional<PreparedLanding> prepare_landing(const RichonlineLandingContext&) const;
+    RichonlineLandingResult commit_landing(PreparedLanding&);
     std::optional<RichonlineLandingResult> land(const RichonlineLandingContext& context,std::uint32_t points);
     std::optional<RichonlineLandingResult> land(const RichonlineLandingContext& context);
     // 调用方须先校验已认证角色、回合计数及当前待处理商店，再分派请求。
@@ -55,6 +79,7 @@ private:
     unsigned refreshes_ = 0;
     std::optional<Clock::time_point> deadline_;
     const char* last_decision_ = "not_open";
+    std::uint64_t open_generation_=0;
     Bytes response(std::uint16_t opcode,std::int8_t index) const;
     Bytes stock(const RichonlineShopStock& offers,bool refreshed) const;
     RichonlineLandingResult close(const char* reason);

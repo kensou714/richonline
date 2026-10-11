@@ -23,6 +23,7 @@
 #include "richonline_pet.hpp"
 #include "richonline_pet_chat.hpp"
 #include "richonline_special_session.hpp"
+#include "richonline_boss_shop.hpp"
 #include <limits>
 #include <chrono>
 
@@ -1210,18 +1211,19 @@ struct Turns {
             std::optional<RichonlineBossCards::PreparedLanding> reward_plan;
             std::optional<RichonlineTicketLandingPlan> ticket_plan;
             std::optional<RichonlinePreparedSpecialLanding> merchant_plan;
+            std::optional<RichonlineBossShop::PreparedLanding> shop_plan;
             std::int8_t merchant_scripted=-1;
             std::shared_ptr<RichonlineChanceLandingAttempt> news_plan;
             std::optional<std::int16_t> selected_reward;
             bool native_called=false,random_called=false;
             const auto require_reward=[&] {
-                if(native_called || reward_plan || ticket_plan || merchant_plan || news_plan || !rules.cards || context.actor_slot!=0 || context.synthetic_actor ||
+                if(native_called || reward_plan || ticket_plan || merchant_plan || shop_plan || news_plan || !rules.cards || context.actor_slot!=0 || context.synthetic_actor ||
                     context.game_mode!=3 || context.property_ref!=-1 || richonline_landing_controlled(context.actor_status) ||
                     !richonline_boss_card_reward_tile(context.static_type))
                     throw CodecError("lua_tile_reward_out_of_scope");
             };
             const LuaBindings api{{"tile.native",[&](const LuaValue&) {
-                if(native_called || reward_plan || ticket_plan || merchant_plan || news_plan || random_called) throw CodecError("lua_native_landing_already_called");
+                if(native_called || reward_plan || ticket_plan || merchant_plan || shop_plan || news_plan || random_called) throw CodecError("lua_native_landing_already_called");
                 native_called=true;
                 scripted_result=native_landing();return LuaValue(true);
             }},{"tile.cards.candidates",[&](const LuaValue&) {
@@ -1245,7 +1247,7 @@ struct Turns {
                 if(!reward_plan) throw CodecError("lua_tile_reward_unavailable");
                 return LuaValue(true);
             }},{"tile.tickets.prepare",[&](const LuaValue& args) {
-                if(native_called || reward_plan || ticket_plan || merchant_plan || news_plan || random_called || !rules.ledger)
+                if(native_called || reward_plan || ticket_plan || merchant_plan || shop_plan || news_plan || random_called || !rules.ledger)
                     throw CodecError("lua_tile_ticket_out_of_scope");
                 const auto& amount=args.at("amount");
                 if(!amount.is_number_integer() || amount<0 || amount>80)
@@ -1254,24 +1256,34 @@ struct Turns {
                     rules.ledger->snapshot(context.actor_slot),amount.get<std::uint32_t>());
                 return LuaValue(true);
             }},{"tile.news.prepare",[&](const LuaValue&) {
-                if(native_called || reward_plan || ticket_plan || merchant_plan || news_plan || random_called ||
+                if(native_called || reward_plan || ticket_plan || merchant_plan || shop_plan || news_plan || random_called ||
                     !rules.prepare_chance_landing || !rules.ledger || !rules.cards || !richonline_news_landing_allowed(context))
                     throw CodecError("lua_tile_news_out_of_scope");
                 news_plan=rules.prepare_chance_landing(context);
                 if(!news_plan || !news_plan->prepared) throw CodecError("lua_tile_news_unavailable");
                 return LuaValue(lua_bytes(View(news_plan->prepared->packet)));
             }},{"tile.merchant.prepare",[&](const LuaValue&) {
-                if(native_called || reward_plan || ticket_plan || merchant_plan || news_plan || random_called ||
+                if(native_called || reward_plan || ticket_plan || merchant_plan || shop_plan || news_plan || random_called ||
                     !rules.merchant || context.static_type!=57)
                     throw CodecError("lua_tile_merchant_out_of_scope");
                 merchant_plan=rules.merchant->prepare(context,merchant_scripted);
                 if(!merchant_plan) throw CodecError("lua_tile_merchant_unavailable");
                 return LuaValue{{"tickets",merchant_plan->before().funds.tickets},{"scripted",merchant_scripted!=-1}};
+            }},{"tile.shop.prepare",[&](const LuaValue&) {
+                if(native_called || reward_plan || ticket_plan || merchant_plan || shop_plan || news_plan || random_called || !rules.shop || !rules.cards)
+                    throw CodecError("lua_tile_shop_out_of_scope");
+                shop_plan=rules.shop->prepare_landing(context);
+                if(!shop_plan) throw CodecError("lua_tile_shop_unavailable");
+                auto offers=LuaValue::array();
+                for(const auto& offer:shop_plan->offers()) offers.push_back({{"card",offer.card_id},{"count",offer.count}});
+                return LuaValue{{"open",shop_plan->opens()},{"offers",std::move(offers)},{"opaque",shop_plan->opaque()}};
             }}};
             const auto response=rules.script->call("tile.land",{{"type",context.static_type},{"position",context.position},
                 {"actor",context.actor_slot},{"map",rules.script_map},{"game_id",init.game_server_id},
                 {"ticket_landing_available",rules.ledger && context.game_mode==3 && context.property_ref==-1},
                 {"merchant_landing_available",rules.merchant && context.game_mode==3 && context.property_ref==-1},
+                {"shop_landing_available",rules.shop && rules.cards && context.actor_slot==0 && !context.synthetic_actor &&
+                    context.game_mode==3 && context.property_ref==-1},
                 {"news_landing_available",rules.prepare_chance_landing && rules.ledger && rules.cards &&
                     richonline_news_landing_allowed(context) && context.property_ref==-1 &&
                     (!context.occupied_by_other_actor || context.collision_resolved) && context.road_degree>0 && context.road_degree<=4},
@@ -1347,6 +1359,24 @@ struct Turns {
                 // 先验证脚本全部输出及当前角色状态；commit再复核脚本状态和资金版本。
                 if(status[actor]!=context.actor_status) throw CodecError("lua_tile_merchant_status_changed");
                 scripted_result=rules.merchant->commit(context,*merchant_plan,merchant_scripted);
+            }
+            if(shop_plan) {
+                if(!response.is_array() || response.size()!=shop_plan->result().messages.size())
+                    throw CodecError("lua_tile_shop_response_invalid");
+                std::vector<Bytes> messages;
+                for(const auto& packet:response) messages.push_back(lua_bytes(packet));
+                if(messages!=shop_plan->result().messages) throw CodecError("lua_tile_shop_response_mismatch");
+                if(status[actor]!=context.actor_status) throw CodecError("lua_tile_shop_status_changed");
+                // 日志文本在提交前分配；旧库存、账本版本及会话代数由商店提交器复核。
+                auto offers=LuaValue::array(),inventory=LuaValue::array();
+                for(const auto& offer:shop_plan->offers()) offers.push_back({{"card",offer.card_id},{"count",offer.count},
+                    {"price",offer.card_id==-1 ? 0U : rules.shop->card_price(offer.card_id)}});
+                for(const auto& slot:rules.cards->inventory()) inventory.push_back({{"card",slot.card_id},{"count",slot.count}});
+                const auto diagnostic="lua_tile_shop_committed "+LuaValue{{"actor",actor},{"position",context.position},
+                    {"open",shop_plan->opens()},{"tickets",shop_plan->points()},{"offers",std::move(offers)},
+                    {"inventory",std::move(inventory)},{"duration_ms",shop_plan->opens() ? 10000 : 0}}.dump();
+                scripted_result=rules.shop->commit_landing(*shop_plan);
+                if(rules.log) rules.log(diagnostic);
             }
             if(!scripted_result) throw CodecError("lua_landing_continuation_required");
         } else if(!scripted_result) scripted_result=native_landing();

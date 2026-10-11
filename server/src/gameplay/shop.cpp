@@ -60,20 +60,47 @@ bool RichonlineBossShop::validate_landing(const RichonlineLandingContext& contex
         throw CodecError("richonline_shop_points_invalid");
     return true;
 }
-std::optional<RichonlineLandingResult> RichonlineBossShop::land(const RichonlineLandingContext& context,std::uint32_t points) {
+std::optional<RichonlineBossShop::PreparedLanding> RichonlineBossShop::prepare_landing(
+    const RichonlineLandingContext& context,std::uint32_t points) const {
     if (!validate_landing(context)) return {};
-    if(auto controlled=resolve_richonline_controlled_static_landing(game_id_,context)) return controlled;
-    if (ledger_ && points!=ledger_->snapshot(0).funds.tickets) throw CodecError("richonline_shop_stale_open_balance");
+    PreparedLanding plan;
+    plan.owner_=this;plan.generation_=open_generation_;plan.inventory_=cards_.inventory();
+    plan.funds_=ledger_ ? std::optional{ledger_->snapshot(0)} : std::nullopt;
+    plan.points_=points;plan.opaque_=stock_opaque_;
+    if(auto controlled=resolve_richonline_controlled_static_landing(game_id_,context)) {
+        plan.result_=std::move(*controlled);return plan;
+    }
+    if(open_generation_==std::numeric_limits<std::uint64_t>::max()) throw CodecError("richonline_shop_generation_overflow");
+    if (plan.funds_ && points!=plan.funds_->funds.tickets) throw CodecError("richonline_shop_stale_open_balance");
     if (points>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max()))
         throw CodecError("richonline_shop_points_invalid");
     Bytes stop; append_le(stop,0x4013,2); append_le(stop,game_id_,2);
     append_le(stop,static_cast<std::uint16_t>(context.position),2);
-    const auto next=catalog_.select(choose_);
-    RichonlineLandingResult result{{std::move(stop),stock(next,false)},RichonlineLandingProgress::await_event,0x30};
-    points_=points; offers_=next; refreshes_=0;
-    deadline_=now_()+std::chrono::seconds{10};
-    last_decision_="opened";
+    plan.offers_=catalog_.select(choose_);plan.opens_=true;
+    plan.result_={{std::move(stop),stock(plan.offers_,false)},RichonlineLandingProgress::await_event,0x30};
+    return plan;
+}
+std::optional<RichonlineBossShop::PreparedLanding> RichonlineBossShop::prepare_landing(const RichonlineLandingContext& context) const {
+    if (!ledger_) throw CodecError("richonline_shop_ledger_required");
+    return prepare_landing(context,ledger_->snapshot(0).funds.tickets);
+}
+RichonlineLandingResult RichonlineBossShop::commit_landing(PreparedLanding& plan) {
+    if(plan.owner_!=this || plan.committed_ || active() || plan.generation_!=open_generation_ ||
+        cards_.inventory()!=plan.inventory_ || (plan.funds_ && ledger_->snapshot(0)!=*plan.funds_))
+        throw CodecError("richonline_shop_open_plan_stale");
+    // 响应复制和时钟读取均在写状态前完成。房间串行执行，提交后不再分配。
+    auto result=plan.result_;
+    const auto deadline=plan.opens_ ? std::optional{now_()+std::chrono::seconds{10}} : std::nullopt;
+    if(plan.opens_) {
+        points_=plan.points_;offers_=plan.offers_;refreshes_=0;
+        deadline_=deadline;last_decision_="opened";++open_generation_;
+    }
+    plan.committed_=true;
     return result;
+}
+std::optional<RichonlineLandingResult> RichonlineBossShop::land(const RichonlineLandingContext& context,std::uint32_t points) {
+    auto plan=prepare_landing(context,points);
+    return plan ? std::optional{commit_landing(*plan)} : std::nullopt;
 }
 std::optional<RichonlineLandingResult> RichonlineBossShop::land(const RichonlineLandingContext& context) {
     if (!ledger_) throw CodecError("richonline_shop_ledger_required");
