@@ -1,0 +1,84 @@
+#pragma once
+
+#include "richonline_actor_status.hpp"
+#include "richonline_game_ledger.hpp"
+#include "richonline_property_resources.hpp"
+#include "richonline_route.hpp"
+#include <chrono>
+#include <map>
+#include <memory>
+
+namespace richnet {
+class LuaServer;
+enum class RichonlineClassicPropertyChoice { purchase, upgrade };
+enum class RichonlineClassicPropertyOutcome { accepted, declined, timed_out, insufficient_funds };
+enum class RichonlineClassicPropertyContinuation { property_effects };
+struct RichonlineClassicPropertyState {
+    std::int16_t id;
+    std::int8_t sprite_type,kind;
+    std::uint8_t level;
+    std::optional<std::uint8_t> owner;
+    std::uint32_t price;
+    bool operator==(const RichonlineClassicPropertyState&) const = default;
+};
+struct RichonlineClassicPropertyEntry {
+    std::uint16_t game_id,calendar;
+    std::uint64_t turn_sequence;
+    std::uint8_t actor;
+    std::int16_t position,property;
+    // 来自当前行动者的真实P+152，不用未提供的装备值推导半价。
+    std::int32_t land_equipment;
+    RichonlineActorStatus status;
+    bool sealed;
+    bool operator==(const RichonlineClassicPropertyEntry&) const = default;
+};
+struct RichonlineClassicPropertyResult {
+    Bytes message;
+    RichonlineClassicPropertyEntry entry;
+    RichonlineClassicPropertyState before,after;
+    RichonlineClassicPropertyOutcome outcome;
+    std::uint32_t charged;
+    // 4020/4021均先续行附加效果；这里完成选择不代表已经完成落点或回合。
+    RichonlineClassicPropertyContinuation continuation=RichonlineClassicPropertyContinuation::property_effects;
+};
+// mode0真人2..4的单局地产所有权。由共享对局锁串行调用，禁止每个连接复制一份。
+// 本类只接受上层落点分流已授权的购地/普通升级选择：上层先处理碰撞、类型2/6
+// 的前置效果及控制状态，之后才begin。它不替代完整落点分派，也不负责发送4013。
+class RichonlineClassicProperty final {
+public:
+    using Clock=std::chrono::steady_clock;
+    using Now=std::function<Clock::time_point()>;
+    RichonlineClassicProperty(std::uint16_t game_id,RichonlineRoadTopology topology,
+        const RichonlinePropertyResources& resources,std::shared_ptr<RichonlineGameLedger> ledger,
+        Now now,std::chrono::milliseconds timeout,std::shared_ptr<LuaServer> script={});
+    RichonlineClassicProperty(const RichonlineClassicProperty&)=delete;
+    RichonlineClassicProperty& operator=(const RichonlineClassicProperty&)=delete;
+    RichonlineClassicPropertyState snapshot(std::int16_t property) const;
+    // 返回应等待的C2S opcode；不支持的选择抛错，不伪造成功或跳过落点。
+    std::uint16_t begin(RichonlineClassicPropertyChoice,const RichonlineClassicPropertyEntry&);
+    // sender_actor由已认证连接提供；current必须从当前权威回合读取，不能回传旧entry冒充。
+    RichonlineClassicPropertyResult handle(std::uint8_t sender_actor,View request,
+        const RichonlineClassicPropertyEntry& current);
+    std::optional<RichonlineClassicPropertyResult> poll(const RichonlineClassicPropertyEntry& current);
+    bool active() const noexcept { return pending_.has_value(); }
+private:
+    struct Pending {
+        RichonlineClassicPropertyChoice choice;
+        RichonlineClassicPropertyEntry entry;
+        RichonlineClassicPropertyState property;
+        std::uint32_t cost;
+        Clock::time_point deadline;
+    };
+    std::uint16_t game_id_;
+    RichonlineRoadTopology topology_;
+    std::shared_ptr<RichonlineGameLedger> ledger_;
+    Now now_;
+    std::chrono::milliseconds timeout_;
+    std::shared_ptr<LuaServer> script_;
+    std::map<std::int16_t,RichonlineClassicPropertyState> properties_;
+    std::optional<Pending> pending_;
+    void validate_entry(const RichonlineClassicPropertyEntry&) const;
+    void validate_pending(const RichonlineClassicPropertyEntry&) const;
+    RichonlineClassicPropertyResult finish(bool requested,bool timed_out);
+};
+}

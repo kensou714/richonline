@@ -12,6 +12,7 @@ local tiles = require("tiles.registry")
 local bank = require("tiles.tile_9")
 local property = require("tiles.tile_12")
 local missile_base = require("buildings.missile_base")
+local classic_property = require("buildings.classic_property")
 local bosses = require("bosses.registry")
 local boss_chest = require("bosses.chest")
 local lottery = require("cards.card_504")
@@ -32,6 +33,7 @@ local handlers = {
     ["property.research"] = property.research,
     ["building.missile_clock"] = missile_base.clock,
     ["building.missile_target"] = missile_base.target,
+    ["property.classic_choice"] = classic_property.choose,
     ["stock.trade"] = stock.trade,
     ["stock.open"] = stock.open,
     ["stock.quote"] = stock.quote, ["stock.market"] = stock.market,

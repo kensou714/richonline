@@ -15,4 +15,13 @@ struct RichonlinePropertyRequest {
 RichonlinePropertyRequest decode_richonline_property_request(View plain);
 // 输出 0x65e8c0 已确认读取的 5 字节；历史完整包长仍未知。
 Bytes richonline_property_response(std::uint16_t game_id, bool accept);
+struct RichonlinePropertyUpgradeRequest {
+    std::uint16_t calendar;
+    bool accept;
+    // 原构造器没有赋值末字节，不能要求客户端将它填为零。
+    std::uint8_t opaque_tail;
+};
+RichonlinePropertyUpgradeRequest decode_richonline_property_upgrade_request(View plain);
+// 普通升级使用0021/4021；与BOSS特殊建筑的0038/403E分开。
+Bytes richonline_property_upgrade_response(std::uint16_t game_id, bool accept);
 }
