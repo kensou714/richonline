@@ -64,3 +64,21 @@
 静态审阅覆盖取消、售罄、严格现金门、超时、迟到包、无人中奖、奖池溢出、破产释放、
 全员发送完成后的队列等待及研究扫描续接。只做固定源码Release构建与Lua语法编译，
 按用户要求不新增/运行测试、不启动本机服务或游戏。发布结果完成后另行追加。
+
+## 发布结果
+
+- 源码 `6e0cc21bb7bc93b5fb9e06cb5416b33aa5fa880e`，tree
+  `25948303298d36c938a04dbfac8b5f483e938ba5`，已推送并核对GitHub main。
+- 固定提交Release构建成功，170份Lua语法编译通过；未新增/运行测试。
+- 线上release `6e0cc21bb7bc`，PID `7696`，instance `7696-105581554014200`。
+  实际进程和计划任务均使用 `D:\richonline\releases\6e0cc21bb7bc\RichOnline.Server.exe`。
+- EXE SHA256 `0D569497DA3D4330AF2FCAB88D500ED3E6BEDC7669F332468FB2698DF08236DF`；
+  本机EXE已备份再同步，170份Lua逐文件哈希与发布包一致，未启动本机服务或客户端。
+- 安装器先备份数据库，再按ExpectedInstance正常停服切换；备份为
+  `D:\richonline\shared\data\backups\accounts-1791735255094879.sqlite3`。
+  持久目录仍为 `D:\richonline\shared\data`，商城日期兼容与全BOSS地图测试配置保留。
+- 六类监听ready，18600/18602/18604/18605/18606/18680公网TCP成功，两个服务器列表HTTP200。
+- 本地收据 `server/build-goal-resume/release-6e0cc21bb7bc-receipt.json`，另有同版本
+  verified/process/bootstrap-after文件及build/deploy日志。此证据提交不改变二进制源码版本。
+- 十二档金豆券修复是此提交的祖先，继续包含在线上版本中，仍待用户实机成功反馈。
+  本轮不开放完整经典生产准入，不把构建与连通性核验当作玩法验收。
