@@ -24,6 +24,7 @@
 #include "richonline_classic_alliance.hpp"
 #include "richonline_classic_trade.hpp"
 #include "richonline_classic_computer.hpp"
+#include "richonline_stock_simulation.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -32,6 +33,7 @@
 #include <deque>
 #include <limits>
 #include <set>
+#include <type_traits>
 #include <utility>
 
 namespace richnet {
@@ -120,6 +122,7 @@ struct Session {
     std::vector<bool> disconnected;
     std::unique_ptr<RichonlineClassicTerminal> terminal;
     std::vector<Bytes> stock_opening;
+    std::optional<RichonlineStockSimulation> stock_simulation;
     std::uint32_t news_fines=richonline_classic_initial_news_fines;
     std::optional<std::chrono::steady_clock::time_point> kidnap_deadline;
     std::optional<std::chrono::steady_clock::time_point> confinement_deadline;
@@ -265,8 +268,17 @@ struct Session {
         if(rules.stocks) {
             const auto& policy=*rules.stocks;
             if(!policy.resources) throw CodecError("richonline_classic_stock_resources_missing");
+            if(policy.simulation_seed) {
+                if(!policy.history.empty() || policy.fluctuate || policy.previous_index!=0 ||
+                    policy.current_index!=0 || policy.factor!=0)
+                    throw CodecError("richonline_classic_stock_policy_ambiguous");
+                stock_simulation.emplace(*policy.resources,source.stocks,*policy.simulation_seed);
+            }
+            const auto index=stock_simulation ? stock_simulation->opening_index() :
+                RichonlineStockIndex{policy.previous_index,policy.current_index,policy.factor};
             auto opening=prepare_richonline_stock_opening(board.game_server_id,*policy.resources,source.stocks,
-                policy.history,policy.previous_index,policy.current_index,policy.factor,world.ledger,rules.script);
+                stock_simulation ? stock_simulation->history() : policy.history,
+                index.previous,index.current,index.factor,world.ledger,rules.script);
             world.stocks=std::move(opening.market);stock_opening=std::move(opening.messages);
         }
         if(rules.bank_wire) bank=std::make_unique<RichonlineGameBank>(board.game_server_id,
@@ -450,7 +462,8 @@ struct Session {
         return begin_feast(std::move(messages));
     }
     void append_stock_fluctuation(std::vector<Bytes>& messages) {
-        if(actor!=round_anchor || !completed_rounds || !world.stocks || !rules.stocks || !rules.stocks->fluctuate) return;
+        if(actor!=round_anchor || !completed_rounds || !world.stocks || !rules.stocks ||
+            (!stock_simulation && !rules.stocks->fluctuate)) return;
         const auto market=world.stocks;
         const auto revision=market->revision();
         const auto before_actor=actor;
@@ -464,7 +477,13 @@ struct Session {
             quotes.push_back(market->quote(slot));trends.push_back(market->trend(slot));
             forced_prices.push_back(market->forced_trend_price(slot));
         }
-        const auto wave=rules.stocks->fluctuate(completed_rounds,quotes,trends,forced_prices,market->index());
+        // 本局模拟器先复制再推进，报价/Lua/发送队列准备失败时，原随机流和惯性不前进。
+        auto next_simulation=stock_simulation;
+        std::optional<RichonlineClassicStockFluctuation> wave;
+        if(next_simulation) {
+            auto generated=next_simulation->advance(quotes,forced_prices);
+            wave=RichonlineClassicStockFluctuation{std::move(generated.prices),generated.index,0,false};
+        } else wave=rules.stocks->fluctuate(completed_rounds,quotes,trends,forced_prices,market->index());
         if(world.stocks!=market || market->revision()!=revision || actor!=before_actor ||
             calendar!=before_calendar || sequence!=before_sequence || relocation_snapshot()!=before_actors)
             throw CodecError("richonline_classic_stock_fluctuation_stale");
@@ -472,6 +491,8 @@ struct Session {
         auto plan=market->prepare_market(wave->prices,wave->current_index,wave->factor,wave->notify);
         messages.push_back(plan.response());
         if(!market->commit(plan)) throw CodecError("richonline_classic_stock_fluctuation_commit_stale");
+        static_assert(std::is_nothrow_move_assignable_v<decltype(stock_simulation)>);
+        stock_simulation=std::move(next_simulation);
         if(rules.log) rules.log("richonline_classic_stock_fluctuation day="+std::to_string(completed_rounds+1));
     }
     void apply_monthly_interest() {
@@ -2602,7 +2623,8 @@ struct Session {
         std::optional<RichonlineStockMarket::TrendCard> plan;
         try {
             const auto& state=raw->actor(actor);
-            if(phase!=Phase::roll || !market || !rules.stocks || !rules.stocks->fluctuate || !owner ||
+            if(phase!=Phase::roll || !market || !rules.stocks ||
+                (!stock_simulation && !rules.stocks->fluctuate) || !owner ||
                 !active[actor] || richonline_landing_controlled(statuses[actor]) || statuses[actor].stay ||
                 state.hotel1493!=-1 || state.hospital1494!=-1 || state.jail1495!=-1 || state.kidnapped1497!=-1 ||
                 raw->game().scripted_event83830!=-1 || movement)
