@@ -211,7 +211,7 @@ if(WIN32)
     if(MINGW)
         target_compile_options(richnet_richonline_map_packages PRIVATE -Wall -Wextra -Wpedantic -Werror -Wconversion -Wsign-conversion)
     endif()
-    add_library(richnet_richonline_boss_host STATIC src/richonline_boss_host.cpp src/richonline_boss_runtime.cpp
+    add_library(richnet_richonline_boss_host STATIC src/richonline_boss_host.cpp src/richonline_room_game_plans.cpp src/richonline_boss_runtime.cpp
         src/gameplay/raw_authority.cpp src/gameplay/boss_session.cpp)
     target_include_directories(richnet_richonline_boss_host PUBLIC include)
     target_compile_features(richnet_richonline_boss_host PUBLIC cxx_std_20)

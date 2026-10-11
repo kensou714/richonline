@@ -1,5 +1,6 @@
 #include "richonline_boss_host.hpp"
 #include "server_lobby_adapter.hpp"
+#include "richonline_room_game_plans.hpp"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -111,19 +112,6 @@ std::size_t random_spawn(std::size_t upper_bound) {
     do { const auto bytes=random_bytes(4); value=read_le(bytes); } while(value<threshold);
     return value%bound;
 }
-void validate_strategy(const RichonlineStartupPlan& strategy, const RichonlineBossStartup& startup) {
-    try {
-        if (!strategy.map_ready || !strategy.action || !strategy.disconnected)
-            throw CodecError("richonline_boss_host_strategy_incomplete");
-        if (encode_richonline_board_init(strategy.init) != encode_richonline_board_init(startup.init) ||
-            encode_richonline_board_snapshot(strategy.snapshot) != encode_richonline_board_snapshot(startup.snapshot) ||
-            strategy.envelope.tag != startup.envelope.tag || strategy.envelope.mode != startup.envelope.mode)
-            throw CodecError("richonline_boss_host_strategy_initialization_changed");
-    } catch (...) {
-        if (strategy.disconnected) { try { strategy.disconnected(); } catch (...) {} }
-        throw;
-    }
-}
 struct SelectedMapIdentity {
     std::string name;
     std::uint32_t category;
@@ -138,7 +126,8 @@ SelectedMapIdentity selected_map_identity(View extension) {
 }
 }
 std::optional<RichonlineRuntimeGame> load_richonline_boss_host(Storage& storage,
-    const std::filesystem::path& bootstrap, ControlLog log, RichonlineBossStrategyFactory strategy) {
+    const std::filesystem::path& bootstrap, ControlLog log, RichonlineBossStrategyFactory strategy,
+    std::optional<RichonlineClassicHostStrategy> classic) {
     if (!std::filesystem::exists(bootstrap)) return {};
     std::ifstream stream(bootstrap,std::ios::binary);
     if (!stream) throw CodecError("bootstrap_file_open_failed");
@@ -148,56 +137,92 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_host(Storage& storage,
         if (!config.contains("richonline_boss_game")) return {};
         if (storage.client_profile() != ClientProfile::richonline) throw CodecError("richonline_boss_host_client_profile_invalid");
         if (!strategy) throw CodecError("richonline_boss_host_strategy_required");
+        if(classic && (!classic->create ||
+            (classic->spawn_policy!=RichonlineMapSpawnPolicy::all_candidates_connected &&
+             classic->spawn_policy!=RichonlineMapSpawnPolicy::largest_adjacent_component)))
+            throw CodecError("richonline_classic_host_strategy_invalid");
         auto selected = policy(config.at("richonline_boss_game"),bootstrap);
         const auto blobs = load_bootstrap_blobs(bootstrap);
         if (!blobs.room_unknown_prefix) throw CodecError("richonline_boss_host_rooms_required");
         if (log) log("richonline_boss_host_configured",{{"provenance",selected.source},{"wire_provenance",selected.wire_source},
-            {"scope","boss-selected-map-startup"},{"runtime_client_verified",false},{"game_ready",false}});
+            {"scope","boss-selected-map-startup"},{"classic_strategy",classic.has_value()},
+            {"runtime_client_verified",false},{"game_ready",false}});
         const auto listen_port = selected.port; const auto ttl = selected.ttl;
         return RichonlineRuntimeGame{listen_port,0,ttl,
             [&storage, selected = std::move(selected), capacity = blobs.player_capacity,
-             strategy = std::move(strategy), log = std::move(log)](std::uint16_t bound_port,const RichonlineRoomSnapshot& room) {
+             strategy = std::move(strategy), classic = std::move(classic), log = std::move(log)]
+             (std::uint16_t bound_port,const RichonlineRoomSnapshot& room) {
                 if (bound_port == 0) throw CodecError("richonline_boss_host_bound_port_invalid");
                 if (room.owner == 0 || room.owner >= capacity || room.owner > 32767)
                     throw CodecError("richonline_boss_host_actor_out_of_range");
+                const RichonlineRedirectFactory redirect_factory=[&] {
+                    const auto entropy=random_bytes(12);
+                    RichonlineGameRedirect redirect{selected.address,bound_port,read_le(View(entropy).first(4)),{}};
+                    std::copy_n(entropy.begin()+4,8,redirect.token.begin());
+                    return redirect;
+                };
+                const GameLogSink game_log=[log,key=room.key,channel=room.channel](const std::string& message) {
+                    if(log) log("richonline_boss_startup",{{"channel",channel},{"room",key},{"message",message}});
+                };
+                const bool ordinary=room.description.extension.size()==88 &&
+                    read_le(View(room.description.extension).subspan(48,4))==0;
+                if(ordinary && !classic) throw CodecError("richonline_classic_host_session_not_enabled");
                 const auto settings = storage.dispatch("config.get",Json::object());
-                const auto skills = storage.boss_skill_caps(room.owner,
-                    numbers<std::int8_t,10>(settings.at("settings").at("max_building_skills"),0,7));
+                const auto maximum_skills=numbers<std::int8_t,10>(settings.at("settings").at("max_building_skills"),0,7);
                 const auto now=std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::system_clock::now().time_since_epoch()).count();
+                if(ordinary) {
+                    // 每个账号都读取本次已过期过滤的装备，不能把房主的背包/技能复制给其他玩家。
+                    std::vector<RichonlineClassicPlayer> players;
+                    for(const auto& peer:room.participants) {
+                        if(peer.actor==0 || peer.actor>=capacity || peer.actor>32767)
+                            throw CodecError("richonline_classic_host_actor_out_of_range");
+                        const auto inventory=storage.lobby_inventory_for_role(peer.actor,now);
+                        players.push_back({peer.connection,static_cast<std::int16_t>(peer.actor),inventory.equipment,
+                            storage.boss_skill_caps(peer.actor,maximum_skills),selected.wire.opaque_trailing[0]});
+                    }
+                    RichonlineBoardInit header{selected.wire.game_server_id,selected.wire.opaque_f64,
+                        selected.wire.year,selected.wire.month,selected.wire.day,selected.wire.weekday,
+                        0,selected.wire.opaque_header_byte,{}};
+                    const auto startup=build_richonline_classic_startup(selected.resources,room,std::move(header),
+                        selected.wire.calendar_counter,players,classic->spawn_policy,random_spawn);
+                    auto plans=bind_richonline_room_game_plans(room,startup.recipients,
+                        classic->create(startup,selected.wire.envelope),
+                        selected.wire.envelope,redirect_factory,random_bytes,game_log);
+                    if(log) log("richonline_classic_plan_prepared",{{"channel",room.channel},{"room",room.key},
+                        {"players",players.size()},{"settings_revision",settings.at("revision")},
+                        {"map",startup.map_name},{"game_server_id",selected.wire.game_server_id},
+                        {"calendar_counter",selected.wire.calendar_counter},{"runtime_client_verified",false}});
+                    return plans;
+                }
+                const auto skills=storage.boss_skill_caps(room.owner,maximum_skills);
                 const auto inventory=storage.lobby_inventory_for_role(room.owner,now);
                 const auto startup = build_richonline_boss_startup(selected.resources,room,
                     {static_cast<std::int16_t>(room.owner),inventory.equipment,skills,selected.wire,random_spawn});
                 const auto map=selected_map_identity(startup.room.description.extension);
-                const auto entropy = random_bytes(12);
-                RichonlineGameRedirect redirect{selected.address,bound_port,read_le(View(entropy).first(4)),{}};
-                std::copy_n(entropy.begin()+4,8,redirect.token.begin());
-                const auto admission = richonline_expected_admission({room.channel,room.key,room.owner},redirect);
-                auto plan = strategy(startup); validate_strategy(plan,startup);
-                const auto sent_enabled=static_cast<bool>(plan.sent);
-                const auto game_finished=plan.game_finished;
-                const auto lobby_sent=plan.lobby_sent;
-                const auto terminal_pending=plan.terminal_pending;
-                auto callbacks = make_richonline_game_callbacks(
-                    [plan = std::optional<RichonlineStartupPlan>(std::move(plan))](const GameAdmission&) mutable {
-                        return std::exchange(plan,{});
-                    },random_bytes,[log, key = room.key,channel=room.channel](const std::string& message) {
-                        if (log) log("richonline_boss_startup",{{"channel",channel},{"room",key},{"message",message}});
-                    });
-                if (!callbacks.authorize_admission(admission)) throw CodecError("richonline_boss_host_plan_authorization_failed");
+                const std::array expected{RichonlineRoomBoardRecipient{room.participants.front().connection,
+                    startup.init,startup.snapshot}};
+                std::vector<RichonlineStartupPlan> supplied;
+                supplied.reserve(1);supplied.push_back(strategy(startup));
+                std::vector<RichonlineGamePlan> plans;
+                try {
+                    plans=bind_richonline_room_game_plans(room,expected,std::move(supplied),startup.envelope,
+                        redirect_factory,random_bytes,game_log);
+                } catch(const CodecError& error) {
+                    // 保留既有BOSS工厂的诊断接口；清理已由公共绑定层完成，不能重复调用。
+                    const std::string_view reason=error.what();
+                    if(reason=="richonline_room_game_plans_strategy_changed_board")
+                        throw CodecError("richonline_boss_host_strategy_initialization_changed");
+                    if(reason=="richonline_room_game_plans_strategy_incomplete")
+                        throw CodecError("richonline_boss_host_strategy_incomplete");
+                    throw;
+                }
                 if (log) log("richonline_boss_plan_prepared",{{"channel",room.channel},{"room",room.key},{"actor",room.owner},
                     {"settings_revision",settings.at("revision")},{"map",map.name},{"category",map.category},{"game_server_id",selected.wire.game_server_id},
                     {"calendar_counter",selected.wire.calendar_counter},
                     {"human_start",startup.init.participants[0].position},{"boss_start",startup.init.participants[1].position},
                     {"runtime_client_verified",false}});
-                return std::vector<RichonlineGamePlan>{{room.participants.front().connection,room.owner,redirect,
-                    [callbacks,admission] { return callbacks.admitted(admission); },
-                    [callbacks,admission](const Envelope299& envelope,View plain) { return callbacks.message(admission,envelope,plain); },
-                    [callbacks,admission] { callbacks.disconnected(admission); },
-                    [callbacks,admission] { return callbacks.poll(admission); },
-                    sent_enabled ? std::function<void(const Frame&)>{[callbacks,admission](const Frame& frame) {
-                        callbacks.sent(admission,frame);
-                    }} : std::function<void(const Frame&)>{},game_finished,lobby_sent,terminal_pending}};
+                return plans;
             }};
     } catch (const Json::exception&) { throw CodecError("richonline_boss_host_json_invalid"); }
 }
