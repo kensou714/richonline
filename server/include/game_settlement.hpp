@@ -35,6 +35,10 @@ struct GameSettlementDelivery {
     std::vector<std::int8_t> bankrupt_slots;
     // 版本1误把400D发给败者；版本2为每个败者发400E，仅向胜者发400D。
     std::uint8_t message_version=2;
+    // 版本3用于全真人共享局：按局内槽排序的结算操作键。只允许整局事务写入，
+    // 恢复时从这些已提交操作读取战绩，不接受调用方伪造其它角色的奖励回执。
+    std::vector<std::string> roster_operations{};
+    std::int8_t winner_slot=-1;
 };
 struct GameSettlementItemReward {
     // Raw stage resource specification. These are not an inventory grant count
@@ -86,6 +90,17 @@ struct GameSettlementResult {
     std::uint32_t losses_after;
     std::uint32_t draws_after;
 };
+struct GameSettlementParticipant {
+    std::string username;
+    std::int64_t role_id;
+    GameSettlementRequest request;
+};
+struct GameSettlementRecordedActor {
+    std::int8_t slot,rank_image_index;
+    std::uint8_t opaque_18;
+    GameOutcome outcome;
+    GameSettlementResult result;
+};
 struct GameSettlementOutbox {
     std::string operation_id;
     std::string match_id;
@@ -93,6 +108,7 @@ struct GameSettlementOutbox {
     GameSettlementDelivery delivery;
     GameSettlementResult result;
     std::uint32_t next_message;
+    std::vector<GameSettlementRecordedActor> roster{};
 };
 // Durable notification intent created atomically with settlement. It carries
 // no cached account values: the sender must materialize the latest profile

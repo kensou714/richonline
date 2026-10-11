@@ -6,6 +6,7 @@
 #include "richonline_raw_authority.hpp"
 #include "richonline_rent_transfer.hpp"
 #include "richonline_game_end.hpp"
+#include "richonline_classic_terminal.hpp"
 #include "lua_server.hpp"
 
 #include <algorithm>
@@ -16,7 +17,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,roll,moving,bank,property,rent_transfer,event,junction,closed };
+enum class Phase { loading,roll,moving,bank,property,rent_transfer,event,junction,settling,closed };
 struct Retired {
     std::uint8_t actor;
     Bytes request;
@@ -57,6 +58,7 @@ struct Session {
     std::optional<PendingRentTransfer> rent_transfer;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_rent_transfers;
     std::vector<bool> disconnected;
+    std::unique_ptr<RichonlineClassicTerminal> terminal;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -113,6 +115,13 @@ struct Session {
             release_members();
             throw CodecError("richonline_classic_session_services_incomplete");
         }
+        try {
+            if(rules.settlement) {
+                terminal=rules.settlement(world);
+                if(!terminal)throw CodecError("richonline_classic_terminal_missing");
+                terminal->validate_identity(board.game_server_id,startup.room.key,count,startup.pawn_gold,world.ledger.get());
+            }
+        } catch(...) {release_members();throw;}
     }
     ~Session() { release_members(); }
     void release_members() noexcept {
@@ -332,7 +341,8 @@ struct Session {
         std::optional<RichonlineClassicProperty::Retirement> retirement;
         if(plan.bankrupt) {
             retirement=prepare_bankruptcy(plan.payer);
-            messages.push_back(richonline_eliminate_actor(board.game_server_id,static_cast<std::int8_t>(plan.payer)));
+            if(std::ranges::count(active,std::uint8_t{1})>2)
+                messages.push_back(richonline_eliminate_actor(board.game_server_id,static_cast<std::int8_t>(plan.payer)));
         }
         retired_rent_transfers.emplace_back(actor,calendar);
         if(retired_rent_transfers.size()>64) retired_rent_transfers.pop_front();
@@ -344,6 +354,8 @@ struct Session {
             world.cards[actor]->commit_inventory(plan.inventory);return true;
         })) throw CodecError("richonline_classic_rent_transfer_commit_stale");
         rent_transfer.reset();pending_opcode.reset();
+        if(retirement && std::ranges::count(active,std::uint8_t{1})==1)
+            return finish_last_survivor(std::move(messages),plan.payer);
         if(rules.log) rules.log("richonline_classic_rent_transfer actor="+std::to_string(actor)+
             " payer="+std::to_string(plan.payer)+" charged="+std::to_string(plan.charged)+
             " target="+std::to_string(plan.target)+" timed_out="+std::to_string(timed_out)+
@@ -355,11 +367,13 @@ struct Session {
     RichonlineClassicProperty::Retirement prepare_bankruptcy(std::uint8_t bankrupt) const {
         if(bankrupt>=active.size() || !active[bankrupt])
             throw CodecError("richonline_classic_bankruptcy_actor_invalid");
-        // 胜者奖励、全员战绩和大厅投递尚未装配，最后一人边界在扣款前拒绝。
-        // 不借用单人BOSS奖励，也不发送一条胜利包假装已经完成持久结算。
-        if(std::ranges::count(active,std::uint8_t{1})<=2)
+        const auto count=std::ranges::count(active,std::uint8_t{1});
+        if(count<2)throw CodecError("richonline_classic_bankruptcy_roster_invalid");
+        // 只有显式绑定全员持久结算和奖励策略才允许最后一人退场。
+        if(count==2 && !terminal)
             throw CodecError("richonline_classic_last_survivor_settlement_unimplemented");
         auto after=active;after[bankrupt]=0;
+        if(count==2)terminal->validate_last_survivor(after);
         auto anchor=round_anchor;
         if(anchor==bankrupt) {
             do {anchor=static_cast<std::uint8_t>((anchor+1U)%after.size());} while(!after[anchor]);
@@ -367,7 +381,7 @@ struct Session {
         auto next=actor;
         do {next=static_cast<std::uint8_t>((next+1U)%after.size());} while(!after[next]);
         const auto limit=static_cast<std::uint8_t>(startup.game_months*30U);
-        if(next==anchor && limit && completed_rounds+2>limit)
+        if(count>2 && next==anchor && limit && completed_rounds+2>limit)
             throw CodecError("richonline_classic_month_settlement_unimplemented");
         if(rules.script) {
             const auto result=rules.script->call("game.classic_retirement",{{"active",active},{"bankrupt",bankrupt},
@@ -377,6 +391,13 @@ struct Session {
                 throw CodecError("lua_classic_retirement_invalid");
         }
         return world.property->prepare_retirement(bankrupt);
+    }
+    std::vector<Bytes> finish_last_survivor(std::vector<Bytes> messages,std::uint8_t bankrupt) {
+        if(!terminal)throw CodecError("richonline_classic_terminal_missing");
+        phase=Phase::settling;collision_pending=false;movement.reset();pending_opcode.reset();
+        // 租金已进入权威账本；全员奖励和战绩原子入库后才发最后400E、胜利及战绩表。
+        // 任一失败由共享层关闭业务，不重跑租金、不伪造换人，也不盲目重发动画。
+        append(messages,terminal->finish(active,bankrupt));return messages;
     }
     void retire_actor(std::uint8_t bankrupt) noexcept {
         active[bankrupt]=0;
@@ -469,7 +490,8 @@ struct Session {
         const auto cash_paid=std::min(charged,payer_after.cash);
         payer_after.cash-=cash_paid;*payer_after.deposit-=charged-cash_paid;*payee_after.deposit+=charged;
         auto messages=std::vector<Bytes>{stop()};
-        if(bankrupt) messages.push_back(richonline_eliminate_actor(board.game_server_id,static_cast<std::int8_t>(actor)));
+        if(bankrupt && std::ranges::count(active,std::uint8_t{1})>2)
+            messages.push_back(richonline_eliminate_actor(board.game_server_id,static_cast<std::int8_t>(actor)));
         const std::array updates{RichonlineGameFundsUpdate{actor,payer,payer_after},
             RichonlineGameFundsUpdate{owner,payee,payee_after}};
         if(!world.ledger->commit_batch(updates,[&]() {
@@ -479,6 +501,8 @@ struct Session {
             if(free_card) world.cards[actor]->commit_inventory(free_card->remaining_inventory);
             return true;
         })) throw CodecError("richonline_classic_rent_commit_stale");
+        if(bankrupt && std::ranges::count(active,std::uint8_t{1})==1)
+            return finish_last_survivor(std::move(messages),actor);
         // 4013已触发客户端6060/6061；只镜像账本/手牌，不发第二笔扣款或扣卡包。
         if(rules.log) rules.log("richonline_classic_rent actor="+std::to_string(actor)+
             " owner="+std::to_string(owner)+" property="+std::to_string(property.id)+
@@ -630,6 +654,10 @@ struct Session {
             if(choice.count>rules.maximum_dice[sender]) throw CodecError("richonline_classic_dice_not_available");
             dice[sender]=choice.count;return {};
         }
+        if(phase==Phase::settling) {
+            if(was_retired(sender,request))return {};
+            throw CodecError("richonline_classic_action_after_settlement");
+        }
         if(!active[sender]) {
             if(was_retired(sender,request)) return {};
             throw CodecError("richonline_classic_inactive_actor_request");
@@ -716,7 +744,9 @@ struct Session {
     }
     void disconnect(std::uint8_t sender) {
         if(sender>=disconnected.size() || disconnected[sender]) return;
-        disconnected[sender]=true;phase=Phase::closed;movement.reset();rent_transfer.reset();
+        disconnected[sender]=true;
+        if(!terminal || !terminal->committed())phase=Phase::closed;
+        movement.reset();rent_transfer.reset();
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
         if(services.disconnected) services.disconnected(sender);
     }
@@ -739,6 +769,16 @@ RichonlineSharedCallbacks make_richonline_classic_session(const RichonlineClassi
     callbacks.disconnected=[session](std::uint8_t actor) {session->disconnect(actor);};
     callbacks.retired_action=[session](std::uint8_t actor,View request) {return session->was_retired(actor,request);};
     callbacks.movement_wait=[session] {return session->movement;};
+    callbacks.sent=[session](std::uint8_t actor,View plain) {
+        if(session->terminal)session->terminal->sent(actor,plain);
+    };
+    callbacks.game_finished=[session](std::uint8_t actor) {
+        return session->terminal && session->terminal->game_finished(actor);
+    };
+    callbacks.lobby_sent=[session](std::uint8_t actor,const Frame& frame) {
+        if(session->terminal)session->terminal->lobby_sent(actor,frame);
+    };
+    callbacks.terminal_pending=[session](std::uint8_t) {return session->terminal && session->terminal->committed();};
     return callbacks;
 }
 }

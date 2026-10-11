@@ -8,7 +8,8 @@ function M.plan(request)
     active[request.bankrupt + 1] = 0
     local count = 0
     for _, value in ipairs(active) do count = count + value end
-    assert(count >= 2, "最后存活者需要完整结算业务")
+    -- 单独存活时由C++的全员持久结算接管，不进入下一4010。
+    assert(count >= 1, "不能淘汰全部角色")
     local function next_active(slot)
         repeat slot = (slot + 1) % #active until active[slot + 1] == 1
         return slot

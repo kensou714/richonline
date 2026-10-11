@@ -9,6 +9,7 @@
 
 namespace richnet {
 class RichonlineShopCatalog;
+class RichonlineClassicTerminal;
 // 所有连接共用这些对象。业务回调只能在shared_startups持有的对局锁内访问。
 struct RichonlineClassicWorld {
     std::shared_ptr<RichonlineGameLedger> ledger;
@@ -56,6 +57,8 @@ struct RichonlineClassicSessionRules {
     // NEW7F85C0先查局内手牌，再查角色第二套卡槽。金额达到自动卡门槛且手牌
     // 未抵扣时，必须由库存业务同步只读地证明第二套没有可用1050/1056；缺席表示未知。
     std::function<bool(std::uint8_t)> secondary_rent_cards_absent;
+    // 由受信任准入层绑定全部账号、实际押金及经典奖励策略。缺席时不开放最终结算。
+    std::function<std::unique_ptr<RichonlineClassicTerminal>(const RichonlineClassicWorld&)> settlement;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

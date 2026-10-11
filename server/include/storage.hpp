@@ -92,6 +92,9 @@ public:
                                        const std::string& operation_id, std::uint32_t sent_message);
     GameSettlementResult settle_game(const std::string& username, std::int64_t role_id,
                                      const GameSettlementRequest& request);
+    // 按局内槽顺序提交2至4名真人的战绩、奖励及完整战绩表投递意图。
+    // 全部成功或全部回滚；相同请求整批重放只返回原回执，不重复发奖。
+    std::vector<GameSettlementResult> settle_game_match(std::span<const GameSettlementParticipant> participants);
     GameBossChestReceipt claim_boss_chest(const std::string& username,std::int64_t role_id,
         const RichonlineMallCatalog& catalog,const GameBossChestClaim& request,std::int64_t unix_now);
     std::int64_t boss_chest_cursor();
@@ -113,6 +116,9 @@ private:
     std::filesystem::path path_;
     ClientProfile profile_;
     std::mutex mutex_;
+    // 调用方须持有mutex_及同一SQLite事务，禁止从业务回调直接使用。
+    GameSettlementResult settle_game_in_transaction(const std::string& username,std::int64_t role_id,
+        const GameSettlementRequest& request);
     nlohmann::json list_accounts(const nlohmann::json& payload);
     nlohmann::json create_account(const nlohmann::json& payload);
     nlohmann::json create_account_with_verifier(const std::string& username,

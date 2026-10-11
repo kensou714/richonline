@@ -96,10 +96,29 @@ std::vector<RichonlineSettlementTransmission> recover_richonline_terminal_messag
         throw CodecError("richonline_terminal_recovery_session_mismatch");
     const auto& delivery=outbox.delivery;
     // 历史游标对应另一条消息序列，禁止用新版序列续发导致重复淘汰或跳过结算。
-    if(delivery.message_version!=2)throw CodecError("richonline_terminal_legacy_outbox_requires_reconciliation");
-    const std::array actor{RichonlineSettledActor{delivery.human_slot,delivery.rank_image_index,outbox.outcome,false,
-        delivery.opaque_18,outbox.result}};
-    const auto game=plan_richonline_settlement(delivery.game_id,delivery.bankrupt_slots,actor,delivery.show_text_270);
+    if(delivery.message_version!=2 && delivery.message_version!=3)
+        throw CodecError("richonline_terminal_legacy_outbox_requires_reconciliation");
+    std::vector<RichonlineSettledActor> actors;
+    if(delivery.message_version==3) {
+        if(outbox.roster.size()<2 || outbox.roster.size()>4 || outbox.roster.size()!=delivery.roster_operations.size() ||
+            delivery.human_slot<0 || static_cast<std::size_t>(delivery.human_slot)>=outbox.roster.size() ||
+            delivery.roster_operations[static_cast<std::size_t>(delivery.human_slot)]!=outbox.operation_id ||
+            delivery.winner_slot<0 || static_cast<std::size_t>(delivery.winner_slot)>=outbox.roster.size() ||
+            delivery.show_text_270 || outbox.outcome!=(delivery.human_slot==delivery.winner_slot?GameOutcome::win:GameOutcome::loss))
+            throw CodecError("richonline_terminal_match_roster_invalid");
+        for(std::size_t slot=0;slot<outbox.roster.size();++slot) {
+            const auto& actor=outbox.roster[slot];
+            if(actor.slot!=static_cast<std::int8_t>(slot) ||
+                actor.outcome!=(actor.slot==delivery.winner_slot?GameOutcome::win:GameOutcome::loss))
+                throw CodecError("richonline_terminal_match_roster_invalid");
+            actors.push_back({actor.slot,actor.rank_image_index,actor.outcome,false,actor.opaque_18,actor.result});
+        }
+    } else {
+        if(!outbox.roster.empty() || !delivery.roster_operations.empty() || delivery.winner_slot!=-1)
+            throw CodecError("richonline_terminal_match_roster_invalid");
+        actors.push_back({delivery.human_slot,delivery.rank_image_index,outbox.outcome,false,delivery.opaque_18,outbox.result});
+    }
+    const auto game=plan_richonline_settlement(delivery.game_id,delivery.bankrupt_slots,actors,delivery.show_text_270);
     if(outbox.next_message>game.size())throw CodecError("richonline_terminal_outbox_cursor_invalid");
     std::vector<RichonlineSettlementTransmission> messages;
     for(std::size_t i=outbox.next_message;i<game.size();++i)
