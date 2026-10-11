@@ -11,16 +11,80 @@ namespace {
 // 实际映射为other_10_*，完整索引/纹理/NP文件证据见classic-news-initialization.json。
 constexpr std::array<std::int16_t,29> news_pictures{
     1,2,5,6,8,9,10,14,15,17,23,26,27,29,30,31,33,39,40,43,44,45,46,48,49,50,51,52,53};
-}
-RichonlineClassicNewsPlan prepare_richonline_classic_money_news(std::uint16_t game,
-    const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
-    const RichonlineGameFundsSnapshot& before,std::uint32_t fines,
-    const std::shared_ptr<LuaServer>& script) {
+void validate_context(const RichonlineLandingContext& context) {
     if(context.game_mode!=0 || context.actor_slot>=4 || context.synthetic_actor || context.static_type!=1 ||
         context.position<0 || context.property_ref!=-1 || context.road_degree==0 || context.road_degree>4 ||
         !context.actor_status.possession || richonline_landing_controlled(context.actor_status) ||
         (context.occupied_by_other_actor && !context.collision_resolved && !context.phase6_collision_authorized))
         throw CodecError("richonline_classic_news_context_invalid");
+}
+}
+RichonlineClassicSavingsNewsPlan prepare_richonline_classic_savings_news(std::uint16_t game,
+    const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
+    std::span<const RichonlineGameFundsSnapshot> before,std::span<const std::uint8_t> active,
+    const std::shared_ptr<LuaServer>& script) {
+    validate_context(context);
+    if(event.opcode!=0x406f || event.amount>32767 || !event.picture ||
+        std::ranges::find(news_pictures,*event.picture)==news_pictures.end())
+        throw CodecError("richonline_classic_news_parameters_invalid");
+    if(before.size()<2 || before.size()>4 || active.size()!=before.size() ||
+        context.actor_slot>=before.size() || active[context.actor_slot]!=1 ||
+        std::ranges::any_of(active,[](auto value){return value>1;}))
+        throw CodecError("richonline_classic_news_roster_invalid");
+    constexpr auto maximum=static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max());
+    std::uint32_t highest=0;
+    for(std::size_t slot=0;slot<before.size();++slot) {
+        const auto& funds=before[slot].funds;
+        if(!funds.deposit || static_cast<std::uint64_t>(funds.cash)+*funds.deposit>maximum)
+            throw CodecError("richonline_classic_news_balance_invalid");
+        if(active[slot]) highest=std::max(highest,*funds.deposit);
+    }
+    RichonlineClassicSavingsNewsPlan plan;
+    LuaValue players=LuaValue::array(),expected_funds=LuaValue::array();
+    for(std::uint8_t slot=0;slot<before.size();++slot) {
+        auto after=before[slot].funds;
+        if(active[slot] && *after.deposit==highest) {
+            if(event.amount>maximum-after.cash-*after.deposit)
+                throw CodecError("richonline_classic_news_income_overflow");
+            after.cash+=event.amount;plan.recipients.push_back(slot);
+        }
+        plan.funds.push_back({slot,before[slot],after});
+        players.push_back({{"active",active[slot]!=0},{"cash",before[slot].funds.cash},
+            {"deposit",*before[slot].funds.deposit}});
+        expected_funds.push_back({{"cash",after.cash},{"deposit",*after.deposit}});
+    }
+    Bytes stop;append_le(stop,0x4013,2);append_le(stop,game,2);
+    append_le(stop,static_cast<std::uint16_t>(context.position),2);
+    Bytes packet;append_le(packet,0x406f,2);append_le(packet,game,2);
+    append_le(packet,static_cast<std::uint16_t>(*event.picture),2);append_le(packet,event.amount,2);
+    plan.messages={std::move(stop),std::move(packet)};
+    if(script) {
+        bool prepared=false;
+        const LuaBindings api{{"tile.classic_news.prepare",[&](const LuaValue&) {
+            if(prepared) throw CodecError("lua_classic_news_already_prepared");
+            prepared=true;
+            return LuaValue{{"opcode",event.opcode},{"amount",event.amount},{"picture",*event.picture},
+                {"players",players}};
+        }}};
+        const auto result=script->call("tile.land",{{"type",1},{"game_id",game},
+            {"position",context.position},{"actor",context.actor_slot},{"classic_news_available",true}},api);
+        LuaValue messages=LuaValue::array();
+        for(const auto& message:plan.messages) messages.push_back(lua_bytes(View(message)));
+        const LuaValue expected{{"funds",expected_funds},{"recipients",plan.recipients},{"messages",messages}};
+        if(!prepared || result!=expected) throw CodecError("lua_classic_news_plan_invalid");
+        for(const auto& funds:result.at("funds"))
+            if(!funds.at("cash").is_number_integer() || !funds.at("deposit").is_number_integer())
+                throw CodecError("lua_classic_news_plan_invalid");
+        for(const auto& recipient:result.at("recipients"))
+            if(!recipient.is_number_integer()) throw CodecError("lua_classic_news_plan_invalid");
+    }
+    return plan;
+}
+RichonlineClassicNewsPlan prepare_richonline_classic_money_news(std::uint16_t game,
+    const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
+    const RichonlineGameFundsSnapshot& before,std::uint32_t fines,
+    const std::shared_ptr<LuaServer>& script) {
+    validate_context(context);
     bool income=false,pictured=false;
     switch(event.opcode) {
     case 0x406d: income=true;break;

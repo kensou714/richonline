@@ -55,7 +55,8 @@ struct RichonlineClassicSubscriptionContext {
 };
 struct RichonlineClassicNewsPolicy {
     // 同步只读选择：自行按真实地图规则选事件及金额，不改账本/手牌/状态、不发包。
-    // 当前仅接已核实的单人金额事件；概率和图片映射不得由BOSS新闻表替代。
+    // 支持单人金额事件及406F并列最高存款奖励；后者的获奖名单由共享会话计算。
+    // 概率和图片映射不得由BOSS新闻表替代。
     std::function<RichonlineClassicMoneyNews(const RichonlineClassicTurnContext&,
         const RichonlineGameFundsSnapshot&,std::uint32_t)> select;
 };

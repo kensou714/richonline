@@ -544,9 +544,27 @@ struct Session {
         if(!rules.news || current.landing.property_ref!=-1)
             throw CodecError("richonline_classic_news_authority_missing");
         if(richonline_landing_controlled(statuses[actor])) return complete({stop()});
-        const auto before=world.ledger->snapshot(actor);
         const auto fines_before=news_fines;
+        const auto active_before=active;
+        std::vector<RichonlineGameFundsSnapshot> all_funds;
+        for(std::uint8_t slot=0;slot<active.size();++slot) all_funds.push_back(world.ledger->snapshot(slot));
+        const auto& before=all_funds[actor];
         const auto event=rules.news->select(current,before,fines_before);
+        if(event.opcode==0x406f) {
+            auto plan=prepare_richonline_classic_savings_news(board.game_server_id,current.landing,event,
+                all_funds,active_before,rules.script);
+            auto detail="richonline_classic_savings_news actor="+std::to_string(actor)+
+                " sequence="+std::to_string(sequence)+" amount="+std::to_string(event.amount);
+            for(const auto recipient:plan.recipients) detail+=" recipient="+std::to_string(recipient);
+            if(!world.ledger->commit_batch(plan.funds,[&]() {
+                return active==active_before && news_fines==fines_before &&
+                    statuses[actor]==current.landing.actor_status &&
+                    board.participants[actor].position==current.landing.position;
+            })) throw CodecError("richonline_classic_news_commit_stale");
+            if(rules.log) rules.log(detail);
+            // 406F只广播一次；每个客户端自行计算并列名单，最后排一次stage2。
+            return complete(std::move(plan.messages));
+        }
         auto plan=prepare_richonline_classic_money_news(board.game_server_id,current.landing,event,before,
             fines_before,rules.script);
         if(statuses[actor]!=current.landing.actor_status || board.participants[actor].position!=current.landing.position)
