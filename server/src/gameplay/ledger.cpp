@@ -98,7 +98,7 @@ bool RichonlineGameLedger::commit_sequence(std::span<const RichonlineGameFundsUp
     return commit_updates(updates,authorize,true);
 }
 bool RichonlineGameLedger::commit_updates(std::span<const RichonlineGameFundsUpdate> updates,
-    const std::function<bool()>& authorize,bool sequential) {
+    const std::function<bool()>& authorize,bool sequential,bool count_income) {
     const std::lock_guard lock(mutex_);
     if(updates.empty() || (!sequential && updates.size()>balances_.size()) || !authorize)
         throw CodecError("richonline_game_ledger_batch_invalid");
@@ -120,7 +120,7 @@ bool RichonlineGameLedger::commit_updates(std::span<const RichonlineGameFundsUpd
             throw CodecError("richonline_game_ledger_knowledge_change");
         if(current.funds!=update.after && current.revision==std::numeric_limits<std::uint64_t>::max())
             throw CodecError("richonline_game_ledger_revision_exhausted");
-        earnings[update.actor]=earned_after(earnings[update.actor],current.funds,update.after);
+        if(count_income) earnings[update.actor]=earned_after(earnings[update.actor],current.funds,update.after);
         if(current.funds!=update.after) current={update.after,current.revision+1};
     }
     if(!authorize()) return false;
@@ -128,5 +128,15 @@ bool RichonlineGameLedger::commit_updates(std::span<const RichonlineGameFundsUpd
         balances_[actor]=projected[actor];earned_cash_[actor]=earnings[actor];
     }
     return true;
+}
+bool RichonlineGameLedger::commit_asset_exchange(std::span<const RichonlineGameFundsUpdate> updates,
+    const std::function<bool()>& authorize) {
+    for(const auto& update:updates) {
+        const auto& before=update.before.funds;
+        if(!before.deposit || !update.after.deposit || before.cash!=update.after.cash ||
+            before.tickets!=update.after.tickets || before.reserve!=update.after.reserve)
+            throw CodecError("richonline_game_ledger_asset_exchange_invalid");
+    }
+    return commit_updates(updates,authorize,false,false);
 }
 }

@@ -58,9 +58,13 @@ public:
     // 每步独立累计正收入，全部校验通过后一次提交；失败不保留任何中间资金状态。
     bool commit_sequence(std::span<const RichonlineGameFundsUpdate> updates,
         const std::function<bool()>& authorize);
+    // 股票成交属于存款与持仓之间的资产交换，不把卖出本金累计为现金收入。
+    // 调用者在authorize中原子提交持仓；股票获利成就仍由股票业务独立处理。
+    bool commit_asset_exchange(std::span<const RichonlineGameFundsUpdate> updates,
+        const std::function<bool()>& authorize);
 private:
     bool commit_updates(std::span<const RichonlineGameFundsUpdate> updates,
-        const std::function<bool()>& authorize,bool sequential);
+        const std::function<bool()>& authorize,bool sequential,bool count_income=true);
     mutable std::mutex mutex_;
     std::vector<RichonlineGameFundsSnapshot> balances_;
     std::vector<std::uint64_t> earned_cash_;

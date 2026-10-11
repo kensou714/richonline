@@ -1,0 +1,74 @@
+#pragma once
+
+// 局内股票：市场槽与Stock.kpd配置编号分开，持仓与资金共享会话串行化边界。
+#include "richonline_game_ledger.hpp"
+#include "lua_server.hpp"
+#include <memory>
+
+namespace richnet {
+enum class RichonlineStockAction { buy, sell };
+struct RichonlineStockRequest {
+    RichonlineStockAction action;
+    std::uint16_t slot,quantity;
+};
+// 0200/0201的+2是股票槽，不能交给日历字段认证器。
+RichonlineStockRequest decode_richonline_stock_request(View);
+struct RichonlineStockQuote {
+    std::int32_t configuration;
+    std::uint32_t supply;
+    float price;
+    float change_percent;
+};
+struct RichonlineStockHolding {
+    std::uint32_t quantity=0;
+    float cost=0;
+};
+class RichonlineStockMarket final {
+public:
+    // 报价必须来自已经同步给客户端的权威初始化；这里不猜测原服务器行情算法。
+    RichonlineStockMarket(std::uint16_t game,std::shared_ptr<RichonlineGameLedger> ledger,
+        std::vector<RichonlineStockQuote> quotes,float rise_limit,float fall_limit,
+        std::shared_ptr<LuaServer> script = {});
+    RichonlineStockMarket(const RichonlineStockMarket&)=delete;
+    RichonlineStockMarket& operator=(const RichonlineStockMarket&)=delete;
+    RichonlineStockMarket(RichonlineStockMarket&&)=delete;
+    RichonlineStockMarket& operator=(RichonlineStockMarket&&)=delete;
+    RichonlineStockHolding holding(std::uint8_t actor,std::uint16_t slot) const;
+    RichonlineStockQuote quote(std::uint16_t slot) const;
+    void set_restricted(bool restricted);
+    // 返回4203并更新原始价/涨跌幅；调用方负责一次广播，不推进移动/落点状态。
+    Bytes change_price(std::uint16_t slot,float price);
+    class Trade final {
+    public:
+        bool accepted() const noexcept {return accepted_;}
+        const std::string& reason() const noexcept {return reason_;}
+        // 拒绝交易不伪造4206或400B；接受交易的包只在commit成功后发送一次。
+        const Bytes& response() const noexcept {return response_;}
+    private:
+        Trade()=default;
+        const RichonlineStockMarket* owner_=nullptr;
+        std::uint64_t revision_=0;
+        bool accepted_=false;
+        std::string reason_;
+        Bytes response_;
+        std::uint16_t slot_=0;
+        RichonlineStockHolding holding_;
+        std::uint32_t supply_=0;
+        RichonlineGameFundsUpdate funds_{};
+        friend class RichonlineStockMarket;
+    };
+    // actor来自已认证连接，不取当前走子者；动作上下文/在场资格由上层准入负责。
+    Trade prepare(std::uint8_t actor,const RichonlineStockRequest&) const;
+    // 同一计划不能提交两次；价格/限制/持仓/资金变化均使旧计划失效。
+    bool commit(const Trade&);
+private:
+    std::uint16_t game_;
+    std::shared_ptr<RichonlineGameLedger> ledger_;
+    std::shared_ptr<LuaServer> script_;
+    std::vector<RichonlineStockQuote> quotes_;
+    std::array<std::array<RichonlineStockHolding,10>,8> holdings_{};
+    float rise_limit_,fall_limit_;
+    bool restricted_=false;
+    std::uint64_t revision_=0;
+};
+}

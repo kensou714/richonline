@@ -6,6 +6,7 @@ local lobby = require("network.lobby")
 local network = require("network.game")
 local game = require("game.session")
 local rewards = require("game.rewards")
+local stock = require("game.stock")
 local feasts = require("events.feasts")
 local tiles = require("tiles.registry")
 local bank = require("tiles.tile_9")
@@ -26,6 +27,7 @@ local handlers = {
     ["bank.open"] = bank.open, ["bank.transaction"] = bank.transaction,
     ["property.construct"] = property.construct, ["property.upgrade"] = property.upgrade,
     ["property.research"] = property.research,
+    ["stock.trade"] = stock.trade,
     ["boss.can_attack"] = bosses.can_attack,
     ["card.lottery_award"] = lottery.award,
     ["boss.attack"] = bosses.attack,
