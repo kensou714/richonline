@@ -10,6 +10,21 @@ local pictured = {[0x406e] = true, [0x4071] = true, [0x4077] = true, [0x407a] = 
 function M.land(request)
     if not request.classic_news_available then return core.call("tile.native") end
     local event = core.call("tile.classic_news.prepare")
+    if event.opcode == 0x4078 then
+        local tickets, inventory = event.tickets, {}
+        assert(#event.slots == 8, "新闻变卖必须提供八个手牌槽")
+        for index, slot in ipairs(event.slots) do
+            if slot.card ~= -1 then
+                -- 原客户端整叠只加一次完整资源价格，与普通商店出售规则不同。
+                tickets = tickets + slot.price
+            end
+            inventory[index] = {card = -1, count = 0}
+        end
+        return {tickets = tickets, inventory = inventory, messages = {
+            protocol.inner(0x4013, request.game_id, string.pack("<i2", request.position)),
+            protocol.inner(0x4078, request.game_id, ""),
+        }}
+    end
     if event.opcode == 0x406f then
         -- 存款第一名按全部活动槽比较：并列不分摊，全零也各领完整金额。
         assert(math.type(event.amount) == "integer" and event.amount >= 0 and event.amount <= 32767,

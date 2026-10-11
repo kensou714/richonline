@@ -549,7 +549,26 @@ struct Session {
         std::vector<RichonlineGameFundsSnapshot> all_funds;
         for(std::uint8_t slot=0;slot<active.size();++slot) all_funds.push_back(world.ledger->snapshot(slot));
         const auto& before=all_funds[actor];
+        const auto inventory_before=world.cards[actor]->inventory();
         const auto event=rules.news->select(current,before,fines_before);
+        if(event.opcode==0x4078) {
+            if(event.amount!=0 || event.picture) throw CodecError("richonline_classic_news_parameters_invalid");
+            auto plan=prepare_richonline_classic_card_sale_news(board.game_server_id,current.landing,before,
+                inventory_before,*rules.resale,rules.script);
+            const auto detail="richonline_classic_card_sale_news actor="+std::to_string(actor)+
+                " sequence="+std::to_string(sequence)+" tickets="+std::to_string(plan.tickets_received);
+            const std::array updates{plan.funds};
+            if(!world.ledger->commit_batch(updates,[&]() noexcept {
+                if(active!=active_before || news_fines!=fines_before ||
+                    statuses[actor]!=current.landing.actor_status ||
+                    board.participants[actor].position!=current.landing.position ||
+                    world.cards[actor]->inventory()!=plan.inventory_before) return false;
+                world.cards[actor]->commit_inventory(plan.inventory_after);return true;
+            })) throw CodecError("richonline_classic_news_commit_stale");
+            if(rules.log) rules.log(detail);
+            // 4078自己清手牌并加点券；不再发逐槽4032或另一个点券增量包。
+            return complete(std::move(plan.messages));
+        }
         if(event.opcode==0x406f) {
             auto plan=prepare_richonline_classic_savings_news(board.game_server_id,current.landing,event,
                 all_funds,active_before,rules.script);

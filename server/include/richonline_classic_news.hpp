@@ -1,8 +1,10 @@
 #pragma once
 #include "richonline_boss_turns.hpp"
 #include "richonline_game_ledger.hpp"
+#include "richonline_chance.hpp"
 
 namespace richnet {
+class RichonlineShopCatalog;
 // NEW 64F2A0 -> 7D9C70在每次开局将G+C80设为5000，与地图起始现金无关。
 inline constexpr std::uint32_t richonline_classic_initial_news_fines=5000;
 struct RichonlineClassicMoneyNews {
@@ -23,6 +25,16 @@ struct RichonlineClassicSavingsNewsPlan {
     std::vector<std::uint8_t> recipients;
     std::vector<Bytes> messages;
 };
+struct RichonlineClassicCardSaleNewsPlan {
+    RichonlineGameFundsUpdate funds;
+    RichonlineChanceInventory inventory_before,inventory_after;
+    std::uint32_t tickets_received;
+    std::vector<Bytes> messages;
+};
+// 4078整槽变卖：每个非空槽只计一次priceG，清掉整叠；不乘数量、不打半价。
+RichonlineClassicCardSaleNewsPlan prepare_richonline_classic_card_sale_news(std::uint16_t game,
+    const RichonlineLandingContext&,const RichonlineGameFundsSnapshot&,
+    const RichonlineChanceInventory&,const RichonlineShopCatalog&,const std::shared_ptr<LuaServer>&);
 // 406F客户端自行按全部活动角色的最高存款选人，每位并列者获得完整金额。
 // 不把现金、股票或预备金计入排名；全员零存款时全部活动角色获奖。
 RichonlineClassicSavingsNewsPlan prepare_richonline_classic_savings_news(std::uint16_t game,

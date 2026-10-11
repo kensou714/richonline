@@ -1,5 +1,6 @@
 #include "richonline_classic_news.hpp"
 #include "richonline_boss_landing.hpp"
+#include "richonline_shop_catalog.hpp"
 #include "lua_wire.hpp"
 #include <algorithm>
 #include <array>
@@ -18,6 +19,50 @@ void validate_context(const RichonlineLandingContext& context) {
         (context.occupied_by_other_actor && !context.collision_resolved && !context.phase6_collision_authorized))
         throw CodecError("richonline_classic_news_context_invalid");
 }
+}
+RichonlineClassicCardSaleNewsPlan prepare_richonline_classic_card_sale_news(std::uint16_t game,
+    const RichonlineLandingContext& context,const RichonlineGameFundsSnapshot& before,
+    const RichonlineChanceInventory& inventory,const RichonlineShopCatalog& catalog,
+    const std::shared_ptr<LuaServer>& script) {
+    validate_context(context);
+    constexpr auto maximum=static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max());
+    if(before.funds.tickets>maximum) throw CodecError("richonline_classic_news_balance_invalid");
+    auto after=before.funds;
+    LuaValue slots=LuaValue::array(),cleared=LuaValue::array();
+    for(const auto& slot:inventory) {
+        if((slot.card_id==-1 && slot.count!=0) || (slot.card_id!=-1 && (slot.card_id<1 || slot.count<1)))
+            throw CodecError("richonline_classic_news_inventory_invalid");
+        // 无明确资源价格时拒绝整笔，不跳过该槽或把未知价格当零。
+        const auto price=slot.card_id==-1 ? 0U : catalog.price(slot.card_id);
+        if(price>maximum-after.tickets) throw CodecError("richonline_classic_news_tickets_overflow");
+        after.tickets+=price;
+        slots.push_back({{"card",slot.card_id},{"count",slot.count},{"price",price}});
+        cleared.push_back({{"card",-1},{"count",0}});
+    }
+    Bytes stop;append_le(stop,0x4013,2);append_le(stop,game,2);
+    append_le(stop,static_cast<std::uint16_t>(context.position),2);
+    Bytes packet;append_le(packet,0x4078,2);append_le(packet,game,2);
+    RichonlineClassicCardSaleNewsPlan plan{{context.actor_slot,before,after},inventory,{},
+        after.tickets-before.funds.tickets,{std::move(stop),std::move(packet)}};
+    if(script) {
+        bool prepared=false;
+        const LuaBindings api{{"tile.classic_news.prepare",[&](const LuaValue&) {
+            if(prepared) throw CodecError("lua_classic_news_already_prepared");
+            prepared=true;
+            return LuaValue{{"opcode",0x4078},{"tickets",before.funds.tickets},{"slots",slots}};
+        }}};
+        const auto result=script->call("tile.land",{{"type",1},{"game_id",game},
+            {"position",context.position},{"actor",context.actor_slot},{"classic_news_available",true}},api);
+        LuaValue messages=LuaValue::array();
+        for(const auto& message:plan.messages) messages.push_back(lua_bytes(View(message)));
+        const LuaValue expected{{"tickets",after.tickets},{"inventory",cleared},{"messages",messages}};
+        if(!prepared || result!=expected || !result.at("tickets").is_number_integer())
+            throw CodecError("lua_classic_news_plan_invalid");
+        for(const auto& slot:result.at("inventory"))
+            if(!slot.at("card").is_number_integer() || !slot.at("count").is_number_integer())
+                throw CodecError("lua_classic_news_plan_invalid");
+    }
+    return plan;
 }
 RichonlineClassicSavingsNewsPlan prepare_richonline_classic_savings_news(std::uint16_t game,
     const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
