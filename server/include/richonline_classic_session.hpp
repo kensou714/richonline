@@ -1,0 +1,56 @@
+#pragma once
+
+#include "richonline_classic_startup.hpp"
+#include "richonline_classic_property.hpp"
+#include "richonline_player_cards.hpp"
+#include "richonline_shared_startup.hpp"
+#include "richonline_opening_hand.hpp"
+
+namespace richnet {
+class RichonlineShopCatalog;
+// 所有连接共用这些对象。业务回调只能在shared_startups持有的对局锁内访问。
+struct RichonlineClassicWorld {
+    std::shared_ptr<RichonlineGameLedger> ledger;
+    std::shared_ptr<RichonlineClassicProperty> property;
+    std::vector<std::shared_ptr<RichonlinePlayerCards>> cards;
+};
+struct RichonlineClassicTurnContext {
+    std::uint16_t game_id,calendar;
+    std::uint64_t sequence,completed_rounds;
+    RichonlineLandingContext landing;
+    // 完整位置和各人的状态来自同一局，不能用当前连接的local_slot替代行动槽。
+    std::span<const RichonlineBoardParticipant> participants;
+    std::span<const RichonlineActorStatus> statuses;
+};
+struct RichonlineClassicServices {
+    // 特殊格、碰撞和复杂地产先由业务接管。空值才进入普通路/卡片格/地产选择。
+    std::function<std::optional<RichonlineLandingResult>(const RichonlineClassicTurnContext&)> landing;
+    // 购地、升级、取消、余额不足后均进入这里；不能把4020/4021等同于回合结束。
+    std::function<RichonlineLandingResult(const RichonlineClassicTurnContext&)> property_effects;
+    std::function<RichonlineLandingResult(const RichonlineClassicTurnContext&,View)> event;
+    std::function<std::optional<RichonlineLandingResult>(const RichonlineClassicTurnContext&)> poll;
+    std::function<void(std::uint8_t)> disconnected;
+};
+struct RichonlineClassicSessionRules {
+    // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
+    std::uint8_t first_actor,opaque_turn7;
+    std::vector<std::uint8_t> maximum_dice;
+    std::array<std::int8_t,2> inactive_ui_dice;
+    RichonlineRouteWirePolicy route_wire;
+    RichonlineRouteChooser random;
+    std::function<std::chrono::steady_clock::time_point()> now;
+    std::chrono::milliseconds decision_timeout;
+    std::shared_ptr<const RichonlineChanceResources> card_resources;
+    std::shared_ptr<const RichonlineShopCatalog> resale;
+    std::vector<std::vector<RichonlineMapOpeningCard>> opening_hands;
+    std::vector<std::int16_t> random_reward_cards;
+    std::shared_ptr<LuaServer> script;
+    std::function<RichonlineClassicServices(const RichonlineClassicWorld&)> services;
+    GameLogSink log;
+};
+// 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
+// 将action绑定到每条连接；0011由该共享层全员汇合后才允许提交位置和落点。
+// 生产接入仍须提供特殊格、银行途中暂停、租金、结算等完整业务，不能仅开放模式门。
+RichonlineSharedCallbacks make_richonline_classic_session(const RichonlineClassicStartup&,
+    RichonlineClassicSessionRules);
+}
