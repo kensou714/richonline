@@ -33,3 +33,21 @@
 
 工作区Release及Lua语法编译通过，未新增或运行玩法测试，未启动服务或游戏。
 固定源码构建、本机EXE/脚本同代交付和GitHub提交另附回执；不部署重启线上实例。
+
+## 固定构建交付回执
+
+2026-10-12：源码提交`8e9fd3b1e0364707f3168af2495f7ef698a6f2fd`，
+tree `75ac44a6dc4b432185cc7ff1e376eab6cf8b0b83`，已推送并核对GitHub main。
+固定源码目录`server/build-classic-computer-source/server`，独立构建目录
+`server/build-classic-computer-fixed`；Release、BUILD_TESTING=OFF，编译退出码0。
+176个Lua文件已逐项与工作区核对哈希，构建包含语法编译，未运行玩法测试。
+
+确认无本机服务进程后，将原EXE备份至
+`server/build-classic-computer-fixed/RichOnline.Server.before-8e9fd3b.exe`，
+固定构建EXE已复制至`server/RichOnline.Server.exe`，两者SHA256一致：
+`C352BECFAB998A4A7B6DEF7A911F6D13D1B5710A08B9DB0261E52B58C77C5858`。
+未启动服务或游戏，未部署重启线上实例；未宣称实机验收或整体goal完成。
+
+后继房产公司取证已定位7E4830/7E4930/7E4A30的分组顺序、最低合格等级与同级后命中覆盖，
+以及7E4020减级保留产权。地图候选列表生产顺序仍需复核，尚未接入kind6；临时原始证据
+保存在本次构建目录的`classic-estate-followup.json`，不当作已完成玩法。
