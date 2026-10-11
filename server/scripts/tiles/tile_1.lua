@@ -2,6 +2,7 @@
 -- 本文件只准备金额、停走、灾难和报文；状态、地产及全员结算由会话统一提交。
 local protocol = require("core.protocol")
 local insurance = require("cards.card_1049")
+local pardon = require("cards.card_1057")
 local M = {}
 local income = {[0x406d] = true, [0x406e] = true}
 local plain = {[0x406d] = true, [0x4070] = true, [0x4073] = true, [0x4074] = true,
@@ -11,6 +12,17 @@ local pictured = {[0x406e] = true, [0x4071] = true, [0x4077] = true, [0x407a] = 
 function M.land(request)
     if not request.classic_news_available then return core.call("tile.native") end
     local event = core.call("tile.classic_news.prepare")
+    if event.opcode == 0x4080 or (event.opcode >= 0x4082 and event.opcode <= 0x4086)
+        or (event.opcode >= 0x4088 and event.opcode <= 0x408a) then
+        local plan = pardon.jail(event)
+        local payload = event.opcode == 0x4088 and string.pack("<i2b", event.picture, event.days)
+            or string.pack("<b", event.days)
+        plan.messages = {
+            protocol.inner(0x4013, request.game_id, string.pack("<i2", request.position)),
+            protocol.inner(event.opcode, request.game_id, payload),
+        }
+        return plan
+    end
     if event.opcode == 0x407f or event.opcode == 0x4087 then
         local plan = insurance.hospital(event)
         plan.hospital, plan.stay = event.days, 0

@@ -60,6 +60,7 @@ struct RichonlineClassicNewsPolicy {
     // 408B..408F要求显式property和amount=0；408F无图，其余带已加载图索引。
     // 4081要求days、图片、amount=0及kidnap策略；不使用免罪卡或保险卡。
     // 407F/4087要求days、图片、amount=0及hospital策略，自动保险与收容同笔提交。
+    // 指定坐牢消息须jail策略；只有4088带图，其余只带days，均允许自动1057免罪。
     // 获奖名单、手牌与实际变卖点券由共享会话计算，不能由选择策略指定。
     // 概率和图片映射不得由BOSS新闻表替代。
     std::function<RichonlineClassicMoneyNews(const RichonlineClassicTurnContext&,
@@ -72,12 +73,17 @@ struct RichonlineClassicKidnapPolicy {
     // 服务端排队节奏，不冒充客户端动画ACK或原服超时。客户端仍按消息队列消费。
     std::chrono::milliseconds entry_delay{6150},turn_delay{1800};
 };
-struct RichonlineClassicHospitalPolicy {
+struct RichonlineClassicConfinementPolicy {
     std::function<bool(std::uint8_t)> secondary_insurance_absent;
-    // 显式服务端排队策略，覆盖入院及可选保险动画；不是客户端确认或原服时长。
+    // 显式服务端排队策略，覆盖入院/入狱及可选保险动画；不是客户端确认或原服时长。
     std::chrono::milliseconds entry_delay{10000},turn_delay{3150},controlled_exit_delay{1800};
-    // 普通本地角色必须回0015；到期报错，不能伪造出院确认。
+    // 普通本地角色必须回0015；到期报错，不能伪造退出确认。
     std::chrono::milliseconds exit_timeout{30000};
+};
+using RichonlineClassicHospitalPolicy=RichonlineClassicConfinementPolicy;
+struct RichonlineClassicJailPolicy : RichonlineClassicConfinementPolicy {
+    // 先查1057免罪；未免罪时才查基类的1049保险库存证明。
+    std::function<bool(std::uint8_t)> secondary_pardon_absent;
 };
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
@@ -112,6 +118,7 @@ struct RichonlineClassicSessionRules {
     std::optional<RichonlineClassicKidnapPolicy> kidnap;
     // 407F/4087还须地图具有已验证的医院入口/出口；不复用绑架返回位置策略。
     std::optional<RichonlineClassicHospitalPolicy> hospital;
+    std::optional<RichonlineClassicJailPolicy> jail;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

@@ -18,7 +18,8 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,roll,stationary,kidnap_wait,hospital_wait,hospital_exit,moving,bank,property,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,property,rent_transfer,event,junction,settling,closed };
+enum class Confinement { hospital,jail };
 struct Retired {
     std::uint8_t actor;
     Bytes request;
@@ -67,8 +68,9 @@ struct Session {
     std::vector<Bytes> stock_opening;
     std::uint32_t news_fines=richonline_classic_initial_news_fines;
     std::optional<std::chrono::steady_clock::time_point> kidnap_deadline;
-    std::optional<std::chrono::steady_clock::time_point> hospital_deadline;
-    bool hospital_exit_roll_requested=false;
+    std::optional<std::chrono::steady_clock::time_point> confinement_deadline;
+    bool confinement_exit_roll_requested=false;
+    Confinement confinement=Confinement::hospital;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -115,11 +117,12 @@ struct Session {
             rules.kidnap->entry_delay<std::chrono::seconds{1} || rules.kidnap->entry_delay>std::chrono::seconds{30} ||
             rules.kidnap->turn_delay<std::chrono::seconds{1} || rules.kidnap->turn_delay>std::chrono::seconds{30}))
             throw CodecError("richonline_classic_kidnap_policy_invalid");
-        if(rules.hospital) {
-            const auto& policy=*rules.hospital;
-            for(const auto delay:{policy.entry_delay,policy.turn_delay,policy.controlled_exit_delay,policy.exit_timeout})
+        for(const auto* policy:{rules.hospital ? static_cast<const RichonlineClassicConfinementPolicy*>(&*rules.hospital) : nullptr,
+            rules.jail ? static_cast<const RichonlineClassicConfinementPolicy*>(&*rules.jail) : nullptr}) {
+            if(!policy) continue;
+            for(const auto delay:{policy->entry_delay,policy->turn_delay,policy->controlled_exit_delay,policy->exit_timeout})
                 if(delay<std::chrono::milliseconds{1} || delay>std::chrono::minutes{5})
-                    throw CodecError("richonline_classic_hospital_policy_invalid");
+                    throw CodecError("richonline_classic_confinement_policy_invalid");
         }
         raw=std::make_unique<RichonlineRawAuthority>(static_cast<std::uint8_t>(count),board.game_server_id);
         raw->initialize_game();
@@ -237,21 +240,26 @@ struct Session {
         ++sequence;calendar=static_cast<std::uint16_t>(calendar+1U);
         static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
-        phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();hospital_deadline.reset();
-        hospital_exit_roll_requested=false;
+        phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
+        confinement_exit_roll_requested=false;
         const auto hospital=raw->actor(actor).hospital1494;
-        if(!hospital) throw CodecError("richonline_classic_hospital_state_unknown");
-        if(*hospital>=0) {
-            if(!rules.hospital || !startup.topology.hospital_positions())
-                throw CodecError("richonline_classic_hospital_policy_missing");
+        const auto jail=raw->actor(actor).jail1495;
+        if(!hospital || !jail || (*hospital>=0 && *jail>=0))
+            throw CodecError("richonline_classic_confinement_state_invalid");
+        if(*hospital>=0 || *jail>=0) {
+            confinement=*hospital>=0 ? Confinement::hospital : Confinement::jail;
+            const auto days=*hospital>=0 ? *hospital : *jail;
+            const auto& policy=confinement_policy();
+            static_cast<void>(confinement_positions());
             route={};route_cursor=0;movement.reset();
-            // 医院入口不是道路。这里只进入阶段4提示/退出动画，不构造该格落点context。
+            // 收容入口不是道路。这里只进入阶段4提示/退出动画，不构造该格落点context。
             messages.push_back(encode_richonline_empty_turn420f(board.game_server_id));
-            phase=*hospital==0 ? Phase::hospital_exit : Phase::hospital_wait;
-            hospital_deadline=rules.now()+(*hospital>0 ? rules.hospital->turn_delay :
-                hospital_controlled() ? rules.hospital->controlled_exit_delay : rules.hospital->exit_timeout);
-            if(rules.log) rules.log("richonline_classic_hospital_turn actor="+std::to_string(actor)+
-                " calendar="+std::to_string(calendar)+" days="+std::to_string(*hospital));
+            phase=days==0 ? Phase::confinement_exit : Phase::confinement_wait;
+            confinement_deadline=rules.now()+(days>0 ? policy.turn_delay :
+                confinement_controlled() ? policy.controlled_exit_delay : policy.exit_timeout);
+            if(rules.log) rules.log("richonline_classic_confinement_turn actor="+std::to_string(actor)+
+                " calendar="+std::to_string(calendar)+" days="+std::to_string(days)+
+                " jail="+std::to_string(confinement==Confinement::jail));
             return messages;
         }
         const auto kidnapped=raw->actor(actor).kidnapped1497;
@@ -293,24 +301,37 @@ struct Session {
             " sequence="+std::to_string(sequence)+" calendar="+std::to_string(calendar));
         return messages;
     }
-    bool hospital_controlled() const noexcept {
+    bool confinement_controlled() const noexcept {
         return statuses[actor].possession==7 || statuses[actor].sleepwalking!=0;
     }
-    std::vector<Bytes> finish_hospital_exit() {
-        if(phase!=Phase::hospital_exit || !startup.topology.hospital_positions() ||
-            raw->actor(actor).hospital1494!=0)
-            throw CodecError("richonline_classic_hospital_exit_invalid");
-        const auto pair=*startup.topology.hospital_positions();
+    const RichonlineClassicConfinementPolicy& confinement_policy() const {
+        if(confinement==Confinement::hospital && rules.hospital) return *rules.hospital;
+        if(confinement==Confinement::jail && rules.jail) return *rules.jail;
+        throw CodecError("richonline_classic_confinement_policy_missing");
+    }
+    std::array<std::int16_t,2> confinement_positions() const {
+        const auto& pair=confinement==Confinement::hospital ? startup.topology.hospital_positions() :
+            startup.topology.jail_positions();
+        if(!pair) throw CodecError("richonline_classic_confinement_positions_missing");
+        return *pair;
+    }
+    std::vector<Bytes> finish_confinement_exit() {
+        const auto days=confinement==Confinement::hospital ? raw->actor(actor).hospital1494 : raw->actor(actor).jail1495;
+        if(phase!=Phase::confinement_exit || days!=0)
+            throw CodecError("richonline_classic_confinement_exit_invalid");
+        const auto pair=confinement_positions();
         const auto width=static_cast<std::int32_t>(startup.topology.width());
         const auto dx=pair[1]%width-pair[0]%width,dy=pair[1]/width-pair[0]/width;
-        raw->exit_hospital(actor);
+        if(confinement==Confinement::hospital) raw->exit_hospital(actor);
+        else raw->exit_jail(actor);
         board.participants[actor].position=pair[1];
         board.participants[actor].direction=static_cast<std::uint8_t>(dy>0 ? 0 : dx<0 ? 1 : dy<0 ? 2 : 3);
-        hospital_deadline.reset();phase=Phase::roll;
-        if(rules.log) rules.log("richonline_classic_hospital_exit actor="+std::to_string(actor)+
+        confinement_deadline.reset();phase=Phase::roll;
+        if(rules.log) rules.log("richonline_classic_confinement_exit actor="+std::to_string(actor)+
             " calendar="+std::to_string(calendar)+" position="+std::to_string(pair[1]));
-        // 631640/631800和阶段4已经恢复行动界面；不重复420F、stay或出口落点事件。
-        if(std::exchange(hospital_exit_roll_requested,false)) {
+        // 医院631640/631800、监狱631D20/631EE0及阶段4已恢复行动界面。
+        // 不重复420F、stay或出口落点事件。
+        if(std::exchange(confinement_exit_roll_requested,false)) {
             auto move=prepare_move();std::vector<Bytes> messages{std::move(move.packet)};
             commit_move(std::move(move));return messages;
         }
@@ -651,21 +672,35 @@ struct Session {
         const auto inventory_before=world.cards[actor]->inventory();
         const auto rain_before=rain_actors();
         const auto event=rules.news->select(current,before,fines_before);
-        if(event.opcode==0x407f || event.opcode==0x4087) {
-            if(!rules.hospital || !startup.topology.hospital_positions())
-                throw CodecError("richonline_classic_hospital_policy_missing");
-            // 先查局内第一套手牌；只有地图允许且手牌没有保险时才读取第二套库存证明。
-            const bool needs_secondary=rules.card_resources->automatic_card_eligible(startup.map_name,1049) &&
+        const bool jail_news=richonline_classic_jail_news(event.opcode);
+        if(jail_news || event.opcode==0x407f || event.opcode==0x4087) {
+            const auto* policy=jail_news ? (rules.jail ? static_cast<const RichonlineClassicConfinementPolicy*>(&*rules.jail) : nullptr) :
+                (rules.hospital ? &*rules.hospital : nullptr);
+            if(!policy) throw CodecError("richonline_classic_confinement_policy_missing");
+            const bool pardon_eligible=jail_news && rules.card_resources->automatic_card_eligible(startup.map_name,1057);
+            const bool has_pardon=pardon_eligible && std::ranges::any_of(inventory_before,
+                [](const auto& slot){return slot.card_id==1057;});
+            const bool secondary_pardon_absent=!pardon_eligible || has_pardon ||
+                (rules.jail->secondary_pardon_absent && rules.jail->secondary_pardon_absent(actor));
+            // 免罪成功不查询/消费保险；其余分支只有第一套无卡时才要求第二套库存证明。
+            const bool needs_secondary=!has_pardon && rules.card_resources->automatic_card_eligible(startup.map_name,1049) &&
                 std::ranges::none_of(inventory_before,[](const auto& slot){return slot.card_id==1049;});
-            const bool secondary_absent=!needs_secondary || (rules.hospital->secondary_insurance_absent &&
-                rules.hospital->secondary_insurance_absent(actor));
-            auto plan=prepare_richonline_classic_hospital_news(board.game_server_id,current.landing,event,
+            const bool secondary_absent=!needs_secondary || (policy->secondary_insurance_absent &&
+                policy->secondary_insurance_absent(actor));
+            auto plan=jail_news ? prepare_richonline_classic_jail_news(board.game_server_id,current.landing,event,
+                rain_before[actor].raw,before,inventory_before,*rules.card_resources,startup.map_name,
+                secondary_pardon_absent,secondary_absent,rules.script) :
+                prepare_richonline_classic_hospital_news(board.game_server_id,current.landing,event,
                 rain_before[actor].raw,before,inventory_before,*rules.card_resources,startup.map_name,
                 secondary_absent,rules.script);
-            const auto deadline=rules.now()+rules.hospital->entry_delay;
-            const auto entry=(*startup.topology.hospital_positions())[0];
-            const auto detail="richonline_classic_hospital_news actor="+std::to_string(actor)+
+            const bool pardoned=plan.pardon_slot>=0;
+            const auto& pair=jail_news ? startup.topology.jail_positions() : startup.topology.hospital_positions();
+            if(!pardoned && !pair) throw CodecError("richonline_classic_confinement_positions_missing");
+            const auto entry=pardoned ? current.landing.position : (*pair)[0];
+            const auto deadline=rules.now()+policy->entry_delay;
+            const auto detail="richonline_classic_confinement_news actor="+std::to_string(actor)+
                 " sequence="+std::to_string(sequence)+" days="+std::to_string(plan.days)+
+                " jail="+std::to_string(jail_news)+" pardon_slot="+std::to_string(plan.pardon_slot)+
                 " insurance_slot="+std::to_string(plan.insurance_slot)+
                 " compensation="+std::to_string(plan.compensation);
             const std::array updates{plan.funds};
@@ -673,14 +708,20 @@ struct Session {
                 if(active!=active_before || raw->actor(actor)!=plan.raw_before || statuses[actor]!=plan.before ||
                     board.participants[actor].position!=current.landing.position ||
                     world.cards[actor]->inventory()!=plan.inventory_before) return false;
-                raw->enter_hospital(actor,static_cast<std::int8_t>(plan.days));
+                if(!pardoned) {
+                    if(jail_news) raw->enter_jail(actor,static_cast<std::int8_t>(plan.days));
+                    else raw->enter_hospital(actor,static_cast<std::int8_t>(plan.days));
+                }
                 statuses[actor]=plan.after;board.participants[actor].position=entry;
                 world.cards[actor]->commit_inventory(plan.inventory_after);return true;
             })) throw CodecError("richonline_classic_news_commit_stale");
-            collision_pending=false;movement.reset();route={};route_cursor=0;
-            pending_opcode.reset();phase=Phase::hospital_wait;hospital_deadline=deadline;
             if(rules.log) rules.log(detail);
-            // 原消息自己排动画9和可选保险，不再发加现金、扣卡或阶段2落点消息。
+            // 免罪原消息已排stage2；保留原位置/状态，继续同格碰撞和岔路，不跳过落点。
+            if(pardoned) return complete(std::move(plan.messages));
+            confinement=jail_news ? Confinement::jail : Confinement::hospital;
+            collision_pending=false;movement.reset();route={};route_cursor=0;
+            pending_opcode.reset();phase=Phase::confinement_wait;confinement_deadline=deadline;
+            // 原消息自己排动画9/11和可选保险，不再发加现金、扣卡或阶段2落点消息。
             return std::move(plan.messages);
         }
         if(event.opcode==0x4081) {
@@ -1079,18 +1120,18 @@ struct Session {
         }
         if(sender!=actor) throw CodecError("richonline_classic_sender_not_active");
         if(opcode==0x15) {
-            if(request.size()!=4) throw CodecError("richonline_classic_hospital_ack_invalid");
-            if(phase==Phase::hospital_exit && !hospital_controlled()) {
-                remember(sender,request);return finish_hospital_exit();
+            if(request.size()!=4) throw CodecError("richonline_classic_confinement_ack_invalid");
+            if(phase==Phase::confinement_exit && !confinement_controlled()) {
+                remember(sender,request);return finish_confinement_exit();
             }
             if(was_retired(sender,request)) return {};
-            throw CodecError("richonline_classic_hospital_ack_out_of_phase");
+            throw CodecError("richonline_classic_confinement_ack_out_of_phase");
         }
-        if(phase==Phase::hospital_exit && hospital_controlled() && opcode==0x10) {
+        if(phase==Phase::confinement_exit && confinement_controlled() && opcode==0x10) {
             const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
             if(roll.parameter!=0) throw CodecError("richonline_classic_roll_parameter_unsupported");
-            // 受控角色不发0015；先保存早到的自动掷骰意图，等归位后再走一步事务。
-            hospital_exit_roll_requested=true;remember(sender,request);return {};
+            // 受控角色不发0015；先保存早到的自动掷骰意图，等归位后再提交移动事务。
+            confinement_exit_roll_requested=true;remember(sender,request);return {};
         }
         if(phase==Phase::roll) {
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
@@ -1164,14 +1205,14 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
-        if(phase==Phase::hospital_wait || phase==Phase::hospital_exit) {
-            if(!hospital_deadline) throw CodecError("richonline_classic_hospital_deadline_missing");
-            if(rules.now()<*hospital_deadline) return {};
-            if(phase==Phase::hospital_exit) {
-                if(!hospital_controlled()) throw CodecError("richonline_classic_hospital_ack_timeout");
-                return finish_hospital_exit();
+        if(phase==Phase::confinement_wait || phase==Phase::confinement_exit) {
+            if(!confinement_deadline) throw CodecError("richonline_classic_confinement_deadline_missing");
+            if(rules.now()<*confinement_deadline) return {};
+            if(phase==Phase::confinement_exit) {
+                if(!confinement_controlled()) throw CodecError("richonline_classic_confinement_ack_timeout");
+                return finish_confinement_exit();
             }
-            hospital_deadline.reset();return advance({});
+            confinement_deadline.reset();return advance({});
         }
         if(phase==Phase::kidnap_wait) {
             if(!kidnap_deadline) throw CodecError("richonline_classic_kidnap_deadline_missing");
@@ -1199,7 +1240,7 @@ struct Session {
         if(sender>=disconnected.size() || disconnected[sender]) return;
         disconnected[sender]=true;
         if(!terminal || !terminal->committed())phase=Phase::closed;
-        movement.reset();rent_transfer.reset();kidnap_deadline.reset();hospital_deadline.reset();
+        movement.reset();rent_transfer.reset();kidnap_deadline.reset();confinement_deadline.reset();
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
         if(services.disconnected) services.disconnected(sender);
     }
