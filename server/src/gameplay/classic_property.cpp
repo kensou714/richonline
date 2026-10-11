@@ -149,6 +149,20 @@ RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_gr
     }
     return plan;
 }
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_conversion(
+    std::int16_t property,std::int8_t kind) const {
+    if(pending_ || kind<2 || kind>6)
+        throw CodecError("richonline_classic_conversion_context_invalid");
+    CardChange plan;plan.owner_=this;
+    plan.before_={snapshot(property)};plan.after_=plan.before_;
+    const auto& before=plan.before_[0];
+    if(before.sprite_type!=12 || !before.level || before.kind==kind ||
+        before.kind==8 || before.kind==9 || before.kind==10)
+        throw CodecError("richonline_classic_conversion_target_invalid");
+    // 681110只写kind；产权、等级、街区计时及研发登记由各自生命周期处理。
+    plan.after_[0].kind=kind;
+    return plan;
+}
 bool RichonlineClassicProperty::matches(const CardChange& plan) const noexcept {
     // 特殊建筑脚下也可合法使用查封；同组无普通地产时仍扣卡，变更集合可以为空。
     if(plan.owner_!=this || pending_ || plan.before_.size()!=plan.after_.size()) return false;
