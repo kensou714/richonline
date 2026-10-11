@@ -4,6 +4,7 @@
 #include "richonline_shop_catalog.hpp"
 #include "richonline_collision.hpp"
 #include "richonline_raw_authority.hpp"
+#include "richonline_rent_transfer.hpp"
 #include "lua_server.hpp"
 
 #include <algorithm>
@@ -14,10 +15,17 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,roll,moving,bank,property,event,junction,closed };
+enum class Phase { loading,roll,moving,bank,property,rent_transfer,event,junction,closed };
 struct Retired {
     std::uint8_t actor;
     Bytes request;
+};
+struct PendingRentTransfer {
+    RichonlineRentTransferState state;
+    RichonlineClassicPropertyState property;
+    std::int16_t position;
+    std::uint64_t sequence;
+    std::chrono::steady_clock::time_point deadline;
 };
 struct Session {
     RichonlineClassicStartup startup;
@@ -44,6 +52,8 @@ struct Session {
     std::optional<RichonlineSharedMovementWait> movement;
     std::deque<Retired> retired;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_banks;
+    std::optional<PendingRentTransfer> rent_transfer;
+    std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_rent_transfers;
     std::vector<bool> disconnected;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
@@ -153,6 +163,10 @@ struct Session {
         if(retired.size()>64) retired.pop_front();
     }
     bool was_retired(std::uint8_t sender,View request) const {
+        if(request.size()>=2 && read_le(request.first(2))==0x76) {
+            const auto choice=decode_richonline_rent_transfer_choice(request);
+            if(std::ranges::find(retired_rent_transfers,std::pair{sender,choice.calendar})!=retired_rent_transfers.end()) return true;
+        }
         // 服务端超时没有实际0027可保存。已关闭的银行允许格式正确的迟到选择，
         // 但action总是先处理当前银行，不能吞掉同回合下一次银行的正常交易。
         if(request.size()>=2 && read_le(request.first(2))==0x27) {
@@ -228,7 +242,8 @@ struct Session {
             throw CodecError("richonline_classic_continuation_invalid");
         if(result.pending_opcode && (*result.pending_opcode==0x10 || *result.pending_opcode==0x11 ||
             *result.pending_opcode==0x14 || *result.pending_opcode==0x20 || *result.pending_opcode==0x21 ||
-            *result.pending_opcode==0x27 || *result.pending_opcode==0x28 || *result.pending_opcode==0x34))
+            *result.pending_opcode==0x27 || *result.pending_opcode==0x28 || *result.pending_opcode==0x34 ||
+            *result.pending_opcode==0x76))
             throw CodecError("richonline_classic_continuation_reserved_opcode");
         if(result.status_change) {
             if(result.status_change->expected!=statuses[actor])
@@ -254,6 +269,72 @@ struct Session {
         auto result=services.property_effects(context());
         prefix.insert(prefix.end(),std::make_move_iterator(result.messages.begin()),std::make_move_iterator(result.messages.end()));
         result.messages=std::move(prefix);return accept_result(std::move(result));
+    }
+    std::vector<bool> rent_transfer_targets() const {
+        std::vector<bool> eligible(board.participants.size(),false);
+        for(std::uint8_t slot=0;slot<board.participants.size();++slot) {
+            const auto& state=raw->actor(slot);
+            if(!state.hotel1493 || !state.hospital1494 || !state.jail1495 || !state.kidnapped1497)
+                throw CodecError("richonline_classic_rent_transfer_target_unknown");
+            // 7174B0与7BC100都只排除原付款者及四种原始状态；不额外排除地主、
+            // 冻结或梦游，不重用普通租金的“地主暂停收租”资格判断。
+            eligible[slot]=slot!=actor && !disconnected[slot] && *state.hotel1493==-1 &&
+                *state.hospital1494==-1 && *state.jail1495==-1 && *state.kidnapped1497==-1;
+        }
+        return eligible;
+    }
+    std::vector<Bytes> begin_rent_transfer(const RichonlineClassicPropertyState& property,std::uint32_t amount,
+        const RichonlineChanceInventory& inventory,const RichonlineGameFundsSnapshot& payer,
+        const RichonlineGameFundsSnapshot& payee) {
+        if(rent_transfer || !property.owner) throw CodecError("richonline_classic_rent_transfer_already_pending");
+        std::int8_t card_slot=-1;
+        for(std::size_t index=0;index<inventory.size();++index) if(inventory[index].card_id==1056) {
+            if(inventory[index].count<=0) throw CodecError("richonline_classic_rent_transfer_card_invalid");
+            card_slot=static_cast<std::int8_t>(index);break;
+        }
+        if(card_slot<0) throw CodecError("richonline_classic_rent_transfer_card_missing");
+        RichonlineRentTransferState state{board.game_server_id,calendar,actor,*property.owner,amount,{},
+            rent_transfer_targets(),inventory,card_slot};
+        for(std::uint8_t slot=0;slot<board.participants.size();++slot) state.funds.push_back(world.ledger->snapshot(slot));
+        if(state.funds[actor]!=payer || state.funds[*property.owner]!=payee ||
+            world.cards[actor]->inventory()!=inventory || world.property->snapshot(property.id)!=property)
+            throw CodecError("richonline_classic_rent_transfer_entry_stale");
+        auto messages=std::vector<Bytes>{stop()};
+        rent_transfer=PendingRentTransfer{std::move(state),property,board.participants[actor].position,sequence,
+            rules.now()+rules.decision_timeout};
+        phase=Phase::rent_transfer;pending_opcode=0x76;
+        // 4013使所有客户端保存同一type0金额并排608C，只有原付款人打开UI27。
+        // 此时不扣嫁祸卡、不改资金，也不提前执行地产附加效果或phase6。
+        return messages;
+    }
+    std::vector<Bytes> finish_rent_transfer(const RichonlineRentTransferChoice& choice,bool timed_out) {
+        if(!rent_transfer || phase!=Phase::rent_transfer) throw CodecError("richonline_classic_rent_transfer_not_pending");
+        const auto& pending=*rent_transfer;
+        if(pending.state.original_payer!=actor || pending.state.calendar!=calendar || pending.sequence!=sequence ||
+            pending.position!=board.participants[actor].position ||
+            world.property->snapshot(pending.property.id)!=pending.property ||
+            world.cards[actor]->inventory()!=pending.state.inventory || pending.state.eligible!=rent_transfer_targets())
+            throw CodecError("richonline_classic_rent_transfer_pending_stale");
+        for(std::uint8_t slot=0;slot<board.participants.size();++slot)
+            if(world.ledger->snapshot(slot)!=pending.state.funds[slot])
+                throw CodecError("richonline_classic_rent_transfer_funds_stale");
+        auto plan=plan_richonline_rent_transfer(pending.state,choice,timed_out,rules.script);
+        if(plan.bankrupt) throw CodecError("richonline_classic_rent_bankruptcy_unimplemented");
+        auto messages=std::vector<Bytes>{std::move(plan.response)};
+        retired_rent_transfers.emplace_back(actor,calendar);
+        if(retired_rent_transfers.size()>64) retired_rent_transfers.pop_front();
+        if(!world.ledger->commit_sequence(plan.funds,[&]() {
+            if(world.cards[actor]->inventory()!=pending.state.inventory ||
+                world.property->snapshot(pending.property.id)!=pending.property) return false;
+            world.cards[actor]->commit_inventory(plan.inventory);return true;
+        })) throw CodecError("richonline_classic_rent_transfer_commit_stale");
+        rent_transfer.reset();pending_opcode.reset();
+        if(rules.log) rules.log("richonline_classic_rent_transfer actor="+std::to_string(actor)+
+            " payer="+std::to_string(plan.payer)+" charged="+std::to_string(plan.charged)+
+            " target="+std::to_string(plan.target)+" timed_out="+std::to_string(timed_out)+
+            " sequence="+std::to_string(sequence));
+        // 40C6(type0)排6080(2,5)，只进入附加效果，不再调用租金入口或补第二条4013。
+        return property_effects(std::move(messages));
     }
     std::vector<Bytes> rent(const RichonlineClassicPropertyState& property) {
         if(!property.owner || *property.owner>=statuses.size() || *property.owner==actor)
@@ -322,7 +403,7 @@ struct Session {
         }
         // 先识别等待/破产再提交，未实现的后继不得吞卡、扣光余额后伪造4010。
         if(std::string_view(outcome)=="transfer_pending")
-            throw CodecError("richonline_classic_rent_transfer_unimplemented");
+            return begin_rent_transfer(property,static_cast<std::uint32_t>(amount),inventory,payer,payee);
         if(std::string_view(outcome)=="bankrupt")
             throw CodecError("richonline_classic_rent_bankruptcy_unimplemented");
         const auto charged=std::string_view(outcome)=="paid" ? static_cast<std::uint32_t>(amount) : 0U;
@@ -532,6 +613,10 @@ struct Session {
         if(phase==Phase::bank && opcode==0x27) {
             auto result=bank->handle(request);remember(sender,request);return bank_result(std::move(result));
         }
+        if(phase==Phase::rent_transfer && opcode==0x76) {
+            const auto choice=decode_richonline_rent_transfer_choice(request);
+            remember(sender,request);return finish_rent_transfer(choice,rules.now()>=rent_transfer->deadline);
+        }
         if(phase==Phase::property && pending_opcode==opcode) {
             auto result=world.property->handle(sender,request,property_entry());
             remember(sender,request);pending_opcode.reset();return property_effects({std::move(result.message)});
@@ -550,6 +635,8 @@ struct Session {
         healthy();
         if(phase==Phase::bank) {
             if(auto result=bank->poll()) return bank_result(std::move(*result));
+        } else if(phase==Phase::rent_transfer) {
+            if(rules.now()>=rent_transfer->deadline) return finish_rent_transfer({calendar,-1,0},true);
         } else if(phase==Phase::property) {
             if(auto result=world.property->poll(property_entry())) {
                 pending_opcode.reset();return property_effects({std::move(result->message)});
@@ -565,7 +652,7 @@ struct Session {
     }
     void disconnect(std::uint8_t sender) {
         if(sender>=disconnected.size() || disconnected[sender]) return;
-        disconnected[sender]=true;phase=Phase::closed;movement.reset();
+        disconnected[sender]=true;phase=Phase::closed;movement.reset();rent_transfer.reset();
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
         if(services.disconnected) services.disconnected(sender);
     }
