@@ -41,6 +41,7 @@ struct ServerLobbyAdapter::Connections {
         std::shared_ptr<LuaServer> equipment_script;
         std::uint64_t mall_generation=0;
         std::optional<GameSettlementProfileRefreshAttempt> profile_attempt;
+        std::int64_t chest_inventory_cursor=0;
         std::vector<Frame> outbound;
         std::size_t outbound_bytes = 0;
         bool overflowed = false;
@@ -152,6 +153,14 @@ void ServerLobbyAdapter::queue_pending_profile_refreshes(std::uint64_t connectio
     directory->refresh_profile(connection,*peer.actor,current,update);
     peer.profile_attempt=*attempt;
     std::vector<RichonlineRoomDispatch> deliveries;
+    const auto now=std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto additions=storage_.boss_chest_notices(peer.username,*peer.selected_role,
+        attempt->intent.operation_id,peer.chest_inventory_cursor,now);
+    for(const auto& addition:additions) {
+        Bytes payload;append_le(payload,0,4);append_le(payload,addition.owned_key,4);append_le(payload,0,4);
+        deliveries.push_back({connection,{77,std::move(payload)}});
+        peer.chest_inventory_cursor=addition.cursor;
+    }
     for(const auto& [recipient,observer]:connections_->peers)
         if(observer.channel==peer.channel && observer.actor)
             deliveries.push_back({recipient,update});
@@ -244,6 +253,8 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                 for (const auto& [id,other]:connections->peers)
                     if (id!=connection && other.actor==actor) throw CodecError("richonline_actor_already_online_or_invalid");
                 auto output = channel_responses(login, actor, channel);
+                // 入频道的wire2已包含旧奖励，之后只通知本连接中新产生的宝箱实例。
+                peer.chest_inventory_cursor=storage_.boss_chest_cursor();
                 const auto rooms=connections->rooms.find(channel);
                 if (rooms!=connections->rooms.end()) connections->deliver(rooms->second.enter(connection, actor, output.at(1)));
                 peer.actor = actor;

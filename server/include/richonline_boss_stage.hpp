@@ -19,6 +19,15 @@ struct RichonlineStageReward {
     std::uint32_t experience, gold, item_count;
     std::vector<std::int32_t> item_ids;
 };
+enum class RichonlineBossDropKind { active_item, inactive_item, skill };
+struct RichonlineBossDrop {
+    RichonlineBossDropKind kind;
+    // 物品使用 Prop 编号；技能使用 Yan..Shou 的 0..9 索引。
+    std::uint16_t id;
+    std::uint8_t level;
+    std::uint32_t weight;
+    bool operator==(const RichonlineBossDrop&) const = default;
+};
 inline constexpr std::array<std::string_view,12> richonline_boss_equipment_keys{
     "bossPet","bossVehicle","bossLand","bossDeng","bossDice","bossMove",
     "bossSuit","bossGlass","bossCover","bossMask","bossKitbag","bossGowith"};
@@ -38,6 +47,7 @@ struct RichonlineBossStage {
     RichonlineStageReward first_reward, repeat_reward;
     // Absent keys stay absent. Static67 consumers must not invent a fee/reward.
     std::optional<std::uint32_t> invest_base, invest_return;
+    std::vector<RichonlineBossDrop> chest_drops;
 };
 
 RichonlineBossStage parse_richonline_boss_stage(std::string_view bosswar_text,

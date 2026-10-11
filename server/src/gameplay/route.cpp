@@ -126,7 +126,7 @@ RichonlineRoute build_richonline_route(const RichonlineRoadTopology& topology,
         throw CodecError("richonline_route_direction_invalid");
     const auto& start = topology.cell(request.start);
     if (!start.walkable) throw CodecError("richonline_route_start_blocked");
-    require_ordinary(start,request.banks_enabled);
+    if(!request.scripted_reward) require_ordinary(start,request.banks_enabled);
     RichonlineRoute route;
     route.directions.reserve(static_cast<std::size_t>(request.budget));
     route.landings.reserve(static_cast<std::size_t>(request.budget));
@@ -162,7 +162,7 @@ RichonlineRoute build_richonline_route(const RichonlineRoadTopology& topology,
             }
         }
         position = *cell.neighbors[direction];
-        require_ordinary(topology.cell(position),request.banks_enabled);
+        if(!request.scripted_reward) require_ordinary(topology.cell(position),request.banks_enabled);
         route.directions.push_back(direction);
         route.landings.push_back(position);
         heading = direction;

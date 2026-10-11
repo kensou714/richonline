@@ -209,6 +209,9 @@ void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& worl
     for (std::size_t i=0;i<damages.size();++i) if (damages[i]) {
         const auto& result=*damages[i];
         auto& actor=*state.actors[i];
+        plan.actor_impacts.push_back({boss,actor.slot,effect,target,actor.funds.funds.cash,
+            *actor.funds.funds.deposit,result.after.cash,*result.after.deposit,attacker.flat_attack,
+            actor.flat_defense,result.bankrupt});
         actor.funds.funds=result.after;
         if (result.bankrupt) actor.active=false;
         if (result.safety_helmet_consumption) {

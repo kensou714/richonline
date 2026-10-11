@@ -45,6 +45,7 @@ struct RichonlineRouteRequest {
     std::optional<std::uint8_t> first_direction;
     bool portals_enabled = true;
     bool banks_enabled = false;
+    bool scripted_reward = false;
 };
 struct RichonlineRoute {
     std::vector<std::uint8_t> directions;

@@ -161,7 +161,8 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_host(Storage& storage,
                 if (room.owner == 0 || room.owner >= capacity || room.owner > 32767)
                     throw CodecError("richonline_boss_host_actor_out_of_range");
                 const auto settings = storage.dispatch("config.get",Json::object());
-                const auto skills = numbers<std::int8_t,10>(settings.at("settings").at("max_building_skills"),0,7);
+                const auto skills = storage.boss_skill_caps(room.owner,
+                    numbers<std::int8_t,10>(settings.at("settings").at("max_building_skills"),0,7));
                 const auto now=std::chrono::duration_cast<std::chrono::seconds>(
                     std::chrono::system_clock::now().time_since_epoch()).count();
                 const auto inventory=storage.lobby_inventory_for_role(room.owner,now);

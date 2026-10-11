@@ -38,6 +38,7 @@ struct RichonlineBossSessionPolicy {
     std::function<RichonlineRawActorState(std::uint8_t)> hibernate_raw_actor = {};
     std::shared_ptr<RichonlineRawAuthority> raw_authority = {};
     LuaNative script_database = {};
+    std::function<Bytes()> claim_boss_chest = {};
 };
 
 // Shared gameplay assembly. Map packages supply resources and policy; they do

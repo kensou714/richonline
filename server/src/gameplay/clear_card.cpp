@@ -43,8 +43,10 @@ RichonlineClearCardPlan plan_richonline_clear_card(const RichonlineClearCardRequ
         throw CodecError("richonline_clear_card_not_owned");
     auto after_inventory = inventory;
     if (--after_inventory[slot].count == 0) after_inventory[slot] = {};
-    // NEW7E2B80 removes every occupied dynamic record, including traps.
-    return {request, ground, {}, inventory, std::move(after_inventory),
+    // NEW7E2B80 ->7E28B0明确保留NPC32胜利宝箱。
+    RichonlineGroundMap remaining;
+    for(const auto& [position,object]:ground.objects) if(object.npc==32) remaining.emplace(position,object);
+    return {request, ground, std::move(remaining), inventory, std::move(after_inventory),
         encode_richonline_clear40f0(context.game_id, request)};
 }
 } // namespace richnet

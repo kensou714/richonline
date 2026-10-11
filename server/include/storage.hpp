@@ -8,6 +8,7 @@
 #include "game_charge.hpp"
 #include "game_settlement.hpp"
 #include "game_settlement_items.hpp"
+#include "game_boss_chest.hpp"
 #include "lobby_inventory.hpp"
 #include "richonline_mail.hpp"
 #include "richonline_mall.hpp"
@@ -91,6 +92,12 @@ public:
                                        const std::string& operation_id, std::uint32_t sent_message);
     GameSettlementResult settle_game(const std::string& username, std::int64_t role_id,
                                      const GameSettlementRequest& request);
+    GameBossChestReceipt claim_boss_chest(const std::string& username,std::int64_t role_id,
+        const RichonlineMallCatalog& catalog,const GameBossChestClaim& request,std::int64_t unix_now);
+    std::int64_t boss_chest_cursor();
+    std::vector<GameBossChestNotice> boss_chest_notices(const std::string& username,std::int64_t role_id,
+        const std::string& settlement_operation,std::int64_t after,std::int64_t unix_now);
+    std::array<std::int8_t,10> boss_skill_caps(std::int64_t role_id,std::array<std::int8_t,10> baseline);
     nlohmann::json select_model(const std::string& username, std::int64_t role_id, std::uint32_t model);
     // unix_now 使用 Unix 时间戳（秒），用于判断库存有效期；不是单调时钟计数。
     LobbyInventory lobby_inventory(const std::string& username, std::int64_t role_id, std::int64_t unix_now);

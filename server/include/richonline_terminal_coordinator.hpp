@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace richnet {
-enum class RichonlineTerminalPhase { prepared, playing, delivering, finished, aborted, recovery_required };
+enum class RichonlineTerminalPhase { prepared, playing, bonus, delivering, finished, aborted, recovery_required };
 enum class RichonlineTerminalAction { continue_play, deliver, abort_live_game, finished };
 struct RichonlineTerminalStep {
     RichonlineTerminalAction action;
@@ -48,7 +48,9 @@ public:
     // A result already committed by bankrupt() is preserved, never made a loss.
     RichonlineTerminalAbandonResult abandon(const std::string& reason);
     // Combat/NPC cash has already committed. This method never debits it again.
-    RichonlineTerminalStep bankrupt(std::span<const std::int8_t> actors);
+    RichonlineTerminalStep bankrupt(std::span<const std::int8_t> actors,bool defer_victory=false);
+    // 胜利已入库；宝箱期间仅放行败者400E，拾取或超时后释放剩余结算。
+    void finish_bonus();
     RichonlineTerminalStep month_limit();
     const RichonlineSettlementTransmission* next_transmission() const noexcept;
     // Read-only planner snapshot; no outbox checkpoint before actual sends.
@@ -69,6 +71,7 @@ private:
     bool settled_{};
     std::vector<RichonlineSettlementTransmission> transmissions_;
     std::size_t next_{};
+    std::size_t bonus_prefix_{};
     std::shared_ptr<const RichonlineGameLedger> income_ledger_;
     std::uint8_t income_actor_{};
 };

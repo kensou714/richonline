@@ -308,6 +308,51 @@ std::optional<RichonlineRuntimeGame> load_richonline_boss_runtime(
                         {3,0,{1},{}},selected_terminal->terminal,selected_terminal->byte18_evidence});
                 session_policy.result_display=selected_terminal->display;
                 session_policy.map_loading=selected_terminal->loading;
+                if(!stage.chest_drops.empty()) {
+                    auto catalog=std::make_shared<const RichonlineMallCatalog>(RichonlineMallCatalog::load(resources));
+                    auto script=LuaServer::create();
+                    for(const auto& drop:stage.chest_drops)
+                        if(drop.kind!=RichonlineBossDropKind::skill && !catalog->products().contains(drop.id))
+                            throw CodecError("richonline_boss_chest_product_missing");
+                    session_policy.claim_boss_chest=[&storage,catalog,script,drops=stage.chest_drops,
+                        username=account.username,role=startup.room.owner,operation=match+":settlement",
+                        stage_key=stage.map_name+":category="+std::to_string(read_le(View(extension).subspan(68,4))),
+                        skills=startup.init.participants[0].building_skill_caps,game=startup.init.game_server_id,
+                        selected_drop=std::optional<std::size_t>{},log]() mutable {
+                        if(!selected_drop) {
+                            Json entries=Json::array();std::uint32_t total=0;
+                            for(const auto& drop:drops) {entries.push_back({{"weight",drop.weight}});total+=drop.weight;}
+                            const auto draw=script->call("boss.chest_select",{{"drops",entries}},
+                                {{"boss.chest_random",[total](const LuaValue& args) {
+                                    if(args.at("bound")!=total || !total) throw CodecError("richonline_boss_chest_weight_invalid");
+                                    return LuaValue(uniform_choice(total));
+                                }}});
+                            if(!draw.is_number_integer() || draw<0 || draw>=drops.size())
+                                throw CodecError("richonline_boss_chest_selection_invalid");
+                            selected_drop=draw.get<std::size_t>();
+                        }
+                        const auto& drop=drops[*selected_drop];
+                        const auto now=std::chrono::duration_cast<std::chrono::seconds>(
+                            std::chrono::system_clock::now().time_since_epoch()).count();
+                        const auto receipt=storage.claim_boss_chest(username,role,*catalog,
+                            {operation,stage_key,drop,skills,true},now);
+                        Bytes message;
+                        append_le(message,drop.kind==RichonlineBossDropKind::skill ? 0x420d : 0x4211,2);
+                        append_le(message,game,2);
+                        if(drop.kind==RichonlineBossDropKind::skill) {
+                            message.push_back(static_cast<std::uint8_t>(drop.id));message.push_back(drop.level);
+                            message.push_back(receipt.discarded ? 1 : 0);
+                        } else {
+                            append_le(message,drop.id,2);
+                            message.push_back(drop.kind==RichonlineBossDropKind::inactive_item ? 1 : 0);
+                            message.push_back(receipt.discarded ? 1 : 0);
+                        }
+                        if(log) log("richonline_boss_chest_claim",{{"role",role},{"reward",drop.id},{"skill_level",drop.level},
+                            {"discarded",receipt.discarded},{"pending_date",receipt.pending_date},{"replayed",receipt.replayed},
+                            {"expires_at",receipt.expires_at},{"level","info"}});
+                        return message;
+                    };
+                }
             }
             if (selected_ground) {
                 const auto stage=package.load_stage(resources,read_le(View(extension).subspan(68,4)));

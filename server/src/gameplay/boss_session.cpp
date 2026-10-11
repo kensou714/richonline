@@ -297,11 +297,12 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         }
     if (policy.terminal) {
         rules.month_limit_days=static_cast<std::uint8_t>(stage.game_months*30U);
-        rules.terminal=[terminal=policy.terminal](const RichonlineTurnTerminalContext& context) {
+        const auto chest_enabled=static_cast<bool>(policy.claim_boss_chest) && !stage.chest_drops.empty();
+        rules.terminal=[terminal=policy.terminal,chest_enabled](const RichonlineTurnTerminalContext& context) {
             std::vector<std::int8_t> actors;
             for (const auto actor:context.bankrupt_actors) actors.push_back(static_cast<std::int8_t>(actor));
             const auto step=context.reason==RichonlineTerminalReason::month_limit ?
-                terminal->month_limit() : terminal->bankrupt(actors);
+                terminal->month_limit() : terminal->bankrupt(actors,chest_enabled);
             if (step.action==RichonlineTerminalAction::abort_live_game)
                 throw CodecError(step.diagnostic);
             if (step.action!=RichonlineTerminalAction::deliver)
@@ -311,7 +312,16 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
                 throw CodecError("richonline_terminal_game_messages_missing");
             // Build all messages without advancing the durable cursor. The
             // transport observer confirms each successfully sent frame later.
-            return RichonlineTurnTerminalResult{terminal->pending_game_messages(),true};
+            return RichonlineTurnTerminalResult{terminal->pending_game_messages(),
+                terminal->phase()!=RichonlineTerminalPhase::bonus};
+        };
+        if(chest_enabled) rules.finish_boss_chest=[terminal=policy.terminal,claim=policy.claim_boss_chest](bool picked) {
+            std::vector<Bytes> messages;
+            if(picked) messages.push_back(claim());
+            terminal->finish_bonus();
+            auto remaining=terminal->pending_game_messages();
+            messages.insert(messages.end(),std::make_move_iterator(remaining.begin()),std::make_move_iterator(remaining.end()));
+            return messages;
         };
     }
     std::shared_ptr<RichonlineGroundObjects> ground;

@@ -120,6 +120,44 @@ RichonlineStageReward reward(const Record& record,std::string_view prefix) {
     }
     return value;
 }
+std::vector<RichonlineBossDrop> chest_drops(const Record& record) {
+    if(!record.contains("dropBoxNum")) return {};
+    const auto count=bounded(record,"dropBoxNum",256);
+    std::vector<RichonlineBossDrop> result;
+    std::uint64_t total=0;
+    for(std::uint32_t i=1;i<=count;++i) {
+        auto suffix=std::to_string(i);
+        suffix.insert(0,3-suffix.size(),'0');
+        std::string_view entry=required(record,"dropBox"+suffix);
+        std::array<std::string,3> parts;
+        for(std::size_t part=0;part<parts.size();++part) {
+            const auto comma=entry.find(',');
+            if((part+1<parts.size())!=(comma!=entry.npos))
+                throw CodecError("richonline_stage_chest_entry_invalid");
+            parts[part]=trim(entry.substr(0,comma));
+            if(comma!=entry.npos) entry.remove_prefix(comma+1);
+        }
+        const Record values{{"value",parts[1]},{"weight",parts[2]}};
+        const auto weight=bounded(values,"weight",1000000);
+        if(weight==0) throw CodecError("richonline_stage_chest_zero_weight");
+        total+=weight;
+        if(total>2147483647U) throw CodecError("richonline_stage_chest_weight_overflow");
+        if(parts[0]=="Active" || parts[0]=="NotAct") {
+            const auto id=bounded(values,"value",4095);
+            if(!id) throw CodecError("richonline_stage_chest_item_invalid");
+            result.push_back({parts[0]=="Active" ? RichonlineBossDropKind::active_item :
+                RichonlineBossDropKind::inactive_item,static_cast<std::uint16_t>(id),0,weight});
+        } else {
+            const auto skill=std::find(richonline_building_keys.begin(),richonline_building_keys.end(),parts[0]);
+            const auto level=bounded(values,"value",7);
+            if(skill==richonline_building_keys.end() || !level)
+                throw CodecError("richonline_stage_chest_skill_invalid");
+            result.push_back({RichonlineBossDropKind::skill,
+                static_cast<std::uint16_t>(skill-richonline_building_keys.begin()),static_cast<std::uint8_t>(level),weight});
+        }
+    }
+    return result;
+}
 }
 RichonlineBossStage parse_richonline_boss_stage(std::string_view text,std::string_view name,const OriginalEmp& map,std::uint32_t category) {
     validate_identity(name);
@@ -143,6 +181,7 @@ RichonlineBossStage parse_richonline_boss_stage(std::string_view text,std::strin
     if(record.contains("investBase")) stage.invest_base=bounded(record,"investBase");
     if(record.contains("investReturn")) stage.invest_return=bounded(record,"investReturn");
     stage.first_reward=reward(record,"first"); stage.repeat_reward=reward(record,"again");
+    stage.chest_drops=chest_drops(record);
     stage.player_count_choices=player_choices(required(record,"plyNum"));
     if (stage.player_selection==0 || std::find(stage.player_count_choices.begin(),stage.player_count_choices.end(),
         stage.player_selection)==stage.player_count_choices.end()) throw CodecError("richonline_stage_player_selection_invalid");

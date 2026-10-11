@@ -59,6 +59,14 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::apply(std::span<const Richo
     const Snapshot& before,RichonlineCombatTurnPlan plan,const RichonlineBossProperty::PreparedMissileRound* missile_round,
     const std::function<void(const std::string&)>& log) {
     std::vector<std::string> impact_logs;
+    if(log) for(const auto& hit:plan.actor_impacts)
+        impact_logs.push_back("richonline_combat_actor_impact revision="+std::to_string(before.combat.revision)+
+            " attacker="+std::to_string(hit.attacker)+" victim="+std::to_string(hit.victim)+
+            " effect="+std::to_string(static_cast<unsigned>(hit.effect))+" target="+std::to_string(hit.target)+
+            " cash_before="+std::to_string(hit.cash_before)+" deposit_before="+std::to_string(hit.deposit_before)+
+            " cash_after="+std::to_string(hit.cash_after)+" deposit_after="+std::to_string(hit.deposit_after)+
+            " flat_attack="+std::to_string(hit.flat_attack)+" flat_defense="+std::to_string(hit.flat_defense)+
+            " bankrupt="+std::to_string(hit.bankrupt));
     if(log) for(const auto& impact:plan.building_impacts) {
         impact_logs.push_back("richonline_combat_property_impact revision="+std::to_string(before.combat.revision)+
             " actor="+std::to_string(impact.actor)+" effect="+std::to_string(static_cast<unsigned>(impact.effect))+

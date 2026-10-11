@@ -9,6 +9,7 @@ local rewards = require("game.rewards")
 local feasts = require("events.feasts")
 local tiles = require("tiles.registry")
 local bosses = require("bosses.registry")
+local boss_chest = require("bosses.chest")
 local lottery = require("cards.card_504")
 local mall_purchase = require("mall.purchase")
 local equipment = require("mall.equipment")
@@ -22,6 +23,7 @@ local handlers = {
     ["tile.land"] = tiles.land, ["boss.can_attack"] = bosses.can_attack,
     ["card.lottery_award"] = lottery.award,
     ["boss.attack"] = bosses.attack,
+    ["boss.chest_select"] = boss_chest.select,
     ["mall.purchase_policy"] = mall_purchase.plan,
     ["mall.equipment_policy"] = equipment.plan,
     ["mall.equipment_healing"] = equipment_effects.healing,

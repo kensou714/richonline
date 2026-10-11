@@ -54,7 +54,8 @@ RichonlineTerminalAbandonResult RichonlineTerminalCoordinator::abandon(const std
     if(settled_ || phase_==RichonlineTerminalPhase::finished || phase_==RichonlineTerminalPhase::aborted) {
         // A socket can disappear during result delivery. Keep the real committed
         // result/outbox for explicit recovery and stop writing this dead game.
-        if(phase_==RichonlineTerminalPhase::delivering)phase_=RichonlineTerminalPhase::recovery_required;
+        if(phase_==RichonlineTerminalPhase::delivering || phase_==RichonlineTerminalPhase::bonus)
+            phase_=RichonlineTerminalPhase::recovery_required;
         return {RichonlineTerminalAbandonAction::already_terminal,{},{},reason};
     }
     try {
@@ -79,7 +80,7 @@ RichonlineTerminalAbandonResult RichonlineTerminalCoordinator::abandon(const std
             std::string("richonline_terminal_abandon_persistence_failure: ")+error.what()+"; "+reason};
     }
 }
-RichonlineTerminalStep RichonlineTerminalCoordinator::bankrupt(std::span<const std::int8_t> actors) {
+RichonlineTerminalStep RichonlineTerminalCoordinator::bankrupt(std::span<const std::int8_t> actors,bool defer_victory) {
     if(phase_==RichonlineTerminalPhase::delivering)return {RichonlineTerminalAction::deliver,{}, {}};
     if(phase_==RichonlineTerminalPhase::finished)return {RichonlineTerminalAction::finished,{}, {}};
     if(phase_==RichonlineTerminalPhase::recovery_required)
@@ -94,7 +95,25 @@ RichonlineTerminalStep RichonlineTerminalCoordinator::bankrupt(std::span<const s
         context_.roster=decision.after;
         return {RichonlineTerminalAction::continue_play,std::move(messages),{}};
     }
-    return deliver_result(decision);
+    auto result=deliver_result(decision);
+    if(defer_victory && decision.outcome==GameOutcome::win && result.action==RichonlineTerminalAction::deliver) {
+        // 普通结算包和序号保持原样，避免恢复时重发已确认的400E。
+        bonus_prefix_=0;
+        while(bonus_prefix_<transmissions_.size()) {
+            const auto& frame=transmissions_[bonus_prefix_];
+            if(frame.transport!=RichonlineSettlementTransport::game || frame.game_plain.size()<2 ||
+                read_le(View(frame.game_plain).first(2))!=0x400e) break;
+            ++bonus_prefix_;
+        }
+        if(!bonus_prefix_) throw CodecError("richonline_bonus_elimination_prefix_missing");
+        phase_=RichonlineTerminalPhase::bonus;
+    }
+    return result;
+}
+void RichonlineTerminalCoordinator::finish_bonus() {
+    if(phase_!=RichonlineTerminalPhase::bonus || next_!=bonus_prefix_)
+        throw CodecError("richonline_bonus_finish_phase_invalid");
+    phase_=RichonlineTerminalPhase::delivering;
 }
 RichonlineTerminalStep RichonlineTerminalCoordinator::month_limit() {
     if(phase_==RichonlineTerminalPhase::delivering)return {RichonlineTerminalAction::deliver,{}, {}};
@@ -130,12 +149,15 @@ RichonlineTerminalStep RichonlineTerminalCoordinator::deliver_result(const Richo
     }
 }
 const RichonlineSettlementTransmission* RichonlineTerminalCoordinator::next_transmission() const noexcept {
-    return phase_==RichonlineTerminalPhase::delivering && next_<transmissions_.size()?&transmissions_[next_]:nullptr;
+    const auto limit=phase_==RichonlineTerminalPhase::bonus ? bonus_prefix_ : transmissions_.size();
+    return (phase_==RichonlineTerminalPhase::delivering || phase_==RichonlineTerminalPhase::bonus) &&
+        next_<limit ? &transmissions_[next_] : nullptr;
 }
 std::vector<Bytes> RichonlineTerminalCoordinator::pending_game_messages() const {
     std::vector<Bytes> result;
-    if(phase_!=RichonlineTerminalPhase::delivering)return result;
-    for(auto i=next_;i<transmissions_.size();++i)
+    if(phase_!=RichonlineTerminalPhase::delivering && phase_!=RichonlineTerminalPhase::bonus)return result;
+    const auto limit=phase_==RichonlineTerminalPhase::bonus ? bonus_prefix_ : transmissions_.size();
+    for(auto i=next_;i<limit;++i)
         if(transmissions_[i].transport==RichonlineSettlementTransport::game)
             result.push_back(transmissions_[i].game_plain);
     return result;

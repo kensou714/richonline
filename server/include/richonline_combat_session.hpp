@@ -127,6 +127,14 @@ struct RichonlineCombatBuildingImpact {
     std::int16_t target;
     RichonlineCombatBuildingView before,after;
 };
+struct RichonlineCombatActorImpact {
+    std::uint8_t attacker,victim;
+    RichonlineCombatEffect effect;
+    std::int16_t target;
+    std::uint32_t cash_before,deposit_before,cash_after,deposit_after;
+    std::int32_t flat_attack,flat_defense;
+    bool bankrupt;
+};
 struct RichonlineCombatTurnPlan {
     RichonlineCombatSessionView expected,after;
     std::array<RichonlineCombatAttackAttempt,4> boss_attempts{};
@@ -138,6 +146,7 @@ struct RichonlineCombatTurnPlan {
     std::vector<RichonlineMissileBaseVolley> base_volleys;
     // 逐次保留命中结果，含被 LAND 保护的空地；只有事务提交后才输出日志。
     std::vector<RichonlineCombatBuildingImpact> building_impacts;
+    std::vector<RichonlineCombatActorImpact> actor_impacts;
 };
 RichonlineCombatTurnPlan prepare_richonline_missile_base_round(const RichonlineCombatSessionView&,
     const RichonlineCombatWorld&,std::span<const RichonlineMissileBaseSalvo>,

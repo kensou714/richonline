@@ -31,7 +31,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading, roll, frozen, jailed, jail_exit, moving, stationary, bank, npc, landing, junction, finished, closed };
+enum class Phase { loading, chest_ready, roll, frozen, jailed, jail_exit, moving, stationary, bank, npc, landing, junction, finished, closed };
 struct Turns {
     RichonlineBoardInit init;
     RichonlineRoadTopology topology;
@@ -84,6 +84,56 @@ struct Turns {
     std::optional<AcceptedRandomRoll> accepted_random_roll{};
     std::uint32_t poison_use_count=0;
     std::array<RichonlinePetState,2> pets{};
+    std::optional<std::int16_t> boss_chest{};
+    std::uint8_t chest_turns_left=0;
+    std::vector<std::array<std::uint16_t,2>> chest_stops{};
+
+    std::vector<Bytes> finish_chest(std::vector<Bytes> messages,bool picked) {
+        auto result=rules.finish_boss_chest(picked);
+        messages.insert(messages.end(),std::make_move_iterator(result.begin()),std::make_move_iterator(result.end()));
+        if(rules.log) rules.log("richonline_boss_chest_finished picked="+std::to_string(picked)+
+            " turns_left="+std::to_string(chest_turns_left));
+        phase=Phase::finished;route={};controlled_roll_deadline.reset();
+        return messages;
+    }
+    std::vector<Bytes> open_chest(std::vector<Bytes> messages) {
+        if(!rules.finish_boss_chest || !rules.ground || !rules.cards || !active[0] || active[1])
+            throw CodecError("richonline_boss_chest_context_invalid");
+        std::vector<std::int16_t> candidates;
+        for(const auto& cell:topology.cells())
+            if(cell.walkable && cell.position!=init.participants[0].position &&
+                std::any_of(cell.neighbors.begin(),cell.neighbors.end(),[](const auto& next){return next.has_value();}))
+                candidates.push_back(cell.position);
+        if(candidates.empty()) throw CodecError("richonline_boss_chest_no_road");
+        const auto chosen=rules.random(candidates.size());
+        if(chosen>=candidates.size()) throw CodecError("richonline_boss_chest_random_invalid");
+        const auto position=candidates[chosen];
+        auto ground=rules.ground->prepare(rules.ground->snapshot(),{{position,{32,255,255}}});
+        auto inventory=rules.cards->inventory();
+        constexpr std::array<std::int16_t,12> removed{1042,1044,1045,1046,1063,1069,1075,1182,1183,500,501,506};
+        for(auto& slot:inventory) if(std::find(removed.begin(),removed.end(),slot.card_id)!=removed.end()) slot={};
+        Bytes spawn;append_le(spawn,0x420c,2);append_le(spawn,init.game_server_id,2);
+        append_le(spawn,static_cast<std::uint16_t>(position),2);messages.push_back(std::move(spawn));
+        // 420C ->7F91F0/7F9560清这些状态，医院/监狱和装备免疫保留。
+        auto cleaned=status[0];
+        richonline_detach_possession(cleaned);cleaned.timed_bomb.reset();cleaned.timed_bomb_owner.reset();
+        cleaned.one_step=cleaned.six_steps=cleaned.turtle=cleaned.stay=cleaned.sleepwalking=cleaned.frozen=0;
+        cleaned.attack_turns=cleaned.damage_turns=0;
+        auto change=rules.npcs ? std::optional{rules.npcs->prepare_status_change(0,status[0],cleaned)} : std::nullopt;
+        if(!rules.ground->matches(ground) || (change && !rules.npcs->matches_status_change(*change,status[0])))
+            throw CodecError("richonline_boss_chest_state_changed");
+        if(!rules.ground->commit_prepared(ground)) std::terminate();
+        rules.cards->commit_inventory(inventory);
+        if(change) {
+            if(!rules.npcs->commit_status_change(*change,status[0])) std::terminate();
+        } else status[0]=cleaned;
+        relations1472={};
+        retire_decision();npc_landing.reset();npc_deadline.reset();npc_pending_counter.reset();
+        controlled_roll_deadline.reset();frozen_deadline.reset();jail_deadline.reset();pending_mine_day.reset();
+        boss_chest=position;chest_turns_left=3;phase=Phase::chest_ready;route={};
+        if(rules.log) rules.log("richonline_boss_chest_open position="+std::to_string(position)+" turns=3");
+        return messages;
+    }
 
     bool placement_present(std::uint8_t slot) const {
         if(!active[slot]) return false;
@@ -178,9 +228,9 @@ struct Turns {
         auto result=rules.terminal({std::move(bankrupt),reason,game_mode,actor,active_counter,turn_sequence});
         // This owner has exactly one human and one BOSS. Partial elimination in
         // a future multi-BOSS owner must be handled there, not falsely resumed.
-        if(!result.closed) throw CodecError("richonline_boss_terminal_not_closed");
         messages.insert(messages.end(),std::make_move_iterator(result.messages.begin()),
             std::make_move_iterator(result.messages.end()));
+        if(!result.closed) return open_chest(std::move(messages));
         phase=Phase::finished;route={};npc_landing.reset();npc_deadline.reset();npc_pending_counter.reset();
         controlled_roll_deadline.reset();
         return messages;
@@ -209,6 +259,13 @@ struct Turns {
     std::vector<Bytes> advance(std::vector<Bytes> messages) {
         retire_decision();
         richonline_status_finish_previous_turn(status[actor]);
+        if(boss_chest) {
+            if(actor!=0 || !chest_turns_left) throw CodecError("richonline_boss_chest_turn_invalid");
+            if(--chest_turns_left==0) return finish_chest(std::move(messages),false);
+            auto next=begin_turn();
+            messages.insert(messages.end(),std::make_move_iterator(next.begin()),std::make_move_iterator(next.end()));
+            return messages;
+        }
         if (actor==0) {
             ++complete_rounds;
             if(rules.combat) pending_mine_day=complete_rounds;
@@ -260,7 +317,7 @@ struct Turns {
             return static_cast<std::int32_t>(effect.movement_budget_after);
         };
         auto proposed = build_richonline_route(topology,{person.position,person.direction,budget,{},
-            !controlled_roll_actor(),static_cast<bool>(rules.bank) || controlled_roll_actor()},rules.random,extend);
+            !controlled_roll_actor(),static_cast<bool>(rules.bank) || controlled_roll_actor(),boss_chest.has_value()},rules.random,extend);
         std::vector<RichonlineMoveDirection> directions;
         for (const auto value : proposed.directions) directions.push_back(static_cast<RichonlineMoveDirection>(value));
         auto wire=rules.route_wire; wire.local_reserve_charge=reserve_charge;
@@ -360,10 +417,10 @@ struct Turns {
     }
     std::vector<Bytes> playable_turn(std::vector<Bytes> messages) {
         bool script_attack=true;
-        if(actor==1 && rules.combat && rules.script)
+        if(!boss_chest && actor==1 && rules.combat && rules.script)
             script_attack=rules.script->call("boss.can_attack",{{"map",rules.script_map},
                 {"actionable",richonline_combat_action_allowed(status[actor])}}).get<bool>();
-        if(actor==1 && rules.combat && script_attack) {
+        if(!boss_chest && actor==1 && rules.combat && script_attack) {
             auto refs=combat_refs();auto attack=rules.combat->boss_turn(refs,actor,rules.combat_random(),rules.log);
             messages.insert(messages.end(),std::make_move_iterator(attack.packets.begin()),
                 std::make_move_iterator(attack.packets.end()));
@@ -537,8 +594,7 @@ struct Turns {
             return terminal({encode_richonline_turn4010({init.game_server_id,1,1,0},rules.opaque_turn7)},
                 {},RichonlineTerminalReason::month_limit);
         }
-        sync_feast_tickets();
-        sync_feast_status();
+        if(!boss_chest) {sync_feast_tickets();sync_feast_status();}
         if(retired_jail_exit_turn && turn_sequence-*retired_jail_exit_turn>2) {
             retired_jail_exit.reset();retired_jail_exit_turn.reset();
         }
@@ -558,6 +614,23 @@ struct Turns {
         if (rules.npcs) static_cast<void>(rules.npcs->actor_begin(actor,++actor_turns[actor],status[actor]));
         std::vector<Bytes> messages{
             encode_richonline_turn4010({init.game_server_id,static_cast<std::int8_t>(actor),1,0},rules.opaque_turn7)};
+        if(boss_chest) {
+            // 保留已淘汰BOSS的anchor1：客户端2次日历倒计时不介入，服务端数满3个玩家回合。
+            if(equipment_heal) {
+                const auto before=rules.ledger->snapshot(actor);auto after=before.funds;
+                if(after.cash>0x7fffffffU-equipment_heal) throw CodecError("richonline_equipment_healing_cash_overflow");
+                after.cash+=equipment_heal;rules.ledger->commit(actor,before,after);
+            }
+            if(rules.raw_authority) {
+                const auto& raw=rules.raw_authority->actor(actor);
+                if(raw.jail1495 && *raw.jail1495!=-1) {
+                    phase=*raw.jail1495==0 ? Phase::jail_exit : Phase::jailed;
+                    if(phase==Phase::jailed) jail_deadline=rules.now()+std::chrono::milliseconds{1800};
+                    return messages;
+                }
+            }
+            return playable_turn(std::move(messages));
+        }
         if(actor==1 && rules.property) {
             auto enabled=true;
             if(rules.raw_authority) {
@@ -756,6 +829,11 @@ struct Turns {
     bool retired(View plain) const {
         if (phase == Phase::closed || plain.size() < 4) return false;
         const auto opcode=read_le(plain.first(2));
+        if(boss_chest && opcode==0x11) {
+            const auto request=std::get<RichonlineMoveStop11>(parse_richonline_movement_request(plain));
+            for(const auto& stop:chest_stops)
+                if(request.calendar_counter==stop[0] && static_cast<std::uint16_t>(request.endpoint)==stop[1]) return true;
+        }
         if(opcode==164 && accepted_hibernate && plain.size()==accepted_hibernate->request.size() &&
             std::equal(plain.begin(),plain.end(),accepted_hibernate->request.begin())) return true;
         if(opcode==0x12) {
@@ -812,7 +890,7 @@ struct Turns {
         return false;
     }
     std::optional<std::size_t> next_bank_checkpoint() const {
-        if(controlled_roll_actor()) return {};
+        if(boss_chest || controlled_roll_actor()) return {};
         // The final tile uses0011/4013, never an intermediate0028.
         for (auto index=checkpoint_cursor; index+1<route.landings.size(); ++index)
             if (topology.cell(route.landings[index]).static_type==9) return index;
@@ -1386,6 +1464,13 @@ struct Turns {
         return messages;
     }
     std::vector<Bytes> script_action(View plain) {
+        if(boss_chest && plain.size()>=2 && read_le(plain.first(2))==0x11 && retired(plain)) return {};
+        if(boss_chest && plain.size()>=2) {
+            const auto opcode=read_le(plain.first(2));
+            if(opcode>=92 && opcode!=103 && opcode!=137 && opcode!=138 && opcode!=139 &&
+                opcode!=140 && opcode!=152 && opcode!=160)
+                return {encode_richonline_dice_recovery400b(init.game_server_id)};
+        }
         if(plain.size()>=2 && read_le(plain.first(2))==66) {
             try {
                 if(phase==Phase::loading || phase==Phase::closed || phase==Phase::finished)
@@ -2142,6 +2227,11 @@ struct Turns {
                     throw CodecError("lua_ground_removals_invalid");
                 auto after=before.objects;
                 for(const auto& position:positions) {
+                    if(position.is_number_integer() && position>=0 && position<=32767) {
+                        const auto found=after.find(position.get<std::int16_t>());
+                        if(found!=after.end() && found->second.npc==32)
+                            throw CodecError("lua_ground_boss_chest_protected");
+                    }
                     if(!position.is_number_integer() || position<0 || position>32767 ||
                         after.erase(position.get<std::int16_t>())!=1)
                         throw CodecError("lua_ground_removal_missing_or_duplicate");
@@ -2474,11 +2564,20 @@ struct Turns {
         return messages;
     }
     std::vector<Bytes> action(View plain) {
+        if(boss_chest && plain.size()>=2 && read_le(plain.first(2))==0x11 && retired(plain)) return {};
+        if(boss_chest && plain.size()==2 && read_le(plain)==2) {
+            if(phase!=Phase::chest_ready) return {};
+            actor=0;return begin_turn();
+        }
         if(phase==Phase::finished && plain.size()>=2 && read_le(plain.first(2))==0x12 && retired(plain)) return {};
         if (phase == Phase::closed || phase == Phase::finished) throw CodecError("richonline_boss_session_closed");
         if (plain.size() < 2) throw CodecError("richonline_boss_action_truncated");
         if (phase==Phase::junction && retired(plain)) return {};
         const auto opcode = read_le(plain.first(2));
+        // 宝箱阶段仅开放移动与手牌管理，不允许重新生成战斗、附身或地产事件。
+        if(boss_chest && opcode>=92 && opcode!=103 && opcode!=137 && opcode!=138 && opcode!=139 &&
+            opcode!=140 && opcode!=152 && opcode!=160)
+            return {encode_richonline_dice_recovery400b(init.game_server_id)};
         if(opcode==21 && retired_jail_exit && plain.size()==4 &&
             read_le(plain.subspan(2,2))==retired_jail_exit->counter) return {};
         if(opcode==164 && retired(plain)) return {};
@@ -3107,6 +3206,16 @@ struct Turns {
             const auto endpoint=stationary ? init.participants[actor].position : route.landings.back();
             const auto heading=stationary ? init.participants[actor].direction : route.directions.back();
             if (request.endpoint != endpoint) throw CodecError("richonline_boss_endpoint_mismatch");
+            if(boss_chest) {
+                chest_stops.push_back({request.calendar_counter,static_cast<std::uint16_t>(endpoint)});
+                if(!stationary) commit_route_positions(route.landings.size()-1);
+                landing_counter=request.calendar_counter;route={};
+                Bytes stop;append_le(stop,0x4013,2);append_le(stop,init.game_server_id,2);
+                append_le(stop,static_cast<std::uint16_t>(endpoint),2);
+                auto messages=sync_stopped_pet();messages.insert(messages.begin(),std::move(stop));
+                if(endpoint==*boss_chest) return finish_chest(std::move(messages),true);
+                return resolve({std::move(messages),RichonlineLandingProgress::complete});
+            }
             auto progress=!stationary ? prepare_timed_progress(0x11,request.calendar_counter,request.endpoint) : std::nullopt;
             auto ground_progress=!stationary && !progress ? prepare_ground_progress(route.landings.size()-1) : std::nullopt;
             PendingLanding landing{request.endpoint,heading,request.calendar_counter,false};
