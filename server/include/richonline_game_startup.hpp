@@ -4,6 +4,7 @@
 
 #include "game_session.hpp"
 #include "richonline_board.hpp"
+#include "richonline_stock_wire.hpp"
 
 #include <chrono>
 #include <memory>
@@ -34,6 +35,8 @@ struct RichonlineStartupPlan {
     std::function<bool()> terminal_pending = {};
     // Starts at game admission; successful ready0 ends this startup-only limit.
     std::optional<RichonlineMapLoadPolicy> map_loading = {};
+    // 独立于带日历的行动消息。对局须绑定已认证角色，并检查行情已发送及交易资格。
+    std::function<std::vector<Bytes>(const RichonlineStockRequest&)> stock_action = {};
 };
 using RichonlineStartupProvider = std::function<std::optional<RichonlineStartupPlan>(const GameAdmission&)>;
 using RichonlineFrameFiller = std::function<Bytes(std::size_t)>;

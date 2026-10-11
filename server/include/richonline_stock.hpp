@@ -4,6 +4,7 @@
 #include "richonline_game_ledger.hpp"
 #include "richonline_chance.hpp"
 #include "lua_server.hpp"
+#include "richonline_stock_wire.hpp"
 #include <memory>
 
 namespace richnet {
@@ -21,13 +22,6 @@ struct RichonlineStockSubscriptionRequest {
 };
 // 0096没有数量字段；数量不能从保留字节或客户端资金预览推导。
 RichonlineStockSubscriptionRequest decode_richonline_stock_subscription_request(View);
-enum class RichonlineStockAction { buy, sell };
-struct RichonlineStockRequest {
-    RichonlineStockAction action;
-    std::uint16_t slot,quantity;
-};
-// 0200/0201的+2是股票槽，不能交给日历字段认证器。
-RichonlineStockRequest decode_richonline_stock_request(View);
 struct RichonlineStockQuote {
     std::int32_t configuration;
     std::uint32_t supply;

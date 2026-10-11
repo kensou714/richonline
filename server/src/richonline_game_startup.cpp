@@ -65,6 +65,7 @@ struct Startup {
             static_cast<void>(encode_richonline_board_init(plan->init));
             static_cast<void>(encode_richonline_board_snapshot(plan->snapshot));
             if (!plan->map_ready || !plan->action) throw CodecError("richonline_game_strategy_required");
+            if (plan->stock_action && !plan->sent) throw CodecError("richonline_game_stock_delivery_observer_required");
             if (plan->map_loading && (!plan->map_loading->now ||
                 plan->map_loading->timeout < std::chrono::milliseconds(1000) ||
                 plan->map_loading->timeout > std::chrono::milliseconds(600000)))
@@ -114,6 +115,11 @@ struct Startup {
             }
         }
         if (!map_loaded) throw CodecError("richonline_game_action_before_map_ready");
+        if (opcode == 0x200 || opcode == 0x201) {
+            const auto request = decode_richonline_stock_request(plain);
+            if (!plan->stock_action) throw CodecError("richonline_game_stock_not_enabled");
+            return output(plan->stock_action(request));
+        }
         if (opcode != 2) {
             if (plain.size() < 4) throw CodecError("richonline_game_action_context_mismatch");
             if (read_le(plain.subspan(2,2)) != action_counter) {
