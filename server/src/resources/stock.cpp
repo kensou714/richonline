@@ -120,8 +120,9 @@ RichonlineStockOpening prepare_richonline_stock_opening(std::uint16_t game,
     if(!map.enabled || map.configurations.empty() || map.configurations.size()>10 || history.size()!=map.configurations.size())
         throw CodecError("richonline_stock_opening_map_invalid");
     positive(previous_index);positive(current_index);
-    if(!std::isfinite(factor) || !std::isfinite((current_index-previous_index)/previous_index*100.0F))
+    if(!std::isfinite(factor))
         throw CodecError("richonline_stock_opening_index_invalid");
+    richonline_stock_change_percent(previous_index,current_index);
     std::vector<RichonlineStockQuote> quotes;std::vector<Bytes> messages;
     auto rows=LuaValue::array();
     Bytes index;append_le(index,0x4200,2);append_le(index,game,2);
@@ -135,8 +136,7 @@ RichonlineStockOpening prepare_richonline_stock_opening(std::uint16_t game,
         const auto [low,high]=std::minmax_element(prices.begin(),prices.end());
         if(*low==*high) throw CodecError("richonline_stock_opening_flat_history");
         // 4201直接取最后两点，不使用4203的涨跌幅内阈值修饰。
-        const float change=(prices[29]-prices[28])/prices[28]*100.0F;
-        if(!std::isfinite(change)) throw CodecError("richonline_stock_opening_change_invalid");
+        const float change=richonline_stock_change_percent(prices[28],prices[29]);
         quotes.push_back({static_cast<std::int32_t>(configuration),resources.definitions[configuration].shares,prices[29],change});
         Bytes response;append_le(response,0x4201,2);append_le(response,game,2);
         append_le(response,static_cast<std::uint32_t>(slot),2);append_le(response,0,2);
@@ -151,7 +151,7 @@ RichonlineStockOpening prepare_richonline_stock_opening(std::uint16_t game,
     }
     // 全部行情包验证完成后才创建交易状态；上层不得在客户端收齐之前开放交易。
     auto market=std::make_shared<RichonlineStockMarket>(game,std::move(ledger),std::move(quotes),
-        resources.rise_limit,resources.fall_limit,std::move(script));
+        resources.rise_limit,resources.fall_limit,RichonlineStockIndex{previous_index,current_index,factor},std::move(script));
     return {std::move(market),std::move(messages)};
 }
 }

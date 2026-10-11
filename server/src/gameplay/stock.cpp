@@ -17,6 +17,24 @@ void valid_price(float price) {
 void available_revision(std::uint64_t revision) {
     if(revision==std::numeric_limits<std::uint64_t>::max()) throw CodecError("richonline_stock_revision_exhausted");
 }
+void valid_index(const RichonlineStockIndex& index) {
+    if(!std::isfinite(index.factor)) throw CodecError("richonline_stock_index_factor_invalid");
+    richonline_stock_change_percent(index.previous,index.current);
+}
+float quote_change(float previous,float current,float rise_limit,float fall_limit) {
+    const auto change=richonline_stock_change_percent(previous,current);
+    // NEW80F2D0仅修饰已写回float的涨跌幅，不把收到的实际价格钳到1..999.99。
+    if(change<fall_limit+0.02F) return fall_limit;
+    if(change>rise_limit-0.02F) return rise_limit;
+    return change;
+}
+}
+float richonline_stock_change_percent(float previous,float current) {
+    valid_price(previous);valid_price(current);
+    // x87的减、除、乘之间没有单精度写回，避免提前舍入触及交易门限。
+    const auto change=static_cast<float>((static_cast<double>(current)-previous)/previous*100.0);
+    if(!std::isfinite(change)) throw CodecError("richonline_stock_change_invalid");
+    return change;
 }
 RichonlineStockRequest decode_richonline_stock_request(View plain) {
     if(plain.size()!=6) throw CodecError("richonline_stock_request_size");
@@ -46,12 +64,14 @@ RichonlineStockSubscriptionRequest decode_richonline_stock_subscription_request(
         static_cast<std::uint16_t>(slot),static_cast<std::int8_t>(plain[4]),plain[6]};
 }
 RichonlineStockMarket::RichonlineStockMarket(std::uint16_t game,std::shared_ptr<RichonlineGameLedger> ledger,
-    std::vector<RichonlineStockQuote> quotes,float rise_limit,float fall_limit,std::shared_ptr<LuaServer> script)
-    :game_(game),ledger_(std::move(ledger)),script_(std::move(script)),quotes_(std::move(quotes)),
+    std::vector<RichonlineStockQuote> quotes,float rise_limit,float fall_limit,RichonlineStockIndex index,
+    std::shared_ptr<LuaServer> script)
+    :game_(game),ledger_(std::move(ledger)),script_(std::move(script)),quotes_(std::move(quotes)),index_(index),
      rise_limit_(rise_limit),fall_limit_(fall_limit) {
     if(!ledger_ || quotes_.empty() || quotes_.size()>10 || !std::isfinite(rise_limit_) ||
         !std::isfinite(fall_limit_) || rise_limit_<=0 || fall_limit_>=0)
         throw CodecError("richonline_stock_market_invalid");
+    valid_index(index_);
     std::set<std::int32_t> configurations;
     for(const auto& entry:quotes_) {
         valid_price(entry.price);
@@ -76,16 +96,56 @@ void RichonlineStockMarket::set_restricted(bool restricted) {
     available_revision(revision_);restricted_=restricted;++revision_;
 }
 Bytes RichonlineStockMarket::change_price(std::uint16_t slot,float price) {
-    const auto before=quote(slot);valid_price(price);available_revision(revision_);
-    float change=(price-before.price)/before.price*100.0F;
-    if(!std::isfinite(change)) throw CodecError("richonline_stock_change_invalid");
-    // NEW80F2D0只修饰涨跌幅，不把服务器收到的实际价格钳到1..999.99。
-    if(change<fall_limit_+0.02F) change=fall_limit_;
-    else if(change>rise_limit_-0.02F) change=rise_limit_;
-    Bytes response;append_le(response,0x4203,2);append_le(response,game_,2);
-    append_le(response,slot,2);append_le(response,0,2);append_le(response,std::bit_cast<std::uint32_t>(price),4);
-    quotes_[slot].price=price;quotes_[slot].change_percent=change;++revision_;
-    return response;
+    auto update=prepare_price(slot,price);
+    if(!commit(update)) throw CodecError("richonline_stock_quote_conflict");
+    return std::move(update.response_);
+}
+RichonlineStockMarket::QuoteUpdate RichonlineStockMarket::prepare_price(std::uint16_t slot,float price) const {
+    const auto before=quote(slot);available_revision(revision_);
+    const auto change=quote_change(before.price,price,rise_limit_,fall_limit_);
+    QuoteUpdate result;result.owner_=this;result.revision_=revision_;result.index_=index_;result.quotes_=quotes_;
+    result.quotes_[slot].price=price;result.quotes_[slot].change_percent=change;
+    append_le(result.response_,0x4203,2);append_le(result.response_,game_,2);
+    append_le(result.response_,slot,2);append_le(result.response_,0,2);
+    append_le(result.response_,std::bit_cast<std::uint32_t>(price),4);
+    if(script_) {
+        const auto message=script_->call("stock.quote",{{"game_id",game_},{"slot",slot},{"price",price}});
+        if(message!=lua_bytes(View(result.response_))) throw CodecError("lua_stock_quote_invalid");
+    }
+    return result;
+}
+RichonlineStockMarket::QuoteUpdate RichonlineStockMarket::prepare_market(std::span<const float> prices,
+    float current_index,float factor,bool notify) const {
+    if(prices.size()!=quotes_.size()) throw CodecError("richonline_stock_market_price_count_invalid");
+    available_revision(revision_);
+    QuoteUpdate result;result.owner_=this;result.revision_=revision_;result.quotes_=quotes_;
+    // 4202调用80F170时前值传0，客户端以旧的大盘当前值作为新前值。
+    result.index_={index_.current,current_index,factor};valid_index(result.index_);
+    LuaValue rows=LuaValue::array();
+    append_le(result.response_,0x4202,2);append_le(result.response_,game_,2);
+    append_le(result.response_,std::bit_cast<std::uint32_t>(current_index),4);
+    append_le(result.response_,std::bit_cast<std::uint32_t>(factor),4);
+    for(std::size_t slot=0;slot<prices.size();++slot) {
+        result.quotes_[slot].change_percent=quote_change(quotes_[slot].price,prices[slot],rise_limit_,fall_limit_);
+        result.quotes_[slot].price=prices[slot];rows.push_back(prices[slot]);
+        append_le(result.response_,std::bit_cast<std::uint32_t>(prices[slot]),4);
+    }
+    // 实际股票少于十槽时仍把通知字节放到+52，不能紧接变长价格表。
+    result.response_.resize(52,0);append_le(result.response_,notify ? 1 : 0,1);
+    if(script_) {
+        const auto message=script_->call("stock.market",{{"game_id",game_},{"current_index",current_index},
+            {"factor",factor},{"prices",std::move(rows)},{"notify",notify}});
+        if(message!=lua_bytes(View(result.response_))) throw CodecError("lua_stock_market_invalid");
+    }
+    return result;
+}
+bool RichonlineStockMarket::commit(const QuoteUpdate& update) {
+    if(update.owner_!=this || update.revision_!=revision_ || update.response_.empty() ||
+        update.quotes_.size()!=quotes_.size()) return false;
+    available_revision(revision_);
+    // 计划来自本实例且版本未变，所有验证/Lua/分配已完成，仅写相同数量的标量。
+    for(std::size_t slot=0;slot<quotes_.size();++slot) quotes_[slot]=update.quotes_[slot];
+    index_=update.index_;++revision_;return true;
 }
 RichonlineStockMarket::Trade RichonlineStockMarket::prepare(std::uint8_t actor,const RichonlineStockRequest& request) const {
     const auto before=holding(actor,request.slot);
@@ -145,7 +205,7 @@ RichonlineStockMarket::Trade RichonlineStockMarket::prepare(std::uint8_t actor,c
     return result;
 }
 bool RichonlineStockMarket::commit(const Trade& plan) {
-    if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_) return false;
+    if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.response_.empty()) return false;
     available_revision(revision_);
     const std::array updates{plan.funds_};
     return ledger_->commit_asset_exchange(updates,[&] {
@@ -216,7 +276,7 @@ RichonlineStockMarket::ForcedSale RichonlineStockMarket::prepare_forced_sale(std
 }
 bool RichonlineStockMarket::commit(const ForcedSale& plan,std::span<const std::uint8_t> active,
     RichonlineBossCards& cards) {
-    if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.cards_!=&cards ||
+    if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.response_.empty() || plan.cards_!=&cards ||
         active.size()!=ledger_->actor_count() || !std::equal(active.begin(),active.end(),plan.active_.begin()) ||
         cards.inventory()!=plan.source_inventory_) return false;
     available_revision(revision_);
@@ -304,7 +364,7 @@ RichonlineStockMarket::Subscription RichonlineStockMarket::prepare_subscription(
 }
 bool RichonlineStockMarket::commit(const Subscription& plan,std::span<const std::uint8_t> active,
     RichonlineBossCards& cards) {
-    if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.cards_!=&cards ||
+    if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.response_.empty() || plan.cards_!=&cards ||
         active.size()!=ledger_->actor_count() || !std::equal(active.begin(),active.end(),plan.active_.begin()) ||
         cards.inventory()!=plan.source_inventory_) return false;
     available_revision(revision_);

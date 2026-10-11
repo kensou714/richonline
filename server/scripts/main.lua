@@ -31,6 +31,7 @@ local handlers = {
     ["property.research"] = property.research,
     ["stock.trade"] = stock.trade,
     ["stock.open"] = stock.open,
+    ["stock.quote"] = stock.quote, ["stock.market"] = stock.market,
     ["boss.can_attack"] = bosses.can_attack,
     ["card.lottery_award"] = lottery.award,
     ["card.stock_forced_sale"] = forced_sale.liquidate,

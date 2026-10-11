@@ -38,11 +38,17 @@ struct RichonlineStockHolding {
     std::uint32_t quantity=0;
     float cost=0;
 };
+struct RichonlineStockIndex {
+    float previous,current,factor;
+};
+// 4200/4201/4202/4203共用原始涨跌计算；中间使用double，最后按客户端写回float。
+// 本函数不修饰涨跌停阈值，也不改变实际报价。
+float richonline_stock_change_percent(float previous,float current);
 class RichonlineStockMarket final {
 public:
     // 报价必须来自已经同步给客户端的权威初始化；这里不猜测原服务器行情算法。
     RichonlineStockMarket(std::uint16_t game,std::shared_ptr<RichonlineGameLedger> ledger,
-        std::vector<RichonlineStockQuote> quotes,float rise_limit,float fall_limit,
+        std::vector<RichonlineStockQuote> quotes,float rise_limit,float fall_limit,RichonlineStockIndex index,
         std::shared_ptr<LuaServer> script = {});
     RichonlineStockMarket(const RichonlineStockMarket&)=delete;
     RichonlineStockMarket& operator=(const RichonlineStockMarket&)=delete;
@@ -50,8 +56,26 @@ public:
     RichonlineStockMarket& operator=(RichonlineStockMarket&&)=delete;
     RichonlineStockHolding holding(std::uint8_t actor,std::uint16_t slot) const;
     RichonlineStockQuote quote(std::uint16_t slot) const;
+    RichonlineStockIndex index() const noexcept {return index_;}
     void set_restricted(bool restricted);
-    // 返回4203并更新原始价/涨跌幅；调用方负责一次广播，不推进移动/落点状态。
+    class QuoteUpdate final {
+    public:
+        // prepare不改变行情。仅在commit成功后按发送队列顺序广播一次。
+        const Bytes& response() const noexcept {return response_;}
+    private:
+        QuoteUpdate()=default;
+        const RichonlineStockMarket* owner_=nullptr;
+        std::uint64_t revision_=0;
+        std::vector<RichonlineStockQuote> quotes_;
+        RichonlineStockIndex index_{};
+        Bytes response_;
+        friend class RichonlineStockMarket;
+    };
+    QuoteUpdate prepare_price(std::uint16_t slot,float price) const;
+    // 4202的提示标志固定在+52，缺少的股票槽填零。必须提供全部本局股票的新价。
+    QuoteUpdate prepare_market(std::span<const float> prices,float current_index,float factor,bool notify) const;
+    bool commit(const QuoteUpdate&);
+    // 单股更新的便捷入口，使用同一准备/提交逻辑；不推进移动或落点状态。
     Bytes change_price(std::uint16_t slot,float price);
     class Trade final {
     public:
@@ -134,6 +158,7 @@ private:
     std::shared_ptr<RichonlineGameLedger> ledger_;
     std::shared_ptr<LuaServer> script_;
     std::vector<RichonlineStockQuote> quotes_;
+    RichonlineStockIndex index_;
     std::array<std::array<RichonlineStockHolding,10>,8> holdings_{};
     float rise_limit_,fall_limit_;
     bool restricted_=false;

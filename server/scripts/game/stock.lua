@@ -14,6 +14,16 @@ function M.open(request)
     end
     return messages
 end
+function M.quote(request)
+    return protocol.inner(0x4203, request.game_id, string.pack("<i2I2f", request.slot, 0, request.price))
+end
+function M.market(request)
+    assert(#request.prices >= 1 and #request.prices <= 10, "股票行情槽数必须为1至10")
+    local body = string.pack("<ff", request.current_index, request.factor)
+    -- 客户端固定读取+52的提示标志，不随本局股票数量移动。
+    for slot = 1, 10 do body = body .. string.pack("<f", request.prices[slot] or 0) end
+    return protocol.inner(0x4202, request.game_id, body .. string.pack("<I1", request.notify and 1 or 0))
+end
 function M.trade(request)
     local reason, deposit = "accepted", request.deposit
     local buy, quantity = request.buy, request.quantity
