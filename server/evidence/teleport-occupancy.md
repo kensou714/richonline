@@ -34,3 +34,22 @@ BOSS宿主尚无饭店访问记录；若未来出现活动住店角色，当前�
 
 只做客户端静态字节核对、代码审阅和Release/Lua编译，不新增或运行测试，不启动服务
 或游戏，不部署或重启线上。固定构建及本机同代交付另记回执。
+
+## 固定构建与本机交付
+
+源码提交`ae3c9eb8ef81b96e23d24648a16e20ace9f3d84e`，固定tree
+`642af63992dc11d99062166aec11b0860197846e`；已推送并核对GitHub main远端引用。
+回执文档提交不改变二进制源码身份。
+
+固定源码`server/build-teleport-occupancy-source/server`，独立构建目录
+`server/build-teleport-occupancy-fixed`。Clang22、Ninja、Release、BUILD_TESTING=OFF，
+RichOnline.Server构建退出0，全部178个Lua模块语法编译通过，静态diff检查通过。
+
+交付前未发现RichOnline.Server.exe进程；旧EXE备份为
+`server/build-teleport-occupancy-fixed/RichOnline.Server.before-ae3c9eb.exe`。
+本机`server/RichOnline.Server.exe`与固定构建SHA256相同：
+`06F06EB28DABB5E20F70C8FBE2FE4257EB21902D38B3C2018FF3016E51C3E064`。
+178个本机Lua文件与固定源码及构建输出数量相同、逐项哈希相同。
+
+未新增或运行测试，未启动服务或游戏，未部署或重启线上；
+不能把编译和字节核对当成实际对局验收。经典完整生产接入仍待完成。
