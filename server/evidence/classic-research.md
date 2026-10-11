@@ -55,3 +55,20 @@ await_event保留turn_event等待，通过既有event/poll恢复；complete才�
 
 验证范围为静态源码与客户端字节审阅、固定提交Release构建、全部Lua语法编译。
 按用户要求不新增或运行测试，不启动本机服务或客户端；发布记录在完成后追加。
+
+## 发布结果
+
+- 源码`cd36ea27cce0797c1a52c6efd48741d0213ddc2e`，tree`f8002692707e5f27319f02679186b7379fc159dd`，已推送GitHub main。
+- 固定源码Release构建及168份Lua语法编译通过；未新增或运行测试。
+- 发布前读到1个认证会话，按用户既有允许中断授权在线备份后正常停服，未强杀。
+- 线上release`cd36ea27cce0`，PID4484，instance`4484-102275630678900`，实际进程及任务
+  路径均为`D:\richonline\releases\cd36ea27cce0\RichOnline.Server.exe`。
+- EXE SHA256 `32E0189BC9FC89D3E93B97DADA537679D7A6656C6C89D801E5FE79A41A627E90`；
+  本机EXE同哈希，168份Lua逐文件同代核对，本机未启动。
+- 数据库备份`D:\richonline\shared\data\backups\accounts-1791731949105996.sqlite3`。
+  保留`D:\richonline\shared\data`、商城日期兼容及全部BOSS地图测试配置。
+- 六监听ready，18600/18602/18604/18605/18606/18680公网TCP成功，两份服务器列表HTTP200。
+- 本地收据`server/build-goal-resume/release-cd36ea27cce0-receipt.json`及同代
+  verified/process/bootstrap-after文件；记录提交与二进制源码提交分开。
+
+生产经典模式仍未开放；上述发布核验不等于研究选择、日历奖励或完整经典玩法实机验收。
