@@ -25,3 +25,12 @@ shop阶段只由当前真人的0030/0031/0035驱动买卖/刷新，连续正常�
 商店内0032复用已有弃卡事务，保持商店阶段。股票的独立入口维持原共享账本；商店买卖每次重新取资金版本。碰撞授权只对mode0生效，原mode3碰撞校验不放宽。日志记录开店货架、库存、角色、位置，以及请求槽位、点券前后值和决策原因。
 
 本轮只静态核对、审阅、Release编译及Lua语法编译；按用户要求不新增或运行测试、不启动本机服务或客户端。经典生产准入、动态NPC/停业、地图完整业务及付费绑定仍需要继续，实机购物验收不在本轮编译结果的证明范围内。
+
+## 发布记录
+
+- 源码提交`276fed0c953fdb7023c070ef5558ad6cbceef82f`已推送GitHub main；固定树`ee871495b987c761656efb34f1770bc2f7798f5e`的Release及166份Lua语法编译成功。
+- 线上release `276fed0c953f`，PID3768，instanceId `3768-94207905960900`；计划任务与真实进程均执行`D:\richonline\releases\276fed0c953f\RichOnline.Server.exe`。
+- EXE SHA256：`A60CD6E0C850EF8A95B1A17BCCDF90686E7D5D1EBDBE62C4ADC432A5B6E3FBCF`；本机同哈希，166份Lua与发布包逐文件一致。
+- 维护前在线备份数据库，通过ExpectedInstance正常停止旧实例；数据仍在`D:\richonline\shared\data`，商城日期兼容和全部BOSS地图测试开关保留。
+- 六类监听ready，18600/18602/18604/18605/18606/18680公网TCP连通；两份服务器列表HTTP200。没有启动本机服务或运行玩法测试。
+- 完整私有收据：`server/build-goal-resume/release-276fed0c953f-receipt.json`。本轮上线包含经典商店基础，但经典mode0生产入口仍未开放。
