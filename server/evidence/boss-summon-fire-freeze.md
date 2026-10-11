@@ -34,3 +34,9 @@
 ## 验证边界
 
 候选 Release 构建和 Lua 语法编译完成；固定提交独立构建与线上部署结果另附回执。仅进行静态协议和源码核对，没有执行玩法测试，也未启动本机服务或客户端。完整服务端 goal 仍未完成。
+
+## 发布回执
+
+首次部署提交 `fc461c872888be880de3dbaaa58b528d8018a766`，EXE SHA256 `E0AB980893BE45F41C66200B731BAACEFBFC8380265968C22DE7B0B12A9A6AAF`，线上实例 `4900-111921388929500`，数据目录 `D:\richonline\shared\data`。数据库备份 `backups\accounts-1791741594921181.sqlite3`，部署备份 `D:\richonline\backups\20261011175954-fc461c872888`。207文件、172Lua、六项Ready、六公网TCP及两个HTTP 200均已核验，本机EXE同代且未启动。
+
+随后原生回血／狂暴修复继承本次全部更改，当前上线源码为 `4a1b52e927709199854ce46e6ebe97e7da619968`；最新运行实例及备份见 [native-boss-recovery.md](native-boss-recovery.md) 的上线回执。此记录为部署核验，不替代玩家实机验收。
