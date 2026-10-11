@@ -47,6 +47,9 @@ public:
     // 重播同一id/actor不再递减；同一回合的另一次真实扫描须使用新的id。
     RichonlineClassicResearchScan advance(std::uint8_t actor,std::uint64_t scan_id);
     void retire(std::uint8_t actor) noexcept;
+    // 7E3E60解除kind2产权时立即调用7E4F60，只清首个匹配地产/原主人的登记。
+    // 上层先核对jobs快照并与扣卡/产权共同提交；拆屋降级不走此产权解除入口。
+    void release_property(std::int16_t property,std::uint8_t actor) noexcept;
     const std::vector<std::optional<RichonlineClassicResearchJob>>& jobs() const noexcept {return jobs_;}
 private:
     struct Pending {

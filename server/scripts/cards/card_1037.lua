@@ -9,7 +9,7 @@ function M.use(request)
     assert(#request.payload == 6, "怪兽卡请求长度错误")
     core.call("card.prepare", { card = M.id })
     core.call("property.prepare", { operation = "destroy", current = true, levels = 5 })
-    -- 回显槽位/背包及有符号目标 WORD，确认后客户端按对应卡牌消费者更新建筑。
+    -- 六字节回复只回显槽位/背包；客户端按施放者脚下地产播放怪兽动画并降级。
     return { protocol.inner(0x40B6, request.game_id, request.payload:sub(5)) }
 end
 return M

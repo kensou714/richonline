@@ -63,6 +63,59 @@ RichonlineClassicPropertyState RichonlineClassicProperty::snapshot(std::int16_t 
     if(found==properties_.end()) throw CodecError("richonline_classic_property_unknown");
     return found->second;
 }
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_purchase(
+    std::int16_t property,std::uint8_t actor) const {
+    if(pending_ || actor>=ledger_->actor_count()) throw CodecError("richonline_classic_property_card_context_invalid");
+    CardChange plan;plan.owner_=this;plan.count_=1;
+    plan.before_[0]=plan.after_[0]=snapshot(property);
+    const auto& before=plan.before_[0];
+    if(before.owner==actor || before.kind==8 || before.kind==9 || before.kind==10)
+        throw CodecError("richonline_classic_purchase_card_target_invalid");
+    plan.after_[0].owner=actor;return plan;
+}
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_swap(
+    std::int16_t source,std::int16_t target,bool buildings) const {
+    if(pending_ || source==target) throw CodecError("richonline_classic_swap_card_context_invalid");
+    CardChange plan;plan.owner_=this;plan.count_=2;
+    plan.before_[0]=plan.after_[0]=snapshot(source);plan.before_[1]=plan.after_[1]=snapshot(target);
+    const auto& a=plan.before_[0];const auto& b=plan.before_[1];
+    if(a.sprite_type!=b.sprite_type || a.kind==8 || a.kind==9 || a.kind==10 ||
+        b.kind==8 || b.kind==9 || b.kind==10)
+        throw CodecError("richonline_classic_swap_card_target_invalid");
+    if(buildings) {
+        if(!a.level || !b.level) throw CodecError("richonline_classic_swap_card_building_empty");
+        std::swap(plan.after_[0].kind,plan.after_[1].kind);
+        std::swap(plan.after_[0].level,plan.after_[1].level);
+    } else {
+        if(a.owner==b.owner) throw CodecError("richonline_classic_swap_card_owner_equal");
+        std::swap(plan.after_[0].owner,plan.after_[1].owner);
+    }
+    return plan;
+}
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_destruction(
+    std::int16_t property,std::uint8_t levels) const {
+    // 与新闻使用同一降级算法，但主动卡须有非保护且非零级建筑。
+    const auto disaster=prepare_disaster(property,levels);
+    const auto& before=disaster.before();
+    if(!before.level || before.kind==8 || before.kind==9 || before.kind==10)
+        throw CodecError("richonline_classic_destruction_card_target_invalid");
+    CardChange plan;plan.owner_=this;plan.count_=1;
+    plan.before_[0]=before;plan.after_[0]=disaster.after();return plan;
+}
+bool RichonlineClassicProperty::matches(const CardChange& plan) const noexcept {
+    if(plan.owner_!=this || pending_ || plan.count_<1 || plan.count_>2) return false;
+    for(const auto& before:plan.before()) {
+        const auto found=properties_.find(before.id);
+        if(found==properties_.end() || found->second!=before) return false;
+    }
+    return true;
+}
+bool RichonlineClassicProperty::commit_card_change(const CardChange& plan) noexcept {
+    if(!matches(plan)) return false;
+    // 所有地块先匹配；查找和已有元素的标量赋值不分配内存，不留下半次交换。
+    for(const auto& after:plan.after()) properties_.find(after.id)->second=after;
+    return true;
+}
 std::vector<std::uint64_t> RichonlineClassicProperty::asset_values(
     const std::function<std::uint64_t(const RichonlineClassicPropertyState&)>& valuation) const {
     if(pending_ || !valuation) throw CodecError("richonline_classic_property_valuation_unavailable");

@@ -65,6 +65,26 @@ public:
     RichonlineClassicProperty(const RichonlineClassicProperty&)=delete;
     RichonlineClassicProperty& operator=(const RichonlineClassicProperty&)=delete;
     RichonlineClassicPropertyState snapshot(std::int16_t property) const;
+    std::uint16_t game_id() const noexcept {return game_id_;}
+    bool uses_ledger(const RichonlineGameLedger& ledger) const noexcept {return ledger_.get()==&ledger;}
+    class CardChange final {
+    public:
+        std::span<const RichonlineClassicPropertyState> before() const noexcept {return {before_.data(),count_};}
+        std::span<const RichonlineClassicPropertyState> after() const noexcept {return {after_.data(),count_};}
+    private:
+        CardChange()=default;
+        const RichonlineClassicProperty* owner_=nullptr;
+        std::array<RichonlineClassicPropertyState,2> before_{},after_{};
+        std::size_t count_=0;
+        friend class RichonlineClassicProperty;
+    };
+    // 主动地产卡的准入比灾难新闻严格：拒绝空建筑/保护建筑，不能扣卡后无效果。
+    // 购地只换产权；换地只换两端产权；换屋只换种类/等级，不换价格和街区。
+    CardChange prepare_card_purchase(std::int16_t property,std::uint8_t actor) const;
+    CardChange prepare_card_swap(std::int16_t source,std::int16_t target,bool buildings) const;
+    CardChange prepare_card_destruction(std::int16_t property,std::uint8_t levels) const;
+    bool matches(const CardChange&) const noexcept;
+    bool commit_card_change(const CardChange&) noexcept;
     // 只将当前实际归属的地产交给只读估值策略；禁止未决交易期间冻结排名。
     // 策略须另有估值依据，不能把购地花费、租金或升级费用自动当作资产价格。
     std::vector<std::uint64_t> asset_values(

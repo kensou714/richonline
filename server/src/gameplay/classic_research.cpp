@@ -181,4 +181,9 @@ void RichonlineClassicResearch::retire(std::uint8_t actor) noexcept {
     for(auto& job:jobs_) if(job && job->actor==actor) job.reset();
     if(pending_ && pending_->entry.actor==actor) pending_.reset();
 }
+void RichonlineClassicResearch::release_property(std::int16_t property,std::uint8_t actor) noexcept {
+    for(auto& job:jobs_) if(job && job->property==property && job->actor==actor) {
+        job.reset();return;
+    }
+}
 }

@@ -18,6 +18,7 @@
 #include "richonline_card_protection.hpp"
 #include "richonline_classic_funds_card.hpp"
 #include "richonline_classic_weapon_treaty.hpp"
+#include "richonline_classic_property_card.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -1904,6 +1905,69 @@ struct Session {
             " card="+std::to_string(plan->transferred_card())+" sequence="+std::to_string(sequence));
         return messages;
     }
+    std::vector<Bytes> property_card(View request) {
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto owner=world.cards[actor];
+        const auto property=world.property;
+        const auto ledger=world.ledger;
+        const auto research=world.research;
+        const auto research_before=research ? research->jobs() : std::vector<std::optional<RichonlineClassicResearchJob>>{};
+        const auto before_status=statuses[actor];
+        const auto before_raw=raw->actor(actor);
+        const auto before_position=board.participants[actor].position;
+        const auto before_heading=board.participants[actor].direction;
+        const auto source=startup.topology.cell(before_position).property_ref;
+        std::optional<RichonlineClassicPropertyCardPlan> plan;
+        try {
+            if(phase!=Phase::roll || !active[actor] || !owner || owner->actor_slot()!=actor ||
+                owner->game_id()!=board.game_server_id || !property || !ledger ||
+                (world.research && world.research->active()) ||
+                richonline_landing_controlled(before_status) || before_status.stay ||
+                !before_raw.hotel1493 || *before_raw.hotel1493!=-1 ||
+                !before_raw.hospital1494 || *before_raw.hospital1494!=-1 ||
+                !before_raw.jail1495 || *before_raw.jail1495!=-1 ||
+                !before_raw.kidnapped1497 || *before_raw.kidnapped1497!=-1 ||
+                raw->game().scripted_event83830!=-1)
+                throw CodecError("richonline_classic_property_card_unavailable");
+            // P+152沿用开局装备原值；只有购地卡读取，其他四卡不额外依赖折扣来源。
+            const auto land=read_le(request.first(2))==96 ? startup.players[actor].equipment[2] : 0;
+            if(land>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max()))
+                throw CodecError("richonline_classic_land_equipment_invalid");
+            plan=prepare_richonline_classic_property_card(request,calendar,source,static_cast<std::int32_t>(land),
+                *owner,*property,*ledger,active,rules.script);
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_property_card_refused actor="+std::to_string(actor)+
+                " reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        std::vector<Bytes> messages{plan->response()};
+        const auto detail="richonline_classic_property_card actor="+std::to_string(actor)+
+            " opcode="+std::to_string(read_le(request.first(2)))+" source="+std::to_string(source)+
+            " sequence="+std::to_string(sequence);
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            world.cards[actor]!=owner || world.property!=property || world.ledger!=ledger ||
+            world.research!=research || (research && research->jobs()!=research_before) ||
+            statuses[actor]!=before_status || raw->actor(actor)!=before_raw ||
+            board.participants[actor].position!=before_position || board.participants[actor].direction!=before_heading ||
+            raw->game().scripted_event83830!=-1 || (world.research && world.research->active()))
+            throw CodecError("richonline_classic_property_card_stale");
+        remember(actor,request);
+        if(!commit_richonline_classic_property_card(*owner,*property,*ledger,active,*plan))
+            throw CodecError("richonline_classic_property_card_commit_stale");
+        // 购地/换地的6071、换屋的6074均先7E3E60解除原产权；该函数立即清首个经典研发登记。
+        // 所有可能失败的检查已完成，此处仅noexcept清槽，不能等待未来扫描再取消旧任务。
+        const auto opcode=read_le(request.first(2));
+        if(research && (opcode==96 || opcode==97 || opcode==98))
+            for(const auto& before:plan->properties_before())
+                if(before.sprite_type==12 && before.kind==2 && before.owner)
+                    research->release_property(before.id,*before.owner);
+        if(rules.log) rules.log(detail);
+        // 确认包已排地产效果、扣卡和6006；客户端本地动画没有独立网络ACK。
+        // 拆屋/怪兽不解除产权，研究登记由后续原生日历扫描按新kind/level检查。
+        return messages;
+    }
     std::vector<Bytes> weapon_treaty(View request) {
         const auto before_actor=actor;
         const auto before_calendar=calendar;
@@ -2144,6 +2208,7 @@ struct Session {
             if(opcode==116) return theft_card(request);
             if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
             if(opcode==142) return weapon_treaty(request);
+            if(opcode==96 || opcode==97 || opcode==98 || opcode==101 || opcode==102) return property_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103 || (opcode>=137 && opcode<=140)) return immediate_move_card(request);
             if((opcode>=104 && opcode<=107) || opcode==136 || opcode==141) return motion_card(request);
