@@ -25,3 +25,16 @@ Lua绑定仅有`card.prepare`和`inventory.prepare_clear`，必须依次各调�
 ## 验证
 
 Release增量构建和Lua语法编译通过，BUILD_TESTING=OFF；静态复核了全员/非活动玩家、整叠/非武器槽、扣卡顺序、过期计划和Lua失败的提交边界。按用户要求未新增或运行测试，未启动本机服务端或客户端。固定提交构建、部署与同代本机交付另记发布回执；静态证据不等于多人实机验收。
+
+## 发布回执
+
+2026-10-12（本地时区）已推送源码提交`8c263e712ada3b2ccbf18b0549a71151c9027c39`，固定tree为`717cc6b3d5d4569eca3ba125b02fda3ae5fcc5a7`。独立Release构建及Lua语法编译通过，BUILD_TESTING=OFF；发布包208个文件的长度与SHA256逐项匹配manifest，其中173个Lua模块。后续文档回执提交不改变二进制源码身份。
+
+- 线上release：`8c263e712ada`；EXE SHA256：`C53D1EFA2067CB3DC6752A7FBDB24FAB03D9F1F111FEA4E3BB283EEC0741C0E9`。
+- ZIP SHA256：`BCA941C4903B9D2A51246878D02F5B87FAF53DBD5C4E4DCE82C911318C2B1009`。
+- 实际PID：`9304`；instance：`9304-119143538255900`。Win32_Process与Running计划任务均指向该release的EXE，173个Lua模块加载。
+- 持久目录仍为`D:\richonline\shared\data`。在线DB备份：`D:\richonline\shared\data\backups\accounts-1791748817011118.sqlite3`；部署备份：`D:\richonline\backups\20261011200016-8c263e712ada`。按既有授权使用AllowActiveSessions，在备份后带ExpectedInstance正常停止旧实例，未覆盖数据库。
+- lobby/http/gameListener/black/intro/inquiry六Ready均true；18600/18602/18604/18605/18606/18680公网TCP成功。两份大厅列表HTTP200，CP950中文正常且各有三个指向103.156.25.81:18600的频道。商城日期兼容和全BOSS测试地图配置保留。
+- 本机EXE已备份并替换为相同哈希版本，173个本地Lua逐项与manifest相同，未启动本机服务端或客户端。
+
+安装器正常完成；本地解析首次输出时因在线会话维护Warning前缀不属于JSON而报错，随后独立运行线上核验脚本确认实际版本、进程、任务、数据与监听，无重复安装。未运行玩法测试；经典生产准入仍关闭，`gameReady=false`仍表示整体玩法尚未完成。并发的docs、测试和利息证据未纳入提交。
