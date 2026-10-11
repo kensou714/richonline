@@ -156,6 +156,7 @@ RichonlineTimedBombStepPlan prepare_richonline_timed_bomb_step(const RichonlineC
                 attacker?attacker->flat_attack:0,mover.flat_defense,false,
                 attacker && attacker->active && attacker->attack_modifiers_enabled,
                 std::array{attacker?attacker->attack_modifiers:neutral_modifiers,mover.defense_modifiers}};
+            if(context.moving_actor==1) mover.status.boss_restore_eligible=true;
             const auto damage=plan_richonline_combat_damage(context.moving_actor,mover.funds,
                 RichonlineCombatEffect::timed_bomb,attacker?attacker->status:neutral_status,mover.status,
                 terms,RichonlineClientDamageApplication::already_applied,std::nullopt);

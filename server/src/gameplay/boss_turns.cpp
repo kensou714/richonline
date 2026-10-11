@@ -25,6 +25,7 @@
 #include "richonline_special_session.hpp"
 #include "richonline_boss_shop.hpp"
 #include <limits>
+#include <cmath>
 #include <chrono>
 
 #include <iterator>
@@ -740,6 +741,18 @@ struct Turns {
             accepted_paid_move.reset();accepted_controlled_move.reset();npc_retired_counter.reset();
         }
         richonline_status_begin_active_turn(status[actor]);
+        // 7C0C50在BOSS锚点日期精确命中时同步激活原生永久狂暴。
+        // 客户端已在4010本地执行同一链；服务端只镜像伤害、恢复和控制状态。
+        if(actor==1 && complete_rounds>0 && rules.native_boss_recovery && !status[1].native_boss_frenzy &&
+            complete_rounds+1==rules.native_boss_recovery->frenzy_bout) {
+            status[1].native_boss_frenzy=rules.native_boss_recovery->frenzy_factors;
+            status[1].protected_from_status=true;
+            status[1].one_step=status[1].six_steps=status[1].turtle=status[1].stay=0;
+            status[1].sleepwalking=status[1].frozen=0;
+            if(status[1].possession==7) richonline_detach_possession(status[1]);
+            if(rules.log) rules.log("richonline_native_boss_frenzy day="+
+                std::to_string(complete_rounds+1));
+        }
         if (rules.npcs) static_cast<void>(rules.npcs->actor_begin(actor,++actor_turns[actor],status[actor]));
         std::vector<Bytes> messages{
             encode_richonline_turn4010({init.game_server_id,static_cast<std::int8_t>(actor),1,0},rules.opaque_turn7)};
@@ -782,6 +795,26 @@ struct Turns {
             aura_bankrupt=std::move(aura.bankrupt_actors);
         }
         std::optional<std::array<std::uint32_t,2>> healed_cash;
+        std::optional<std::array<std::uint32_t,2>> native_healed_cash;
+        if(actor==1 && rules.native_boss_recovery && status[1].boss_restore_eligible &&
+            active[1] && aura_bankrupt.empty()) {
+            const auto before=rules.ledger->snapshot(1);
+            if(before.funds.cash<rules.native_boss_cash_cap) {
+                auto amount=rules.native_boss_recovery->amount;
+                if(status[1].native_boss_frenzy) {
+                    const auto scaled=static_cast<float>(amount)*(*status[1].native_boss_frenzy)[2]+0.5F;
+                    if(!std::isfinite(scaled) || scaled>static_cast<float>(std::numeric_limits<std::int32_t>::max()))
+                        throw CodecError("richonline_native_boss_restore_overflow");
+                    amount=static_cast<std::uint32_t>(scaled);
+                }
+                amount=std::min(amount,rules.native_boss_cash_cap-before.funds.cash);
+                if(amount) {
+                    auto after=before.funds;after.cash+=amount;
+                    native_healed_cash=std::array{before.funds.cash,after.cash};
+                    turn_funds.push_back({1,before,after});
+                }
+            }
+        }
         if(equipment_heal && aura_bankrupt.empty()) {
             auto before=rules.ledger->snapshot(actor);
             for(const auto& update:turn_funds) if(update.actor==actor) {
@@ -801,6 +834,12 @@ struct Turns {
         // 光环和回血各算一笔收入，按队列顺序校验后原子提交，不能用净额抵消回血收入。
         if(!turn_funds.empty() && !rules.ledger->commit_sequence(turn_funds,[]{return true;}))
             throw CodecError("richonline_boss_turn_funds_rejected");
+        if(native_healed_cash) {
+            status[1].boss_restore_eligible=false;
+            if(rules.log) rules.log("richonline_native_boss_restore before="+
+                std::to_string((*native_healed_cash)[0])+" after="+
+                std::to_string((*native_healed_cash)[1]));
+        }
         if(!aura_bankrupt.empty())
             return terminal(std::move(messages),std::move(aura_bankrupt),RichonlineTerminalReason::npc_aura);
         if(healed_cash) {
@@ -3632,6 +3671,9 @@ RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& st
     RichonlineRoadTopology topology, RichonlineBossTurnRules rules) {
     if (!rules.random || !rules.landed || !rules.event || !rules.now) throw CodecError("richonline_boss_turn_rules_required");
     if(rules.equipment_healing && !rules.ledger) throw CodecError("richonline_equipment_healing_ledger_required");
+    if(rules.native_boss_recovery && (!rules.ledger || !rules.native_boss_cash_cap ||
+        !rules.native_boss_recovery->amount || !rules.native_boss_recovery->frenzy_bout))
+        throw CodecError("richonline_native_boss_recovery_rules_invalid");
     if((rules.npcs || rules.combat || rules.ice_traps || rules.fire_traps) && !rules.npc_landing_preflight)
         throw CodecError("richonline_boss_npc_landing_preflight_required");
     if(rules.combat && (!rules.combat_random || !rules.combat_capabilities || !rules.terminal))

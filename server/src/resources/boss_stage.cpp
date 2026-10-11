@@ -198,6 +198,20 @@ RichonlineBossStage parse_richonline_boss_stage(std::string_view text,std::strin
         stage.player_selection)==stage.player_count_choices.end()) throw CodecError("richonline_stage_player_selection_invalid");
     stage.boss.count=bounded(record,"bossNum"); stage.boss.base_cash=bounded(record,"bossInitCash");
     stage.boss.max_dice=bounded(record,"bossMaxDice"); stage.boss.role=number(record,"bossRole");
+    constexpr std::array native_keys{"bossRestore","frenzyBout","frenzyAttack","frenzyDefend","frenzyRestore"};
+    const auto native_count=std::count_if(native_keys.begin(),native_keys.end(),[&](const char* key){return record.contains(key);});
+    if(native_count!=0 && native_count!=native_keys.size()) throw CodecError("richonline_stage_native_frenzy_incomplete");
+    if(native_count) {
+        const auto restore=bounded(record,"bossRestore",0x7fffffffU);
+        const auto bout=bounded(record,"frenzyBout",255);
+        const auto attack=bounded(record,"frenzyAttack",1000);
+        const auto defense=bounded(record,"frenzyDefend",100);
+        const auto recovery=bounded(record,"frenzyRestore",1000);
+        if(!restore || !bout) throw CodecError("richonline_stage_native_frenzy_invalid");
+        stage.native_recovery=RichonlineNativeBossRecovery{restore,bout,
+            {static_cast<float>(100+attack)/100.0F,static_cast<float>(100-defense)/100.0F,
+             static_cast<float>(100+recovery)/100.0F}};
+    }
     stage.boss.mood=bounded(record,"bossMood");
     if (stage.boss.count!=1) throw CodecError("richonline_stage_boss_count_unsupported");
     if (stage.boss.max_dice==0) throw CodecError("richonline_stage_range:bossMaxDice");

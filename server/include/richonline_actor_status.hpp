@@ -25,6 +25,9 @@ struct RichonlineActorStatus {
     float possession_multiplier1744=0.0F;
     // 已触发的BOSS永久技能；通过4214续期客户端第二组倍率，不复用新闻状态槽。
     std::optional<std::array<float,2>> boss_frenzy{};
+    // Chapter 3 native 4010 lifecycle; this is separate from the custom 4214 skill.
+    bool boss_restore_eligible=false;
+    std::optional<std::array<float,3>> native_boss_frenzy{};
     bool operator==(const RichonlineActorStatus&) const = default;
 };
 void richonline_detach_possession(RichonlineActorStatus&) noexcept;

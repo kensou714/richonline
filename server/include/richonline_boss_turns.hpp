@@ -3,6 +3,7 @@
 // 新版双角色 BOSS 回合协调：以落点结果决定等待事件、完成落点或结束对局。
 
 #include "richonline_boss_startup.hpp"
+#include "richonline_boss_stage.hpp"
 #include "richonline_game_startup.hpp"
 #include "richonline_movement_wire.hpp"
 #include "richonline_route.hpp"
@@ -176,6 +177,8 @@ struct RichonlineBossTurnRules {
     std::function<std::vector<Bytes>(bool)> finish_boss_chest{};
     // 4010先刷新所有角色的条件装备属性，再处理回血、光环及连续攻击。
     std::function<void()> refresh_equipment{};
+    std::optional<RichonlineNativeBossRecovery> native_boss_recovery{};
+    std::uint32_t native_boss_cash_cap=0;
     // 新闻只准备不提交；脚本回包通过后由回合层原子提交账本、手牌和状态时钟。
     std::function<std::shared_ptr<RichonlineChanceLandingAttempt>(const RichonlineLandingContext&)> prepare_chance_landing{};
     // 57格兑换计划在Lua回包校验后提交，与原生兼容入口共用同一账本和脚本状态授权。

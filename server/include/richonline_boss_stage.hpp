@@ -28,6 +28,10 @@ struct RichonlineBossDrop {
     std::uint32_t weight;
     bool operator==(const RichonlineBossDrop&) const = default;
 };
+struct RichonlineNativeBossRecovery {
+    std::uint32_t amount, frenzy_bout;
+    std::array<float,3> frenzy_factors; // attack, incoming damage, recovery
+};
 inline constexpr std::array<std::string_view,12> richonline_boss_equipment_keys{
     "bossPet","bossVehicle","bossLand","bossDeng","bossDice","bossMove",
     "bossSuit","bossGlass","bossCover","bossMask","bossKitbag","bossGowith"};
@@ -48,6 +52,7 @@ struct RichonlineBossStage {
     // Absent keys stay absent. Static67 consumers must not invent a fee/reward.
     std::optional<std::uint32_t> invest_base, invest_return;
     std::vector<RichonlineBossDrop> chest_drops;
+    std::optional<RichonlineNativeBossRecovery> native_recovery{};
     // 原资源中非空的受负面神明影响台词；缺少第5组时回退到实际存在的台词。
     std::optional<std::array<std::uint16_t,2>> negative_possession_talk{};
 };

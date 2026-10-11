@@ -169,6 +169,7 @@ void chain(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& world,std
         !entry->in_prison && !entry->status.frozen && !entry->mine_immune_vehicle) {
         std::uint64_t sum=0,raw=0;
         for (const auto& blast:graph.blasts) if (contains(blast.positions,entry->position)) {
+            if(entry->slot==1) state.actors[1]->status.boss_restore_eligible=true;
             const auto base=blast.mine.kind==RichonlineMineKind::super?
                 world.resources.super_mine_damage:world.resources.mine_damage;
             sum+=damage(state,blast.mine.owner,*entry,base);
@@ -203,6 +204,7 @@ void projectile(RichonlineCombatTurnPlan& plan,const RichonlineCombatWorld& worl
     for (auto& entry:state.actors) if (entry && contains(footprint,entry->position) &&
         richonline_attack_hits_actor(effect,static_cast<std::int8_t>(boss),static_cast<std::int8_t>(entry->slot),
             entry->active,entry->in_hospital,entry->in_prison,entry->status.frozen!=0)) {
+        if(entry->slot==1) entry->status.boss_restore_eligible=true;
         auto helmet=world.helmet?world.helmet(*entry,state):std::nullopt;
         if (helmet && helmet->source_inventory!=entry->inventory)
             throw CodecError("richonline_combat_session_helmet_stale");
@@ -557,6 +559,7 @@ RichonlineCombatTurnPlan prepare_richonline_combat_fire_landing(const Richonline
         throw CodecError("richonline_combat_fire_landing_invalid");
     refresh_terms(plan.after,world);
     auto& target=*plan.after.actors[victim];
+    if(victim==1) target.status.boss_restore_eligible=true;
     debit(target,damage(plan.after,owner,target,base));
     finish(plan,true);return plan;
 }
@@ -584,6 +587,7 @@ RichonlineCombatPoisonPlan prepare_richonline_combat_poison(const RichonlineComb
             throw CodecError("richonline_combat_poison_raw_unknown");
         if(*eligibility.hospital1494!=-1 || *eligibility.jail1495!=-1 || *eligibility.kidnapped1497!=-1) continue;
         refresh_terms(combat.after,world);
+        if(slot==1) target->status.boss_restore_eligible=true;
         const auto amount=damage(combat.after,context.actor,*target,rules.base_damage);
         const RichonlinePoisonVictim victim{slot,cell.position,true,false,false,false,target->funds,amount};
         const auto planned=plan_richonline_poison_card(request,context,hand,count,rules.base_damage,

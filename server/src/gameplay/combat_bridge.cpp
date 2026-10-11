@@ -61,15 +61,20 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::apply(std::span<const Richo
     const std::function<void(const std::string&)>& log) {
     // 伤害计划已完成；此处仍在任何共享状态提交之前，可安全准备狂暴状态和回包。
     // 涵盖真人攻击、雷链、火焰、毒气与定时炸弹，不改变Lua已核验的卡确认前缀。
+    if(plan.after.actors[1] && plan.expected.actors[1] &&
+        (plan.after.actors[1]->funds.funds.cash<before.combat.actors[1]->funds.funds.cash ||
+         std::ranges::any_of(plan.actor_impacts,[](const auto& impact){return impact.victim==1;})))
+        plan.after.actors[1]->status.boss_restore_eligible=true;
     if(world_.boss_frenzy && plan.after.actors[1]) {
         auto& boss=*plan.after.actors[1];
         auto packets=world_.boss_frenzy(game_,boss.status,boss.funds.funds.cash,boss.active,false);
         plan.packets.insert(plan.packets.end(),std::make_move_iterator(packets.begin()),std::make_move_iterator(packets.end()));
-        if(boss.status!=before.combat.actors[1]->status && plan.after.revision==before.combat.revision) {
-            if(plan.after.revision==std::numeric_limits<std::uint64_t>::max())
-                throw CodecError("richonline_combat_bridge_revision_overflow");
-            ++plan.after.revision;
-        }
+    }
+    if(plan.after.actors[1] && plan.after.actors[1]->status!=before.combat.actors[1]->status &&
+        plan.after.revision==before.combat.revision) {
+        if(plan.after.revision==std::numeric_limits<std::uint64_t>::max())
+            throw CodecError("richonline_combat_bridge_revision_overflow");
+        ++plan.after.revision;
     }
     std::vector<std::string> impact_logs;
     if(log && plan.after.actors[1]->status.boss_frenzy && !before.combat.actors[1]->status.boss_frenzy)

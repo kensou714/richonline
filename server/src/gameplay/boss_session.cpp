@@ -319,6 +319,8 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         };
     }
     rules.ledger=ledger;
+    rules.native_boss_recovery=stage.native_recovery;
+    rules.native_boss_cash_cap=stage.boss.base_cash;
     const auto feast=load_original_kpd(resources/"Data/Feast.kpd",806);
     if(feast.size()!=806) throw CodecError("richonline_feast_calendar_invalid");
     for(std::size_t year=0;year<rules.feast_dates.size();++year)
