@@ -25,6 +25,7 @@ local handlers = {
     ["card.lottery_award"] = lottery.award,
     ["boss.attack"] = bosses.attack,
     ["boss.chest_select"] = boss_chest.select,
+    ["boss.chest_spawn"] = boss_chest.spawn,
     ["mall.purchase_policy"] = mall_purchase.plan,
     ["mall.equipment_policy"] = equipment.plan,
     ["mall.equipment_healing"] = equipment_effects.healing,

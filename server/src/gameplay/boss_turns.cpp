@@ -100,15 +100,43 @@ struct Turns {
     std::vector<Bytes> open_chest(std::vector<Bytes> messages) {
         if(!rules.finish_boss_chest || !rules.ground || !rules.cards || !active[0] || active[1])
             throw CodecError("richonline_boss_chest_context_invalid");
+        // 有邻格的道路也可能属于另一座孤岛。先从玩家位置遍历道路连通分量，
+        // 成对传送点是额外的连通边；这里只限制可到达区域，不保证三回合必能拾取。
+        const auto start=init.participants[0].position;
+        if(!topology.cell(start).walkable) throw CodecError("richonline_boss_chest_start_invalid");
+        std::vector<bool> reachable(topology.cells().size(),false);
+        std::vector<std::int16_t> pending{start};
+        reachable[static_cast<std::size_t>(start)]=true;
+        const auto visit=[&](std::int16_t position) {
+            const auto index=static_cast<std::size_t>(position);
+            if(!reachable[index]) {reachable[index]=true;pending.push_back(position);}
+        };
+        for(std::size_t cursor=0;cursor<pending.size();++cursor) {
+            const auto position=pending[cursor];
+            for(const auto next:topology.cell(position).neighbors) if(next) visit(*next);
+            if(const auto exit=topology.portal_destination(position)) visit(*exit);
+        }
         std::vector<std::int16_t> candidates;
         for(const auto& cell:topology.cells())
-            if(cell.walkable && cell.position!=init.participants[0].position &&
+            if(cell.walkable && reachable[static_cast<std::size_t>(cell.position)] && cell.position!=start &&
                 std::any_of(cell.neighbors.begin(),cell.neighbors.end(),[](const auto& next){return next.has_value();}))
                 candidates.push_back(cell.position);
         if(candidates.empty()) throw CodecError("richonline_boss_chest_no_road");
         const auto chosen=rules.random(candidates.size());
         if(chosen>=candidates.size()) throw CodecError("richonline_boss_chest_random_invalid");
         const auto position=candidates[chosen];
+        if(rules.script) {
+            // 核心只抽一次且保留结果；Lua选择候选位置，不能扩池、重抽或提前写地面。
+            bool sampled=false;
+            const auto selected=rules.script->call("boss.chest_spawn",{{"positions",candidates}},
+                {{"boss.chest_position_random",[&](const LuaValue& args) {
+                    if(sampled || args!=LuaValue{{"bound",candidates.size()}})
+                        throw CodecError("richonline_boss_chest_spawn_random_invalid");
+                    sampled=true;return LuaValue(chosen);
+                }}});
+            if(!sampled || !selected.is_number_integer() || selected!=position)
+                throw CodecError("richonline_boss_chest_spawn_selection_invalid");
+        }
         auto ground=rules.ground->prepare(rules.ground->snapshot(),{{position,{32,255,255}}});
         auto inventory=rules.cards->inventory();
         constexpr std::array<std::int16_t,12> removed{1042,1044,1045,1046,1063,1069,1075,1182,1183,500,501,506};
@@ -132,7 +160,8 @@ struct Turns {
         retire_decision();npc_landing.reset();npc_deadline.reset();npc_pending_counter.reset();
         controlled_roll_deadline.reset();frozen_deadline.reset();jail_deadline.reset();pending_mine_day.reset();
         boss_chest=position;chest_turns_left=3;phase=Phase::chest_ready;route={};
-        if(rules.log) rules.log("richonline_boss_chest_open position="+std::to_string(position)+" turns=3");
+        if(rules.log) rules.log("richonline_boss_chest_open position="+std::to_string(position)+
+            " candidates="+std::to_string(candidates.size())+" lua="+std::to_string(static_cast<bool>(rules.script))+" turns=3");
         return messages;
     }
 
