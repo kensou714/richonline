@@ -31,3 +31,16 @@
 - `7BE160`核对破产减少G+E24活动人数；`6948D0`核对606A账户标志默认清零。
 
 沿用 `classic-bankruptcy-continuation.md` 的活动名单生命周期及只读40C2/40EE专题。Release与Lua语法编译通过，修改范围diff检查通过；工作区其他会话的zhao-admission文档末尾空行不属于本轮。未新增或运行测试，未启动本机服务或客户端。静态证据与部署健康检查不构成三张卡的实机验收。
+
+## 发布回执
+
+2026-10-12（本地时区）源码提交 `2edd6e2beab3a75d0e4106acb93375643c1ede2d` 已推送 GitHub main并核对远端。固定tree `6c8fccfb2d5048d690b23516133413bb0c96bea4` 独立Release构建、173个Lua语法编译通过，BUILD_TESTING=OFF。后续文档回执不改变二进制源码身份。
+
+- 线上release `2edd6e2beab3`，实际PID `1096`，instance `1096-118337455476700`；计划任务Running，任务及实际进程均引用该release的EXE。
+- EXE SHA256 `E9F9A408561ECE2B9D83D54B465F6A1F00AF9CEE9D60E425D31914FAB1C25D3E`。
+- ZIP SHA256 `3878DD7512CA906AE7A94408A945C965D230AF052EAA2CB4ACE175153F11B4B2`，208个运行文件的长度与哈希逐项匹配manifest。
+- 持久目录 `D:\richonline\shared\data`，在线DB备份 `D:\richonline\shared\data\backups\accounts-1791748010962967.sqlite3`，部署备份 `D:\richonline\backups\20261011194650-2edd6e2beab3`。旧实例经过ExpectedInstance正常停止，未覆盖数据库。
+- lobby/http/gameListener/black/intro/inquiry六Ready为true；18600/18602/18604/18605/18606/18680公网TCP成功，两份大厅列表HTTP200、CP950三频道均为 `103.156.25.81:18600`。
+- 商城日期兼容及全BOSS测试地图解锁配置保留；本机EXE已备份并同步为同哈希文件，173个本地Lua逐项同代，未启动本机。
+
+只执行静态核对、编译和发布健康检查；没有新增或运行玩法测试，经典生产准入仍关闭，`gameReady=false`仍表示整体能力边界。其他会话的测试、docs及旧利息证据没有纳入本次提交。
