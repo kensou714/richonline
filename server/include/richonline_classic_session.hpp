@@ -12,6 +12,7 @@
 namespace richnet {
 class RichonlineShopCatalog;
 class RichonlineClassicTerminal;
+class RichonlineCombatModifierResources;
 // 所有连接共用这些对象。业务回调只能在shared_startups持有的对局锁内访问。
 struct RichonlineClassicWorld {
     std::shared_ptr<RichonlineGameLedger> ledger;
@@ -98,6 +99,18 @@ struct RichonlineClassicShopPolicy {
     std::array<std::uint8_t,2> stock_opaque;
     RichonlineGoldCharges charges;
 };
+struct RichonlineClassicAccountPayment {
+    // 准入层已认证的房间角色和扣押金前账号余额；debit必须绑定同一账号/角色。
+    std::int16_t identity;
+    double account_gold;
+    std::string operation_prefix;
+    RichonlineGamePayment::Debit debit;
+};
+struct RichonlineClassicPaymentPolicy {
+    RichonlineGoldCharges charges;
+    std::shared_ptr<const RichonlineCombatModifierResources> equipment;
+    std::vector<RichonlineClassicAccountPayment> actors;
+};
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
     std::uint8_t first_actor,opaque_turn7;
@@ -134,6 +147,7 @@ struct RichonlineClassicSessionRules {
     std::optional<RichonlineClassicJailPolicy> jail;
     std::optional<RichonlineClassicAssetPolicy> asset_settlement;
     std::optional<RichonlineClassicShopPolicy> shop;
+    std::optional<RichonlineClassicPaymentPolicy> payment;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

@@ -10,6 +10,7 @@
 #include "richonline_portal_landing.hpp"
 #include "richonline_special_landings.hpp"
 #include "richonline_boss_shop.hpp"
+#include "richonline_combat_resources.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -17,6 +18,7 @@
 #include <bit>
 #include <deque>
 #include <limits>
+#include <set>
 #include <utility>
 
 namespace richnet {
@@ -66,6 +68,9 @@ struct Session {
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_banks;
     std::vector<std::unique_ptr<RichonlineBossShop>> shops;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_shops;
+    std::vector<std::shared_ptr<RichonlineGamePayment>> payments;
+    std::vector<RichonlinePaidDiceEquipment> payment_equipment;
+    std::vector<std::uint64_t> shop_refresh_sequence;
     std::optional<PendingRentTransfer> rent_transfer;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_rent_transfers;
     std::vector<bool> disconnected;
@@ -95,6 +100,22 @@ struct Session {
             throw CodecError("richonline_classic_session_snapshot_invalid");
         const auto expected_snapshot=encode_richonline_board_snapshot(snapshot);
         const auto expected_init=encode_richonline_board_init(board);
+        if(rules.payment) {
+            const auto& policy=*rules.payment;
+            if(policy.actors.size()!=count || !policy.equipment)
+                throw CodecError("richonline_classic_payment_policy_invalid");
+            std::set<std::string> prefixes;
+            for(std::size_t slot=0;slot<count;++slot) {
+                const auto& member=policy.actors[slot];
+                if(member.identity!=source.players[slot].identity || !member.debit || member.operation_prefix.empty() ||
+                    member.operation_prefix.size()>128 || member.operation_prefix.find('\0')!=std::string::npos ||
+                    !prefixes.insert(member.operation_prefix).second)
+                    throw CodecError("richonline_classic_payment_identity_invalid");
+                payment_equipment.push_back(policy.equipment->paid_dice_equipment(source.players[slot].equipment));
+            }
+            if(rules.shop && rules.shop->charges.values!=policy.charges.values)
+                throw CodecError("richonline_classic_shop_charge_policy_mismatch");
+        }
         std::vector<RichonlineGameFunds> funds;
         for(std::size_t index=0;index<count;++index) {
             auto init=source.recipients[index].init;
@@ -110,10 +131,22 @@ struct Session {
                 throw CodecError("richonline_classic_session_spawn_invalid");
             const auto& money=snapshot.slots[index];
             funds.push_back({money.cash,money.deposit,money.tickets,{}});
+            if(rules.payment) funds.back().reserve=richonline_initial_reserve(
+                rules.payment->actors[index].account_gold,source.pawn_gold,rules.payment->charges);
             // NEW初始化附身槽的有符号-1；optional空值表示未知，不能用于地产资格判断。
             statuses[index].possession=-1;
         }
         world.ledger=std::make_shared<RichonlineGameLedger>(std::move(funds));
+        if(rules.payment) {
+            for(std::uint8_t slot=0;slot<count;++slot) {
+                auto payment=std::make_shared<RichonlineGamePayment>(world.ledger,slot,rules.payment->charges,
+                    rules.payment->actors[slot].debit);
+                for(std::uint8_t dice_count=1;dice_count<=3;++dice_count)
+                    static_cast<void>(payment->quote_random_dice(dice_count,payment_equipment[slot]));
+                payments.push_back(std::move(payment));
+            }
+            shop_refresh_sequence.resize(count);
+        }
         if(rules.news) {
             if(!rules.news->select)
                 throw CodecError("richonline_classic_news_policy_invalid");
@@ -155,12 +188,23 @@ struct Session {
             throw CodecError("richonline_classic_session_services_incomplete");
         }
         try {
+            if(!payments.empty() && services.shop_refresh)
+                throw CodecError("richonline_classic_payment_owner_ambiguous");
             if(rules.shop) {
                 for(std::uint8_t slot=0;slot<count;++slot) {
                     auto shop=std::make_unique<RichonlineBossShop>(*rules.resale,*world.cards[slot],
                         board.game_server_id,world.ledger,rules.now,rules.shop->stock_opaque,rules.random);
                     RichonlineBossShop::ChargeReserve charge;
-                    if(services.shop_refresh) charge=[refresh=services.shop_refresh,slot](std::uint32_t amount) {
+                    if(!payments.empty()) charge=[this,slot](std::uint32_t amount) {
+                        if(amount!=static_cast<std::uint32_t>(rules.payment->charges.require(4)))
+                            throw CodecError("richonline_classic_shop_charge_mismatch");
+                        auto& next_refresh=shop_refresh_sequence[slot];
+                        if(next_refresh==std::numeric_limits<std::uint64_t>::max())
+                            throw CodecError("richonline_classic_payment_sequence_overflow");
+                        const auto operation=rules.payment->actors[slot].operation_prefix+":shop:"+std::to_string(++next_refresh);
+                        return payment_committed(payments[slot]->shop_refresh(operation));
+                    };
+                    else if(services.shop_refresh) charge=[refresh=services.shop_refresh,slot](std::uint32_t amount) {
                         return refresh(slot,amount);
                     };
                     shop->configure_refresh(rules.shop->charges,std::move(charge));
@@ -362,8 +406,7 @@ struct Session {
         // 医院631640/631800、监狱631D20/631EE0及阶段4已恢复行动界面。
         // 不重复420F、stay或出口落点事件。
         if(std::exchange(confinement_exit_roll_requested,false)) {
-            auto move=prepare_move();std::vector<Bytes> messages{std::move(move.packet)};
-            commit_move(std::move(move));return messages;
+            return random_move({});
         }
         return {};
     }
@@ -1090,32 +1133,116 @@ struct Session {
             throw CodecError("richonline_classic_static_landing_unimplemented");
         return complete({stop()});
     }
-    struct PreparedMove { RichonlineRoute route;Bytes packet; };
-    PreparedMove prepare_move(std::optional<std::uint8_t> selected={}) {
-        const auto count=selected ? std::uint8_t{1} : dice[actor];
+    struct PreparedMove { RichonlineRoute route;Bytes packet;RichonlineSharedMovementWait wait; };
+    PreparedMove prepare_move(std::optional<std::uint8_t> selected={},std::int32_t charge=0,
+        std::optional<std::uint8_t> count_override={},std::optional<std::array<std::int8_t,3>> previous_faces={}) {
+        const auto forced=statuses[actor].one_step || statuses[actor].turtle ? std::optional<std::uint8_t>{1} :
+            statuses[actor].six_steps ? std::optional<std::uint8_t>{6} : std::nullopt;
+        // 沿用既有遥控卡政策：卡片指定覆盖本次固定步数，不清除持续状态；金豆骰另行拒绝。
+        const auto chosen=selected ? selected : forced;
+        const auto count=chosen ? std::uint8_t{1} : count_override.value_or(dice[actor]);
+        if(count<1 || count>3 || charge<0) throw CodecError("richonline_classic_move_policy_invalid");
         std::array<std::int8_t,3> faces{1,rules.inactive_ui_dice[0],rules.inactive_ui_dice[1]};
         std::int32_t budget=0;
         for(std::uint8_t index=0;index<count;++index) {
-            const auto choice=selected ? static_cast<std::size_t>(*selected-1U) : rules.random(6);
+            const auto choice=chosen ? static_cast<std::size_t>(*chosen-1U) : previous_faces ?
+                static_cast<std::size_t>((*previous_faces)[index]-1) : rules.random(6);
             if(choice>=6) throw CodecError("richonline_classic_die_invalid");
             faces[index]=static_cast<std::int8_t>(choice+1);budget+=faces[index];
         }
         const auto& person=board.participants[actor];
         auto proposed=build_richonline_route(startup.topology,
-            {person.position,person.direction,budget,{},true,static_cast<bool>(bank)},rules.random);
+            {person.position,person.direction,budget,{},!confinement_controlled(),static_cast<bool>(bank)},rules.random);
         // 最后一步仍停在入口，等0011全员汇合才传送；途中61由不可变路线处理。
         std::vector<RichonlineMoveDirection> directions;
         for(const auto direction:proposed.directions) directions.push_back(static_cast<RichonlineMoveDirection>(direction));
+        auto wire=rules.route_wire;wire.local_reserve_charge=charge;
         auto packet=encode_richonline_route4011({board.game_server_id,person.position,count,faces,
-            std::move(directions),proposed.landings.size()},rules.route_wire);
+            std::move(directions),proposed.landings.size()},wire);
         if(movement_sequence==std::numeric_limits<std::uint64_t>::max())
             throw CodecError("richonline_classic_movement_sequence_overflow");
-        return {std::move(proposed),std::move(packet)};
+        static_cast<void>(raw->actor(actor));
+        std::optional<std::size_t> checkpoint;
+        if(bank) for(std::size_t index=0;index+1<proposed.landings.size();++index)
+            if(startup.topology.cell(proposed.landings[index]).static_type==9) {checkpoint=index;break;}
+        const RichonlineSharedMovementWait wait{movement_sequence+1,calendar,
+            proposed.landings.at(checkpoint.value_or(proposed.landings.size()-1)),actor,
+            static_cast<std::uint16_t>(checkpoint ? 0x28 : 0x11)};
+        return {std::move(proposed),std::move(packet),wait};
     }
-    void commit_move(PreparedMove move) {
+    static bool payment_committed(const RichonlinePaymentResult& paid) {
+        switch(paid.status) {
+        case RichonlinePaymentStatus::committed:return true;
+        case RichonlinePaymentStatus::account_refused:
+        case RichonlinePaymentStatus::insufficient_reserve:return false;
+        case RichonlinePaymentStatus::duplicate:
+        case RichonlinePaymentStatus::recovery_required:
+            throw CodecError("richonline_classic_payment_recovery_required");
+        }
+        throw CodecError("richonline_classic_payment_result_invalid");
+    }
+    std::string payment_operation(const char* kind,std::uint8_t value) const {
+        return rules.payment->actors[actor].operation_prefix+":turn="+std::to_string(sequence)+
+            ":counter="+std::to_string(calendar)+":"+kind+":"+std::to_string(value);
+    }
+    template<class Pay>
+    std::optional<std::vector<Bytes>> pay_and_move(PreparedMove& move,View request,Pay&& pay) {
+        // 先分配响应和迟到请求记录；扣费成功后只提交已经验证的移动状态。
+        std::vector<Bytes> messages{move.packet};
+        if(!request.empty()) retired.push_back({actor,Bytes(request.begin(),request.end())});
+        bool accepted=false;
+        try {accepted=pay();} catch(...) {if(!request.empty())retired.pop_back();throw;}
+        if(!accepted) {if(!request.empty())retired.pop_back();return {};}
+        if(retired.size()>64) retired.pop_front();
+        commit_move(std::move(move));return std::optional{std::move(messages)};
+    }
+    std::vector<Bytes> random_move(View request) {
+        const bool automatic=confinement_controlled();
+        const auto forced=statuses[actor].one_step || statuses[actor].six_steps || statuses[actor].turtle;
+        auto count=forced ? std::uint8_t{1} : dice[actor];
+        std::vector<Bytes> refused{encode_richonline_dice_recovery400b(board.game_server_id)};
+        if(payments.empty()) {
+            // 无绑定时只有一颗普通骰得到已证实的免费资格；不能把最大可选骰数当成免费额度。
+            if(count>1 && !automatic)return refused;
+            auto move=prepare_move({},0,1);
+            return pay_and_move(move,request,[]{return true;}).value();
+        }
+        const auto& equipment=payment_equipment[actor];
+        auto& payment=*payments[actor];
+        if(automatic) while(count>1 && static_cast<std::uint32_t>(payment.quote_random_dice(count,equipment))>payment.reserve()) --count;
+        const auto cost=payment.quote_random_dice(count,equipment);
+        auto move=prepare_move({},cost,count);
+        const auto operation=payment_operation("random-dice",count);
+        if(auto messages=pay_and_move(move,request,[&] {
+            return cost==0 || payment_committed(payment.random_dice(operation,count,equipment));
+        })) return std::move(*messages);
+        if(!automatic)return refused;
+        // 自动掷骰被账号拒付时按载具免费额度继续，复用已抽骰面，不再次抽取有利结果。
+        const auto free_count=equipment.dice_vehicle==RichonlineDiceVehicle::car ? 3U :
+            equipment.dice_vehicle==RichonlineDiceVehicle::motorcycle ? 2U : 1U;
+        auto fallback=prepare_move({},0,static_cast<std::uint8_t>(std::min<unsigned>(count,free_count)),
+            std::array<std::int8_t,3>{static_cast<std::int8_t>(move.packet[8]),static_cast<std::int8_t>(move.packet[9]),
+                static_cast<std::int8_t>(move.packet[10])});
+        return pay_and_move(fallback,request,[]{return true;}).value();
+    }
+    std::vector<Bytes> paid_move(View request) {
+        const auto choice=std::get<RichonlinePaidDiceRequest22>(parse_richonline_controlled_dice_request(request));
+        std::vector<Bytes> refused{encode_richonline_dice_recovery400b(board.game_server_id)};
+        if(payments.empty() || richonline_landing_controlled(statuses[actor]) || statuses[actor].one_step ||
+            statuses[actor].six_steps || statuses[actor].turtle || statuses[actor].stay) return refused;
+        auto& payment=*payments[actor];const auto& equipment=payment_equipment[actor];
+        const auto cost=payment.quote_paid_die(choice.selected_die,equipment);
+        auto move=prepare_move(choice.selected_die,cost);
+        const auto operation=payment_operation("paid-die",choice.selected_die);
+        if(auto messages=pay_and_move(move,request,[&] {
+            return payment_committed(payment.paid_die(operation,choice.selected_die,equipment));
+        })) return std::move(*messages);
+        return refused;
+    }
+    void commit_move(PreparedMove move) noexcept {
         route=std::move(move.route);
         raw->apply_s2c4011_movement(actor);
-        route_cursor=0;wait_for_segment();
+        route_cursor=0;movement_sequence=move.wait.sequence;movement=move.wait;
         phase=Phase::moving;
     }
     std::optional<std::size_t> next_bank() const {
@@ -1322,6 +1449,7 @@ struct Session {
             return shop_result(std::move(result));
         }
         if(phase==Phase::roll) {
+            if(opcode==22) return paid_move(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103) {
                 const auto use=std::get<RichonlineCardDiceRequest103>(parse_richonline_controlled_dice_request(request));
@@ -1334,8 +1462,7 @@ struct Session {
             if(opcode==0x10) {
                 const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
                 if(roll.parameter!=0) throw CodecError("richonline_classic_roll_parameter_unsupported");
-                auto move=prepare_move();std::vector<Bytes> messages{std::move(move.packet)};
-                remember(sender,request);commit_move(std::move(move));return messages;
+                return random_move(request);
             }
         }
         if(phase==Phase::stationary && opcode==0x11) {
