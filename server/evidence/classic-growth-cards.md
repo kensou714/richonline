@@ -27,3 +27,15 @@
 Release和Lua语法编译、限定变更文件的diff检查通过。未新增/运行测试，未启动本机服务或客户端；只修改server，保留其他会话改动。固定提交构建与发布回执后续追加。
 
 天使能够生成kind3贸易中心是原生规则，不能为迁就尚未完成的经典落点模块而改成其他建筑；该建筑完整业务仍需后续接入。此次只证明两张卡的共享状态与协议实现，不宣称经典模式全部可玩，也不改变生产准入。完整goal继续。
+
+## 上线回执
+
+2026-10-12（本地时区）已部署源码提交`4cc22758b1b322b91ff6c7597e6b2b75de99db57`，固定源码tree `4b34e4c9c8170fa97d6e01edfa2c396db775a8fb`，线上release `4cc22758b1b3`。后续文档回执提交不改变二进制身份。
+
+- 固定提交独立Release与Lua语法编译通过，`BUILD_TESTING=OFF`。ZIP逐项核验208个文件的大小及SHA256，其中173个Lua文件。
+- EXE SHA256：`E18DA245EA85EA3B9B6315D45F1BC8DCCB3FB41E8AD359B6D7414F9F2914A230`；ZIP SHA256：`10F928C942E691278AFCF5BB25487D3D4EA8376BC5BB82382286E9D181C0127A`。
+- 实际PID `9820`，instance `9820-121581783212600`；进程与Running计划任务指向`D:\richonline\releases\4cc22758b1b3\RichOnline.Server.exe`。
+- 在线DB备份`D:\richonline\shared\data\backups\accounts-1791751255321217.sqlite3`；部署备份`D:\richonline\backups\20261011204055-4cc22758b1b3`。备份后带ExpectedInstance正常停止旧实例；持久目录仍为`D:\richonline\shared\data`，数据库未覆盖。
+- lobby/http/gameListener/black/intro/inquiry六项Ready均为true；18600/18602/18604/18605/18606/18680公网TCP通过。两个大厅列表HTTP 200，CP950中文正常，各有三个指向103.156.25.81:18600的频道。
+- 商城日期兼容及测试全BOSS地图解锁配置保留。本机EXE备份后已同步同哈希产物，173个Lua文件逐项匹配manifest，未启动本机服务或客户端。
+- 未新增/运行玩法测试。部署健康不等于实战验收；经典模式仍未开放，完整goal继续。
