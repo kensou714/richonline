@@ -29,3 +29,17 @@
 本轮按用户要求不新增或运行测试、不启动本机客户端或服务端。
 执行静态协议/资源核对、diff检查、固定源码Release构建及整包Lua语法编译，部署后核对实际版本及六端口。
 实机使用结果仍需用户复测；发布记录在部署完成后追加。
+
+## 发布结果
+
+- 源码 `5d616ad37d4b26e2b4d6802c9d47944bd7bf87da`，tree `1861274fef69ae4fe8937c6750da5c810eb487b1`；已推送并核对 GitHub main。
+- 固定提交 Release 构建成功，167个Lua模块语法编译通过；未新增/运行测试。
+- 线上 release `5d616ad37d4b`，PID `4616`，instance `4616-96906744869700`。
+  实际进程与计划任务均指向 `D:\richonline\releases\5d616ad37d4b\RichOnline.Server.exe`。
+- EXE SHA256 `CBDF5731EE37DDFF7A9D1E5DDCC6FDF6E017A13FE6D5268C0D7F1A351FCF0209`；线上与本机一致。
+- 使用安装器正常停服切换，数据库备份 `D:\richonline\shared\data\backups\accounts-1791726580260072.sqlite3`。
+  持久目录仍为 `D:\richonline\shared\data`；保留商城日期兼容及全部BOSS地图测试配置。
+- 六类监听ready；18600/18602/18604/18605/18606/18680公网TCP均成功，两个服务器列表HTTP200。
+- 本机EXE已备份再同步，167份Lua与发布manifest逐文件哈希一致，未启动本机服务或客户端。
+- 本地收据：`server/build-goal-resume/release-5d616ad37d4b-receipt.json`；
+  另有同版本 verified/process/bootstrap-after 文件。此证据提交不改变二进制源码版本。
