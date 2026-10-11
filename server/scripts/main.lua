@@ -11,6 +11,7 @@ local feasts = require("events.feasts")
 local tiles = require("tiles.registry")
 local bank = require("tiles.tile_9")
 local property = require("tiles.tile_12")
+local missile_base = require("buildings.missile_base")
 local bosses = require("bosses.registry")
 local boss_chest = require("bosses.chest")
 local lottery = require("cards.card_504")
@@ -29,6 +30,8 @@ local handlers = {
     ["bank.open"] = bank.open, ["bank.transaction"] = bank.transaction,
     ["property.construct"] = property.construct, ["property.upgrade"] = property.upgrade,
     ["property.research"] = property.research,
+    ["building.missile_clock"] = missile_base.clock,
+    ["building.missile_target"] = missile_base.target,
     ["stock.trade"] = stock.trade,
     ["stock.open"] = stock.open,
     ["stock.quote"] = stock.quote, ["stock.market"] = stock.market,

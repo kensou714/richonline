@@ -404,8 +404,20 @@ RichonlineBossProperty::prepare_missile_round(std::uint64_t round) const {
         if(!property.owner || property.building.kind!=12 || !property.building.level) remaining=0;
         else {
             const auto& rule=missile_rules_.at(property.building.level-1);
-            const bool due=remaining>0 && --remaining==0;
+            bool due=remaining>0 && --remaining==0;
             if(!remaining) remaining=rule.rounds;
+            if(construction_script_) {
+                // Lua 编排基地周期；核心对照已验证 PAO 资源和旧时钟复核，尚不写地产或资金。
+                const auto clock=construction_script_->call("building.missile_clock",
+                    {{"remaining",property.missile_rounds},{"period",rule.rounds}});
+                if(!clock.is_object() || clock.size()!=2 || !clock.contains("remaining") ||
+                    !clock.at("remaining").is_number_integer() || !clock.contains("fire") ||
+                    !clock.at("fire").is_boolean() ||
+                    clock!=LuaValue{{"remaining",remaining},{"fire",due}})
+                    throw CodecError("richonline_missile_base_script_clock_invalid");
+                remaining=clock.at("remaining").get<std::uint8_t>();
+                due=clock.at("fire").get<bool>();
+            }
             if(due) result.salvos_.push_back({static_cast<std::uint32_t>(ref),*property.owner,
                 property.building.level,rule.shots,rule.target});
         }

@@ -308,7 +308,9 @@ RichonlineCombatTurnPlan prepare_richonline_missile_base_round(const RichonlineC
             if(candidates.empty()) break;
             const auto selected=random(candidates.size());
             if(selected>=candidates.size()) throw CodecError("richonline_missile_base_random_invalid");
-            const auto target=candidates[selected];
+            const auto target=world.select_missile_base_target ?
+                world.select_missile_base_target(candidates,selected) : candidates[selected];
+            if(target!=candidates[selected]) throw CodecError("richonline_missile_base_selection_invalid");
             // NEW66E830: flag1 queues only the map effect, without a hand charge or action restoration.
             Bytes packet;append_le(packet,0x40bf,2);append_le(packet,before.game_id,2);
             packet.push_back(0);packet.push_back(0xff);append_le(packet,static_cast<std::uint16_t>(target),2);

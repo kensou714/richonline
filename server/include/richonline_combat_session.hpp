@@ -95,6 +95,8 @@ struct RichonlineCombatWorld {
     std::function<ResolvedTerms(const RichonlineCombatActorView&,
         const RichonlineCombatSessionView&)> resolve_terms;
     std::vector<std::int16_t> missile_base_roads;
+    // 每发弹重建候选后，由业务选择本次随机数对应的位置；不得重抽或改动战斗状态。
+    std::function<std::int16_t(std::span<const std::int16_t>,std::size_t)> select_missile_base_target{};
 };
 struct RichonlineBossAttackRandomness {
     // Independent categorical draws: 0..79 none,80..89 mine,90..99 projectile.

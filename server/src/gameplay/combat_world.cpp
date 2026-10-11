@@ -231,6 +231,24 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         }
     }
     if(auto script=LuaServer::create()) {
+        result.world.select_missile_base_target=[script]
+            (std::span<const std::int16_t> candidates,std::size_t draw) {
+            if(candidates.empty() || draw>=candidates.size())
+                throw CodecError("richonline_missile_base_selection_invalid");
+            auto positions=LuaValue::array();
+            for(const auto position:candidates) positions.push_back(position);
+            bool sampled=false;
+            // 绑定本次候选数量及已抽取索引。脚本重抽、改池或错误返回均在事务提交前失败。
+            const auto selected=script->call("building.missile_target",{{"positions",positions}},
+                {{"building.missile_random",[&](const LuaValue& args) {
+                    if(sampled || args!=LuaValue{{"bound",candidates.size()}})
+                        throw CodecError("richonline_missile_base_script_random_invalid");
+                    sampled=true;return LuaValue(draw);
+                }}});
+            if(!sampled || !selected.is_number_integer() || selected!=candidates[draw])
+                throw CodecError("richonline_missile_base_script_target_invalid");
+            return selected.get<std::int16_t>();
+        };
         result.boss.select_attack=[script,map_name=stage.map_name,allowed=result.boss.projectiles]
             (std::uint8_t roll,const std::function<std::size_t(std::size_t)>& random)->std::optional<RichonlineCombatEffect> {
             auto projectiles=LuaValue::array();
