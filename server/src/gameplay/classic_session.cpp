@@ -214,7 +214,7 @@ struct Session {
             if(rules.settlement) {
                 terminal=rules.settlement(world);
                 if(!terminal)throw CodecError("richonline_classic_terminal_missing");
-                terminal->validate_identity(board.game_server_id,startup.room.key,count,startup.pawn_gold,world.ledger.get());
+                terminal->validate_identity(board.game_server_id,startup.room.key,board.participants,startup.pawn_gold,world.ledger.get());
             }
             if(rules.asset_settlement) {
                 const auto& policy=*rules.asset_settlement;

@@ -31,12 +31,17 @@ RichonlineClassicTerminal::RichonlineClassicTerminal(Storage& storage,Richonline
     }
     cursors_.resize(count);
 }
-void RichonlineClassicTerminal::validate_identity(std::uint16_t game,std::uint32_t room,std::size_t count,
+void RichonlineClassicTerminal::validate_identity(std::uint16_t game,std::uint32_t room,std::span<const RichonlineBoardParticipant> roster,
     std::uint32_t pawn_gold,const RichonlineGameLedger* ledger) const {
-    if(game!=context_.game_id || room!=context_.room_id || count!=context_.participants.size() || ledger!=ledger_.get())
+    if(game!=context_.game_id || room!=context_.room_id || roster.size()!=context_.participants.size() || ledger!=ledger_.get())
         throw CodecError("richonline_classic_terminal_session_mismatch");
-    for(const auto& participant:context_.participants) if(participant.request.pawn_gold!=pawn_gold)
-        throw CodecError("richonline_classic_terminal_pledge_mismatch");
+    for(std::size_t slot=0;slot<roster.size();++slot) {
+        const auto& participant=context_.participants[slot];
+        if(roster[slot].lobby_identity<0 || participant.role_id!=roster[slot].lobby_identity)
+            throw CodecError("richonline_classic_terminal_roster_mismatch");
+        if(participant.request.pawn_gold!=pawn_gold)
+            throw CodecError("richonline_classic_terminal_pledge_mismatch");
+    }
 }
 void RichonlineClassicTerminal::validate_last_survivor(std::span<const std::uint8_t> active) const {
     if(committed_ || recovery_required_ || active.size()!=context_.participants.size() ||

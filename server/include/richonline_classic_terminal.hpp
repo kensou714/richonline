@@ -1,6 +1,7 @@
 #pragma once
 
 #include "richonline_terminal.hpp"
+#include "richonline_board.hpp"
 #include "richonline_game_ledger.hpp"
 #include "richonline_result_delivery.hpp"
 #include <memory>
@@ -30,7 +31,8 @@ struct RichonlineClassicAssets {
 class RichonlineClassicTerminal final {
 public:
     RichonlineClassicTerminal(Storage&,RichonlineClassicTerminalContext,std::shared_ptr<const RichonlineGameLedger>);
-    void validate_identity(std::uint16_t game,std::uint32_t room,std::size_t count,std::uint32_t pawn_gold,
+    // 结算名单必须逐槽匹配已认证棋盘角色；相同人数不能证明奖励归属正确。
+    void validate_identity(std::uint16_t game,std::uint32_t room,std::span<const RichonlineBoardParticipant> roster,std::uint32_t pawn_gold,
         const RichonlineGameLedger*) const;
     void validate_last_survivor(std::span<const std::uint8_t> active) const;
     std::vector<Bytes> finish(std::span<const std::uint8_t> active,std::uint8_t newly_bankrupt);
