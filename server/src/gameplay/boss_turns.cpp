@@ -516,6 +516,14 @@ struct Turns {
         return std::chrono::sys_days{start}+std::chrono::days{complete_rounds};
     }
     std::optional<std::size_t> feast_slot() const {
+        // 7C0C50仅在轮首且无脚本事件时分派节日；宝箱阶段不再推进轮首日历。
+        // 三类奖励共用此门，避免客户端跳过节日时服务端仍发奖或排续行包。
+        if(actor!=1 || boss_chest) return {};
+        if(rules.raw_authority) {
+            const auto scripted=rules.raw_authority->game().scripted_event83830;
+            if(!scripted) throw CodecError("richonline_feast_scripted_state_unknown");
+            if(*scripted!=-1) return {};
+        }
         const std::chrono::year_month_day date{game_date()};
         const auto year=static_cast<int>(date.year());
         if(year<2004 || year>=2035) return {};
@@ -557,7 +565,9 @@ struct Turns {
         }
     }
     void append_feast_response(std::vector<Bytes>& messages) {
-        if(actor!=init.local_slot || feast_response_day==game_date()) return;
+        // 赠卡与愚人节返回0等待40A0/40A1，必须跟随触发节日的轮首4010。
+        // 轮首角色是BOSS槽1，收卡角色仍是拥有权威手牌的真人槽位。
+        if(feast_response_day==game_date()) return;
         const auto slot=feast_slot();
         if(!slot) return;
         if(*slot==1 || *slot==2 || *slot==4 || *slot==5 || *slot==9) {
@@ -573,7 +583,8 @@ struct Turns {
             rules.cards->commit_inventory(reward.inventory);
             feast_response_day=game_date();
             if(rules.log) rules.log("richonline_feast_card day="+std::to_string(complete_rounds)+
-                " slot="+std::to_string(*slot)+" actor="+std::to_string(actor)+
+                " slot="+std::to_string(*slot)+" actor="+std::to_string(init.local_slot)+
+                " turn_actor="+std::to_string(actor)+
                 " card="+std::to_string(reward.card)+" inventory_changed="+std::to_string(changed)+
                 " policy=native-uniform-playable-resource-cards-v1");
         } else if(*slot==3) {
