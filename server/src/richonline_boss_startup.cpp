@@ -4,6 +4,7 @@
 #include "original_map.hpp"
 #include "original_options.hpp"
 #include "richonline_combat_resources.hpp"
+#include "richonline_room_board.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -123,19 +124,20 @@ RichonlineBossStartup build_richonline_boss_startup(const std::filesystem::path&
         throw;
     }
     const auto& w = input.wire;
-    RichonlineBoardInit init{w.game_server_id,w.opaque_f64,w.year,w.month,w.day,w.weekday,0,w.opaque_header_byte,
-        {{input.human_identity,positions[0].position,positions[0].direction,input.building_skill_caps,w.opaque_trailing[0]},
-         {-1,positions[1].position,positions[1].direction,w.synthetic_unconsumed_skill_bytes,w.opaque_trailing[1]}}};
+    RichonlineBoardInit init{w.game_server_id,w.opaque_f64,w.year,w.month,w.day,w.weekday,0,w.opaque_header_byte,{}};
     const auto props=records(client_root / "Data" / "Prop.kpd","[PROP]");
     const auto initial_boss_cash = equipment_cash(stage.boss.base_cash,stage.boss.equipment,props);
     // NEW7F3C70 对人类和 BOSS 都应用同一套初始现金加成；快照覆盖客户端本地值。
     const auto initial_human_cash = equipment_cash(stage.human.cash,input.profile_slots,props);
     // New 7DF010 tail fields26..29; 7F3840 explicitly initializes BOSS deposit/tickets to0.
-    RichonlineBoardSnapshot snapshot{w.game_server_id,w.calendar_counter,stage.monetary_scale,
-        {{initial_human_cash,stage.human.deposit,stage.human.tickets},
-         {initial_boss_cash,0,0}}};
-    static_cast<void>(encode_richonline_board_init(init));
-    static_cast<void>(encode_richonline_board_snapshot(snapshot));
-    return {room,std::move(init),std::move(snapshot),w.envelope,input.profile_slots};
+    RichonlineBoardSnapshot snapshot{w.game_server_id,w.calendar_counter,stage.monetary_scale,{}};
+    const std::array<RichonlineRoomBoardPlayer,1> players{{{room.participants.front().connection,
+        {input.human_identity,positions[0].position,positions[0].direction,input.building_skill_caps,w.opaque_trailing[0]},
+        {initial_human_cash,stage.human.deposit,stage.human.tickets}}}};
+    const std::array<RichonlineRoomBoardSynthetic,1> synthetic{{{
+        {-1,positions[1].position,positions[1].direction,w.synthetic_unconsumed_skill_bytes,w.opaque_trailing[1]},
+        {initial_boss_cash,0,0}}}};
+    auto boards=build_richonline_room_boards(room,std::move(init),std::move(snapshot),players,synthetic);
+    return {room,std::move(boards.front().init),std::move(boards.front().snapshot),w.envelope,input.profile_slots};
 }
 }
