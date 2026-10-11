@@ -93,6 +93,9 @@ public:
     CardChange prepare_card_growth(std::int16_t property,std::int8_t levels) const;
     // 经典改造卡只改大型地产的建筑类型，不改变等级、产权或计时。
     CardChange prepare_card_conversion(std::int16_t property,std::int8_t kind) const;
+    // 房产公司落点：自有加盖，他有拆除。调用方先核实查封/控制状态等入口门。
+    // 按原始普通地产表顺序选目标；计划保留完整候选快照以校验选择仍然有效。
+    CardChange prepare_estate_effect(std::int16_t property,std::uint8_t actor) const;
     bool matches(const CardChange&) const noexcept;
     bool commit_card_change(const CardChange&) noexcept;
     // 只在4010实际推进日期时调用；首次轮首和同日其余玩家不递减。

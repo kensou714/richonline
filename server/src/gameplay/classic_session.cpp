@@ -832,6 +832,25 @@ struct Session {
         prefix.insert(prefix.end(),std::make_move_iterator(result.messages.begin()),std::make_move_iterator(result.messages.end()));
         result.messages=std::move(prefix);return accept_result(std::move(result));
     }
+    void apply_estate_effect(std::int16_t property) {
+        const auto source=world.property->snapshot(property);
+        if(source.sprite_type!=12 || source.kind!=6 || !source.owner)
+            throw CodecError("richonline_classic_estate_source_invalid");
+        const bool own=*source.owner==actor;
+        const auto plan=world.property->prepare_estate_effect(property,actor);
+        std::int16_t target=-1;unsigned level=0;
+        for(std::size_t index=0;index<plan.before().size();++index)
+            if(plan.before()[index]!=plan.after()[index]) {
+                target=plan.after()[index].id;level=plan.after()[index].level;break;
+            }
+        const auto detail="richonline_classic_estate actor="+std::to_string(actor)+
+            " property="+std::to_string(property)+" improve="+std::to_string(own)+
+            " target="+std::to_string(target)+" level="+std::to_string(level)+
+            " sequence="+std::to_string(sequence);
+        if(!world.property->commit_card_change(plan))
+            throw CodecError("richonline_classic_estate_commit_stale");
+        if(rules.log) rules.log(detail);
+    }
     std::vector<bool> rent_transfer_targets() const {
         std::vector<bool> eligible(board.participants.size(),false);
         for(std::uint8_t slot=0;slot<board.participants.size();++slot) {
@@ -1564,8 +1583,16 @@ struct Session {
             const auto property=world.property->snapshot(current.landing.property_ref);
             if(property.kind!=0 && property.kind!=1 && !(property.sprite_type==12 && property.kind==-1) &&
                 !(property.kind==2 && world.research) && !(property.kind==3 && rules.trade_result) &&
-                !(property.kind==4 && rules.hotel) && property.kind!=5)
+                !(property.kind==4 && rules.hotel) && property.kind!=5 &&
+                !(property.sprite_type==12 && property.kind==6))
                 throw CodecError("richonline_classic_property_landing_unimplemented");
+            // 7C6640先执行自有加盖，再到LABEL_217升级询问；4021完成后排6084
+            // 直接续地产附加效果。服务端仅在首次落点镜像，使用升级前公司等级。
+            if(property.kind==6 && property.owner) {
+                const bool suppressed=*property.owner==actor ? controlled || property.sealed_days :
+                    payment_suppressed(property);
+                if(!suppressed) apply_estate_effect(property.id);
+            }
             if(property.owner && *property.owner!=actor && (property.kind==0 || property.kind==1 || property.kind==5))
                 return property_payment(property);
             if(property.owner && *property.owner!=actor && (property.kind==3 || property.kind==4)) return begin_trade(property);
