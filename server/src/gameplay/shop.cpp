@@ -38,6 +38,16 @@ void RichonlineBossShop::configure_refresh(const RichonlineGoldCharges& values,C
     }
     charge_reserve_=std::move(charge);
 }
+RichonlineBossShop::RichonlineBossShop(RichonlineShopCatalog catalog,RichonlinePlayerCards& cards,
+    std::uint16_t game_id,std::shared_ptr<RichonlineGameLedger> ledger,Now now,
+    std::array<std::uint8_t,2> stock_opaque,RichonlineShopCatalog::Choose choose)
+    :cards_(cards),game_id_(game_id),now_(std::move(now)),stock_opaque_(stock_opaque),
+     catalog_(std::move(catalog)),choose_(std::move(choose)),ledger_(std::move(ledger)) {
+    if(!now_ || !choose_) throw CodecError("richonline_shop_policy_required");
+    if(catalog_.offers().empty()) throw CodecError("richonline_shop_catalog_empty");
+    if(game_id_!=cards_.game_id()) throw CodecError("richonline_shop_game_mismatch");
+    if(!ledger_ || cards_.actor_slot()>=ledger_->actor_count()) throw CodecError("richonline_shop_ledger_required");
+}
 Bytes RichonlineBossShop::response(std::uint16_t opcode,std::int8_t index) const {
     Bytes bytes; append_le(bytes,opcode,2); append_le(bytes,game_id_,2);
     bytes.push_back(static_cast<std::uint8_t>(index)); return bytes;
@@ -53,7 +63,8 @@ Bytes RichonlineBossShop::stock(const RichonlineShopStock& offers,bool refreshed
 }
 bool RichonlineBossShop::validate_landing(const RichonlineLandingContext& context) const {
     if (context.actor_slot!=cards_.actor_slot() || context.synthetic_actor || context.game_mode!=cards_.game_mode() || context.static_type!=10 ||
-        context.position<0 || context.property_ref!=-1 || (context.occupied_by_other_actor && !context.collision_resolved) ||
+        context.position<0 || context.property_ref!=-1 || (context.occupied_by_other_actor && !context.collision_resolved &&
+            !(context.game_mode==0 && context.phase6_collision_authorized)) ||
         context.road_degree==0 || context.road_degree>4) return false;
     if (active()) throw CodecError("richonline_shop_already_open");
     if (!richonline_landing_controlled(context.actor_status) &&

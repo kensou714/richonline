@@ -20,7 +20,8 @@ std::optional<RichonlineLandingResult> resolve_richonline_controlled_static_land
         context.actor_slot<4 && !context.synthetic_actor;
     if(!actor_valid || context.position<0 ||
         context.road_degree==0 || context.road_degree>4 ||
-        (context.occupied_by_other_actor && !context.collision_resolved))
+        (context.occupied_by_other_actor && !context.collision_resolved &&
+            !(context.game_mode==0 && context.phase6_collision_authorized)))
         throw CodecError("richonline_controlled_static_landing_invalid");
     Bytes stop; append_le(stop,0x4013,2); append_le(stop,game_id,2);
     append_le(stop,static_cast<std::uint16_t>(context.position),2);

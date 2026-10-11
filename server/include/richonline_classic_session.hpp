@@ -7,6 +7,7 @@
 #include "richonline_opening_hand.hpp"
 #include "richonline_game_bank.hpp"
 #include "richonline_classic_news.hpp"
+#include "richonline_game_payment.hpp"
 
 namespace richnet {
 class RichonlineShopCatalog;
@@ -40,6 +41,8 @@ struct RichonlineClassicServices {
     std::function<RichonlineLandingResult(const RichonlineClassicTurnContext&,View)> event;
     std::function<std::optional<RichonlineLandingResult>(const RichonlineClassicTurnContext&)> poll;
     std::function<void(std::uint8_t)> disconnected;
+    // 同步原子扣费，由准入层绑定账号及同一金豆支付协调器；缺席则不开放付费刷新。
+    std::function<bool(std::uint8_t,std::uint32_t)> shop_refresh;
 };
 struct RichonlineClassicStockPolicy {
     std::shared_ptr<const RichonlineStockResources> resources;
@@ -90,6 +93,11 @@ struct RichonlineClassicAssetPolicy {
     std::function<std::uint64_t(const RichonlineClassicPropertyState&)> property_value;
     std::string evidence;
 };
+struct RichonlineClassicShopPolicy {
+    // 沿用同代客户端资源；两个商品兼容字节没有已证实业务含义，须由准入层显式提供。
+    std::array<std::uint8_t,2> stock_opaque;
+    RichonlineGoldCharges charges;
+};
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
     std::uint8_t first_actor,opaque_turn7;
@@ -125,6 +133,7 @@ struct RichonlineClassicSessionRules {
     std::optional<RichonlineClassicHospitalPolicy> hospital;
     std::optional<RichonlineClassicJailPolicy> jail;
     std::optional<RichonlineClassicAssetPolicy> asset_settlement;
+    std::optional<RichonlineClassicShopPolicy> shop;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

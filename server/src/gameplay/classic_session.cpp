@@ -9,6 +9,7 @@
 #include "richonline_classic_terminal.hpp"
 #include "richonline_portal_landing.hpp"
 #include "richonline_special_landings.hpp"
+#include "richonline_boss_shop.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -20,7 +21,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,property,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,property,rent_transfer,event,junction,settling,closed };
 enum class Confinement { hospital,jail };
 struct Retired {
     std::uint8_t actor;
@@ -63,6 +64,8 @@ struct Session {
     std::optional<RichonlineSharedMovementWait> movement;
     std::deque<Retired> retired;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_banks;
+    std::vector<std::unique_ptr<RichonlineBossShop>> shops;
+    std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_shops;
     std::optional<PendingRentTransfer> rent_transfer;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_rent_transfers;
     std::vector<bool> disconnected;
@@ -152,6 +155,18 @@ struct Session {
             throw CodecError("richonline_classic_session_services_incomplete");
         }
         try {
+            if(rules.shop) {
+                for(std::uint8_t slot=0;slot<count;++slot) {
+                    auto shop=std::make_unique<RichonlineBossShop>(*rules.resale,*world.cards[slot],
+                        board.game_server_id,world.ledger,rules.now,rules.shop->stock_opaque,rules.random);
+                    RichonlineBossShop::ChargeReserve charge;
+                    if(services.shop_refresh) charge=[refresh=services.shop_refresh,slot](std::uint32_t amount) {
+                        return refresh(slot,amount);
+                    };
+                    shop->configure_refresh(rules.shop->charges,std::move(charge));
+                    shops.push_back(std::move(shop));
+                }
+            }
             if(rules.settlement) {
                 terminal=rules.settlement(world);
                 if(!terminal)throw CodecError("richonline_classic_terminal_missing");
@@ -218,6 +233,12 @@ struct Session {
         if(retired.size()>64) retired.pop_front();
     }
     bool was_retired(std::uint8_t sender,View request) const {
+        if(request.size()>=4) {
+            const auto opcode=read_le(request.first(2));
+            const auto turn=static_cast<std::uint16_t>(read_le(request.subspan(2,2)));
+            if((((opcode==0x30 || opcode==0x31) && request.size()==6) || (opcode==0x35 && request.size()==4)) &&
+                std::ranges::find(retired_shops,std::pair{sender,turn})!=retired_shops.end()) return true;
+        }
         if(request.size()>=2 && read_le(request.first(2))==0x76) {
             const auto choice=decode_richonline_rent_transfer_choice(request);
             if(std::ranges::find(retired_rent_transfers,std::pair{sender,choice.calendar})!=retired_rent_transfers.end()) return true;
@@ -974,6 +995,56 @@ struct Session {
         if(rules.log) rules.log(diagnostic);
         return complete(std::move(messages));
     }
+    std::vector<Bytes> shop_result(RichonlineLandingResult result) {
+        if(shops.empty() || !collision_pending || result.status_change || result.temple_change)
+            throw CodecError("richonline_classic_shop_result_invalid");
+        if(result.progress==RichonlineLandingProgress::await_event && result.pending_opcode==0x30 && shops[actor]->active()) {
+            phase=Phase::shop;pending_opcode=0x30;return std::move(result.messages);
+        }
+        if(result.progress!=RichonlineLandingProgress::complete || result.pending_opcode || shops[actor]->active())
+            throw CodecError("richonline_classic_shop_result_invalid");
+        retired_shops.emplace_back(actor,calendar);
+        if(retired_shops.size()>64) retired_shops.pop_front();
+        pending_opcode.reset();return complete(std::move(result.messages));
+    }
+    std::optional<std::vector<Bytes>> shop_landing(const RichonlineLandingContext& landing) {
+        if(shops.empty() || landing.static_type!=10) return {};
+        const auto scripted=raw->game().scripted_event83830;
+        if(!scripted || *scripted!=-1) throw CodecError("richonline_classic_shop_scripted_unavailable");
+        auto& shop=*shops[actor];
+        auto prepared=shop.prepare_landing(landing);
+        if(!prepared) throw CodecError("richonline_classic_shop_landing_invalid");
+        if(rules.script) {
+            bool called=false;
+            const LuaBindings api{{"tile.shop.prepare",[&](const LuaValue&) {
+                if(called) throw CodecError("lua_classic_shop_prepare_repeated");
+                called=true;auto offers=LuaValue::array();
+                for(const auto& offer:prepared->offers()) offers.push_back({{"card",offer.card_id},{"count",offer.count}});
+                return LuaValue{{"open",prepared->opens()},{"offers",std::move(offers)},{"opaque",prepared->opaque()}};
+            }}};
+            const auto response=rules.script->call("tile.land",{{"type",10},{"position",landing.position},
+                {"actor",actor},{"map",startup.map_name},{"game_id",board.game_server_id},
+                {"shop_landing_available",true},{"synthetic_actor",false},
+                {"controlled",richonline_landing_controlled(landing.actor_status)}},api);
+            const auto& messages=prepared->result().messages;
+            if(!called || !response.is_array() || response.size()!=messages.size())
+                throw CodecError("lua_classic_shop_response_invalid");
+            for(std::size_t index=0;index<messages.size();++index)
+                if(lua_bytes(response[index])!=messages[index]) throw CodecError("lua_classic_shop_response_mismatch");
+        }
+        if(!active[actor] || statuses[actor]!=landing.actor_status || !collision_pending ||
+            board.participants[actor].position!=landing.position || raw->game().scripted_event83830!=scripted)
+            throw CodecError("richonline_classic_shop_landing_stale");
+        auto offers=LuaValue::array(),inventory=LuaValue::array();
+        for(const auto& offer:prepared->offers()) offers.push_back({{"card",offer.card_id},{"count",offer.count}});
+        for(const auto& slot:world.cards[actor]->inventory()) inventory.push_back({{"card",slot.card_id},{"count",slot.count}});
+        const auto diagnostic="richonline_classic_shop_landed "+LuaValue{{"actor",actor},{"calendar",calendar},
+            {"position",landing.position},{"open",prepared->opens()},{"tickets",prepared->points()},
+            {"offers",std::move(offers)},{"inventory",std::move(inventory)}}.dump();
+        auto result=shop.commit_landing(*prepared);
+        if(rules.log) rules.log(diagnostic);
+        return shop_result(std::move(result));
+    }
     std::vector<Bytes> land() {
         if(collision_pending) throw CodecError("richonline_classic_phase6_already_pending");
         static_cast<void>(collision_actors());
@@ -983,6 +1054,7 @@ struct Session {
         // 先完成静态/地产业务，同格效果由complete统一在phase6执行，不能提前抢卡。
         if(auto result=services.landing(current)) return accept_result(std::move(*result));
         if(auto messages=local_reward_landing(current.landing)) return std::move(*messages);
+        if(auto messages=shop_landing(current.landing)) return std::move(*messages);
         if(current.landing.static_type==1 && rules.news) return money_news(current);
         if(current.landing.static_type==9) {
             if(current.landing.property_ref!=-1)
@@ -1231,14 +1303,26 @@ struct Session {
             // 受控角色不发0015；先保存早到的自动掷骰意图，等归位后再提交移动事务。
             confinement_exit_roll_requested=true;remember(sender,request);return {};
         }
+        // 商店显示时Shift弃卡仍产生0032，独立于0031出售，不增加点券也不结束商店。
+        if((phase==Phase::roll || phase==Phase::shop) && opcode==0x32) {
+            const auto discard=parse_richonline_card_discard50(request);
+            auto prepared=world.cards[actor]->prepare_discard(discard,static_cast<std::int8_t>(actor));
+            auto messages=std::vector<Bytes>{std::move(prepared.confirmation4033)};
+            world.cards[actor]->commit_inventory(prepared.remaining_inventory);return messages;
+        }
+        if(phase==Phase::shop && (opcode==0x30 || opcode==0x31 || opcode==0x35)) {
+            auto& shop=*shops[actor];
+            const auto before=shop.points();
+            auto result=shop.handle(request);
+            if(rules.log) rules.log("richonline_classic_shop_request actor="+std::to_string(actor)+
+                " calendar="+std::to_string(calendar)+" opcode="+std::to_string(opcode)+
+                " index="+std::to_string(request.size()==6 ? std::bit_cast<std::int8_t>(request[4]) : -1)+
+                " tickets_before="+std::to_string(before)+" tickets_after="+std::to_string(shop.points())+
+                " decision="+shop.last_decision());
+            return shop_result(std::move(result));
+        }
         if(phase==Phase::roll) {
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
-            if(opcode==0x32) {
-                const auto discard=parse_richonline_card_discard50(request);
-                auto prepared=world.cards[actor]->prepare_discard(discard,static_cast<std::int8_t>(actor));
-                auto messages=std::vector<Bytes>{std::move(prepared.confirmation4033)};
-                world.cards[actor]->commit_inventory(prepared.remaining_inventory);return messages;
-            }
             if(opcode==103) {
                 const auto use=std::get<RichonlineCardDiceRequest103>(parse_richonline_controlled_dice_request(request));
                 const auto prepared=world.cards[actor]->prepare_use(use);
@@ -1319,6 +1403,8 @@ struct Session {
         }
         if(phase==Phase::bank) {
             if(auto result=bank->poll()) return bank_result(std::move(*result));
+        } else if(phase==Phase::shop) {
+            if(auto result=shops[actor]->poll()) return shop_result(std::move(*result));
         } else if(phase==Phase::rent_transfer) {
             if(rules.now()>=rent_transfer->deadline) return finish_rent_transfer({calendar,-1,0},true);
         } else if(phase==Phase::property) {

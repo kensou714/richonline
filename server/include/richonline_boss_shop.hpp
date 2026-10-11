@@ -42,6 +42,10 @@ public:
     RichonlineBossShop(const std::filesystem::path& root,RichonlinePlayerCards& cards,
         std::uint16_t game_id,std::shared_ptr<RichonlineGameLedger> ledger,Now now,
         std::array<std::uint8_t,2> stock_opaque = {0,255},RichonlineShopCatalog::Choose choose = {});
+    // 经典共享会话复用已按当前地图加载的目录；不再次读取资源或猜测付费配置。
+    RichonlineBossShop(RichonlineShopCatalog catalog,RichonlinePlayerCards& cards,
+        std::uint16_t game_id,std::shared_ptr<RichonlineGameLedger> ledger,Now now,
+        std::array<std::uint8_t,2> stock_opaque,RichonlineShopCatalog::Choose choose);
     // Atomic reserve charge supplied by the authoritative account/session owner.
     void enable_refresh(ChargeReserve charge) { charge_reserve_=std::move(charge); }
     void configure_refresh(const RichonlineGoldCharges& client_values,ChargeReserve charge);
