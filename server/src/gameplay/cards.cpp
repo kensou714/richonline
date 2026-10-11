@@ -84,7 +84,8 @@ std::optional<RichonlinePlayerCards::PreparedLanding> RichonlinePlayerCards::pre
         richonline_landing_controlled(context.actor_status) ||
         !richonline_boss_card_reward_tile(context.static_type) ||
         context.property_ref != -1 || context.road_degree == 0 || context.road_degree > 4 ||
-        (context.occupied_by_other_actor && !context.collision_resolved) || context.position < 0) return {};
+        (context.occupied_by_other_actor && !context.collision_resolved &&
+            !(context.game_mode==0 && context.phase6_collision_authorized)) || context.position < 0) return {};
     auto next = inventory_;
     auto card = fixed_tile_reward(context.static_type).value_or(-1);
     if(selected_card) {

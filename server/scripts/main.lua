@@ -7,6 +7,7 @@ local network = require("network.game")
 local game = require("game.session")
 local rewards = require("game.rewards")
 local stock = require("game.stock")
+local collision = require("game.collision")
 local feasts = require("events.feasts")
 local tiles = require("tiles.registry")
 local bank = require("tiles.tile_9")
@@ -34,6 +35,7 @@ local handlers = {
     ["building.missile_clock"] = missile_base.clock,
     ["building.missile_target"] = missile_base.target,
     ["property.classic_choice"] = classic_property.choose,
+    ["collision.plan"] = collision.plan,
     ["stock.trade"] = stock.trade,
     ["stock.open"] = stock.open,
     ["stock.quote"] = stock.quote, ["stock.market"] = stock.market,

@@ -1,10 +1,35 @@
 #include "richonline_collision.hpp"
+#include "lua_server.hpp"
 #include <algorithm>
 
 namespace richnet {
+namespace {
+void verify_script(const RichonlineCollisionPlan& plan,std::uint8_t active,std::uint32_t mode,
+    bool suppressed,const std::shared_ptr<LuaServer>& script) {
+    if(!script) return;
+    auto actors=LuaValue::array();
+    for(const auto& actor:plan.before) {
+        auto inventory=LuaValue::array();
+        for(const auto& slot:actor.inventory) inventory.push_back({{"card",slot.card_id},{"count",slot.count}});
+        actors.push_back({{"slot",actor.slot},{"position",actor.position},{"active",actor.active},
+            {"synthetic",actor.synthetic},{"excluded",actor.excluded1497},
+            {"possession",actor.possession ? static_cast<int>(*actor.possession) : -1},{"inventory",std::move(inventory)}});
+    }
+    auto transfers=LuaValue::array();
+    for(const auto& item:plan.transfers) transfers.push_back({{"source_actor",item.source_actor},
+        {"target_actor",item.target_actor},{"source_slot",item.source_slot},{"card_id",item.card_id}});
+    const LuaValue expected{{"evaluate_junction",plan.evaluate_junction},{"transfers",std::move(transfers)}};
+    const auto result=script->call("collision.plan",{{"actor",active},{"mode",mode},
+        {"suppressed",suppressed},{"actors",std::move(actors)}});
+    if(result!=expected) throw CodecError("lua_collision_plan_invalid");
+    for(const auto& item:result.at("transfers"))
+        for(const auto* field:{"source_actor","target_actor","source_slot","card_id"})
+            if(!item.at(field).is_number_integer()) throw CodecError("lua_collision_plan_integer_required");
+}
+}
 RichonlineCollisionPlan plan_richonline_collision(std::uint8_t active,
     std::uint32_t mode,bool suppressed,std::span<const RichonlineCollisionActor> actors,
-    const RichonlineChanceResources& resources,std::string_view map) {
+    const RichonlineChanceResources& resources,std::string_view map,std::shared_ptr<LuaServer> script) {
     if(actors.empty() || actors.size()>8 || active>=actors.size())
         throw CodecError("richonline_collision_context_invalid");
     for(std::size_t i=0;i<actors.size();++i) {
@@ -20,8 +45,10 @@ RichonlineCollisionPlan plan_richonline_collision(std::uint8_t active,
     if(!actors[active].active) throw CodecError("richonline_collision_active_actor_invalid");
     RichonlineCollisionPlan plan{{actors.begin(),actors.end()},{actors.begin(),actors.end()},{},true};
     const auto& owner=actors[active];
-    if(suppressed || (mode==4 && owner.synthetic)) {plan.evaluate_junction=false;return plan;}
-    if(owner.synthetic || owner.possession!=6) return plan;
+    if(suppressed || (mode==4 && owner.synthetic)) {
+        plan.evaluate_junction=false;verify_script(plan,active,mode,suppressed,script);return plan;
+    }
+    if(owner.synthetic || owner.possession!=6) {verify_script(plan,active,mode,suppressed,script);return plan;}
     for(std::size_t i=0;i<actors.size();++i) {
         const auto& other=actors[i];
         if(i==active || !other.active || other.synthetic || other.excluded1497 || other.position!=owner.position) continue;
@@ -36,7 +63,7 @@ RichonlineCollisionPlan plan_richonline_collision(std::uint8_t active,
             break;
         }
     }
-    return plan;
+    verify_script(plan,active,mode,suppressed,script);return plan;
 }
 void commit_richonline_collision(std::span<RichonlineCollisionActor> actors,const RichonlineCollisionPlan& plan) {
     if(actors.size()!=plan.before.size() || plan.after.size()!=plan.before.size() ||

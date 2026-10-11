@@ -1,10 +1,12 @@
 #pragma once
 #include "richonline_chance.hpp"
 #include <optional>
+#include <memory>
 #include <span>
 #include <vector>
 
 namespace richnet {
+class LuaServer;
 struct RichonlineCollisionActor {
     std::uint8_t slot;
     std::int16_t position;
@@ -31,7 +33,7 @@ struct RichonlineCollisionPlan {
 // is sent. The resulting inventory deltas mirror local6061 consumption/add.
 RichonlineCollisionPlan plan_richonline_collision(std::uint8_t active_actor,
     std::uint32_t game_mode,bool phase_suppressed83830,std::span<const RichonlineCollisionActor>,
-    const RichonlineChanceResources&,std::string_view map);
+    const RichonlineChanceResources&,std::string_view map,std::shared_ptr<LuaServer> script={});
 void commit_richonline_collision(std::span<RichonlineCollisionActor>,const RichonlineCollisionPlan&);
 // Admission proof for the present one-human/one-synthetic BOSS runtime. A god
 // picked up earlier in this landing cannot enable theft across this pair.

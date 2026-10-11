@@ -2,6 +2,8 @@
 #include "richonline_boss_landing.hpp"
 #include "richonline_junction.hpp"
 #include "richonline_shop_catalog.hpp"
+#include "richonline_collision.hpp"
+#include "richonline_raw_authority.hpp"
 
 #include <algorithm>
 #include <deque>
@@ -26,6 +28,8 @@ struct Session {
     RichonlinePlayerOpeningHands opening_hands;
     RichonlineJunction junction;
     RichonlineRoute route;
+    std::unique_ptr<RichonlineRawAuthority> raw;
+    bool collision_pending=false;
     std::unique_ptr<RichonlineGameBank> bank;
     std::optional<RichonlineGameFundsSnapshot> bank_funds;
     std::optional<std::size_t> bank_checkpoint;
@@ -77,6 +81,9 @@ struct Session {
             statuses[index].possession=-1;
         }
         world.ledger=std::make_shared<RichonlineGameLedger>(std::move(funds));
+        raw=std::make_unique<RichonlineRawAuthority>(static_cast<std::uint8_t>(count),board.game_server_id);
+        raw->initialize_game();
+        for(std::uint8_t slot=0;slot<count;++slot) raw->initialize_actor(slot);
         world.property=std::make_shared<RichonlineClassicProperty>(board.game_server_id,source.topology,
             source.properties,world.ledger,rules.now,rules.decision_timeout,rules.script);
         if(rules.bank_wire) bank=std::make_unique<RichonlineGameBank>(board.game_server_id,
@@ -111,8 +118,25 @@ struct Session {
         for(std::size_t other=0;other<board.participants.size();++other)
             if(other!=actor && board.participants[other].position==tile) occupied=true;
         return {board.game_server_id,calendar,sequence,completed_rounds,
-            {actor,tile,cell.static_type,cell.property_ref,0,false,degree,occupied,statuses[actor],false},
+            {actor,tile,cell.static_type,cell.property_ref,0,false,degree,occupied,statuses[actor],false,collision_pending},
             board.participants,statuses};
+    }
+    std::vector<RichonlineCollisionActor> collision_actors() const {
+        const auto scripted=raw->game().scripted_event83830;
+        if(!scripted || *scripted!=-1) throw CodecError("richonline_classic_collision_game_unavailable");
+        std::vector<RichonlineCollisionActor> actors;
+        actors.reserve(board.participants.size());
+        for(std::uint8_t slot=0;slot<board.participants.size();++slot) {
+            const auto& state=raw->actor(slot);
+            const auto possession=statuses[slot].possession;
+            if(!state.kidnapped1497 || !possession || *possession< -1 || *possession>32)
+                throw CodecError("richonline_classic_collision_actor_unknown");
+            // 碰撞核心的nullopt约定为无附身；在适配层先证明原始值确为-1，
+            // 不能把回合状态中的未知optional直接当作无附身。
+            actors.push_back({slot,board.participants[slot].position,true,false,*state.kidnapped1497!=-1,
+                *possession==-1 ? std::nullopt : possession,world.cards[slot]->inventory()});
+        }
+        return actors;
     }
     Bytes stop() const {
         Bytes packet;append_le(packet,0x4013,2);append_le(packet,board.game_server_id,2);
@@ -147,6 +171,7 @@ struct Session {
         auto packet=encode_richonline_turn4010({board.game_server_id,static_cast<std::int8_t>(actor),
             static_cast<std::int8_t>(rules.first_actor),0},rules.opaque_turn7);
         ++sequence;calendar=static_cast<std::uint16_t>(calendar+1U);
+        static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
         phase=Phase::roll;pending_opcode.reset();
         if(rules.log) rules.log("richonline_classic_turn actor="+std::to_string(actor)+
@@ -173,8 +198,20 @@ struct Session {
         append(messages,begin_turn());return messages;
     }
     std::vector<Bytes> complete(std::vector<Bytes> messages) {
+        if(!collision_pending) throw CodecError("richonline_classic_phase6_not_pending");
+        const auto before=collision_actors();
+        const auto plan=plan_richonline_collision(actor,0,false,before,*rules.card_resources,startup.map_name,rules.script);
+        // 先准备/验证全部角色的变化和Lua意图，再统一提交。4013已让客户端执行
+        // 本地6061，不能为同一转移再造一个网络扣卡包；满手也遵循原生插入/合成规则。
+        if(collision_actors()!=plan.before) throw CodecError("richonline_classic_collision_stale");
         const auto& person=board.participants[actor];
-        if(junction.begin(startup.topology,{person.position,person.direction,calendar},rules.now())) {
+        const bool direction=plan.evaluate_junction && statuses[actor].possession!=7 && !statuses[actor].sleepwalking &&
+            junction.begin(startup.topology,{person.position,person.direction,calendar},rules.now());
+        for(std::size_t slot=0;slot<world.cards.size();++slot) world.cards[slot]->commit_inventory(plan.after[slot].inventory);
+        collision_pending=false;
+        if(rules.log) rules.log("richonline_classic_phase6 actor="+std::to_string(actor)+
+            " sequence="+std::to_string(sequence)+" transfers="+std::to_string(plan.transfers.size()));
+        if(direction) {
             phase=Phase::junction;pending_opcode=0x34;return messages;
         }
         return advance(std::move(messages));
@@ -217,11 +254,12 @@ struct Session {
         result.messages=std::move(prefix);return accept_result(std::move(result));
     }
     std::vector<Bytes> land() {
+        if(collision_pending) throw CodecError("richonline_classic_phase6_already_pending");
+        static_cast<void>(collision_actors());
+        collision_pending=true;
         const auto current=context();
-        // 先给业务处理碰撞/特殊类型。基础分支不假定多人同格时没有库存或附身交换。
+        // 先完成静态/地产业务，同格效果由complete统一在phase6执行，不能提前抢卡。
         if(auto result=services.landing(current)) return accept_result(std::move(*result));
-        if(current.landing.occupied_by_other_actor)
-            throw CodecError("richonline_classic_collision_unimplemented");
         if(current.landing.static_type==9) {
             if(current.landing.property_ref!=-1)
                 throw CodecError("richonline_classic_bank_property_unimplemented");
@@ -282,6 +320,7 @@ struct Session {
     }
     void commit_move(PreparedMove move) {
         route=std::move(move.route);
+        raw->apply_s2c4011_movement(actor);
         route_cursor=0;wait_for_segment();
         phase=Phase::moving;
     }
@@ -435,6 +474,7 @@ struct Session {
     void disconnect(std::uint8_t sender) {
         if(sender>=disconnected.size() || disconnected[sender]) return;
         disconnected[sender]=true;phase=Phase::closed;movement.reset();
+        if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
         if(services.disconnected) services.disconnected(sender);
     }
 };

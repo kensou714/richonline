@@ -60,6 +60,9 @@ struct RichonlineLandingContext {
     // Physical occupancy remains observable. Only a proven no-transfer pair
     // can continue without an additional collision inventory transaction.
     bool collision_resolved=false;
+    // 经典共享会话已核对原始状态，并保证在静态格/地产之后执行一次phase6。
+    // 不表示碰撞已经执行，也不抹去occupied_by_other_actor的实际占格信息。
+    bool phase6_collision_authorized=false;
 };
 enum class RichonlineLandingProgress { await_event, complete, finished };
 struct RichonlineLandingStatusChange {
