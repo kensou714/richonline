@@ -45,17 +45,23 @@ std::optional<RichonlineLandingResult> RichonlineMerchantSession::land(const Ric
     std::int8_t raw_scripted=-1;
     auto prepared=prepare(context,raw_scripted);
     if(!prepared) return {};
+    return commit(context,*prepared,raw_scripted);
+}
+RichonlineLandingResult RichonlineMerchantSession::commit(const RichonlineLandingContext& context,
+    RichonlinePreparedSpecialLanding& prepared,std::int8_t raw_scripted) {
+    if(context.actor_slot!=prepared.actor() || read_scripted_state_(context)!=std::optional{raw_scripted})
+        throw CodecError("richonline_merchant_authority_changed");
     // Allocate both output and diagnostic before committing funds. Only the
     // nonthrowing sink executes afterward, so logging cannot lose a response.
-    RichonlineLandingResult result{prepared->messages(),RichonlineLandingProgress::complete};
+    RichonlineLandingResult result{prepared.messages(),RichonlineLandingProgress::complete};
     nlohmann::json fields{{"room",room_},{"package",package_},{"actor_slot",context.actor_slot},
         {"position",context.position},{"static_type",context.static_type},{"synthetic",context.synthetic_actor},
         {"game83830",raw_scripted},{"scripted_event_active",raw_scripted!=-1},
-        {"outcome",outcome_name(prepared->outcome())},{"cash_before",prepared->before().funds.cash},
-        {"cash_after",prepared->after().cash},{"tickets_before",prepared->before().funds.tickets},
-        {"tickets_after",prepared->after().tickets},{"continuation","property_phase2"},
+        {"outcome",outcome_name(prepared.outcome())},{"cash_before",prepared.before().funds.cash},
+        {"cash_after",prepared.after().cash},{"tickets_before",prepared.before().funds.tickets},
+        {"tickets_after",prepared.after().tickets},{"continuation","property_phase2"},
         {"extra_money_packet",false},{"level","info"}};
-    if(!commit_richonline_special_landing(*ledger_,*prepared,context.actor_status,[]{return true;}))
+    if(!commit_richonline_special_landing(*ledger_,prepared,context.actor_status,[]{return true;}))
         throw CodecError("richonline_merchant_state_changed");
     if(log_) log_("richonline_merchant_landed",fields);
     return result;

@@ -14,6 +14,9 @@ public:
         std::uint16_t game,std::uint16_t room,std::string package,ControlLog,ScriptedStateReader);
     bool validate_landing(const RichonlineLandingContext&) const;
     std::optional<RichonlineLandingResult> land(const RichonlineLandingContext&);
+    // Lua落点先准备，再验证完整回包，最后调用commit；准备阶段不改账本。
+    std::optional<RichonlinePreparedSpecialLanding> prepare(const RichonlineLandingContext&,std::int8_t&) const;
+    RichonlineLandingResult commit(const RichonlineLandingContext&,RichonlinePreparedSpecialLanding&,std::int8_t);
 private:
     RichonlineRoadTopology topology_;
     std::shared_ptr<RichonlineGameLedger> ledger_;
@@ -21,6 +24,5 @@ private:
     std::string package_;
     ControlLog log_;
     ScriptedStateReader read_scripted_state_;
-    std::optional<RichonlinePreparedSpecialLanding> prepare(const RichonlineLandingContext&,std::int8_t&) const;
 };
 }

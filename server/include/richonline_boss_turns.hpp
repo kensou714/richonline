@@ -22,6 +22,7 @@ class RichonlineGameLedger;
 class RichonlineNpcSession;
 class RichonlineCombatBridge;
 class RichonlineGroundObjects;
+class RichonlineMerchantSession;
 struct RichonlineBossAttackRandomness;
 struct RichonlineCombatCapabilities;
 struct RichonlineMotionCardRules;
@@ -170,6 +171,8 @@ struct RichonlineBossTurnRules {
     std::function<void()> refresh_equipment{};
     // 新闻只准备不提交；脚本回包通过后由回合层原子提交账本、手牌和状态时钟。
     std::function<std::shared_ptr<RichonlineChanceLandingAttempt>(const RichonlineLandingContext&)> prepare_chance_landing{};
+    // 57格兑换计划在Lua回包校验后提交，与原生兼容入口共用同一账本和脚本状态授权。
+    std::shared_ptr<RichonlineMerchantSession> merchant{};
 };
 // 双角色移动，支持显式配置的移动卡状态；动态物件与其他控制状态另行接入。
 // 每个落点都必须显式处理；未知事件不得直接推进回合。
