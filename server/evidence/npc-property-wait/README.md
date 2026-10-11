@@ -25,3 +25,17 @@
 验证范围：静态协议核对、独立固定源码Release编译及Lua语法编译。不新增或运行测试，不启动本机服务/客户端。
 这是对提前超时的修复，弹窗实机结果仍由用户复测；若仍不显示，应继续核客户端队列与401C补充的相互影响。
 本提交不包含尚在开发的经典月限结算。
+
+## 发布记录
+
+- 修复源码：75d864df666a5f07a969ddc4080922452d8374d8，已推送main。
+- 固定源码Release构建成功，166个Lua文件语法编译成功；没有运行玩法测试。
+- 线上release：75d864df666a；PID2756，instanceId `2756-91858201920200`。
+- 实际进程/任务路径：`D:\richonline\releases\75d864df666a\RichOnline.Server.exe`。
+- EXE SHA256：`E89454EF2E756BA7DD4333D771BEA573EBFF1CB143550E1D521B333FE23497CF`。
+- 持久数据目录：`D:\richonline\shared\data`；维护前已在线备份并正常stop旧实例。
+- 六类监听ready；六个公开TCP端口18600/18602/18604/18605/18606/18680连通，两服务器列表HTTP200。
+- 线上保留compat_2021_v1、richonline-inventory-date-2021-v1和测试全BOSS地图开关。
+- 本机EXE与166个运行脚本同代，未启动本机服务。尚未交付的月限Lua草稿保存在
+  `server/build-goal-resume/classic_settlement-month-limit-draft.lua`，恢复开发时须与未提交C++变更一起继续。
+- 用户可继续复测衰神附身同一落点的购地窗口；当前无更新后的游戏实测证据。
