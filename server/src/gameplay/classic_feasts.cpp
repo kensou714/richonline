@@ -43,7 +43,7 @@ RichonlineClassicFeastPlan prepare_richonline_classic_feast(std::uint8_t slot,st
         raw.game().scripted_event83830!=-1)
         throw CodecError("richonline_classic_feast_context_invalid");
     const bool gift=slot==1 || slot==2 || slot==4 || slot==5 || slot==9;
-    const auto opcode=gift ? 0x40a0 : slot==3 ? 0x40a1 : 0;
+    const auto opcode=gift ? 0x40a0U : slot==3 ? 0x40a1U : 0U;
     std::array<std::int16_t,8> gifts;gifts.fill(-1);
     std::array<std::uint8_t,8> luck{};
     auto input=LuaValue::array(),expected=LuaValue::array();
