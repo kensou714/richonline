@@ -311,6 +311,39 @@ bool RichonlineStockMarket::commit(const ForcedSale& plan,std::span<const std::u
         return true;
     });
 }
+std::uint32_t RichonlineStockMarket::maximum_subscription_quantity(std::uint8_t buyer,std::uint8_t seller,
+    std::uint16_t slot) const {
+    if(buyer==seller) throw CodecError("richonline_stock_subscription_actors_invalid");
+    const auto market=quote(slot);
+    const auto buyer_holding=holding(buyer,slot),seller_holding=holding(seller,slot);
+    const auto funds=ledger_->snapshot(buyer);
+    if(!funds.funds.deposit) throw CodecError("richonline_stock_deposit_unknown");
+    const auto deposit=*funds.funds.deposit;
+    const auto limit=std::min(seller_holding.quantity,maximum-buyer_holding.quantity);
+    const auto affordable=[&](std::uint32_t quantity) {
+        // 先按现价预算限制整股，再核对原成交内核的float总额，避免舍入后超支。
+        // 不用卖方75%的净收入当买价，也不因截断小数而额外买入超预算的一股。
+        if(static_cast<double>(market.price)*quantity>deposit) return false;
+        const float total=market.price*static_cast<float>(quantity);
+        return std::isfinite(total) && static_cast<double>(total)<=maximum &&
+            static_cast<std::uint32_t>(total)<=deposit;
+    };
+    std::uint32_t low=0,high=limit;
+    // 金额随股数单调不减；最多31次，无须按股循环，也不把巨大浮点商强转整数。
+    while(low<high) {
+        const auto middle=low+(high-low+1)/2;
+        if(affordable(middle)) low=middle;
+        else high=middle-1;
+    }
+    if(script_) {
+        const auto result=script_->call("card.stock_subscription_quantity",{{"price",market.price},
+            {"buyer_deposit",deposit},{"buyer_holding",buyer_holding.quantity},
+            {"seller_holding",seller_holding.quantity}});
+        if(!result.is_number_integer() || result!=LuaValue(low))
+            throw CodecError("lua_stock_subscription_quantity_invalid");
+    }
+    return low;
+}
 RichonlineStockMarket::Subscription RichonlineStockMarket::prepare_subscription(std::uint8_t actor,
     const RichonlineStockSubscriptionRequest& request,std::uint32_t quantity,
     std::span<const std::uint8_t> active,const RichonlinePlayerCards& cards) const {

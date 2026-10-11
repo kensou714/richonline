@@ -97,7 +97,7 @@ struct RichonlineClassicSessionRules {
     // 准入层明确提供按地图槽排列的真实初始行情；缺席时不开放股票，不生成假历史。
     std::optional<RichonlineClassicStockPolicy> stocks;
     // 0096没有数量字段。策略只读本次快照并返回数量，不得修改市场/账本或发包。
-    // 缺席时仅支持已无持仓的40E6零数量确认；有持仓则恢复操作，不猜全量/最大数量。
+    // 缺席时采用用户确认的默认规则：以买方存款尽量收购，不动用现金或卖方折让。
     std::function<std::uint32_t(const RichonlineClassicSubscriptionContext&)> subscription_quantity;
     std::optional<RichonlineClassicNewsPolicy> news;
     std::shared_ptr<const RichonlineMotionCardRules> motion_cards;

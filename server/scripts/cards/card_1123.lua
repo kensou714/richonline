@@ -1,10 +1,26 @@
 -- 认购卡（资源编号 1123）。本文件是该卡的独立业务入口。
 -- C2S 操作号 150；request.payload 是未加密的完整内部报文，包含操作号。
--- 经典会话在已配置股票及数量策略时调用transfer；目标已卖光时零数量确认不扣卡。
--- 数量由受信任准入策略明确提供，不在这里猜测全量或最大可负担量。
+-- 经典会话已配置股票时默认按买方存款尽量收购；用户已明确确认此数量规则。
+-- 目标已卖光时零数量确认不扣卡，买不起时由会话恢复操作，不伪报目标卖光。
 -- reward_enabled 只控制随机赠卡；还必须通过资源 enable、CARD 类型及地图允许列表。
 local M = { id = 1123, name = "认购卡", opcode = 150, reward_enabled = false, implementation = "native_compatibility" }
 local protocol = require("core.protocol")
+function M.quantity(request)
+    local price, deposit = request.price, request.buyer_deposit
+    local low, high = 0, math.min(request.seller_holding, 2147483647 - request.buyer_holding)
+    local function float(value) return string.unpack("<f", string.pack("<f", value)) end
+    -- 预算按现价限制整股；实际扣款仍须经过与C++成交内核一致的单精度舍入。
+    while low < high do
+        local middle = low + (high - low + 1) // 2
+        local total = float(price * float(middle))
+        if price * middle <= deposit and total <= 2147483647 and math.floor(total) <= deposit then
+            low = middle
+        else
+            high = middle - 1
+        end
+    end
+    return low
+end
 function M.transfer(request)
     local quantity, amount = request.quantity, request.amount
     local buyer_deposit, seller_deposit = request.buyer_deposit, request.seller_deposit

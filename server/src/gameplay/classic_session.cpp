@@ -955,8 +955,11 @@ struct Session {
             world.stocks->holding(use.target,use.stock_slot),world.ledger->snapshot(actor),world.ledger->snapshot(use.target)};
         std::uint32_t quantity=0;
         if(snapshot.seller_holding.quantity) {
-            if(!rules.subscription_quantity) return reject("subscription_quantity_policy_missing");
-            quantity=rules.subscription_quantity(snapshot);
+            quantity=rules.subscription_quantity ? rules.subscription_quantity(snapshot) :
+                world.stocks->maximum_subscription_quantity(actor,use.target,use.stock_slot);
+            // 40E6零数量文本表示目标已卖光，不能拿来表示买方买不起或持仓已满。
+            if(!quantity) return reject(snapshot.buyer_holding.quantity==0x7fffffffU ?
+                "holding_limit" : "insufficient_deposit");
         }
         const auto plan=world.stocks->prepare_subscription(actor,use,quantity,active,*world.cards[actor]);
         if(!plan.accepted()) return reject(plan.reason());

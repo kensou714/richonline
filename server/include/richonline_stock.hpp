@@ -160,6 +160,9 @@ public:
     // 仅目标确实无持仓时允许quantity=0，此分支发送40E6恢复但不扣卡。
     Subscription prepare_subscription(std::uint8_t actor,const RichonlineStockSubscriptionRequest&,
         std::uint32_t quantity,std::span<const std::uint8_t> active,const RichonlinePlayerCards& cards) const;
+    // 用户确认的默认数量策略：只用买方存款，以现价尽量收购目标持股。
+    // 同时尊重持仓上限及客户端float成交额；不占用市场剩余量，不写任何状态。
+    std::uint32_t maximum_subscription_quantity(std::uint8_t buyer,std::uint8_t seller,std::uint16_t slot) const;
     bool commit(const Subscription&,std::span<const std::uint8_t> active,RichonlinePlayerCards& cards);
 private:
     std::uint16_t game_;

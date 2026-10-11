@@ -54,6 +54,7 @@ local handlers = {
     ["card.rent_transfer"] = rent_transfer.rent,
     ["card.stock_forced_sale"] = forced_sale.liquidate,
     ["card.stock_subscription"] = subscription.transfer,
+    ["card.stock_subscription_quantity"] = subscription.quantity,
     ["boss.attack"] = bosses.attack,
     ["boss.chest_select"] = boss_chest.select,
     ["boss.chest_spawn"] = boss_chest.spawn,
