@@ -186,6 +186,10 @@ struct RichonlineClassicSessionRules {
     // 抢夺的1074自动防盗先查主手牌；未命中时由准入证明第二套没有可用防盗卡。
     // 缺席或返回false表示未知/尚不支持，拒绝本次抢夺且双方均不扣卡。
     std::function<bool(std::uint8_t)> secondary_theft_protection_absent;
+    // 贸易中心UI15已证实1..6，无原服概率证据。提供只读选择策略才开放kind3落点；
+    // 回调不得修改任何共享状态。0025不带点数，超时明确用4027(-1)取消而不掷假骰。
+    std::function<std::int8_t(const RichonlineClassicTurnContext&,
+        const RichonlineClassicPropertyState&)> trade_result;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

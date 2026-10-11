@@ -12,7 +12,8 @@ struct RichonlineRentTransferChoice {
     std::uint8_t unassigned_padding;
 };
 RichonlineRentTransferChoice decode_richonline_rent_transfer_choice(View);
-// 只用于7CD090的type0租金；不混用陷害入狱、饭店或其它金钱分支。
+enum class RichonlineRentTransferKind { rent, trade };
+// 6712B0的type0租金/type1贸易中心共用资金与续行；不混用type2饭店或type3入狱。
 struct RichonlineRentTransferState {
     std::uint16_t game_id,calendar;
     std::uint8_t original_payer,recipient;
@@ -21,6 +22,7 @@ struct RichonlineRentTransferState {
     std::vector<bool> eligible;
     RichonlineChanceInventory inventory;
     std::int8_t card_slot;
+    RichonlineRentTransferKind kind=RichonlineRentTransferKind::rent;
 };
 struct RichonlineRentTransferPlan {
     std::int8_t target;

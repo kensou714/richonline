@@ -19,6 +19,7 @@
 #include "richonline_classic_funds_card.hpp"
 #include "richonline_classic_weapon_treaty.hpp"
 #include "richonline_classic_property_card.hpp"
+#include "richonline_classic_trade.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -31,7 +32,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,feast_exit,lottery_draw,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,lottery,property,research,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,feast_exit,lottery_draw,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,lottery,property,research,trade,rent_transfer,event,junction,settling,closed };
 enum class Confinement { hospital,jail };
 struct Retired {
     std::uint8_t actor;
@@ -42,6 +43,13 @@ struct PendingRentTransfer {
     RichonlineClassicPropertyState property;
     std::int16_t position;
     std::uint64_t sequence;
+    std::chrono::steady_clock::time_point deadline;
+};
+struct PendingTrade {
+    RichonlineClassicPropertyEntry entry;
+    RichonlineClassicPropertyState property;
+    RichonlineActorStatus owner_status;
+    RichonlineRawActorState owner_raw;
     std::chrono::steady_clock::time_point deadline;
 };
 struct PreparedRetirement {
@@ -91,6 +99,8 @@ struct Session {
     std::optional<PendingRentTransfer> rent_transfer;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_rent_transfers;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_research;
+    std::optional<PendingTrade> trade;
+    std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_trades;
     std::vector<bool> disconnected;
     std::unique_ptr<RichonlineClassicTerminal> terminal;
     std::vector<Bytes> stock_opening;
@@ -333,6 +343,10 @@ struct Session {
         if(retired.size()>64) retired.pop_front();
     }
     bool was_retired(std::uint8_t sender,View request) const {
+        if(request.size()>=2 && read_le(request.first(2))==0x25) {
+            const auto day=decode_richonline_classic_trade_request(request);
+            if(std::ranges::find(retired_trades,std::pair{sender,day})!=retired_trades.end()) return true;
+        }
         if(request.size()>=2 && read_le(request.first(2))==0x29) {
             const auto choice=decode_richonline_lottery_request(request);
             if(std::ranges::find(retired_lottery,std::pair{sender,choice.calendar})!=retired_lottery.end()) return true;
@@ -503,7 +517,7 @@ struct Session {
     }
     static bool reserved_event(std::uint16_t opcode) noexcept {
         return opcode==0x10 || opcode==0x11 || opcode==0x14 || opcode==0x15 || opcode==0x20 || opcode==0x21 ||
-            opcode==0x23 || opcode==0x24 || opcode==0x27 || opcode==0x28 || opcode==0x29 || opcode==0x34 || opcode==0x76;
+            opcode==0x23 || opcode==0x24 || opcode==0x25 || opcode==0x27 || opcode==0x28 || opcode==0x29 || opcode==0x34 || opcode==0x76;
     }
     std::vector<Bytes> turn_start_result(std::vector<Bytes> prefix,RichonlineLandingResult result) {
         if((result.progress!=RichonlineLandingProgress::complete && result.progress!=RichonlineLandingProgress::await_event) ||
@@ -726,7 +740,8 @@ struct Session {
     }
     std::vector<Bytes> begin_rent_transfer(const RichonlineClassicPropertyState& property,std::uint32_t amount,
         const RichonlineChanceInventory& inventory,const RichonlineGameFundsSnapshot& payer,
-        const RichonlineGameFundsSnapshot& payee) {
+        const RichonlineGameFundsSnapshot& payee,Bytes entry_packet,
+        RichonlineRentTransferKind kind) {
         if(rent_transfer || !property.owner) throw CodecError("richonline_classic_rent_transfer_already_pending");
         std::int8_t card_slot=-1;
         for(std::size_t index=0;index<inventory.size();++index) if(inventory[index].card_id==1056) {
@@ -735,16 +750,19 @@ struct Session {
         }
         if(card_slot<0) throw CodecError("richonline_classic_rent_transfer_card_missing");
         RichonlineRentTransferState state{board.game_server_id,calendar,actor,*property.owner,amount,{},
-            rent_transfer_targets(),inventory,card_slot};
+            rent_transfer_targets(),inventory,card_slot,kind};
         for(std::uint8_t slot=0;slot<board.participants.size();++slot) state.funds.push_back(world.ledger->snapshot(slot));
         if(state.funds[actor]!=payer || state.funds[*property.owner]!=payee ||
             world.cards[actor]->inventory()!=inventory || world.property->snapshot(property.id)!=property)
             throw CodecError("richonline_classic_rent_transfer_entry_stale");
-        auto messages=std::vector<Bytes>{stop()};
+        auto messages=std::vector<Bytes>{std::move(entry_packet)};
+        // 贸易中心4027先暂停客户端队列3600ms，再显示UI27；给等待保留这段动画时间。
+        const auto delay=kind==RichonlineRentTransferKind::trade ? std::chrono::milliseconds{3600} :
+            std::chrono::milliseconds{0};
         rent_transfer=PendingRentTransfer{std::move(state),property,board.participants[actor].position,sequence,
-            rules.now()+rules.decision_timeout};
+            rules.now()+rules.decision_timeout+delay};
         phase=Phase::rent_transfer;pending_opcode=0x76;
-        // 4013使所有客户端保存同一type0金额并排608C，只有原付款人打开UI27。
+        // 4013/type0或4027/type1使客户端缓存同一金额并排608C，只有原付款人打开UI27。
         // 此时不扣嫁祸卡、不改资金，也不提前执行地产附加效果或phase6。
         return messages;
     }
@@ -783,7 +801,7 @@ struct Session {
             " payer="+std::to_string(plan.payer)+" charged="+std::to_string(plan.charged)+
             " target="+std::to_string(plan.target)+" timed_out="+std::to_string(timed_out)+
             " sequence="+std::to_string(sequence));
-        // 40C6(type0)排6080(2,5)，只进入附加效果，不再调用租金入口或补第二条4013。
+        // 40C6(type0/1)排6080(2,5)，只进入附加效果，不再调用收费入口或补第二条4013。
         if(!active[actor]) {collision_pending=false;return advance(std::move(messages));}
         return property_effects(std::move(messages));
     }
@@ -868,7 +886,7 @@ struct Session {
         auto& state=statuses[bankrupt];
         state.one_step=state.six_steps=state.turtle=state.stay=state.sleepwalking=state.frozen=0;
     }
-    std::vector<Bytes> rent(const RichonlineClassicPropertyState& property) {
+    bool payment_suppressed(const RichonlineClassicPropertyState& property) const {
         if(!property.owner || *property.owner>=statuses.size() || *property.owner==actor)
             throw CodecError("richonline_classic_rent_owner_invalid");
         const auto owner=*property.owner;
@@ -880,18 +898,26 @@ struct Session {
         // 7C94xx读取地主的状态，而1472/1480关系由付款者按地主索引读取。
         // 关系卡尚未开放；查封读取落脚地产，涨价在报价内逐块处理，不排除其他查封地块的贡献。
         // 7E4140的联排报价本身不检查查封，7C6640在租金入口检查目标D+4。
-        const bool suppressed=property.sealed_days || owner_status.possession==7 || owner_status.sleepwalking || owner_status.frozen ||
+        return property.sealed_days || owner_status.possession==7 || owner_status.sleepwalking || owner_status.frozen ||
             *owner_raw.hotel1493!=-1 || *owner_raw.hospital1494!=-1 ||
             *owner_raw.jail1495!=-1 || *owner_raw.kidnapped1497!=-1;
-        const auto possession=*statuses[actor].possession;
+    }
+    std::uint32_t monetary_scale() const {
         const auto initial_scale=startup.recipients.front().snapshot.monetary_scale;
         // 当前会话只从新局4004开始：首次先手回合不增日，此后每完整轮增日一次。
         // 正基准每30次增日加1；类型19和外部4004改系数尚无写入口。
         const auto scale=static_cast<std::uint64_t>(initial_scale)+(initial_scale ? completed_rounds/30U : 0U);
         if(scale>static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max()))
             throw CodecError("richonline_classic_rent_scale_unsupported");
-        const auto quote=suppressed || possession==0 ? 0 :
-            world.property->rent_quote(property.id,static_cast<std::uint32_t>(scale));
+        return static_cast<std::uint32_t>(scale);
+    }
+    std::vector<Bytes> property_payment(const RichonlineClassicPropertyState& property,
+        const std::optional<RichonlineClassicTradeResult>& trade_result={}) {
+        const auto suppressed=payment_suppressed(property);
+        const auto owner=*property.owner;
+        const auto possession=*statuses[actor].possession;
+        const auto quote=trade_result ? trade_result->quote : suppressed || possession==0 ? 0 :
+            world.property->rent_quote(property.id,monetary_scale());
         auto amount=possession==1 ? std::bit_cast<std::int32_t>(static_cast<std::uint32_t>(quote)*2U) : quote;
         if(amount<0) throw CodecError("richonline_classic_rent_negative_unsupported");
         const auto payer=world.ledger->snapshot(actor),payee=world.ledger->snapshot(owner);
@@ -935,7 +961,9 @@ struct Session {
         }
         // 先识别等待/破产再提交，未实现的后继不得吞卡、扣光余额后伪造4010。
         if(std::string_view(outcome)=="transfer_pending")
-            return begin_rent_transfer(property,static_cast<std::uint32_t>(amount),inventory,payer,payee);
+            return begin_rent_transfer(property,static_cast<std::uint32_t>(amount),inventory,payer,payee,
+                trade_result ? trade_result->message : stop(),trade_result ?
+                    RichonlineRentTransferKind::trade : RichonlineRentTransferKind::rent);
         const bool bankrupt=std::string_view(outcome)=="bankrupt";
         std::optional<PreparedRetirement> retirement;
         if(bankrupt) retirement=prepare_bankruptcy(actor);
@@ -946,7 +974,7 @@ struct Session {
             throw CodecError("richonline_classic_rent_recipient_overflow");
         const auto cash_paid=std::min(charged,payer_after.cash);
         payer_after.cash-=cash_paid;*payer_after.deposit-=charged-cash_paid;*payee_after.deposit+=charged;
-        auto messages=std::vector<Bytes>{stop()};
+        auto messages=std::vector<Bytes>{trade_result ? trade_result->message : stop()};
         if(bankrupt && std::ranges::count(active,std::uint8_t{1})>2)
             messages.push_back(richonline_eliminate_actor(board.game_server_id,static_cast<std::int8_t>(actor)));
         const std::array updates{RichonlineGameFundsUpdate{actor,payer,payer_after},
@@ -960,12 +988,61 @@ struct Session {
         })) throw CodecError("richonline_classic_rent_commit_stale");
         if(bankrupt && std::ranges::count(active,std::uint8_t{1})==1)
             return finish_last_survivor(std::move(messages),actor);
-        // 4013已触发客户端6060/6061；只镜像账本/手牌，不发第二笔扣款或扣卡包。
-        if(rules.log) rules.log("richonline_classic_rent actor="+std::to_string(actor)+
+        // 4013或4027已触发客户端6060/6061；只镜像账本/手牌，不发第二笔扣款或扣卡包。
+        if(rules.log) rules.log(std::string(trade_result ? "richonline_classic_trade_payment actor=" :
+            "richonline_classic_rent actor=")+std::to_string(actor)+
             " owner="+std::to_string(owner)+" property="+std::to_string(property.id)+
             " sequence="+std::to_string(sequence)+" charged="+std::to_string(charged)+" outcome="+outcome);
         if(bankrupt) {collision_pending=false;return advance(std::move(messages));}
         return property_effects(std::move(messages));
+    }
+    std::vector<Bytes> begin_trade(const RichonlineClassicPropertyState& property) {
+        if(!rules.trade_result || trade || property.kind!=3 || property.sprite_type!=12)
+            throw CodecError("richonline_classic_trade_policy_missing");
+        if(payment_suppressed(property)) return property_effects({stop()});
+        // 地主的控制/收容状态阻止收费；付款人梦游或冰冻并不跳过他人的贸易中心。
+        // 财神免付仍要经过转盘，不能在4013后直接换人让UI15悬空。
+        auto packet=stop();
+        trade=PendingTrade{property_entry(),property,statuses[*property.owner],raw->actor(*property.owner),
+            rules.now()+rules.decision_timeout};
+        phase=Phase::trade;pending_opcode=0x25;
+        return {std::move(packet)};
+    }
+    bool trade_matches() const {
+        return trade && property_entry()==trade->entry &&
+            world.property->snapshot(trade->property.id)==trade->property &&
+            statuses[*trade->property.owner]==trade->owner_status &&
+            raw->actor(*trade->property.owner)==trade->owner_raw && active[*trade->property.owner];
+    }
+    std::vector<Bytes> finish_trade(bool timed_out) {
+        if(phase!=Phase::trade || !trade_matches())
+            throw CodecError("richonline_classic_trade_pending_stale");
+        // 股票可在UI15等待时正常成交；用此刻余额计费。策略回调本身必须完全只读。
+        std::vector<RichonlineGameFundsSnapshot> funds;
+        std::vector<RichonlineChanceInventory> cards;
+        for(std::uint8_t slot=0;slot<active.size();++slot) {
+            funds.push_back(world.ledger->snapshot(slot));cards.push_back(world.cards[slot]->inventory());
+        }
+        const auto selected=timed_out ? std::int8_t{-1} : rules.trade_result(context(),trade->property);
+        if((!timed_out && (selected<1 || selected>6)) || !trade_matches())
+            throw CodecError("richonline_classic_trade_selection_invalid");
+        for(std::uint8_t slot=0;slot<active.size();++slot)
+            if(funds[slot]!=world.ledger->snapshot(slot) || cards[slot]!=world.cards[slot]->inventory())
+                throw CodecError("richonline_classic_trade_selection_mutated_state");
+        auto result=prepare_richonline_classic_trade(board.game_server_id,trade->property,
+            monetary_scale(),selected,rules.script);
+        const auto property=trade->property;
+        retired_trades.emplace_back(actor,calendar);
+        if(retired_trades.size()>64) retired_trades.pop_front();
+        pending_opcode.reset();
+        // 4027(-1)直接排6084；正常结果经6042付款后排同一附加效果。
+        // 后继包在4027之后排队，客户端自身的3600ms暂停同时约束其消费顺序。
+        auto messages=timed_out ? property_effects({std::move(result.message)}) : property_payment(property,result);
+        trade.reset();
+        if(rules.log) rules.log("richonline_classic_trade property="+std::to_string(property.id)+
+            " result="+std::to_string(selected)+" quote="+std::to_string(result.quote)+
+            " timed_out="+std::to_string(timed_out));
+        return messages;
     }
     std::vector<RichonlineClassicRainActor> rain_actors() const {
         std::vector<RichonlineClassicRainActor> result;
@@ -1357,10 +1434,11 @@ struct Session {
         if(current.landing.property_ref>=0) {
             const auto property=world.property->snapshot(current.landing.property_ref);
             if(property.kind!=0 && property.kind!=1 && !(property.sprite_type==12 && property.kind==-1) &&
-                !(property.kind==2 && world.research))
+                !(property.kind==2 && world.research) && !(property.kind==3 && rules.trade_result))
                 throw CodecError("richonline_classic_property_landing_unimplemented");
             if(property.owner && *property.owner!=actor && (property.kind==0 || property.kind==1))
-                return rent(property);
+                return property_payment(property);
+            if(property.owner && *property.owner!=actor && property.kind==3) return begin_trade(property);
             // 大型空地、他人研究所不收住宅租金，仍保留附加效果及同格续行。
             if(property.owner && *property.owner!=actor) return property_effects({stop()});
             const bool purchase=!property.owner;
@@ -2152,6 +2230,8 @@ struct Session {
         // 旧行动者的迟到选号也可能在换人后抵达；当前待决仍优先，不能吞掉同日再次购买。
         if(opcode==0x29 && !(phase==Phase::lottery && sender==actor && pending_opcode==opcode) &&
             was_retired(sender,request)) return {};
+        if(opcode==0x25 && !(phase==Phase::trade && sender==actor && pending_opcode==opcode) &&
+            was_retired(sender,request)) return {};
         if(sender!=actor) throw CodecError("richonline_classic_sender_not_active");
         if((phase==Phase::feast_exit || phase==Phase::lottery_draw) && opcode==0x10) {
             const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
@@ -2165,6 +2245,11 @@ struct Session {
         if(phase==Phase::research && pending_opcode==opcode) {
             auto result=world.research->handle(sender,request,property_entry());remember(sender,request);
             return research_result(std::move(result));
+        }
+        if(phase==Phase::trade && opcode==0x25) {
+            if(decode_richonline_classic_trade_request(request)!=calendar)
+                throw CodecError("richonline_classic_trade_calendar_mismatch");
+            auto messages=finish_trade(rules.now()>=trade->deadline);remember(sender,request);return messages;
         }
         if(phase==Phase::lottery && pending_opcode==opcode) {
             auto result=lottery->handle(sender,request,lottery_entry(),news_fines);remember(sender,request);
@@ -2272,6 +2357,11 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
+        if(phase==Phase::trade) {
+            if(!trade) throw CodecError("richonline_classic_trade_pending_missing");
+            if(rules.now()>=trade->deadline) return finish_trade(true);
+            return {};
+        }
         if(phase==Phase::lottery_draw) {
             if(!lottery_draw_deadline || rules.now()<*lottery_draw_deadline) return {};
             lottery_draw_deadline.reset();lottery_draw_packet.clear();
@@ -2342,7 +2432,7 @@ struct Session {
         if(sender>=disconnected.size() || disconnected[sender]) return;
         disconnected[sender]=true;
         if(!terminal || !terminal->committed())phase=Phase::closed;
-        movement.reset();rent_transfer.reset();kidnap_deadline.reset();confinement_deadline.reset();
+        movement.reset();rent_transfer.reset();trade.reset();kidnap_deadline.reset();confinement_deadline.reset();
         feast_exits.clear();calendar_roll_requested=false;
         lottery_draw_deadline.reset();lottery_draw_packet.clear();
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
