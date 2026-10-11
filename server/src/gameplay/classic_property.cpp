@@ -123,6 +123,32 @@ RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_st
     }
     return plan;
 }
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_growth(
+    std::int16_t property,std::int8_t levels) const {
+    if(pending_ || (levels!=1 && levels!=-1))
+        throw CodecError("richonline_classic_growth_context_invalid");
+    const auto source=snapshot(property);
+    if(source.kind==8 || source.kind==9 || source.kind==10)
+        throw CodecError("richonline_classic_growth_target_protected");
+    const auto district=districts_.at(property);
+    CardChange plan;plan.owner_=this;
+    for(const auto id:ordinary_properties_) if(districts_.at(id)==district) {
+        const auto& before=properties_.at(id);auto after=before;
+        if(levels>0) {
+            // 7E3670固定上限5；type11商店不升级，type12空地先变贸易中心kind3。
+            if(after.level<5 && !(after.sprite_type==11 && after.kind==1)) {
+                if(after.sprite_type==12 && !after.level) after.kind=3;
+                ++after.level;
+            }
+        } else if(after.level) {
+            // 7E3840无商店例外；7E4020降至0按地类清建筑，原owner净值不变。
+            --after.level;
+            if(!after.level) after.kind=after.sprite_type==11 ? 0 : -1;
+        }
+        plan.before_.push_back(before);plan.after_.push_back(after);
+    }
+    return plan;
+}
 bool RichonlineClassicProperty::matches(const CardChange& plan) const noexcept {
     // 特殊建筑脚下也可合法使用查封；同组无普通地产时仍扣卡，变更集合可以为空。
     if(plan.owner_!=this || pending_ || plan.before_.size()!=plan.after_.size()) return false;

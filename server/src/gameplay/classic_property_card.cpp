@@ -11,7 +11,8 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
     if(packet.size()<6) throw CodecError("richonline_classic_property_card_wire_invalid");
     const auto opcode=read_le(packet.first(2));
     const bool has_target=opcode==97 || opcode==98 || opcode==101;
-    if((opcode!=96 && opcode!=97 && opcode!=98 && opcode!=100 && opcode!=101 && opcode!=102 && opcode!=119) ||
+    if((opcode!=96 && opcode!=97 && opcode!=98 && opcode!=100 && opcode!=101 && opcode!=102 &&
+            opcode!=119 && opcode!=120 && opcode!=134) ||
         packet.size()!=(has_target?8U:6U) || read_le(packet.subspan(2,2))!=calendar || packet[4]>=8 || packet[5]!=0)
         throw CodecError("richonline_classic_property_card_wire_invalid");
     const auto actor=cards.actor_slot();
@@ -19,7 +20,8 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
         active.size()<2 || active.size()>4 || active.size()!=ledger.actor_count() || actor>=active.size() ||
         !active[actor] || std::ranges::any_of(active,[](auto value){return value>1;}))
         throw CodecError("richonline_classic_property_card_context_invalid");
-    const auto card_id=static_cast<std::int16_t>(opcode==119 ? 1058 : opcode+935);
+    const auto card_id=static_cast<std::int16_t>(opcode==119 ? 1058 : opcode==120 ? 1059 :
+        opcode==134 ? 1077 : opcode+935);
     const auto consumed=cards.prepare_consumption(static_cast<std::int8_t>(packet[4]),card_id);
     if(!consumed) throw CodecError("richonline_classic_property_card_not_owned");
     const auto target=has_target ? std::bit_cast<std::int16_t>(static_cast<std::uint16_t>(read_le(packet.subspan(6,2)))) :
@@ -44,6 +46,10 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
         plan.change_=property.prepare_card_street(current_property,opcode==100 ?
             RichonlineClassicProperty::StreetEffect::seal : RichonlineClassicProperty::StreetEffect::price_rise);
         operation={{"operation",opcode==100 ? "seal" : "price_rise"}};
+    } else if(opcode==120 || opcode==134) {
+        const auto levels=static_cast<std::int8_t>(opcode==120 ? 1 : -1);
+        plan.change_=property.prepare_card_growth(current_property,levels);
+        operation={{"operation","grow"},{"levels",levels},{"own_only",false}};
     } else if(opcode==97 || opcode==98) {
         plan.change_=property.prepare_card_swap(current_property,target,opcode==98);
         operation={{"operation","swap"},{"property",target},{"buildings",opcode==98}};
@@ -70,7 +76,8 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
                 // JSON数值相等仍可能是浮点；Lua业务参数须保持原整数/布尔/字符串类型。
                 for(auto it=args.begin();it!=args.end();++it) {
                     if((it.key()=="property" || it.key()=="levels") && !it->is_number_integer()) return reject();
-                    if((it.key()=="buildings" || it.key()=="current") && !it->is_boolean()) return reject();
+                    if((it.key()=="buildings" || it.key()=="current" || it.key()=="own_only") && !it->is_boolean())
+                        return reject();
                 }
                 property_call=true;return LuaValue{{"price",price}};
             }},

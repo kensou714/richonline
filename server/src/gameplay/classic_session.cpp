@@ -1968,7 +1968,7 @@ struct Session {
                     research->release_property(before.id,*before.owner);
         if(rules.log) rules.log(detail);
         // 确认包已排地产效果、扣卡和6006；客户端本地动画没有独立网络ACK。
-        // 拆屋/怪兽不解除产权，研究登记由后续原生日历扫描按新kind/level检查。
+        // 拆屋/怪兽/恶魔保留产权，研究登记由后续原生日历扫描按新kind/level检查。
         return messages;
     }
     std::vector<Bytes> weapon_treaty(View request) {
@@ -2211,7 +2211,8 @@ struct Session {
             if(opcode==116) return theft_card(request);
             if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
             if(opcode==142) return weapon_treaty(request);
-            if(opcode==96 || opcode==97 || opcode==98 || opcode==100 || opcode==101 || opcode==102 || opcode==119)
+            if(opcode==96 || opcode==97 || opcode==98 || opcode==100 || opcode==101 || opcode==102 ||
+                opcode==119 || opcode==120 || opcode==134)
                 return property_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103 || (opcode>=137 && opcode<=140)) return immediate_move_card(request);

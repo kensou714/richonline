@@ -89,6 +89,8 @@ public:
     // 同街区普通地产表成员重设5天，不限所有权/等级；初始kind8/9/10不在此表。
     enum class StreetEffect { seal, price_rise };
     CardChange prepare_card_street(std::int16_t property,StreetEffect effect) const;
+    // 天使+1/恶魔-1：普通地产表按街区筛选，产权与两种计时保留。
+    CardChange prepare_card_growth(std::int16_t property,std::int8_t levels) const;
     bool matches(const CardChange&) const noexcept;
     bool commit_card_change(const CardChange&) noexcept;
     // 只在4010实际推进日期时调用；首次轮首和同日其余玩家不递减。
