@@ -10,11 +10,11 @@ struct RichonlineCosmeticCardRequest {
 };
 struct RichonlineCosmeticCardPlan {
     Bytes response;
-    RichonlineBossCards::PreparedConsumption consumption;
+    RichonlinePlayerCards::PreparedConsumption consumption;
 };
 RichonlineCosmeticCardRequest parse_richonline_cosmetic_card(View);
 // Both NEW handlers enqueue their effect, consume one card, then restore local
 // action controls. No movement, persistent combat modifier or C2S ACK follows.
 RichonlineCosmeticCardPlan plan_richonline_cosmetic_card(std::uint16_t game_id,
-    const RichonlineCosmeticCardRequest&,std::uint16_t current_calendar,const RichonlineBossCards&);
+    const RichonlineCosmeticCardRequest&,std::uint16_t current_calendar,const RichonlinePlayerCards&);
 }

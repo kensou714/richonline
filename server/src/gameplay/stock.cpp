@@ -208,7 +208,9 @@ bool RichonlineStockMarket::commit(const Trade& plan) {
 }
 RichonlineStockMarket::ForcedSale RichonlineStockMarket::prepare_forced_sale(std::uint8_t actor,
     const RichonlineStockForcedSaleRequest& request,std::span<const std::uint8_t> active,
-    const RichonlineBossCards& cards) const {
+    const RichonlinePlayerCards& cards) const {
+    if(cards.actor_slot()!=actor || cards.game_id()!=game_)
+        throw CodecError("richonline_stock_card_owner_mismatch");
     if(active.size()!=ledger_->actor_count() || actor>=active.size() || active[actor]!=1 ||
         std::any_of(active.begin(),active.end(),[](auto value){return value>1;}))
         throw CodecError("richonline_stock_forced_sale_actors_invalid");
@@ -266,7 +268,7 @@ RichonlineStockMarket::ForcedSale RichonlineStockMarket::prepare_forced_sale(std
     return result;
 }
 bool RichonlineStockMarket::commit(const ForcedSale& plan,std::span<const std::uint8_t> active,
-    RichonlineBossCards& cards) {
+    RichonlinePlayerCards& cards) {
     if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.response_.empty() || plan.cards_!=&cards ||
         active.size()!=ledger_->actor_count() || !std::equal(active.begin(),active.end(),plan.active_.begin()) ||
         cards.inventory()!=plan.source_inventory_) return false;
@@ -282,7 +284,9 @@ bool RichonlineStockMarket::commit(const ForcedSale& plan,std::span<const std::u
 }
 RichonlineStockMarket::Subscription RichonlineStockMarket::prepare_subscription(std::uint8_t actor,
     const RichonlineStockSubscriptionRequest& request,std::uint32_t quantity,
-    std::span<const std::uint8_t> active,const RichonlineBossCards& cards) const {
+    std::span<const std::uint8_t> active,const RichonlinePlayerCards& cards) const {
+    if(cards.actor_slot()!=actor || cards.game_id()!=game_)
+        throw CodecError("richonline_stock_card_owner_mismatch");
     if(active.size()!=ledger_->actor_count() || actor>=active.size() || request.target>=active.size() ||
         actor==request.target || active[actor]!=1 || active[request.target]!=1 ||
         std::any_of(active.begin(),active.end(),[](auto value){return value>1;}))
@@ -354,7 +358,7 @@ RichonlineStockMarket::Subscription RichonlineStockMarket::prepare_subscription(
     return result;
 }
 bool RichonlineStockMarket::commit(const Subscription& plan,std::span<const std::uint8_t> active,
-    RichonlineBossCards& cards) {
+    RichonlinePlayerCards& cards) {
     if(plan.owner_!=this || !plan.accepted_ || plan.revision_!=revision_ || plan.response_.empty() || plan.cards_!=&cards ||
         active.size()!=ledger_->actor_count() || !std::equal(active.begin(),active.end(),plan.active_.begin()) ||
         cards.inventory()!=plan.source_inventory_) return false;

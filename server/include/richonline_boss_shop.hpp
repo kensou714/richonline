@@ -1,6 +1,6 @@
 #pragma once
 
-// 新版 BOSS 商店事件：维护当前点数、商品及等待期限，共用对局卡包。
+// 商店事件：每个实例绑定一名真人的手牌和账本槽，独立维护商品及等待期限。
 #include "richonline_boss_cards.hpp"
 #include "richonline_shop_catalog.hpp"
 #include "richonline_game_payment.hpp"
@@ -36,10 +36,10 @@ public:
     // Live sessions pass their authoritative RNG here. An omitted chooser keeps
     // stable catalog order only for standalone deterministic compatibility callers.
     // 客户端未读取货架偏移 4/5 字节；这是显式兼容策略，没有已确认的游戏含义。
-    RichonlineBossShop(const std::filesystem::path& root,RichonlineBossCards& cards,
+    RichonlineBossShop(const std::filesystem::path& root,RichonlinePlayerCards& cards,
         std::uint16_t game_id,Now now,std::array<std::uint8_t,2> stock_opaque = {0,255},
         RichonlineShopCatalog::Choose choose = {});
-    RichonlineBossShop(const std::filesystem::path& root,RichonlineBossCards& cards,
+    RichonlineBossShop(const std::filesystem::path& root,RichonlinePlayerCards& cards,
         std::uint16_t game_id,std::shared_ptr<RichonlineGameLedger> ledger,Now now,
         std::array<std::uint8_t,2> stock_opaque = {0,255},RichonlineShopCatalog::Choose choose = {});
     // Atomic reserve charge supplied by the authoritative account/session owner.
@@ -57,7 +57,7 @@ public:
     RichonlineLandingResult handle(View request);
     std::optional<RichonlineLandingResult> poll();
     bool active() const noexcept { return deadline_.has_value(); }
-    std::uint32_t points() const { return ledger_ ? ledger_->snapshot(0).funds.tickets : points_; }
+    std::uint32_t points() const { return ledger_ ? ledger_->snapshot(cards_.actor_slot()).funds.tickets : points_; }
     std::uint32_t price() const { return catalog_.price(1038); }
     std::uint32_t card_price(std::int16_t card) const { return catalog_.price(card); }
     bool card_has_price(std::int16_t card) const noexcept { return catalog_.can_sell(card); }
@@ -65,7 +65,7 @@ public:
     std::optional<std::uint32_t> refresh_cost() const noexcept { return refresh_cost_; }
     const RichonlineShopStock& offers() const noexcept { return offers_; }
 private:
-    RichonlineBossCards& cards_;
+    RichonlinePlayerCards& cards_;
     std::uint16_t game_id_;
     Now now_;
     std::array<std::uint8_t,2> stock_opaque_;

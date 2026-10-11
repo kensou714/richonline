@@ -33,18 +33,24 @@ RichonlineChanceSingleCard checked_award(const std::shared_ptr<const RichonlineC
 bool richonline_boss_card_reward_tile(std::int8_t static_type) noexcept {
     return static_type==8 || fixed_tile_reward(static_type).has_value();
 }
+RichonlinePlayerCards::RichonlinePlayerCards(std::shared_ptr<const RichonlineChanceResources> resources,
+    std::uint16_t game_id,std::string map,std::uint8_t actor,std::uint8_t mode)
+    :resources_(std::move(resources)),game_id_(game_id),map_(std::move(map)),actor_(actor),mode_(mode) {
+    if(!resources_ || map_.empty() || actor_>=4 || (mode_!=0 && mode_!=3) || (mode_==3 && actor_!=0))
+        throw CodecError("richonline_player_cards_identity_invalid");
+}
 RichonlineBossCards::RichonlineBossCards(std::shared_ptr<const RichonlineChanceResources> resources,
     std::uint16_t game_id,const RichonlineBossCardPolicy& policy)
-    : resources_(std::move(resources)), award_(checked_award(resources_,policy)),
-      game_id_(game_id), opaque6_7_(policy.opaque6_7) {}
+    :RichonlinePlayerCards(std::move(resources),game_id,policy.map_name,0,3),
+     award_(checked_award(resources_,policy)),opaque6_7_(policy.opaque6_7) {}
 
-void RichonlineBossCards::configure_tile_rewards(std::vector<std::int16_t> playable,RichonlineRouteChooser random,
+void RichonlinePlayerCards::configure_tile_rewards(std::vector<std::int16_t> playable,RichonlineRouteChooser random,
     const RichonlineShopCatalog& resale) {
     // 共享池统一服务卡片格、福神、新闻、节日；脚本返回也必须通过商店实际出售能力校验。
     std::erase_if(playable,[&](const auto card){return !resale.can_sell(card);});
     configure_tile_rewards(std::move(playable),std::move(random));
 }
-void RichonlineBossCards::configure_tile_rewards(std::vector<std::int16_t> playable,RichonlineRouteChooser random) {
+void RichonlinePlayerCards::configure_tile_rewards(std::vector<std::int16_t> playable,RichonlineRouteChooser random) {
     if(!random) throw CodecError("richonline_card_tile_random_required");
     std::set<std::int16_t> unique;
     std::vector<std::int16_t> candidates;
@@ -52,7 +58,7 @@ void RichonlineBossCards::configure_tile_rewards(std::vector<std::int16_t> playa
         if(card<=0||!unique.insert(card).second) throw CodecError("richonline_card_tile_policy_invalid");
         // 随机奖励禁止商城金豆卡和星光环绕；Lua 缺席或候选配置误放时也不能重新混入。
         if((card>=500 && card<=519) || card==1131) continue;
-        if(resources_->contains_card(card)&&resources_->automatic_card_eligible(award_.map(),card))
+        if(resources_->contains_card(card)&&resources_->automatic_card_eligible(map_name(),card))
             candidates.push_back(card);
     }
     if(candidates.empty()) throw CodecError("richonline_card_tile_pool_empty");
@@ -60,59 +66,74 @@ void RichonlineBossCards::configure_tile_rewards(std::vector<std::int16_t> playa
     tile_random_=std::move(random);
 }
 
-std::vector<std::int16_t> RichonlineBossCards::tile_candidates(std::int8_t type) const {
+std::vector<std::int16_t> RichonlinePlayerCards::tile_candidates(std::int8_t type) const {
     if(type==8) {
         if(tile_reward_cards_.empty()) throw CodecError("richonline_card_tile_policy_required");
         return tile_reward_cards_;
     }
     if(const auto fixed=fixed_tile_reward(type)) {
-        if(!resources_->automatic_card_eligible(award_.map(),*fixed))
+        if(!resources_->automatic_card_eligible(map_name(),*fixed))
             throw CodecError("richonline_card_tile_reward_not_eligible");
         return {*fixed};
     }
     throw CodecError("richonline_card_tile_kind_invalid");
 }
-std::optional<RichonlineBossCards::PreparedLanding> RichonlineBossCards::prepare_landing(
+std::optional<RichonlinePlayerCards::PreparedLanding> RichonlinePlayerCards::prepare_landing(
     const RichonlineLandingContext& context,std::optional<std::int16_t> selected_card) const {
-    if (context.actor_slot != 0 || context.game_mode != 3 || context.synthetic_actor ||
+    if (context.actor_slot != actor_slot() || context.game_mode != game_mode() || context.synthetic_actor ||
         richonline_landing_controlled(context.actor_status) ||
-        (context.static_type != 68 && !richonline_boss_card_reward_tile(context.static_type)) ||
+        !richonline_boss_card_reward_tile(context.static_type) ||
         context.property_ref != -1 || context.road_degree == 0 || context.road_degree > 4 ||
         (context.occupied_by_other_actor && !context.collision_resolved) || context.position < 0) return {};
     auto next = inventory_;
-    auto card = fixed_tile_reward(context.static_type).value_or(award_.card_id());
+    auto card = fixed_tile_reward(context.static_type).value_or(-1);
     if(selected_card) {
         const auto candidates=tile_candidates(context.static_type);
         if(std::ranges::find(candidates,*selected_card)==candidates.end())
             throw CodecError("richonline_card_tile_selected_card_invalid");
         card=*selected_card;
     }
-    if(fixed_tile_reward(context.static_type) && !resources_->automatic_card_eligible(award_.map(),card))
+    if(fixed_tile_reward(context.static_type) && !resources_->automatic_card_eligible(map_name(),card))
         throw CodecError("richonline_card_tile_reward_not_eligible");
     if(context.static_type==8 && !selected_card) {
         const auto reward=prepare_random_reward();
         card=reward.card;
         next=reward.inventory;
     }
-    try { if(context.static_type!=8 || selected_card) next = context.static_type == 68 ? resources_->insert(award_,inventory_) : prepare_add(card); }
+    try { if(context.static_type!=8 || selected_card) next = prepare_add(card); }
     catch (const CodecError& error) {
         if (std::string_view(error.what()) != "richonline_chance_inventory_full") throw;
     }
     Bytes stop;
     append_le(stop,0x4013,2); append_le(stop,game_id_,2); append_le(stop,static_cast<std::uint16_t>(context.position),2);
     Bytes reward;
-    if (context.static_type != 68) {
-        append_le(reward,0x4029,2);
-        append_le(reward,game_id_,2);
-        append_le(reward,static_cast<std::uint16_t>(card),2);
-    } else reward = encode_richonline_chance_single_card(game_id_,award_,opaque6_7_);
+    append_le(reward,0x4029,2);append_le(reward,game_id_,2);
+    append_le(reward,static_cast<std::uint16_t>(card),2);
     return PreparedLanding{inventory_,next,{{std::move(stop),std::move(reward)},RichonlineLandingProgress::complete}};
 }
-void RichonlineBossCards::commit_landing(const PreparedLanding& prepared) {
+std::optional<RichonlineBossCards::PreparedLanding> RichonlineBossCards::prepare_landing(
+    const RichonlineLandingContext& context,std::optional<std::int16_t> selected_card) const {
+    if(context.static_type!=68) return RichonlinePlayerCards::prepare_landing(context,selected_card);
+    if(context.actor_slot!=actor_slot() || context.game_mode!=game_mode() || context.synthetic_actor ||
+        richonline_landing_controlled(context.actor_status) || context.property_ref!=-1 ||
+        context.road_degree==0 || context.road_degree>4 || context.position<0 ||
+        (context.occupied_by_other_actor && !context.collision_resolved)) return {};
+    if(selected_card) throw CodecError("richonline_card_tile_kind_invalid");
+    auto next=inventory_;
+    try { next=prepare_reward(); }
+    catch(const CodecError& error) {
+        if(std::string_view(error.what())!="richonline_chance_inventory_full") throw;
+    }
+    Bytes stop;append_le(stop,0x4013,2);append_le(stop,game_id_,2);
+    append_le(stop,static_cast<std::uint16_t>(context.position),2);
+    return PreparedLanding{inventory_,next,{{std::move(stop),
+        encode_richonline_chance_single_card(game_id_,award_,opaque6_7_)},RichonlineLandingProgress::complete}};
+}
+void RichonlinePlayerCards::commit_landing(const PreparedLanding& prepared) {
     if(inventory_!=prepared.source_inventory) throw CodecError("richonline_card_tile_inventory_changed");
     inventory_=prepared.remaining_inventory;
 }
-std::optional<RichonlineLandingResult> RichonlineBossCards::land(const RichonlineLandingContext& context) {
+std::optional<RichonlineLandingResult> RichonlinePlayerCards::land(const RichonlineLandingContext& context) {
     auto prepared=prepare_landing(context);
     if(!prepared) return {};
     commit_landing(*prepared);
@@ -121,18 +142,18 @@ std::optional<RichonlineLandingResult> RichonlineBossCards::land(const Richonlin
 RichonlineChanceInventory RichonlineBossCards::prepare_reward() const {
     return resources_->insert(award_,inventory_);
 }
-RichonlineChanceInventory RichonlineBossCards::prepare_add(std::int16_t card_id,std::int16_t count) const {
-    return resources_->add(award_.map(),card_id,count,inventory_);
+RichonlineChanceInventory RichonlinePlayerCards::prepare_add(std::int16_t card_id,std::int16_t count) const {
+    return resources_->add(map_name(),card_id,count,inventory_);
 }
-RichonlineBossCards::PreparedReward RichonlineBossCards::prepare_random_reward() const {
+RichonlinePlayerCards::PreparedReward RichonlinePlayerCards::prepare_random_reward() const {
     return prepare_random_reward(inventory_);
 }
-RichonlineBossCards::PreparedReward RichonlineBossCards::prepare_random_reward(const RichonlineChanceInventory& source) const {
+RichonlinePlayerCards::PreparedReward RichonlinePlayerCards::prepare_random_reward(const RichonlineChanceInventory& source) const {
     if(!tile_random_||tile_reward_cards_.empty()) throw CodecError("richonline_card_tile_policy_required");
     std::vector<PreparedReward> candidates;
     for(const auto card:tile_reward_cards_) {
         auto resulting=source;
-        try { resulting=resources_->add(award_.map(),card,1,source); }
+        try { resulting=resources_->add(map_name(),card,1,source); }
         catch(const CodecError& error) {
             // NEW7F8780 leaves a full hand unchanged and still continues the event.
             if(std::string_view(error.what())!="richonline_chance_inventory_full") throw;
@@ -145,12 +166,14 @@ RichonlineBossCards::PreparedReward RichonlineBossCards::prepare_random_reward(c
     if(selected>=candidates.size()) throw CodecError("richonline_card_tile_random_invalid");
     return candidates[selected];
 }
-RichonlineBossCards::PreparedDiscard RichonlineBossCards::prepare_discard(
+RichonlinePlayerCards::PreparedDiscard RichonlinePlayerCards::prepare_discard(
     const RichonlineCardDiscardRequest50& request,std::int8_t actor) const {
+    if(actor<0 || static_cast<std::uint8_t>(actor)!=actor_slot())
+        throw CodecError("richonline_card_discard_actor_mismatch");
     return {encode_richonline_card_discard4033(game_id_,request.inventory_slot,actor),
         resources_->discard(inventory_,request.inventory_slot)};
 }
-std::optional<RichonlineBossCards::PendingTargetEffect> RichonlineBossCards::prepare_target_effect(
+std::optional<RichonlinePlayerCards::PendingTargetEffect> RichonlinePlayerCards::prepare_target_effect(
     const RichonlineTargetCardRequest& request) const {
     if (request.inventory_slot<0 || request.inventory_slot>=8 || request.inventory_bank!=0 || request.target<0)
         throw CodecError("richonline_target_card_request_invalid");
@@ -165,11 +188,11 @@ std::optional<RichonlineBossCards::PendingTargetEffect> RichonlineBossCards::pre
     if (--remaining[slot].count==0) remaining[slot]={};
     return PendingTargetEffect{request,inventory_,remaining};
 }
-void RichonlineBossCards::commit_target_effect(const PendingTargetEffect& pending) {
+void RichonlinePlayerCards::commit_target_effect(const PendingTargetEffect& pending) {
     if (inventory_ != pending.source_inventory) throw CodecError("richonline_target_card_inventory_changed");
     inventory_=pending.remaining_inventory;
 }
-std::optional<RichonlineBossCards::PreparedConsumption> RichonlineBossCards::prepare_consumption(
+std::optional<RichonlinePlayerCards::PreparedConsumption> RichonlinePlayerCards::prepare_consumption(
     std::int8_t slot,std::int16_t card_id) const {
     if (slot<0 || slot>=8 || !resources_->contains_card(card_id)) throw CodecError("richonline_card_consumption_invalid");
     const auto index=static_cast<std::size_t>(slot);
@@ -178,13 +201,13 @@ std::optional<RichonlineBossCards::PreparedConsumption> RichonlineBossCards::pre
     if(--remaining[index].count==0) remaining[index]={};
     return PreparedConsumption{inventory_,remaining,slot,card_id};
 }
-void RichonlineBossCards::commit_consumption(const PreparedConsumption& prepared) {
+void RichonlinePlayerCards::commit_consumption(const PreparedConsumption& prepared) {
     if(inventory_!=prepared.source_inventory) throw CodecError("richonline_card_consumption_inventory_changed");
     inventory_=prepared.remaining_inventory;
 }
-RichonlineBossCards::PreparedShuffle RichonlineBossCards::prepare_shuffle(
+RichonlinePlayerCards::PreparedShuffle RichonlinePlayerCards::prepare_shuffle(
     std::int8_t slot,std::uint8_t actor,const RichonlineRouteChooser& random) const {
-    if(actor!=0 || !random) throw CodecError("richonline_shuffle_card_context_invalid");
+    if(actor!=actor_slot() || !random) throw CodecError("richonline_shuffle_card_context_invalid");
     const auto consumed=prepare_consumption(slot,1125);
     if(!consumed) throw CodecError("richonline_shuffle_card_not_owned");
     std::vector<std::uint8_t> order;
@@ -203,9 +226,9 @@ RichonlineBossCards::PreparedShuffle RichonlineBossCards::prepare_shuffle(
     }
     return prepare_shuffle_order(slot,actor,order);
 }
-RichonlineBossCards::PreparedShuffle RichonlineBossCards::prepare_shuffle_order(
+RichonlinePlayerCards::PreparedShuffle RichonlinePlayerCards::prepare_shuffle_order(
     std::int8_t slot,std::uint8_t actor,const std::vector<std::uint8_t>& order) const {
-    if(actor!=0) throw CodecError("richonline_shuffle_card_context_invalid");
+    if(actor!=actor_slot()) throw CodecError("richonline_shuffle_card_context_invalid");
     const auto consumed=prepare_consumption(slot,1125);
     if(!consumed) throw CodecError("richonline_shuffle_card_not_owned");
     std::array<bool,8> seen{};
@@ -231,14 +254,14 @@ RichonlineBossCards::PreparedShuffle RichonlineBossCards::prepare_shuffle_order(
         append_le(packet,static_cast<std::uint16_t>(entry.card_id),2);
         packet.push_back(static_cast<std::uint8_t>(entry.count));packet.push_back(actor);
         // NEW607B inserts each wire entry through7F8780/800FD0, including combinations.
-        result.remaining_inventory=resources_->add(award_.map(),entry.card_id,entry.count,result.remaining_inventory);
+        result.remaining_inventory=resources_->add(map_name(),entry.card_id,entry.count,result.remaining_inventory);
     }
     return result;
 }
-void RichonlineBossCards::commit_inventory(const RichonlineChanceInventory& inventory) noexcept {
+void RichonlinePlayerCards::commit_inventory(const RichonlineChanceInventory& inventory) noexcept {
     inventory_ = inventory;
 }
-std::optional<RichonlineBossCards::PreparedUse> RichonlineBossCards::prepare_use(const RichonlineCardDiceRequest103& request) const {
+std::optional<RichonlinePlayerCards::PreparedUse> RichonlinePlayerCards::prepare_use(const RichonlineCardDiceRequest103& request) const {
     if (request.inventory_slot < 0 || request.inventory_slot >= 8 || request.inventory_bank != 0 ||
         request.selected_die < 1 || request.selected_die > 6) throw CodecError("richonline_boss_card_request_invalid");
     const auto slot = static_cast<std::size_t>(request.inventory_slot);
@@ -247,7 +270,7 @@ std::optional<RichonlineBossCards::PreparedUse> RichonlineBossCards::prepare_use
     if (--remaining[slot].count==0) remaining[slot] = {};
     return PreparedUse{encode_richonline_card_used40b7({game_id_,request.inventory_slot,request.inventory_bank}),remaining,request.selected_die};
 }
-void RichonlineBossCards::commit_use(const PreparedUse& prepared) noexcept { inventory_ = prepared.remaining_inventory; }
+void RichonlinePlayerCards::commit_use(const PreparedUse& prepared) noexcept { inventory_ = prepared.remaining_inventory; }
 
 RichonlineCardDiscardRequest50 parse_richonline_card_discard50(View plain) {
     if (plain.size()!=6 || read_le(plain.first(2))!=50) throw CodecError("richonline_card_discard_wire_invalid");
@@ -314,9 +337,10 @@ RichonlineFixedStepCardRequest parse_richonline_fixed_step_card(View bytes) {
     return r;
 }
 RichonlineFixedStepCardPlan plan_richonline_fixed_step_card(std::uint16_t game,
-    const RichonlineFixedStepCardRequest& r,std::uint16_t calendar,const RichonlineBossCards& cards) {
+    const RichonlineFixedStepCardRequest& r,std::uint16_t calendar,const RichonlinePlayerCards& cards) {
     if(r.opcode<137 || r.opcode>140 || r.slot<0 || r.slot>=8 || r.bank!=0)
         throw CodecError("richonline_fixed_step_card_fields_invalid");
+    if(game!=cards.game_id()) throw CodecError("richonline_card_game_mismatch");
     if(r.calendar!=calendar) throw CodecError("richonline_fixed_step_card_calendar_mismatch");
     const auto consumption=cards.prepare_consumption(r.slot,static_cast<std::int16_t>(r.opcode+943));
     if(!consumption) throw CodecError("richonline_fixed_step_card_not_owned");
@@ -335,10 +359,11 @@ RichonlineCosmeticCardRequest parse_richonline_cosmetic_card(View bytes) {
     return r;
 }
 RichonlineCosmeticCardPlan plan_richonline_cosmetic_card(std::uint16_t game,
-    const RichonlineCosmeticCardRequest& r,std::uint16_t calendar,const RichonlineBossCards& cards) {
+    const RichonlineCosmeticCardRequest& r,std::uint16_t calendar,const RichonlinePlayerCards& cards) {
     if((r.kind!=RichonlineCosmeticCard::cracker1117 && r.kind!=RichonlineCosmeticCard::fireworks1118 &&
         r.kind!=RichonlineCosmeticCard::love1127 && r.kind!=RichonlineCosmeticCard::starlight1131) ||
         r.slot<0 || r.slot>=8 || r.bank!=0) throw CodecError("richonline_cosmetic_card_fields_invalid");
+    if(game!=cards.game_id()) throw CodecError("richonline_card_game_mismatch");
     if(r.calendar!=calendar) throw CodecError("richonline_cosmetic_card_calendar_mismatch");
     const auto id=r.kind==RichonlineCosmeticCard::love1127 ? 1127 : r.kind==RichonlineCosmeticCard::starlight1131 ?
         1131 : static_cast<std::int16_t>(static_cast<std::uint16_t>(r.kind)+973);

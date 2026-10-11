@@ -8,7 +8,7 @@
 #include <memory>
 
 namespace richnet {
-class RichonlineBossCards;
+class RichonlinePlayerCards;
 struct RichonlineStockForcedSaleRequest {
     std::uint16_t calendar_counter,stock_slot;
     std::int8_t inventory_slot;
@@ -102,7 +102,7 @@ public:
     private:
         ForcedSale()=default;
         const RichonlineStockMarket* owner_=nullptr;
-        const RichonlineBossCards* cards_=nullptr;
+        const RichonlinePlayerCards* cards_=nullptr;
         std::uint64_t revision_=0;
         bool accepted_=false;
         std::string reason_;
@@ -114,12 +114,12 @@ public:
         RichonlineChanceInventory source_inventory_{},remaining_inventory_{};
         friend class RichonlineStockMarket;
     };
-    // 上层验证日历、当前操作者及手牌归属。active按原角色槽排列，不能压缩淘汰槽。
+    // 上层验证日历及当前操作者；此层复核手牌局号和所有者。active不能压缩淘汰槽。
     // 卡牌直接按现价清仓，不应用普通买卖的涨跌停/闭市门；零持仓也消耗1124。
     ForcedSale prepare_forced_sale(std::uint8_t actor,const RichonlineStockForcedSaleRequest&,
-        std::span<const std::uint8_t> active,const RichonlineBossCards& cards) const;
+        std::span<const std::uint8_t> active,const RichonlinePlayerCards& cards) const;
     // 会话串行化边界内重新核验活动角色、手牌、市场和账本，然后一次提交扣卡/清仓/资金。
-    bool commit(const ForcedSale&,std::span<const std::uint8_t> active,RichonlineBossCards& cards);
+    bool commit(const ForcedSale&,std::span<const std::uint8_t> active,RichonlinePlayerCards& cards);
     class Subscription final {
     public:
         bool accepted() const noexcept {return accepted_;}
@@ -129,7 +129,7 @@ public:
     private:
         Subscription()=default;
         const RichonlineStockMarket* owner_=nullptr;
-        const RichonlineBossCards* cards_=nullptr;
+        const RichonlinePlayerCards* cards_=nullptr;
         std::uint64_t revision_=0;
         bool accepted_=false;
         std::string reason_;
@@ -145,8 +145,8 @@ public:
     // quantity由后续服务端数量策略明确提供，不从0096解码，也不猜测必须买光。
     // 仅目标确实无持仓时允许quantity=0，此分支发送40E6恢复但不扣卡。
     Subscription prepare_subscription(std::uint8_t actor,const RichonlineStockSubscriptionRequest&,
-        std::uint32_t quantity,std::span<const std::uint8_t> active,const RichonlineBossCards& cards) const;
-    bool commit(const Subscription&,std::span<const std::uint8_t> active,RichonlineBossCards& cards);
+        std::uint32_t quantity,std::span<const std::uint8_t> active,const RichonlinePlayerCards& cards) const;
+    bool commit(const Subscription&,std::span<const std::uint8_t> active,RichonlinePlayerCards& cards);
 private:
     std::uint16_t game_;
     std::shared_ptr<RichonlineGameLedger> ledger_;

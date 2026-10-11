@@ -10,21 +10,22 @@ namespace {
 // The client starts its ten-second clock after receiving the stock packet.
 constexpr auto shop_transport_grace=std::chrono::milliseconds{500};
 }
-RichonlineBossShop::RichonlineBossShop(const std::filesystem::path& root,RichonlineBossCards& cards,
+RichonlineBossShop::RichonlineBossShop(const std::filesystem::path& root,RichonlinePlayerCards& cards,
     std::uint16_t game_id,Now now,std::array<std::uint8_t,2> stock_opaque,RichonlineShopCatalog::Choose choose)
     : cards_(cards),game_id_(game_id),now_(std::move(now)),stock_opaque_(stock_opaque),
       catalog_(RichonlineShopCatalog::load(root,cards.map_name())),choose_(std::move(choose)) {
     if (!now_) throw CodecError("richonline_shop_clock_required");
+    if(game_id_!=cards_.game_id()) throw CodecError("richonline_shop_game_mismatch");
     configure_refresh(load_richonline_gold_charges(root/"Data"/"GoldCharge.kpd"),{});
     // Live session assembly supplies its shared RNG; this fallback keeps existing
     // standalone deterministic callers independent of a second random source.
     if (!choose_) choose_=[](std::size_t) { return std::size_t{0}; };
 }
-RichonlineBossShop::RichonlineBossShop(const std::filesystem::path& root,RichonlineBossCards& cards,
+RichonlineBossShop::RichonlineBossShop(const std::filesystem::path& root,RichonlinePlayerCards& cards,
     std::uint16_t game_id,std::shared_ptr<RichonlineGameLedger> ledger,Now now,
     std::array<std::uint8_t,2> stock_opaque,RichonlineShopCatalog::Choose choose)
     : RichonlineBossShop(root,cards,game_id,std::move(now),stock_opaque,std::move(choose)) {
-    if (!ledger) throw CodecError("richonline_shop_ledger_required");
+    if (!ledger || cards_.actor_slot()>=ledger->actor_count()) throw CodecError("richonline_shop_ledger_required");
     ledger_=std::move(ledger);
 }
 void RichonlineBossShop::configure_refresh(const RichonlineGoldCharges& values,ChargeReserve charge) {
@@ -51,7 +52,7 @@ Bytes RichonlineBossShop::stock(const RichonlineShopStock& offers,bool refreshed
     bytes.push_back(static_cast<std::uint8_t>(refreshed)); return bytes;
 }
 bool RichonlineBossShop::validate_landing(const RichonlineLandingContext& context) const {
-    if (context.actor_slot!=0 || context.synthetic_actor || context.game_mode!=3 || context.static_type!=10 ||
+    if (context.actor_slot!=cards_.actor_slot() || context.synthetic_actor || context.game_mode!=cards_.game_mode() || context.static_type!=10 ||
         context.position<0 || context.property_ref!=-1 || (context.occupied_by_other_actor && !context.collision_resolved) ||
         context.road_degree==0 || context.road_degree>4) return false;
     if (active()) throw CodecError("richonline_shop_already_open");
@@ -65,7 +66,7 @@ std::optional<RichonlineBossShop::PreparedLanding> RichonlineBossShop::prepare_l
     if (!validate_landing(context)) return {};
     PreparedLanding plan;
     plan.owner_=this;plan.generation_=open_generation_;plan.inventory_=cards_.inventory();
-    plan.funds_=ledger_ ? std::optional{ledger_->snapshot(0)} : std::nullopt;
+    plan.funds_=ledger_ ? std::optional{ledger_->snapshot(cards_.actor_slot())} : std::nullopt;
     plan.points_=points;plan.opaque_=stock_opaque_;
     if(auto controlled=resolve_richonline_controlled_static_landing(game_id_,context)) {
         plan.result_=std::move(*controlled);return plan;
@@ -82,11 +83,11 @@ std::optional<RichonlineBossShop::PreparedLanding> RichonlineBossShop::prepare_l
 }
 std::optional<RichonlineBossShop::PreparedLanding> RichonlineBossShop::prepare_landing(const RichonlineLandingContext& context) const {
     if (!ledger_) throw CodecError("richonline_shop_ledger_required");
-    return prepare_landing(context,ledger_->snapshot(0).funds.tickets);
+    return prepare_landing(context,ledger_->snapshot(cards_.actor_slot()).funds.tickets);
 }
 RichonlineLandingResult RichonlineBossShop::commit_landing(PreparedLanding& plan) {
     if(plan.owner_!=this || plan.committed_ || active() || plan.generation_!=open_generation_ ||
-        cards_.inventory()!=plan.inventory_ || (plan.funds_ && ledger_->snapshot(0)!=*plan.funds_))
+        cards_.inventory()!=plan.inventory_ || (plan.funds_ && ledger_->snapshot(cards_.actor_slot())!=*plan.funds_))
         throw CodecError("richonline_shop_open_plan_stale");
     // 响应复制和时钟读取均在写状态前完成。房间串行执行，提交后不再分配。
     auto result=plan.result_;
@@ -104,7 +105,7 @@ std::optional<RichonlineLandingResult> RichonlineBossShop::land(const Richonline
 }
 std::optional<RichonlineLandingResult> RichonlineBossShop::land(const RichonlineLandingContext& context) {
     if (!ledger_) throw CodecError("richonline_shop_ledger_required");
-    return land(context,ledger_->snapshot(0).funds.tickets);
+    return land(context,ledger_->snapshot(cards_.actor_slot()).funds.tickets);
 }
 RichonlineLandingResult RichonlineBossShop::close(const char* reason) {
     if (!active()) return {{},RichonlineLandingProgress::complete};
@@ -132,11 +133,11 @@ RichonlineLandingResult RichonlineBossShop::handle(View request) {
         offers_=next; ++refreshes_; last_decision_="refreshed"; return result;
     }
     const auto index=std::bit_cast<std::int8_t>(request[4]);
-    const auto expected=ledger_ ? std::optional{ledger_->snapshot(0)} : std::nullopt;
+    const auto expected=ledger_ ? std::optional{ledger_->snapshot(cards_.actor_slot())} : std::nullopt;
     const auto current_points=expected ? expected->funds.tickets : points_;
     const auto commit_points=[&](std::int64_t delta) {
         if (!ledger_) { points_=static_cast<std::uint32_t>(static_cast<std::int64_t>(current_points)+delta); return true; }
-        try { ledger_->adjust(0,*expected,{0,0,delta,0}); return true; }
+        try { ledger_->adjust(cards_.actor_slot(),*expected,{0,0,delta,0}); return true; }
         catch (const CodecError& error) {
             if (std::string_view(error.what())=="richonline_game_ledger_conflict") return false;
             throw;

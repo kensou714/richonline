@@ -6,7 +6,8 @@
 namespace richnet {
 std::optional<RichonlineLandingResult> resolve_richonline_controlled_static_landing(
     std::uint16_t game_id,const RichonlineLandingContext& context) {
-    if(!richonline_landing_controlled(context.actor_status) || context.game_mode!=3 || context.property_ref!=-1)
+    if(!richonline_landing_controlled(context.actor_status) ||
+        (context.game_mode!=0 && context.game_mode!=3) || context.property_ref!=-1)
         return {};
     if(richonline_news_landing_allowed(context)) return {};
     const auto kind=context.static_type;
@@ -14,7 +15,10 @@ std::optional<RichonlineLandingResult> resolve_richonline_controlled_static_land
     const bool special=(kind>=0 && kind<=10) || kind==28 || (kind>=41 && kind<=43) ||
         (kind>=51 && kind<=62) || (kind>=67 && kind<=70);
     if(!special) return {};
-    if(context.actor_slot>=2 || context.synthetic_actor!=(context.actor_slot==1) || context.position<0 ||
+    const bool actor_valid=context.game_mode==3 ?
+        context.actor_slot<2 && context.synthetic_actor==(context.actor_slot==1) :
+        context.actor_slot<4 && !context.synthetic_actor;
+    if(!actor_valid || context.position<0 ||
         context.road_degree==0 || context.road_degree>4 ||
         (context.occupied_by_other_actor && !context.collision_resolved))
         throw CodecError("richonline_controlled_static_landing_invalid");

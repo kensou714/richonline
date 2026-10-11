@@ -37,15 +37,16 @@ RichonlineInventoryPrefix4019 decode_richonline_inventory_prefix4019(View plain,
     }
     validate(value,actor_count); return value;
 }
-RichonlineOpeningHandPlan prepare_richonline_opening_hand(std::uint16_t game_id,
-    const RichonlineMapOpeningHand& configured,const RichonlineChanceResources& resources) {
-    RichonlineOpeningHandPlan plan{};
-    const std::array<const std::vector<RichonlineMapOpeningCard>*,2> hands{&configured.human,&configured.boss};
+RichonlinePlayerOpeningHands prepare_richonline_player_opening_hands(std::uint16_t game_id,
+    std::span<const std::vector<RichonlineMapOpeningCard>> hands,const RichonlineChanceResources& resources) {
+    if(hands.empty() || hands.size()>8) throw CodecError("richonline_opening_hand_actor_count_invalid");
+    RichonlinePlayerOpeningHands plan;
+    plan.inventories.resize(hands.size());plan.synchronization.resize(hands.size());
     for(std::size_t actor=0;actor<hands.size();++actor) {
         // 4019 cannot initialize a fifth slot; reject this unsupported configuration rather than truncate.
-        if(hands[actor]->size()>4) throw CodecError("richonline_opening_hand_prefix_capacity");
+        if(hands[actor].size()>4) throw CodecError("richonline_opening_hand_prefix_capacity");
         std::size_t slot=0;
-        for(const auto& card:*hands[actor]) {
+        for(const auto& card:hands[actor]) {
             if(card.card_id<=0 || card.count<=0 || !resources.contains_card(card.card_id))
                 throw CodecError("richonline_opening_hand_card_invalid");
             // The receiver memcpy does not call the acquire/combination path.
@@ -58,8 +59,16 @@ RichonlineOpeningHandPlan prepare_richonline_opening_hand(std::uint16_t game_id,
         std::copy_n(plan.inventories[actor].begin(),4,packet.slots.begin());
         // NEW 7D5BD0 initializes these two slot bytes to 0 and -1; their gameplay meaning remains unknown.
         packet.slot_tail.fill({0,255});
-        plan.synchronization[actor]=encode_richonline_inventory_prefix4019(packet,2);
+        plan.synchronization[actor]=encode_richonline_inventory_prefix4019(packet,hands.size());
     }
     return plan;
 }
+RichonlineOpeningHandPlan prepare_richonline_opening_hand(std::uint16_t game_id,
+    const RichonlineMapOpeningHand& configured,const RichonlineChanceResources& resources) {
+    const std::array hands{configured.human,configured.boss};
+    auto shared=prepare_richonline_player_opening_hands(game_id,hands,resources);
+    return {{shared.inventories[0],shared.inventories[1]},
+        {std::move(shared.synchronization[0]),std::move(shared.synchronization[1])}};
+}
+
 }

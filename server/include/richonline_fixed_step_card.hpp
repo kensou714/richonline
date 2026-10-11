@@ -8,12 +8,12 @@ struct RichonlineFixedStepCardRequest {
 };
 struct RichonlineFixedStepCardPlan {
     Bytes confirmation;
-    RichonlineBossCards::PreparedConsumption consumption;
+    RichonlinePlayerCards::PreparedConsumption consumption;
     std::uint8_t steps;
 };
 RichonlineFixedStepCardRequest parse_richonline_fixed_step_card(View);
 // Like1038, send confirmation followed by the normal authoritative movement
 // projection. Confirmation alone neither moves the actor nor restores controls.
 RichonlineFixedStepCardPlan plan_richonline_fixed_step_card(std::uint16_t game_id,
-    const RichonlineFixedStepCardRequest&,std::uint16_t current_calendar,const RichonlineBossCards&);
+    const RichonlineFixedStepCardRequest&,std::uint16_t current_calendar,const RichonlinePlayerCards&);
 }

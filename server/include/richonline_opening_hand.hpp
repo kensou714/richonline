@@ -17,6 +17,13 @@ struct RichonlineOpeningHandPlan {
     std::array<RichonlineChanceInventory,2> inventories;
     std::array<Bytes,2> synchronization;
 };
+struct RichonlinePlayerOpeningHands {
+    std::vector<RichonlineChanceInventory> inventories;
+    std::vector<Bytes> synchronization;
+};
+// 依局内槽顺序初始化1至8名角色；不伪造经典模式起手卡，调用方必须提供明确配置。
+RichonlinePlayerOpeningHands prepare_richonline_player_opening_hands(std::uint16_t game_id,
+    std::span<const std::vector<RichonlineMapOpeningCard>> hands,const RichonlineChanceResources& resources);
 // Pure preparation for a new two-actor BOSS game. The session owns once-only commit/emission.
 RichonlineOpeningHandPlan prepare_richonline_opening_hand(std::uint16_t game_id,
     const RichonlineMapOpeningHand& configured,const RichonlineChanceResources& resources);
