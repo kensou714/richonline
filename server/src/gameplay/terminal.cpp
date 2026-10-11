@@ -1,5 +1,6 @@
 #include "richonline_terminal.hpp"
 #include <algorithm>
+#include <limits>
 #include <utility>
 
 namespace richnet {
@@ -95,26 +96,47 @@ std::vector<RichonlineSettlementTransmission> recover_richonline_terminal_messag
     if(outbox.match_id!=live_match || outbox.delivery.game_id!=live_game)
         throw CodecError("richonline_terminal_recovery_session_mismatch");
     const auto& delivery=outbox.delivery;
+    if(delivery.message_version!=4 && (!delivery.winner_slots.empty() ||
+        !delivery.asset_totals.empty() || !delivery.active_slots.empty()))
+        throw CodecError("richonline_terminal_asset_ranking_invalid");
     // 历史游标对应另一条消息序列，禁止用新版序列续发导致重复淘汰或跳过结算。
-    if(delivery.message_version!=2 && delivery.message_version!=3)
+    if(delivery.message_version!=2 && delivery.message_version!=3 && delivery.message_version!=4)
         throw CodecError("richonline_terminal_legacy_outbox_requires_reconciliation");
     std::vector<RichonlineSettledActor> actors;
-    if(delivery.message_version==3) {
+    if(delivery.message_version==3 || delivery.message_version==4) {
         if(outbox.roster.size()<2 || outbox.roster.size()>4 || outbox.roster.size()!=delivery.roster_operations.size() ||
             delivery.human_slot<0 || static_cast<std::size_t>(delivery.human_slot)>=outbox.roster.size() ||
             delivery.roster_operations[static_cast<std::size_t>(delivery.human_slot)]!=outbox.operation_id ||
-            delivery.winner_slot<0 || static_cast<std::size_t>(delivery.winner_slot)>=outbox.roster.size() ||
-            delivery.show_text_270 || outbox.outcome!=(delivery.human_slot==delivery.winner_slot?GameOutcome::win:GameOutcome::loss))
+            (delivery.message_version==3 && (delivery.winner_slot<0 || static_cast<std::size_t>(delivery.winner_slot)>=outbox.roster.size())) ||
+            delivery.show_text_270 || outbox.outcome!=(delivery.is_winner(delivery.human_slot)?GameOutcome::win:GameOutcome::loss))
             throw CodecError("richonline_terminal_match_roster_invalid");
+        if(delivery.message_version==4) {
+            if(delivery.winner_slot!=-1 || !delivery.bankrupt_slots.empty() || delivery.winner_slots.empty() ||
+                delivery.asset_totals.size()!=outbox.roster.size() || delivery.active_slots.size()!=outbox.roster.size() ||
+                std::ranges::any_of(delivery.asset_totals,[](auto value) {
+                    return value>static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
+                }) ||
+                std::ranges::count(delivery.active_slots,std::uint8_t{1})<2 ||
+                std::ranges::any_of(delivery.active_slots,[](auto value){return value>1;}))
+                throw CodecError("richonline_terminal_asset_ranking_invalid");
+            std::uint64_t highest=0;
+            for(std::size_t slot=0;slot<outbox.roster.size();++slot)
+                if(delivery.active_slots[slot])highest=std::max(highest,delivery.asset_totals[slot]);
+            std::vector<std::int8_t> winners;
+            for(std::size_t slot=0;slot<outbox.roster.size();++slot)
+                if(delivery.active_slots[slot] && delivery.asset_totals[slot]==highest)winners.push_back(static_cast<std::int8_t>(slot));
+            if(winners!=delivery.winner_slots)throw CodecError("richonline_terminal_asset_ranking_invalid");
+        }
         for(std::size_t slot=0;slot<outbox.roster.size();++slot) {
             const auto& actor=outbox.roster[slot];
             if(actor.slot!=static_cast<std::int8_t>(slot) ||
-                actor.outcome!=(actor.slot==delivery.winner_slot?GameOutcome::win:GameOutcome::loss))
+                actor.outcome!=(delivery.is_winner(actor.slot)?GameOutcome::win:GameOutcome::loss))
                 throw CodecError("richonline_terminal_match_roster_invalid");
             actors.push_back({actor.slot,actor.rank_image_index,actor.outcome,false,actor.opaque_18,actor.result});
         }
     } else {
-        if(!outbox.roster.empty() || !delivery.roster_operations.empty() || delivery.winner_slot!=-1)
+        if(!outbox.roster.empty() || !delivery.roster_operations.empty() || delivery.winner_slot!=-1 ||
+            !delivery.winner_slots.empty() || !delivery.asset_totals.empty() || !delivery.active_slots.empty())
             throw CodecError("richonline_terminal_match_roster_invalid");
         actors.push_back({delivery.human_slot,delivery.rank_image_index,outbox.outcome,false,delivery.opaque_18,outbox.result});
     }

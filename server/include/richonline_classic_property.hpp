@@ -54,6 +54,10 @@ public:
     RichonlineClassicProperty(const RichonlineClassicProperty&)=delete;
     RichonlineClassicProperty& operator=(const RichonlineClassicProperty&)=delete;
     RichonlineClassicPropertyState snapshot(std::int16_t property) const;
+    // 只将当前实际归属的地产交给只读估值策略；禁止未决交易期间冻结排名。
+    // 策略须另有估值依据，不能把购地花费、租金或升级费用自动当作资产价格。
+    std::vector<std::uint64_t> asset_values(
+        const std::function<std::uint64_t(const RichonlineClassicPropertyState&)>& valuation) const;
     // 只用于本对象持有的普通住宅/同类地产；当前对象尚无封闭、加倍卡写入口。
     // 按NEW的32位乘法、逐块有符号除法和累加顺序返回报价，负值不能当无租金。
     std::int32_t rent_quote(std::int16_t property,std::uint32_t monetary_scale) const;

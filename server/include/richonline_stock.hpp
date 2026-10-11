@@ -50,6 +50,8 @@ public:
     RichonlineStockMarket& operator=(RichonlineStockMarket&&)=delete;
     RichonlineStockHolding holding(std::uint8_t actor,std::uint16_t slot) const;
     RichonlineStockQuote quote(std::uint16_t slot) const;
+    // 现价逐股估值：数量先写float，乘积不提前舍入，逐项截断后以64位累加。
+    std::uint64_t market_value(std::uint8_t actor) const;
     RichonlineStockIndex index() const noexcept {return index_;}
     class Retirement final {
     private:

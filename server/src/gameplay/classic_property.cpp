@@ -53,6 +53,20 @@ RichonlineClassicPropertyState RichonlineClassicProperty::snapshot(std::int16_t 
     if(found==properties_.end()) throw CodecError("richonline_classic_property_unknown");
     return found->second;
 }
+std::vector<std::uint64_t> RichonlineClassicProperty::asset_values(
+    const std::function<std::uint64_t(const RichonlineClassicPropertyState&)>& valuation) const {
+    if(pending_ || !valuation) throw CodecError("richonline_classic_property_valuation_unavailable");
+    std::vector<std::uint64_t> totals(ledger_->actor_count());
+    constexpr auto maximum=static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
+    for(const auto& [id,property]:properties_) {
+        if(!property.owner) continue;
+        auto& total=totals.at(*property.owner);
+        const auto value=valuation(property);
+        if(value>maximum-total) throw CodecError("richonline_classic_property_asset_overflow");
+        total+=value;
+    }
+    return totals;
+}
 std::int32_t RichonlineClassicProperty::rent_quote(std::int16_t property,std::uint32_t monetary_scale) const {
     const auto target=snapshot(property);
     if(!target.owner || (target.kind!=0 && target.kind!=1))

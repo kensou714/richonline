@@ -155,6 +155,13 @@ struct Session {
                 if(!terminal)throw CodecError("richonline_classic_terminal_missing");
                 terminal->validate_identity(board.game_server_id,startup.room.key,count,startup.pawn_gold,world.ledger.get());
             }
+            if(rules.asset_settlement) {
+                const auto& policy=*rules.asset_settlement;
+                if(!terminal || !world.stocks || !policy.property_value || policy.evidence.empty() ||
+                    policy.evidence.size()>512 || policy.evidence.find('\0')!=std::string::npos)
+                    throw CodecError("richonline_classic_asset_policy_incomplete");
+                terminal->validate_month_limit(active);
+            }
         } catch(...) {release_members();throw;}
     }
     ~Session() { release_members(); }
@@ -355,10 +362,10 @@ struct Session {
         }
         if(!active[next] || std::ranges::count(active,std::uint8_t{1})<2)
             throw CodecError("richonline_classic_last_survivor_settlement_unimplemented");
-        // 月数在客户端转为BYTE天数；结算业务尚未装配时明确停在边界，不无限续局。
+        // 月数在客户端转为BYTE天数；到期先冻结资产，不再执行新回合扣减或掷骰。
         const auto limit=static_cast<std::uint8_t>(startup.game_months*30U);
         if(next==round_anchor && limit && completed_rounds+2>limit)
-            throw CodecError("richonline_classic_month_settlement_unimplemented");
+            return finish_month_limit(std::move(messages),next);
         richonline_status_finish_previous_turn(statuses[actor]);
         actor=next;
         if(actor==round_anchor) ++completed_rounds;
@@ -515,7 +522,7 @@ struct Session {
         do {next=static_cast<std::uint8_t>((next+1U)%after.size());} while(!after[next]);
         const auto limit=static_cast<std::uint8_t>(startup.game_months*30U);
         if(count>2 && next==anchor && limit && completed_rounds+2>limit)
-            throw CodecError("richonline_classic_month_settlement_unimplemented");
+            validate_month_limit(after);
         if(rules.script) {
             const auto result=rules.script->call("game.classic_retirement",{{"active",active},{"bankrupt",bankrupt},
                 {"actor",actor},{"anchor",round_anchor}});
@@ -533,6 +540,28 @@ struct Session {
         if(!world.property->commit_retirement(plan.property)) std::terminate();
         if(plan.stocks && !world.stocks->commit(*plan.stocks)) std::terminate();
         return true;
+    }
+    void validate_month_limit(std::span<const std::uint8_t> survivors) const {
+        if(!terminal || !rules.asset_settlement || !world.stocks)
+            throw CodecError("richonline_classic_month_settlement_unimplemented");
+        terminal->validate_month_limit(survivors);
+    }
+    std::vector<Bytes> finish_month_limit(std::vector<Bytes> messages,std::uint8_t next) {
+        validate_month_limit(active);
+        // 同一共享对局锁内读取资金、持仓及产权；终局后不再接受股票交易。
+        const auto property=world.property->asset_values(rules.asset_settlement->property_value);
+        std::vector<RichonlineClassicAssets> assets;
+        for(std::uint8_t slot=0;slot<active.size();++slot) {
+            const auto funds=world.ledger->snapshot(slot).funds;
+            if(!funds.deposit) throw CodecError("richonline_classic_asset_deposit_unknown");
+            assets.push_back({funds.cash,*funds.deposit,world.stocks->market_value(slot),property.at(slot)});
+        }
+        // 这条4010使客户端在7CF780显示到期文本269；不接420F或新的4011。
+        messages.push_back(encode_richonline_turn4010({board.game_server_id,static_cast<std::int8_t>(next),
+            static_cast<std::int8_t>(round_anchor),0},rules.opaque_turn7));
+        phase=Phase::settling;collision_pending=false;movement.reset();pending_opcode.reset();
+        append(messages,terminal->finish_month_limit(active,assets,rules.asset_settlement->evidence));
+        return messages;
     }
     std::vector<Bytes> finish_last_survivor(std::vector<Bytes> messages,std::uint8_t bankrupt) {
         if(!terminal)throw CodecError("richonline_classic_terminal_missing");

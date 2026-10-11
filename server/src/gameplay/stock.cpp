@@ -82,6 +82,24 @@ RichonlineStockQuote RichonlineStockMarket::quote(std::uint16_t slot) const {
     if(slot>=quotes_.size()) throw CodecError("richonline_stock_slot_invalid");
     return quotes_[slot];
 }
+std::uint64_t RichonlineStockMarket::market_value(std::uint8_t actor) const {
+    if(actor>=ledger_->actor_count()) throw CodecError("richonline_stock_holding_invalid");
+    constexpr auto limit=static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
+    std::uint64_t total=0;
+    for(std::size_t slot=0;slot<quotes_.size();++slot) {
+        const auto quantity=holdings_[actor][slot].quantity;
+        if(!quantity) continue;
+        // NEW7F9DE0的两个float操作数在x87寄存器中相乘，然后__ftol2截断。
+        // double可精确保存这两个float的乘积；直接float乘法会改变边界上的整数。
+        const auto amount=std::trunc(static_cast<double>(static_cast<float>(quantity))*quotes_[slot].price);
+        if(!std::isfinite(amount) || amount<0 || amount>=0x1p63)
+            throw CodecError("richonline_stock_asset_overflow");
+        const auto value=static_cast<std::uint64_t>(amount);
+        if(value>limit-total) throw CodecError("richonline_stock_asset_overflow");
+        total+=value;
+    }
+    return total;
+}
 void RichonlineStockMarket::set_restricted(bool restricted) {
     if(restricted_==restricted) return;
     available_revision(revision_);restricted_=restricted;++revision_;

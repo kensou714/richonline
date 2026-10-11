@@ -114,18 +114,40 @@ Json delivery_json(const GameSettlementDelivery& value) {
     if(value.message_version==3) {
         result["roster_operations"]=value.roster_operations;result["winner_slot"]=value.winner_slot;
     }
+    if(value.message_version==4) {
+        result["roster_operations"]=value.roster_operations;result["winner_slots"]=value.winner_slots;
+        result["asset_totals"]=value.asset_totals;result["active_slots"]=value.active_slots;
+    }
     return result;
 }
 void validate_delivery(const GameSettlementDelivery& value,GameOutcome outcome) {
     if(value.room_id>32767 || value.human_slot<0 || value.human_slot>=8 || value.bankrupt_slots.size()>8 ||
-        (value.message_version!=1 && value.message_version!=2 && value.message_version!=3))
+        (value.message_version<1 || value.message_version>4))
         throw StorageError("game_settlement_delivery_invalid");
-    if(value.message_version==3) {
+    if(value.message_version!=4 && (!value.winner_slots.empty() || !value.asset_totals.empty() || !value.active_slots.empty()))
+        throw StorageError("game_settlement_match_delivery_invalid");
+    if(value.message_version==3 || value.message_version==4) {
         const auto count=value.roster_operations.size();
         if(count<2 || count>4 || value.show_text_270 || value.human_slot>=static_cast<std::int8_t>(count) ||
-            value.winner_slot<0 || value.winner_slot>=static_cast<std::int8_t>(count) ||
-            outcome!=(value.human_slot==value.winner_slot ? GameOutcome::win : GameOutcome::loss))
+            (value.message_version==3 && (value.winner_slot<0 || value.winner_slot>=static_cast<std::int8_t>(count))) ||
+            outcome!=(value.is_winner(value.human_slot) ? GameOutcome::win : GameOutcome::loss))
             throw StorageError("game_settlement_match_delivery_invalid");
+        if(value.message_version==4) {
+            if(value.winner_slot!=-1 || !value.bankrupt_slots.empty() || value.asset_totals.size()!=count ||
+                value.active_slots.size()!=count || std::ranges::count(value.active_slots,std::uint8_t{1})<2 ||
+                std::ranges::any_of(value.active_slots,[](auto active){return active>1;}))
+                throw StorageError("game_settlement_asset_ranking_invalid");
+            std::uint64_t highest=0;
+            for(std::size_t slot=0;slot<count;++slot) {
+                if(value.asset_totals[slot]>static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()))
+                    throw StorageError("game_settlement_asset_ranking_invalid");
+                if(value.active_slots[slot])highest=std::max(highest,value.asset_totals[slot]);
+            }
+            std::vector<std::int8_t> winners;
+            for(std::size_t slot=0;slot<count;++slot)
+                if(value.active_slots[slot] && value.asset_totals[slot]==highest)winners.push_back(static_cast<std::int8_t>(slot));
+            if(value.winner_slots!=winners)throw StorageError("game_settlement_asset_ranking_invalid");
+        }
         std::set<std::string> operations;
         for(const auto& operation:value.roster_operations)
             if(operation.empty() || operation.size()>256 || operation.find('\0')!=std::string::npos ||
@@ -151,7 +173,7 @@ GameSettlementDelivery delivery_from_json(const Json& value,GameOutcome outcome)
     bounded(value.at("opaque_18"),0,255);
     if(!value.at("bankrupt_slots").is_array())throw StorageError("game_settlement_outbox_invalid");
     for(const auto& slot:value.at("bankrupt_slots"))bounded(slot,0,7);
-    if(value.contains("message_version"))bounded(value.at("message_version"),1,3);
+    if(value.contains("message_version"))bounded(value.at("message_version"),1,4);
     GameSettlementDelivery result{value.at("game_id").get<std::uint16_t>(),value.at("room_id").get<std::uint32_t>(),
         value.at("human_slot").get<std::int8_t>(),value.at("rank_image_index").get<std::int8_t>(),
         value.at("opaque_18").get<std::uint8_t>(),value.at("show_text_270").get<bool>(),
@@ -162,12 +184,24 @@ GameSettlementDelivery delivery_from_json(const Json& value,GameOutcome outcome)
         result.roster_operations=value.at("roster_operations").get<std::vector<std::string>>();
         result.winner_slot=value.at("winner_slot").get<std::int8_t>();
     }
+    if(result.message_version==4) {
+        if(!value.at("winner_slots").is_array() || !value.at("asset_totals").is_array() || !value.at("active_slots").is_array())
+            throw StorageError("game_settlement_outbox_invalid");
+        for(const auto& slot:value.at("winner_slots"))bounded(slot,0,3);
+        for(const auto& total:value.at("asset_totals"))bounded(total,0,std::numeric_limits<std::int64_t>::max());
+        for(const auto& active:value.at("active_slots"))bounded(active,0,1);
+        result.roster_operations=value.at("roster_operations").get<std::vector<std::string>>();
+        result.winner_slots=value.at("winner_slots").get<std::vector<std::int8_t>>();
+        result.asset_totals=value.at("asset_totals").get<std::vector<std::uint64_t>>();
+        result.active_slots=value.at("active_slots").get<std::vector<std::uint8_t>>();
+    }
     validate_delivery(result,outcome);return result;
 }
 std::size_t delivery_message_count(const GameSettlementDelivery& delivery,GameOutcome outcome) {
     // 包含401B、400F和大厅58；历史记录保持原游标边界，不迁移已发送位置。
     if(delivery.message_version==1)return delivery.bankrupt_slots.size()*2+3;
     if(delivery.message_version==3)return delivery.bankrupt_slots.size()+delivery.roster_operations.size()+3;
+    if(delivery.message_version==4)return delivery.roster_operations.size()+delivery.winner_slots.size()+2;
     return delivery.bankrupt_slots.size()+3+(outcome==GameOutcome::win ? 1U : 0U);
 }
 void text(const std::string& value, std::size_t maximum, const char* error) {
@@ -303,7 +337,7 @@ GameSettlementResult result_from_json(const Json& value) {
 std::vector<GameSettlementRecordedActor> committed_roster(sqlite3* db,const Json& own_request,
     const std::string& own_operation,const GameSettlementDelivery& delivery) {
     std::vector<GameSettlementRecordedActor> result;
-    if(delivery.message_version!=3)return result;
+    if(delivery.message_version!=3 && delivery.message_version!=4)return result;
     if(delivery.roster_operations[static_cast<std::size_t>(delivery.human_slot)]!=own_operation)
         throw StorageError("game_settlement_match_roster_mismatch");
     std::set<std::int64_t> roles;
@@ -316,14 +350,15 @@ std::vector<GameSettlementRecordedActor> committed_roster(sqlite3* db,const Json
         if(!row.row() || row.text(1)!=source || row.integer(0)!=row.integer(6) || row.integer(0)!=row.integer(8) ||
             !roles.insert(row.integer(0)).second) throw StorageError("game_settlement_match_roster_invalid");
         const auto request=Json::parse(row.text(2));
-        const auto outcome=slot==static_cast<std::size_t>(delivery.winner_slot)?GameOutcome::win:GameOutcome::loss;
+        const auto outcome=delivery.is_winner(static_cast<std::int8_t>(slot))?GameOutcome::win:GameOutcome::loss;
         const auto peer=delivery_from_json(Json::parse(row.text(4)),outcome);
         if(request.at("role_id")!=row.integer(0) || request.at("match_id")!=own_request.at("match_id") ||
             request.at("match_id")!=row.text(5) || request.at("match_id")!=row.text(7) ||
             request.at("stage_key")!=own_request.at("stage_key") || request.at("outcome")!=outcome_name(outcome) ||
             row.text(9)!=outcome_name(outcome) || request.at("delivery")!=delivery_json(peer) ||
-            peer.message_version!=3 || peer.human_slot!=static_cast<std::int8_t>(slot) ||
+            peer.message_version!=delivery.message_version || peer.human_slot!=static_cast<std::int8_t>(slot) ||
             peer.roster_operations!=delivery.roster_operations || peer.winner_slot!=delivery.winner_slot ||
+            peer.winner_slots!=delivery.winner_slots || peer.asset_totals!=delivery.asset_totals || peer.active_slots!=delivery.active_slots ||
             peer.game_id!=delivery.game_id || peer.room_id!=delivery.room_id ||
             peer.bankrupt_slots!=delivery.bankrupt_slots || peer.show_text_270!=delivery.show_text_270)
             throw StorageError("game_settlement_match_roster_mismatch");
@@ -425,7 +460,7 @@ GameEntryPledgeResult Storage::refund_game_pledge(const std::string& username,st
 GameSettlementResult Storage::settle_game(const std::string& username,std::int64_t role_id,
                                          const GameSettlementRequest& request) {
     const std::lock_guard lock(mutex_);
-    if(request.delivery && request.delivery->message_version==3)
+    if(request.delivery && (request.delivery->message_version==3 || request.delivery->message_version==4))
         throw StorageError("game_settlement_match_requires_atomic_batch");
     Transaction transaction(db_);
     auto result=settle_game_in_transaction(username,role_id,request);
@@ -436,7 +471,7 @@ std::vector<GameSettlementResult> Storage::settle_game_match(std::span<const Gam
     if(participants.size()<2 || participants.size()>4)
         throw StorageError("game_settlement_match_roster_invalid");
     const auto& first=participants.front().request;
-    if(!first.delivery || first.delivery->message_version!=3)
+    if(!first.delivery || (first.delivery->message_version!=3 && first.delivery->message_version!=4))
         throw StorageError("game_settlement_match_delivery_invalid");
     std::set<std::int64_t> roles;
     std::vector<std::string> operations;
@@ -449,10 +484,12 @@ std::vector<GameSettlementResult> Storage::settle_game_match(std::span<const Gam
         if(!request.delivery)throw StorageError("game_settlement_match_delivery_invalid");
         const auto& delivery=*request.delivery;
         validate_delivery(delivery,request.outcome);
-        if(request.match_id!=first.match_id || request.stage_key!=first.stage_key || delivery.message_version!=3 ||
+        if(request.match_id!=first.match_id || request.stage_key!=first.stage_key || delivery.message_version!=first.delivery->message_version ||
             delivery.human_slot!=static_cast<std::int8_t>(slot) || delivery.roster_operations!=operations ||
             delivery.game_id!=first.delivery->game_id || delivery.room_id!=first.delivery->room_id ||
             delivery.winner_slot!=first.delivery->winner_slot || delivery.show_text_270!=first.delivery->show_text_270 ||
+            delivery.winner_slots!=first.delivery->winner_slots || delivery.asset_totals!=first.delivery->asset_totals ||
+            delivery.active_slots!=first.delivery->active_slots ||
             delivery.bankrupt_slots!=first.delivery->bankrupt_slots)
             throw StorageError("game_settlement_match_roster_mismatch");
     }

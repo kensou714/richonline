@@ -85,6 +85,11 @@ struct RichonlineClassicJailPolicy : RichonlineClassicConfinementPolicy {
     // 先查1057免罪；未免罪时才查基类的1049保险库存证明。
     std::function<bool(std::uint8_t)> secondary_pardon_absent;
 };
+struct RichonlineClassicAssetPolicy {
+    // 同步只读，每块实际归属地产调用一次；不给未核实的估值公式设置默认值。
+    std::function<std::uint64_t(const RichonlineClassicPropertyState&)> property_value;
+    std::string evidence;
+};
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
     std::uint8_t first_actor,opaque_turn7;
@@ -119,6 +124,7 @@ struct RichonlineClassicSessionRules {
     // 407F/4087还须地图具有已验证的医院入口/出口；不复用绑架返回位置策略。
     std::optional<RichonlineClassicHospitalPolicy> hospital;
     std::optional<RichonlineClassicJailPolicy> jail;
+    std::optional<RichonlineClassicAssetPolicy> asset_settlement;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

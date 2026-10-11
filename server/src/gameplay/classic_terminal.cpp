@@ -2,6 +2,7 @@
 #include "lua_server.hpp"
 #include <algorithm>
 #include <set>
+#include <limits>
 
 namespace richnet {
 RichonlineClassicTerminal::RichonlineClassicTerminal(Storage& storage,RichonlineClassicTerminalContext context,
@@ -24,8 +25,8 @@ RichonlineClassicTerminal::RichonlineClassicTerminal(Storage& storage,Richonline
             throw CodecError("richonline_classic_terminal_identity_invalid");
         if(request.policy.provenance.empty() || request.policy.provenance.find('\0')!=std::string::npos)
             throw CodecError("richonline_classic_terminal_reward_policy_missing");
-        request.policy.provenance+="; native-classic-last-survivor-v1; "+context_.byte18.evidence;
-        if(request.policy.provenance.size()>1024)throw CodecError("richonline_classic_terminal_reward_policy_invalid");
+        if((request.policy.provenance+"; native-classic-last-survivor-v1; "+context_.byte18.evidence).size()>1024)
+            throw CodecError("richonline_classic_terminal_reward_policy_invalid");
         display_.emplace_back(context_.display);
     }
     cursors_.resize(count);
@@ -61,18 +62,95 @@ std::vector<Bytes> RichonlineClassicTerminal::finish(std::span<const std::uint8_
             if(!actor.at("slot").is_number_integer() || !actor.at("rank").is_number_integer())
                 throw CodecError("lua_classic_settlement_integer_required");
     }
+    std::vector<GameOutcome> outcomes;
+    std::vector<std::int8_t> ranks;
+    for(const auto value:active) {
+        outcomes.push_back(value?GameOutcome::win:GameOutcome::loss);
+        ranks.push_back(value?context_.win_rank:context_.loss_rank);
+    }
+    return commit_result(outcomes,ranks,{context_.game_id,context_.room_id,0,0,context_.byte18.value,
+        context_.show_text_270,{static_cast<std::int8_t>(bankrupt)},3,{},winner},"last-survivor-v1");
+}
+void RichonlineClassicTerminal::validate_month_limit(std::span<const std::uint8_t> active) const {
+    if(committed_ || recovery_required_ || !context_.asset_rank_images || active.size()!=context_.participants.size() ||
+        std::ranges::any_of(active,[](auto value){return value>1;}) || std::ranges::count(active,std::uint8_t{1})<2)
+        throw CodecError("richonline_classic_terminal_month_context_invalid");
+}
+std::vector<Bytes> RichonlineClassicTerminal::finish_month_limit(std::span<const std::uint8_t> active,
+    std::span<const RichonlineClassicAssets> assets,const std::string& evidence) {
+    validate_month_limit(active);
+    if(assets.size()!=active.size() || evidence.empty() || evidence.size()>512 || evidence.find('\0')!=std::string::npos)
+        throw CodecError("richonline_classic_terminal_assets_invalid");
+    std::vector<std::uint64_t> totals;
+    auto players=LuaValue::array();
+    constexpr auto maximum=static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
+    std::uint64_t highest=0;
+    for(std::size_t slot=0;slot<assets.size();++slot) {
+        const auto& value=assets[slot];
+        const auto funds=ledger_->snapshot(static_cast<std::uint8_t>(slot)).funds;
+        if(!funds.deposit || funds.cash!=value.cash || *funds.deposit!=value.deposit)
+            throw CodecError("richonline_classic_terminal_asset_funds_stale");
+        std::uint64_t total=0;
+        for(const auto part:{std::uint64_t{value.cash},std::uint64_t{value.deposit},value.stocks,value.property}) {
+            if(part>maximum-total)throw CodecError("richonline_classic_terminal_asset_overflow");
+            total+=part;
+        }
+        totals.push_back(total);
+        if(active[slot])highest=std::max(highest,total);
+        players.push_back({{"active",active[slot]!=0},{"cash",value.cash},{"deposit",value.deposit},
+            {"stocks",value.stocks},{"property",value.property}});
+    }
+    std::vector<GameOutcome> outcomes;
+    std::vector<std::int8_t> ranks,winners;
+    auto expected_actors=LuaValue::array();
+    for(std::size_t slot=0;slot<assets.size();++slot) {
+        const bool winner=active[slot] && totals[slot]==highest;
+        if(winner)winners.push_back(static_cast<std::int8_t>(slot));
+        std::size_t rank=1;
+        for(std::size_t other=0;other<assets.size();++other)
+            if(active[other] && (!active[slot] || totals[other]>totals[slot]))++rank;
+        // 破产者已退出排名竞争；仍在最后的全员表中，排在所有存活者之后。
+        ranks.push_back(context_.asset_rank_images->at(rank-1));
+        outcomes.push_back(winner?GameOutcome::win:GameOutcome::loss);
+        expected_actors.push_back({{"slot",slot},{"outcome",winner?"win":"loss"},
+            {"rank",ranks.back()},{"place",rank},{"assets",totals[slot]}});
+    }
+    if(context_.script) {
+        const auto result=context_.script->call("game.classic_settlement",{{"reason","month_limit"},
+            {"players",players},{"rank_images",*context_.asset_rank_images}});
+        const LuaValue expected{{"winners",winners},{"actors",expected_actors}};
+        if(result!=expected)throw CodecError("lua_classic_asset_settlement_invalid");
+        for(const auto& actor:result.at("actors"))
+            for(const auto* key:{"slot","rank","place","assets"})
+                if(!actor.at(key).is_number_integer())throw CodecError("lua_classic_asset_settlement_integer_required");
+        for(const auto& slot:result.at("winners"))
+            if(!slot.is_number_integer())throw CodecError("lua_classic_asset_settlement_integer_required");
+    }
+    GameSettlementDelivery delivery{context_.game_id,context_.room_id,0,0,context_.byte18.value,false,{},4};
+    delivery.winner_slots=std::move(winners);delivery.asset_totals=std::move(totals);
+    delivery.active_slots.assign(active.begin(),active.end());
+    return commit_result(outcomes,ranks,std::move(delivery),"user-total-assets-tied-first-v1; "+evidence);
+}
+std::vector<Bytes> RichonlineClassicTerminal::commit_result(std::span<const GameOutcome> outcomes,
+    std::span<const std::int8_t> ranks,GameSettlementDelivery delivery,const std::string& evidence) {
     auto participants=context_.participants;
     std::vector<std::string> operations;
     for(const auto& participant:participants)operations.push_back(participant.request.operation_id);
     for(std::size_t slot=0;slot<participants.size();++slot) {
         auto& request=participants[slot].request;
-        request.outcome=slot==static_cast<std::size_t>(winner)?GameOutcome::win:GameOutcome::loss;
+        request.outcome=outcomes[slot];
+        // 保留旧唯一存活者请求的规范文本，避免升级后同一操作键的重放失配。
+        request.policy.provenance+=delivery.message_version==3 ?
+            "; native-classic-last-survivor-v1; "+context_.byte18.evidence :
+            "; native-classic-terminal-v1; "+context_.byte18.evidence+"; "+evidence;
+        if(request.policy.provenance.size()>1024)throw CodecError("richonline_classic_terminal_reward_policy_invalid");
         const auto income=ledger_->income_snapshot(static_cast<std::uint8_t>(slot));
         request.achievement=GameSettlementAchievement{RichonlineAchievement::cash_earned,income.earned_cash,
             richonline_cash_earned_policy,income.ledger_revision};
-        request.delivery=GameSettlementDelivery{context_.game_id,context_.room_id,static_cast<std::int8_t>(slot),
-            request.outcome==GameOutcome::win?context_.win_rank:context_.loss_rank,context_.byte18.value,
-            context_.show_text_270,{static_cast<std::int8_t>(bankrupt)},3,operations,winner};
+        request.delivery=delivery;
+        request.delivery->human_slot=static_cast<std::int8_t>(slot);
+        request.delivery->rank_image_index=ranks[slot];
+        request.delivery->roster_operations=operations;
     }
     // DB失败会整体回滚。其后的失败保留committed_，不得把已结算对局改记为逃跑或重发奖励。
     const auto receipts=storage_.settle_game_match(participants);
@@ -86,8 +164,7 @@ std::vector<Bytes> RichonlineClassicTerminal::finish(std::span<const std::uint8_
             actors.push_back({static_cast<std::int8_t>(slot),request.delivery->rank_image_index,request.outcome,false,
                 context_.byte18.value,receipts[slot]});
         }
-        const std::array eliminated{static_cast<std::int8_t>(bankrupt)};
-        messages_=plan_richonline_settlement(context_.game_id,eliminated,actors,context_.show_text_270);
+        messages_=plan_richonline_settlement(context_.game_id,delivery.bankrupt_slots,actors,delivery.show_text_270);
         return messages_;
     } catch(...) {recovery_required_=true;throw;}
 }

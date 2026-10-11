@@ -39,6 +39,16 @@ struct GameSettlementDelivery {
     // 恢复时从这些已提交操作读取战绩，不接受调用方伪造其它角色的奖励回执。
     std::vector<std::string> roster_operations{};
     std::int8_t winner_slot=-1;
+    // 版本4用于经典月限：保留全部资产快照及活动资格，允许多名并列第一。
+    // 不修改版本3的规范JSON，旧收据/游标仍按原来唯一存活者的序列恢复。
+    std::vector<std::int8_t> winner_slots{};
+    std::vector<std::uint64_t> asset_totals{};
+    std::vector<std::uint8_t> active_slots{};
+    bool is_winner(std::int8_t slot) const noexcept {
+        if(message_version!=4)return slot==winner_slot;
+        for(const auto winner:winner_slots)if(winner==slot)return true;
+        return false;
+    }
 };
 struct GameSettlementItemReward {
     // Raw stage resource specification. These are not an inventory grant count
