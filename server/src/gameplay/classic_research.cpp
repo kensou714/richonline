@@ -69,7 +69,7 @@ void RichonlineClassicResearch::validate_entry(const RichonlineClassicPropertyEn
     const auto& cell=topology_.cell(entry.position);
     const auto property=property_->snapshot(entry.property);
     if(!cell.walkable || cell.property_ref!=entry.property || property.owner!=entry.actor ||
-        property.kind!=2 || property.level>5 || entry.sealed ||
+        property.kind!=2 || property.level>5 || entry.sealed || property.sealed_days ||
         entry.status.possession==7 || entry.status.sleepwalking || entry.status.frozen)
         throw CodecError("richonline_classic_research_ineligible");
 }

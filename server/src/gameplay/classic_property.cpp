@@ -53,6 +53,8 @@ RichonlineClassicProperty::RichonlineClassicProperty(std::uint16_t game_id,Richo
             property.kind,property.level,property.owner,property.price}).second)
             throw CodecError("richonline_classic_property_duplicate");
         districts_.emplace(property.id,property.district);
+        if(property.kind!=8 && property.kind!=9 && property.kind!=10)
+            seal_properties_.push_back(property.id);
     }
     for(const auto& cell:topology_.cells())
         if(cell.walkable && cell.property_ref>=0 && !properties_.contains(cell.property_ref))
@@ -66,8 +68,8 @@ RichonlineClassicPropertyState RichonlineClassicProperty::snapshot(std::int16_t 
 RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_purchase(
     std::int16_t property,std::uint8_t actor) const {
     if(pending_ || actor>=ledger_->actor_count()) throw CodecError("richonline_classic_property_card_context_invalid");
-    CardChange plan;plan.owner_=this;plan.count_=1;
-    plan.before_[0]=plan.after_[0]=snapshot(property);
+    CardChange plan;plan.owner_=this;
+    plan.before_={snapshot(property)};plan.after_=plan.before_;
     const auto& before=plan.before_[0];
     if(before.owner==actor || before.kind==8 || before.kind==9 || before.kind==10)
         throw CodecError("richonline_classic_purchase_card_target_invalid");
@@ -76,8 +78,8 @@ RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_pu
 RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_swap(
     std::int16_t source,std::int16_t target,bool buildings) const {
     if(pending_ || source==target) throw CodecError("richonline_classic_swap_card_context_invalid");
-    CardChange plan;plan.owner_=this;plan.count_=2;
-    plan.before_[0]=plan.after_[0]=snapshot(source);plan.before_[1]=plan.after_[1]=snapshot(target);
+    CardChange plan;plan.owner_=this;
+    plan.before_={snapshot(source),snapshot(target)};plan.after_=plan.before_;
     const auto& a=plan.before_[0];const auto& b=plan.before_[1];
     if(a.sprite_type!=b.sprite_type || a.kind==8 || a.kind==9 || a.kind==10 ||
         b.kind==8 || b.kind==9 || b.kind==10)
@@ -99,11 +101,23 @@ RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_de
     const auto& before=disaster.before();
     if(!before.level || before.kind==8 || before.kind==9 || before.kind==10)
         throw CodecError("richonline_classic_destruction_card_target_invalid");
-    CardChange plan;plan.owner_=this;plan.count_=1;
-    plan.before_[0]=before;plan.after_[0]=disaster.after();return plan;
+    CardChange plan;plan.owner_=this;
+    plan.before_={before};plan.after_={disaster.after()};return plan;
+}
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_seal(std::int16_t property) const {
+    if(pending_) throw CodecError("richonline_classic_seal_choice_pending");
+    static_cast<void>(snapshot(property));
+    const auto district=districts_.at(property);
+    CardChange plan;plan.owner_=this;
+    for(const auto id:seal_properties_) if(districts_.at(id)==district) {
+        const auto& state=properties_.at(id);
+        plan.before_.push_back(state);auto after=state;after.sealed_days=5;plan.after_.push_back(after);
+    }
+    return plan;
 }
 bool RichonlineClassicProperty::matches(const CardChange& plan) const noexcept {
-    if(plan.owner_!=this || pending_ || plan.count_<1 || plan.count_>2) return false;
+    // 特殊建筑脚下也可合法使用查封；同组无普通地产时仍扣卡，变更集合可以为空。
+    if(plan.owner_!=this || pending_ || plan.before_.size()!=plan.after_.size()) return false;
     for(const auto& before:plan.before()) {
         const auto found=properties_.find(before.id);
         if(found==properties_.end() || found->second!=before) return false;
@@ -115,6 +129,18 @@ bool RichonlineClassicProperty::commit_card_change(const CardChange& plan) noexc
     // 所有地块先匹配；查找和已有元素的标量赋值不分配内存，不留下半次交换。
     for(const auto& after:plan.after()) properties_.find(after.id)->second=after;
     return true;
+}
+void RichonlineClassicProperty::advance_seals(std::uint64_t completed_rounds) {
+    if(pending_ || !completed_rounds) throw CodecError("richonline_classic_seal_round_invalid");
+    if(completed_rounds==last_seal_round_) return;
+    if(last_seal_round_==std::numeric_limits<std::uint64_t>::max() || completed_rounds!=last_seal_round_+1)
+        throw CodecError("richonline_classic_seal_round_invalid");
+    // 7E3480只递减正数；计时变更与日历同属共享会话串行状态，不发额外查封包。
+    for(const auto id:seal_properties_) {
+        auto& state=properties_.at(id);
+        if(state.sealed_days) --state.sealed_days;
+    }
+    last_seal_round_=completed_rounds;
 }
 std::vector<std::uint64_t> RichonlineClassicProperty::asset_values(
     const std::function<std::uint64_t(const RichonlineClassicPropertyState&)>& valuation) const {
@@ -216,7 +242,7 @@ std::uint16_t RichonlineClassicProperty::begin(RichonlineClassicPropertyChoice c
     if(choice==RichonlineClassicPropertyChoice::purchase) {
         if(property.owner) throw CodecError("richonline_classic_property_already_owned");
     } else {
-        if(property.owner!=entry.actor || property.level>=5 || property.kind==1 || entry.sealed)
+        if(property.owner!=entry.actor || property.level>=5 || property.kind==1 || entry.sealed || property.sealed_days)
             throw CodecError("richonline_classic_property_upgrade_ineligible");
         // 打开UI13前先证明所有可选许可证来源可处理，避免选了group1道具后才拒绝。
         if(property.sprite_type!=11 && (property.kind<2 || property.kind>6))

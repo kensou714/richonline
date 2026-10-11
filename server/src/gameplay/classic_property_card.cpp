@@ -11,7 +11,7 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
     if(packet.size()<6) throw CodecError("richonline_classic_property_card_wire_invalid");
     const auto opcode=read_le(packet.first(2));
     const bool has_target=opcode==97 || opcode==98 || opcode==101;
-    if((opcode!=96 && opcode!=97 && opcode!=98 && opcode!=101 && opcode!=102) ||
+    if((opcode!=96 && opcode!=97 && opcode!=98 && opcode!=100 && opcode!=101 && opcode!=102) ||
         packet.size()!=(has_target?8U:6U) || read_le(packet.subspan(2,2))!=calendar || packet[4]>=8 || packet[5]!=0)
         throw CodecError("richonline_classic_property_card_wire_invalid");
     const auto actor=cards.actor_slot();
@@ -40,6 +40,9 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
         auto after=before.funds;after.cash-=price;
         plan.funds_=RichonlineGameFundsUpdate{actor,before,after};
         operation={{"operation","purchase"}};
+    } else if(opcode==100) {
+        plan.change_=property.prepare_card_seal(current_property);
+        operation={{"operation","seal"}};
     } else if(opcode==97 || opcode==98) {
         plan.change_=property.prepare_card_swap(current_property,target,opcode==98);
         operation={{"operation","swap"},{"property",target},{"buildings",opcode==98}};
