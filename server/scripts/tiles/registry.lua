@@ -4,6 +4,7 @@ local modules = {
     [6] = require("tiles.tile_6"),
     [7] = require("tiles.tile_7"),
     [8] = require("tiles.tile_8"),
+    [9] = require("tiles.tile_9"),
     [10] = require("tiles.tile_10"),
     [12] = require("tiles.tile_12"),
     [28] = require("tiles.tile_28"),

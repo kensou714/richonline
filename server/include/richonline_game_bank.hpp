@@ -3,8 +3,10 @@
 #include "codec.hpp"
 #include <chrono>
 #include <functional>
+#include <memory>
 
 namespace richnet {
+class LuaServer;
 enum class RichonlineGameBankAction : std::uint16_t { deposit = 0, withdraw = 1, exit = 2 };
 enum class RichonlineGameBankVisit { passing, landing };
 enum class RichonlineGameBankContinuation { await_choice, resume_movement, continue_landing };
@@ -52,7 +54,8 @@ class RichonlineGameBank final {
 public:
     using Clock = std::chrono::steady_clock;
     using Now = std::function<Clock::time_point()>;
-    RichonlineGameBank(std::uint16_t game_id,RichonlineGameBankWirePolicy policy,Now now);
+    RichonlineGameBank(std::uint16_t game_id,RichonlineGameBankWirePolicy policy,Now now,
+        std::shared_ptr<LuaServer> script = {});
     // 调用者须先验证角色、地图银行格、访问资格及原移动路线；模块不拥有持久化余额。
     RichonlineGameBankResult begin(const RichonlineGameBankEntry& entry);
     RichonlineGameBankResult handle(View request);
@@ -63,8 +66,10 @@ private:
     std::uint16_t game_id_;
     RichonlineGameBankWirePolicy policy_;
     Now now_;
+    std::shared_ptr<LuaServer> script_;
     std::optional<Pending> pending_;
-    RichonlineGameBankResult finish(RichonlineGameBankAction action,std::uint32_t amount,
-        RichonlineGameBankOutcome outcome);
+    // 只准备结果；完整Lua决策与回包通过核心复核后，调用者才关闭等待。
+    RichonlineGameBankResult transaction(const RichonlineGameBankEntry& entry,
+        const RichonlineGameBankRequest& request,bool timed_out) const;
 };
 }

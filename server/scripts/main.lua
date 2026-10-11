@@ -8,6 +8,7 @@ local game = require("game.session")
 local rewards = require("game.rewards")
 local feasts = require("events.feasts")
 local tiles = require("tiles.registry")
+local bank = require("tiles.tile_9")
 local bosses = require("bosses.registry")
 local boss_chest = require("bosses.chest")
 local lottery = require("cards.card_504")
@@ -21,6 +22,7 @@ local handlers = {
     ["network.poll"] = network.poll, ["network.sent"] = network.sent, ["network.disconnected"] = network.disconnected,
     ["game.action"] = game.action, ["rewards.pool"] = rewards.pool, ["feast.tickets"] = feasts.tickets,
     ["tile.land"] = tiles.land, ["tile.news_select"] = tiles.select_news,
+    ["bank.open"] = bank.open, ["bank.transaction"] = bank.transaction,
     ["boss.can_attack"] = bosses.can_attack,
     ["card.lottery_award"] = lottery.award,
     ["boss.attack"] = bosses.attack,

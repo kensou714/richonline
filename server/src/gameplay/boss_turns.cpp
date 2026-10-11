@@ -994,6 +994,12 @@ struct Turns {
         auto funds=bank_funds->funds;
         funds.cash=result.after.cash; funds.deposit=result.after.deposit;
         rules.ledger->commit(actor,*bank_funds,funds);
+        if(rules.log) rules.log("richonline_bank_completed actor="+std::to_string(actor)+
+            " position="+std::to_string(result.entry.position)+
+            " outcome="+std::to_string(static_cast<unsigned>(result.outcome))+
+            " cash="+std::to_string(result.after.cash)+" deposit="+std::to_string(result.after.deposit)+
+            " passing="+std::to_string(result.entry.visit==RichonlineGameBankVisit::passing)+
+            " lua="+std::to_string(static_cast<bool>(rules.script)));
         bank_funds.reset();
         retire_decision();
         if (result.continuation==RichonlineGameBankContinuation::resume_movement) {

@@ -485,7 +485,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     }
     if (policy.bank)
         rules.bank=std::make_shared<RichonlineGameBank>(startup.init.game_server_id,*policy.bank,
-            [] { return RichonlineGameBank::Clock::now(); });
+            [] { return RichonlineGameBank::Clock::now(); },rules.script);
     rules.log=[log,package_id,key=startup.room.key](const std::string& detail) {
         if (log) log("richonline_boss_action",{{"room",key},{"package",package_id},{"detail",detail},{"level","warning"}});
     };
