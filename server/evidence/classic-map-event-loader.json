@@ -1,0 +1,552 @@
+{
+  "function": "0x7DF010",
+  "function_bytes": {"start":"0x7df010","end":"0x7e0ddf","sha256":"655be16f26035166a48311cf35a06b0e807757bd39d002cb978a197b3baaf681"},
+  "ida_input_sha256": "cb35f69f3d49c2093897d4ea2cb547a1e38b213f3a8df0af52b859f9e661de77",
+  "pseudocode_excerpt": [
+    "  v69[31] = *(_DWORD *)Src;",
+    "  Src = (char *)Src + 4;",
+    "  if ( v69[31] > 0 )",
+    "  {",
+    "    v69[32] = CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(4 * v69[31]);",
+    "    j__memcpy((void *)v69[32], Src, 4 * v69[31]);",
+    "    Src = (char *)Src + 4 * v69[31];",
+    "  }",
+    "  v69[29] = *(_DWORD *)Src;",
+    "  Src = (char *)Src + 4;",
+    "  if ( v69[29] > 0 )",
+    "  {",
+    "    v69[30] = CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(8 * v69[29]);",
+    "    for ( k = 0; k < v69[29]; ++k )",
+    "    {",
+    "      *(_DWORD *)(v69[30] + 8 * k) = *(_DWORD *)Src;",
+    "      Src = (char *)Src + 4;",
+    "      *(_DWORD *)(v69[30] + 8 * k + 4) = *(_DWORD *)Src;",
+    "      Src = (char *)Src + 4;",
+    "    }",
+    "    v69[35] = *(_DWORD *)Src;",
+    "    Src = (char *)Src + 4;",
+    "    if ( v69[35] > 0 )",
+    "    {",
+    "      v69[36] = CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(4 * v69[35]);",
+    "      j__memcpy((void *)v69[36], Src, 4 * v69[35]);",
+    "      Src = (char *)Src + 4 * v69[35];",
+    "    }",
+    "    v69[37] = *(_DWORD *)Src;",
+    "    Src = (char *)Src + 4;",
+    "    if ( v69[37] > 0 )",
+    "    {",
+    "      v69[38] = CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(4 * v69[37]);",
+    "      j__memcpy((void *)v69[38], Src, 4 * v69[37]);",
+    "      Src = (char *)Src + 4 * v69[37];",
+    "    }",
+    "  }",
+    "  v69[43] = *(_DWORD *)Src;",
+    "  Src = (char *)Src + 4;",
+    "  if ( v69[43] > 0 )",
+    "  {",
+    "    v69[44] = CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(4 * v69[43]);",
+    "    j__memcpy((void *)v69[44], Src, 4 * v69[43]);",
+    "    Src = (char *)Src + 4 * v69[43];",
+    "  }",
+    "  v69[33] = *(_DWORD *)Src;",
+    "  Src = (char *)Src + 4;",
+    "  if ( v69[33] > 0 )",
+    "  {",
+    "    v69[34] = CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(4 * v69[33]);",
+    "    j__memcpy((void *)v69[34], Src, 4 * v69[33]);",
+    "    Src = (char *)Src + 4 * v69[33];",
+    "  }",
+    "  v69[73] = *(_DWORD *)Src;",
+    "  Src = (char *)Src + 4;",
+    "  v69[355] = *(_DWORD *)Src;",
+    "  Src = (char *)Src + 4;",
+    "  switch ( v69[355] )"
+  ],
+  "assembly_excerpt": [
+    [
+      "0x7e065c",
+      "lea     ecx, [eax+edx*4]",
+      "8d0c90"
+    ],
+    [
+      "0x7e065f",
+      "mov     [ebp+Src], ecx",
+      "898d58ffffff"
+    ],
+    [
+      "0x7e0665",
+      "push    4; Size",
+      "6a04"
+    ],
+    [
+      "0x7e0667",
+      "mov     edx, [ebp+Src]",
+      "8b9558ffffff"
+    ],
+    [
+      "0x7e066d",
+      "push    edx; Src",
+      "52"
+    ],
+    [
+      "0x7e066e",
+      "mov     eax, [ebp+var_14]",
+      "8b45ec"
+    ],
+    [
+      "0x7e0671",
+      "add     eax, 0ACh",
+      "05ac000000"
+    ],
+    [
+      "0x7e0676",
+      "push    eax; void *",
+      "50"
+    ],
+    [
+      "0x7e0677",
+      "call    j__memcpy",
+      "e86cdde2ff"
+    ],
+    [
+      "0x7e067c",
+      "add     esp, 0Ch",
+      "83c40c"
+    ],
+    [
+      "0x7e067f",
+      "mov     ecx, [ebp+Src]",
+      "8b8d58ffffff"
+    ],
+    [
+      "0x7e0685",
+      "add     ecx, 4",
+      "83c104"
+    ],
+    [
+      "0x7e0688",
+      "mov     [ebp+Src], ecx",
+      "898d58ffffff"
+    ],
+    [
+      "0x7e068e",
+      "mov     edx, [ebp+var_14]",
+      "8b55ec"
+    ],
+    [
+      "0x7e0691",
+      "cmp     dword ptr [edx+0ACh], 0",
+      "83baac00000000"
+    ],
+    [
+      "0x7e0698",
+      "jle     short loc_7E0702",
+      "7e68"
+    ],
+    [
+      "0x7e069a",
+      "mov     eax, [ebp+var_14]",
+      "8b45ec"
+    ],
+    [
+      "0x7e069d",
+      "mov     ecx, [eax+0ACh]",
+      "8b88ac000000"
+    ],
+    [
+      "0x7e06a3",
+      "shl     ecx, 2",
+      "c1e102"
+    ],
+    [
+      "0x7e06a6",
+      "push    ecx; Size",
+      "51"
+    ],
+    [
+      "0x7e06a7",
+      "call    CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(uint,int)",
+      "e8eb92e2ff"
+    ],
+    [
+      "0x7e06ac",
+      "add     esp, 4",
+      "83c404"
+    ],
+    [
+      "0x7e06af",
+      "mov     [ebp+var_274], eax",
+      "89858cfdffff"
+    ],
+    [
+      "0x7e06b5",
+      "mov     edx, [ebp+var_14]",
+      "8b55ec"
+    ],
+    [
+      "0x7e06b8",
+      "mov     eax, [ebp+var_274]",
+      "8b858cfdffff"
+    ],
+    [
+      "0x7e06be",
+      "mov     [edx+0B0h], eax",
+      "8982b0000000"
+    ],
+    [
+      "0x7e06c4",
+      "mov     ecx, [ebp+var_14]",
+      "8b4dec"
+    ],
+    [
+      "0x7e06c7",
+      "mov     edx, [ecx+0ACh]",
+      "8b91ac000000"
+    ],
+    [
+      "0x7e06cd",
+      "shl     edx, 2",
+      "c1e202"
+    ],
+    [
+      "0x7e06d0",
+      "push    edx; Size",
+      "52"
+    ],
+    [
+      "0x7e06d1",
+      "mov     eax, [ebp+Src]",
+      "8b8558ffffff"
+    ],
+    [
+      "0x7e06d7",
+      "push    eax; Src",
+      "50"
+    ],
+    [
+      "0x7e06d8",
+      "mov     ecx, [ebp+var_14]",
+      "8b4dec"
+    ],
+    [
+      "0x7e06db",
+      "mov     edx, [ecx+0B0h]",
+      "8b91b0000000"
+    ],
+    [
+      "0x7e06e1",
+      "push    edx; void *",
+      "52"
+    ],
+    [
+      "0x7e06e2",
+      "call    j__memcpy",
+      "e801dde2ff"
+    ],
+    [
+      "0x7e06e7",
+      "add     esp, 0Ch",
+      "83c40c"
+    ],
+    [
+      "0x7e06ea",
+      "mov     eax, [ebp+var_14]",
+      "8b45ec"
+    ],
+    [
+      "0x7e06ed",
+      "mov     ecx, [eax+0ACh]",
+      "8b88ac000000"
+    ],
+    [
+      "0x7e06f3",
+      "mov     edx, [ebp+Src]",
+      "8b9558ffffff"
+    ],
+    [
+      "0x7e06f9",
+      "lea     eax, [edx+ecx*4]",
+      "8d048a"
+    ],
+    [
+      "0x7e06fc",
+      "mov     [ebp+Src], eax",
+      "898558ffffff"
+    ],
+    [
+      "0x7e0702",
+      "push    4; Size",
+      "6a04"
+    ],
+    [
+      "0x7e0704",
+      "mov     ecx, [ebp+Src]",
+      "8b8d58ffffff"
+    ],
+    [
+      "0x7e070a",
+      "push    ecx; Src",
+      "51"
+    ],
+    [
+      "0x7e070b",
+      "mov     edx, [ebp+var_14]",
+      "8b55ec"
+    ],
+    [
+      "0x7e070e",
+      "add     edx, 84h",
+      "81c284000000"
+    ],
+    [
+      "0x7e0714",
+      "push    edx; void *",
+      "52"
+    ],
+    [
+      "0x7e0715",
+      "call    j__memcpy",
+      "e8cedce2ff"
+    ],
+    [
+      "0x7e071a",
+      "add     esp, 0Ch",
+      "83c40c"
+    ],
+    [
+      "0x7e071d",
+      "mov     eax, [ebp+Src]",
+      "8b8558ffffff"
+    ],
+    [
+      "0x7e0723",
+      "add     eax, 4",
+      "83c004"
+    ],
+    [
+      "0x7e0726",
+      "mov     [ebp+Src], eax",
+      "898558ffffff"
+    ],
+    [
+      "0x7e072c",
+      "mov     ecx, [ebp+var_14]",
+      "8b4dec"
+    ],
+    [
+      "0x7e072f",
+      "cmp     dword ptr [ecx+84h], 0",
+      "83b98400000000"
+    ],
+    [
+      "0x7e0736",
+      "jle     short loc_7E07A0",
+      "7e68"
+    ],
+    [
+      "0x7e0738",
+      "mov     edx, [ebp+var_14]",
+      "8b55ec"
+    ],
+    [
+      "0x7e073b",
+      "mov     eax, [edx+84h]",
+      "8b8284000000"
+    ],
+    [
+      "0x7e0741",
+      "shl     eax, 2",
+      "c1e002"
+    ],
+    [
+      "0x7e0744",
+      "push    eax; Size",
+      "50"
+    ],
+    [
+      "0x7e0745",
+      "call    CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(uint,int)",
+      "e84d92e2ff"
+    ],
+    [
+      "0x7e074a",
+      "add     esp, 4",
+      "83c404"
+    ],
+    [
+      "0x7e074d",
+      "mov     [ebp+var_278], eax",
+      "898588fdffff"
+    ],
+    [
+      "0x7e0753",
+      "mov     ecx, [ebp+var_14]",
+      "8b4dec"
+    ],
+    [
+      "0x7e0756",
+      "mov     edx, [ebp+var_278]",
+      "8b9588fdffff"
+    ],
+    [
+      "0x7e075c",
+      "mov     [ecx+88h], edx",
+      "899188000000"
+    ],
+    [
+      "0x7e0762",
+      "mov     eax, [ebp+var_14]",
+      "8b45ec"
+    ],
+    [
+      "0x7e0765",
+      "mov     ecx, [eax+84h]",
+      "8b8884000000"
+    ],
+    [
+      "0x7e076b",
+      "shl     ecx, 2",
+      "c1e102"
+    ],
+    [
+      "0x7e076e",
+      "push    ecx; Size",
+      "51"
+    ],
+    [
+      "0x7e076f",
+      "mov     edx, [ebp+Src]",
+      "8b9558ffffff"
+    ],
+    [
+      "0x7e0775",
+      "push    edx; Src",
+      "52"
+    ],
+    [
+      "0x7e0776",
+      "mov     eax, [ebp+var_14]",
+      "8b45ec"
+    ],
+    [
+      "0x7e0779",
+      "mov     ecx, [eax+88h]",
+      "8b8888000000"
+    ],
+    [
+      "0x7e077f",
+      "push    ecx; void *",
+      "51"
+    ],
+    [
+      "0x7e0780",
+      "call    j__memcpy",
+      "e863dce2ff"
+    ],
+    [
+      "0x7e0785",
+      "add     esp, 0Ch",
+      "83c40c"
+    ],
+    [
+      "0x7e0788",
+      "mov     edx, [ebp+var_14]",
+      "8b55ec"
+    ],
+    [
+      "0x7e078b",
+      "mov     eax, [edx+84h]",
+      "8b8284000000"
+    ],
+    [
+      "0x7e0791",
+      "mov     ecx, [ebp+Src]",
+      "8b8d58ffffff"
+    ],
+    [
+      "0x7e0797",
+      "lea     edx, [ecx+eax*4]",
+      "8d1481"
+    ],
+    [
+      "0x7e079a",
+      "mov     [ebp+Src], edx",
+      "899558ffffff"
+    ],
+    [
+      "0x7e07a0",
+      "push    4; Size",
+      "6a04"
+    ],
+    [
+      "0x7e07a2",
+      "mov     eax, [ebp+Src]",
+      "8b8558ffffff"
+    ],
+    [
+      "0x7e07a8",
+      "push    eax; Src",
+      "50"
+    ],
+    [
+      "0x7e07a9",
+      "mov     ecx, [ebp+var_14]",
+      "8b4dec"
+    ],
+    [
+      "0x7e07ac",
+      "add     ecx, 124h",
+      "81c124010000"
+    ],
+    [
+      "0x7e07b2",
+      "push    ecx; void *",
+      "51"
+    ],
+    [
+      "0x7e07b3",
+      "call    j__memcpy",
+      "e830dce2ff"
+    ],
+    [
+      "0x7e07b8",
+      "add     esp, 0Ch",
+      "83c40c"
+    ],
+    [
+      "0x7e07bb",
+      "mov     edx, [ebp+Src]",
+      "8b9558ffffff"
+    ],
+    [
+      "0x7e07c1",
+      "add     edx, 4",
+      "83c204"
+    ],
+    [
+      "0x7e07c4",
+      "mov     [ebp+Src], edx",
+      "899558ffffff"
+    ],
+    [
+      "0x7e07ca",
+      "push    4; Size",
+      "6a04"
+    ],
+    [
+      "0x7e07cc",
+      "mov     eax, [ebp+Src]",
+      "8b8558ffffff"
+    ],
+    [
+      "0x7e07d2",
+      "push    eax; Src",
+      "50"
+    ],
+    [
+      "0x7e07d3",
+      "mov     ecx, [ebp+var_14]",
+      "8b4dec"
+    ]
+  ]
+}
