@@ -18,6 +18,7 @@
 #include "richonline_research_cards.hpp"
 #include "richonline_boss_landing.hpp"
 #include "richonline_boss_property.hpp"
+#include "richonline_chance_landing.hpp"
 #include "lua_wire.hpp"
 #include "richonline_pet.hpp"
 #include "richonline_pet_chat.hpp"
@@ -1127,16 +1128,17 @@ struct Turns {
         if(rules.script) {
             std::optional<RichonlineBossCards::PreparedLanding> reward_plan;
             std::optional<RichonlineTicketLandingPlan> ticket_plan;
+            std::shared_ptr<RichonlineChanceLandingAttempt> news_plan;
             std::optional<std::int16_t> selected_reward;
             bool native_called=false,random_called=false;
             const auto require_reward=[&] {
-                if(native_called || reward_plan || ticket_plan || !rules.cards || context.actor_slot!=0 || context.synthetic_actor ||
+                if(native_called || reward_plan || ticket_plan || news_plan || !rules.cards || context.actor_slot!=0 || context.synthetic_actor ||
                     context.game_mode!=3 || context.property_ref!=-1 || richonline_landing_controlled(context.actor_status) ||
                     !richonline_boss_card_reward_tile(context.static_type))
                     throw CodecError("lua_tile_reward_out_of_scope");
             };
             const LuaBindings api{{"tile.native",[&](const LuaValue&) {
-                if(native_called || reward_plan || ticket_plan || random_called) throw CodecError("lua_native_landing_already_called");
+                if(native_called || reward_plan || ticket_plan || news_plan || random_called) throw CodecError("lua_native_landing_already_called");
                 native_called=true;
                 scripted_result=native_landing();return LuaValue(true);
             }},{"tile.cards.candidates",[&](const LuaValue&) {
@@ -1160,7 +1162,7 @@ struct Turns {
                 if(!reward_plan) throw CodecError("lua_tile_reward_unavailable");
                 return LuaValue(true);
             }},{"tile.tickets.prepare",[&](const LuaValue& args) {
-                if(native_called || reward_plan || ticket_plan || random_called || !rules.ledger)
+                if(native_called || reward_plan || ticket_plan || news_plan || random_called || !rules.ledger)
                     throw CodecError("lua_tile_ticket_out_of_scope");
                 const auto& amount=args.at("amount");
                 if(!amount.is_number_integer() || amount<0 || amount>80)
@@ -1168,10 +1170,20 @@ struct Turns {
                 ticket_plan=prepare_richonline_ticket_landing(init.game_server_id,context,
                     rules.ledger->snapshot(context.actor_slot),amount.get<std::uint32_t>());
                 return LuaValue(true);
+            }},{"tile.news.prepare",[&](const LuaValue&) {
+                if(native_called || reward_plan || ticket_plan || news_plan || random_called ||
+                    !rules.prepare_chance_landing || !rules.ledger || !rules.cards || !richonline_news_landing_allowed(context))
+                    throw CodecError("lua_tile_news_out_of_scope");
+                news_plan=rules.prepare_chance_landing(context);
+                if(!news_plan || !news_plan->prepared) throw CodecError("lua_tile_news_unavailable");
+                return LuaValue(lua_bytes(View(news_plan->prepared->packet)));
             }}};
             const auto response=rules.script->call("tile.land",{{"type",context.static_type},{"position",context.position},
                 {"actor",context.actor_slot},{"map",rules.script_map},{"game_id",init.game_server_id},
                 {"ticket_landing_available",rules.ledger && context.game_mode==3 && context.property_ref==-1},
+                {"news_landing_available",rules.prepare_chance_landing && rules.ledger && rules.cards &&
+                    richonline_news_landing_allowed(context) && context.property_ref==-1 &&
+                    (!context.occupied_by_other_actor || context.collision_resolved) && context.road_degree>0 && context.road_degree<=4},
                 {"synthetic_actor",context.synthetic_actor},{"controlled",richonline_landing_controlled(context.actor_status)},
                 {"card_reward_allowed",rules.cards && context.actor_slot==0 && !context.synthetic_actor &&
                     context.game_mode==3 && context.property_ref==-1 && !richonline_landing_controlled(context.actor_status)}},api);
@@ -1198,6 +1210,33 @@ struct Turns {
                 if(rules.log) rules.log("lua_tile_tickets_committed actor="+std::to_string(funds.actor)+
                     " type="+std::to_string(context.static_type)+" position="+std::to_string(context.position)+
                     " before="+std::to_string(funds.before.funds.tickets)+" after="+std::to_string(funds.after.tickets));
+            }
+            if(news_plan) {
+                auto& prepared=*news_plan->prepared;
+                Bytes stop;append_le(stop,0x4013,2);append_le(stop,init.game_server_id,2);
+                append_le(stop,static_cast<std::uint16_t>(context.position),2);
+                if(!response.is_array() || response.size()!=2) throw CodecError("lua_tile_news_response_invalid");
+                RichonlineLandingResult result{{lua_bytes(response[0]),lua_bytes(response[1])},RichonlineLandingProgress::complete};
+                if(result.messages[0]!=stop || result.messages[1]!=prepared.packet)
+                    throw CodecError("lua_tile_news_response_mismatch");
+                if(prepared.actor!=actor || status[actor]!=prepared.expected_status || !supported_status(prepared.updated_status))
+                    throw CodecError("lua_tile_news_status_invalid");
+                auto change=rules.npcs ? std::optional{rules.npcs->prepare_status_change(actor,status[actor],prepared.updated_status)} : std::nullopt;
+                const std::array updates{RichonlineGameFundsUpdate{actor,prepared.expected_funds,prepared.updated_funds}};
+                // 所有分配、脚本和回包检查均在此前完成；账本锁内复核并提交其余无抛出状态。
+                if(!rules.ledger->commit_batch(updates,[&]() noexcept {
+                    if(rules.cards->inventory()!=prepared.expected_inventory || status[actor]!=prepared.expected_status ||
+                        (change && !rules.npcs->matches_status_change(*change,status[actor]))) return false;
+                    rules.cards->commit_inventory(prepared.updated_inventory);
+                    if(change) {
+                        if(!rules.npcs->commit_status_change(*change,status[actor])) std::terminate();
+                    } else status[actor]=prepared.updated_status;
+                    return true;
+                })) throw CodecError("lua_tile_news_stale");
+                scripted_result=std::move(result);
+                if(rules.log) rules.log("lua_tile_news_committed actor="+std::to_string(actor)+
+                    " type="+std::to_string(context.static_type)+" event="+std::to_string(prepared.event)+
+                    " category="+std::to_string(prepared.category));
             }
             if(!scripted_result) throw CodecError("lua_landing_continuation_required");
         } else scripted_result=native_landing();

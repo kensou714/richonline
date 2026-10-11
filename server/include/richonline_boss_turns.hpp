@@ -30,6 +30,7 @@ struct RichonlineTimedBombStepContext;
 struct RichonlineResearchTrapRules;
 struct RichonlineFireTrapRules;
 struct RichonlinePoisonRules;
+struct RichonlineChanceLandingAttempt;
 struct RichonlineHibernateTurnPolicy {
     std::shared_ptr<const RichonlineChanceResources> resources;
     RichonlineHibernateRules rules;
@@ -167,6 +168,8 @@ struct RichonlineBossTurnRules {
     std::function<std::vector<Bytes>(bool)> finish_boss_chest{};
     // 4010先刷新所有角色的条件装备属性，再处理回血、光环及连续攻击。
     std::function<void()> refresh_equipment{};
+    // 新闻只准备不提交；脚本回包通过后由回合层原子提交账本、手牌和状态时钟。
+    std::function<std::shared_ptr<RichonlineChanceLandingAttempt>(const RichonlineLandingContext&)> prepare_chance_landing{};
 };
 // 双角色移动，支持显式配置的移动卡状态；动态物件与其他控制状态另行接入。
 // 每个落点都必须显式处理；未知事件不得直接推进回合。

@@ -234,9 +234,9 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
         const auto status_rules=RichonlineStatusRules::load(resources);
         const auto chance_policy=make_richonline_closed_chance_policy(*event_table,stage.map_name,
             rules.cards->tile_reward_cards(),map_chance.enable_motion_status,policy.cards->opaque6_7);
-        rules.chance_landing=[event_table,status_rules,chance_policy,chance,ledger,cards=rules.cards,script,
-            random=policy.random,game=startup.init.game_server_id,log,package_id,key=startup.room.key]
-            (const RichonlineLandingContext& context)->std::optional<RichonlineLandingResult> {
+        rules.prepare_chance_landing=[event_table,status_rules,chance_policy,chance,ledger,cards=rules.cards,script=rules.script,
+            random=policy.random,game=startup.init.game_server_id]
+            (const RichonlineLandingContext& context)->std::shared_ptr<RichonlineChanceLandingAttempt> {
             // Only road events with no subsequent property or actor collision
             // can proceed directly to the shared final-junction phase.
             if (context.property_ref!=-1 || (context.occupied_by_other_actor && !context.collision_resolved) || context.road_degree==0 || context.road_degree>4)
@@ -255,7 +255,14 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
                 context,game,ledger->snapshot(context.actor_slot),cards->inventory(),random,selector);
             if (attempt.disposition==RichonlineChanceLandingDisposition::not_applicable) return {};
             if (!attempt.prepared) throw CodecError("richonline_chance_no_closed_event");
-            auto& prepared=*attempt.prepared;
+            return std::make_shared<RichonlineChanceLandingAttempt>(std::move(attempt));
+        };
+        rules.chance_landing=[prepare=rules.prepare_chance_landing,ledger,cards=rules.cards,
+            game=startup.init.game_server_id,log,package_id,key=startup.room.key]
+            (const RichonlineLandingContext& context)->std::optional<RichonlineLandingResult> {
+            const auto attempt=prepare(context);
+            if(!attempt) return {};
+            auto& prepared=*attempt->prepared;
             if (cards->inventory()!=prepared.expected_inventory)
                 throw CodecError("richonline_chance_inventory_changed");
             Bytes stop; append_le(stop,0x4013,2); append_le(stop,game,2);
@@ -267,7 +274,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             if (log) log("richonline_chance_completed",{{"room",key},{"package",package_id},{"actor",context.actor_slot},
                 {"event",prepared.event},{"category",prepared.category},{"selection_policy",prepared.policy},
                 {"synthetic_actor",context.synthetic_actor},{"sleepwalking",context.actor_status.sleepwalking},
-                {"excluded_events",attempt.excluded_events},{"level","info"}});
+                {"excluded_events",attempt->excluded_events},{"level","info"}});
             return result;
         };
     }
