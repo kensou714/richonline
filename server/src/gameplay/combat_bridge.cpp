@@ -134,6 +134,11 @@ RichonlineCombatBridgeResult RichonlineCombatBridge::finish_round(std::span<cons
     const auto before=snapshot(refs);
     return apply(refs,before,prepare_richonline_combat_mine_day(before.combat,world_,day,true));
 }
+RichonlineCombatBridgeResult RichonlineCombatBridge::boss_mine_burst(std::span<const RichonlineCombatActorRef> refs,
+    std::uint8_t boss,std::uint8_t count,const std::function<std::size_t(std::size_t)>& random) {
+    const auto before=snapshot(refs);
+    return apply(refs,before,prepare_richonline_boss_mine_burst(before.combat,world_,boss,count,random));
+}
 RichonlineCombatBridgeResult RichonlineCombatBridge::missile_base_round(std::span<const RichonlineCombatActorRef> refs,
     std::uint64_t round,const std::function<std::size_t(std::size_t)>& random,
     const std::function<void(const std::string&)>& log) {

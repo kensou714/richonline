@@ -127,7 +127,22 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
     // 开局校验BOSS资源；生产会话另外提供与客户端回合入口一致的装备缓存。
     (void)modifiers->equipment(equipment[1],stage.boss.base_cash);
     RichonlineCombatWorldFactoryResult result;
+    const auto script=LuaServer::create();
+    if(script) {
+        const auto chances=script->call("boss.probabilities",{{"map",stage.map_name}});
+        if(!chances.is_null()) {
+            if(!chances.is_array() || chances.size()!=3) throw CodecError("lua_boss_probability_invalid");
+            std::array<std::uint8_t,3> values;
+            for(std::size_t i=0;i<values.size();++i) {
+                if(!chances[i].is_number_integer() || chances[i]<0 || chances[i]>100)
+                    throw CodecError("lua_boss_probability_invalid");
+                values[i]=chances[i].get<std::uint8_t>();
+            }
+            result.boss.turn_probabilities=values;
+        }
+    }
     result.target_policy=policy.range.name;
+    result.world.mine_burst_talk=stage.negative_possession_talk;
     result.world.width=static_cast<std::uint16_t>(topology.width());
     result.world.height=static_cast<std::uint16_t>(topology.height());
     for(const auto& cell:topology.cells()) if(cell.walkable)
@@ -139,14 +154,24 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         const auto& cell=topology.cell(position);
         return cell.walkable?cell.neighbors[direction]:std::optional<std::int16_t>{};
     };
-    result.world.targets=[topology,range=policy.range,mine_supported=policy.mine_landing_supported]
+    result.world.targets=[topology,range=policy.range,mine_supported=policy.mine_landing_supported,
+        player_targets=result.boss.turn_probabilities.has_value()]
         (std::uint8_t actor,RichonlineCombatEffect effect,const RichonlineCombatSessionView& state) {
         if(actor>=state.actors.size() || !state.actors[actor]) throw CodecError("richonline_combat_world_actor_invalid");
         const auto origin=state.actors[actor]->position;
         if(!topology.cell(origin).walkable) throw CodecError("richonline_combat_world_origin_invalid");
         std::vector<std::int16_t> targets;
         for(const auto& cell:topology.cells()) {
-            if(!within_range(origin,cell.position,topology,range)) continue;
+            if(player_targets) {
+                // 每次攻击重读存活玩家的位置；地雷取玩家四邻道路，飞弹/核弹直接瞄准玩家。
+                const auto near_player=std::ranges::any_of(state.actors,[&](const auto& target) {
+                    if(!target || target->slot==actor || !target->active || target->in_hospital || target->in_prison)
+                        return false;
+                    return effect==RichonlineCombatEffect::mine ?
+                        distance(target->position,cell.position,topology.width())==1 : target->position==cell.position;
+                });
+                if(!near_player) continue;
+            } else if(!within_range(origin,cell.position,topology,range)) continue;
             if(effect==RichonlineCombatEffect::mine) {
                 if(!cell.walkable || placement_occupied(cell.position,state) || !mine_supported(cell.position,state)) continue;
             } else if(effect!=RichonlineCombatEffect::missile && effect!=RichonlineCombatEffect::nuclear &&
@@ -172,6 +197,14 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
             // and empty tiles and is independent of BOSS authorization range.
             targets.push_back(cell.position);
         }
+        return targets;
+    };
+    result.world.mine_burst_targets=[topology,mine_supported=policy.mine_landing_supported]
+        (const RichonlineCombatSessionView& state) {
+        std::vector<std::int16_t> targets;
+        for(const auto& cell:topology.cells())
+            if(cell.walkable && !placement_occupied(cell.position,state) && mine_supported(cell.position,state))
+                targets.push_back(cell.position);
         return targets;
     };
     result.world.detonation_roots=[topology,range=policy.range]
@@ -230,7 +263,7 @@ RichonlineCombatWorldFactoryResult make_richonline_combat_world(const std::files
         default:throw CodecError("richonline_combat_world_projectile_invalid");
         }
     }
-    if(auto script=LuaServer::create()) {
+    if(script) {
         result.world.select_missile_base_target=[script]
             (std::span<const std::int16_t> candidates,std::size_t draw) {
             if(candidates.empty() || draw>=candidates.size())

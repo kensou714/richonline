@@ -5,6 +5,13 @@ local bosses = {
     kid_ken = require("bosses.kid_ken"), zhao_linger = require("bosses.zhao_linger"),
 }
 local M = {}
+function M.probabilities(request)
+    local map = assert(maps[request.map], "未注册地图：" .. request.map)
+    local boss = assert(bosses[map.boss], "未注册 BOSS")
+    local stage = tonumber(request.map:match("BS_%d+_(%d+)%.emp$"))
+    assert(stage and stage >= 1, "BOSS关卡编号无效")
+    return boss.probabilities and boss.probabilities(stage) or nil
+end
 function M.attack(request)
     local map = assert(maps[request.map], "未注册地图：" .. request.map)
     return assert(bosses[map.boss], "未注册 BOSS").attack(request)

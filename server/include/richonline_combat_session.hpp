@@ -97,6 +97,8 @@ struct RichonlineCombatWorld {
     std::vector<std::int16_t> missile_base_roads;
     // 每发弹重建候选后，由业务选择本次随机数对应的位置；不得重抽或改动战斗状态。
     std::function<std::int16_t(std::span<const std::int16_t>,std::size_t)> select_missile_base_target{};
+    std::function<std::vector<std::int16_t>(const RichonlineCombatSessionView&)> mine_burst_targets{};
+    std::optional<std::array<std::uint16_t,2>> mine_burst_talk{};
 };
 struct RichonlineBossAttackRandomness {
     // Independent categorical draws: 0..79 none,80..89 mine,90..99 projectile.
@@ -112,6 +114,8 @@ struct RichonlineBossCombatPolicy {
     // Lua 负责 AI 类别选择；核心仍按实际状态和合法格集执行战斗事务。
     std::function<std::optional<RichonlineCombatEffect>(std::uint8_t,
         const std::function<std::size_t(std::size_t)>&)> select_attack{};
+    // 地雷、飞弹、核弹每个BOSS回合各自独立判定一次；没有配置的旧关卡保留既有策略。
+    std::optional<std::array<std::uint8_t,3>> turn_probabilities{};
 };
 enum class RichonlineCombatAttemptOutcome { none,executed,controlled,no_legal_target,actor_eliminated };
 struct RichonlineCombatAttackAttempt {
@@ -156,6 +160,9 @@ RichonlineCombatTurnPlan prepare_richonline_missile_base_round(const RichonlineC
 RichonlineCombatTurnPlan prepare_richonline_boss_combat_turn(const RichonlineCombatSessionView&,
     const RichonlineCombatWorld&,std::uint8_t boss,const RichonlineBossAttackRandomness&,
     const RichonlineBossCombatPolicy& = {});
+RichonlineCombatTurnPlan prepare_richonline_boss_mine_burst(const RichonlineCombatSessionView&,
+    const RichonlineCombatWorld&,std::uint8_t boss,std::uint8_t count,
+    const std::function<std::size_t(std::size_t)>&);
 RichonlineCombatTurnPlan prepare_richonline_combat_human_card(const RichonlineCombatSessionView&,
     const RichonlineCombatWorld&,std::uint8_t actor,const RichonlineTargetCardRequest&,
     std::uint16_t expected_calendar,const RichonlineBossCards::PreparedConsumption&);

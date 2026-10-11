@@ -55,6 +55,9 @@ struct RichonlineResearchTrapPlan {
     RichonlineChanceInventory expected_inventory,after_inventory;
     Bytes success;
 };
+// 401C(type26)与40ED共用的区域火焰规则；只规划地面，不扣卡也不提交。
+void plan_richonline_fire_area(RichonlineGroundMap&,std::int16_t center,
+    const RichonlineResearchTrapMap&,const RichonlineResearchTrapRules&);
 RichonlineResearchTrapPlan plan_richonline_research_trap(const RichonlineResearchCardRequest&,
     const RichonlineResearchCardContext&,const RichonlineResearchTrapMap&,
     const RichonlineResearchTrapRules&,const RichonlineChanceInventory&,const RichonlineGroundSnapshot&);

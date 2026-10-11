@@ -16,6 +16,8 @@ class RichonlineResultDeliveryGate final {
 public:
     explicit RichonlineResultDeliveryGate(RichonlineResultDisplayPolicy);
     void game_frames_sent();
+    // 在最终结果发送前预留前置奖励/胜利提示的播放时间，不重置已开始的期限。
+    void require_display_delay(std::chrono::milliseconds);
     bool ready() const;
 private:
     RichonlineResultDisplayPolicy policy_;

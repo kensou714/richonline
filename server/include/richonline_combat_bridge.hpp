@@ -35,6 +35,8 @@ public:
         std::shared_ptr<RichonlineBossProperty>,RichonlineCombatWorld,RichonlineBossCombatPolicy);
     RichonlineCombatBridgeResult boss_turn(std::span<const RichonlineCombatActorRef>,std::uint8_t boss,
         const RichonlineBossAttackRandomness&,const std::function<void(const std::string&)>& log={});
+    RichonlineCombatBridgeResult boss_mine_burst(std::span<const RichonlineCombatActorRef>,std::uint8_t boss,
+        std::uint8_t count,const std::function<std::size_t(std::size_t)>&);
     RichonlineCombatBridgeResult human_card(std::span<const RichonlineCombatActorRef>,
         const RichonlineTargetCardRequest&,std::uint16_t expected_calendar,bool recover_refusal=false,
         const std::function<void(const std::string&)>& log={});

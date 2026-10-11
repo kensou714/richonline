@@ -22,6 +22,7 @@ local classic_property = require("buildings.classic_property")
 local classic_research = require("buildings.classic_research")
 local bosses = require("bosses.registry")
 local boss_chest = require("bosses.chest")
+local boss_skills = require("bosses.skills")
 local lottery = require("cards.card_504")
 local rent_transfer = require("cards.card_1056")
 local forced_sale = require("cards.card_1124")
@@ -61,6 +62,8 @@ local handlers = {
     ["stock.open"] = stock.open,
     ["stock.quote"] = stock.quote, ["stock.market"] = stock.market,
     ["boss.can_attack"] = bosses.can_attack,
+    ["boss.probabilities"] = bosses.probabilities,
+    ["boss.skill"] = boss_skills.plan,
     ["card.lottery_award"] = lottery.award,
     ["card.rent_transfer"] = rent_transfer.rent,
     ["card.stock_forced_sale"] = forced_sale.liquidate,

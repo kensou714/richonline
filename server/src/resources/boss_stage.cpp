@@ -182,6 +182,17 @@ RichonlineBossStage parse_richonline_boss_stage(std::string_view text,std::strin
     if(record.contains("investReturn")) stage.invest_return=bounded(record,"investReturn");
     stage.first_reward=reward(record,"first"); stage.repeat_reward=reward(record,"again");
     stage.chest_drops=chest_drops(record);
+    for(const auto group:std::array{5,1,2,3,4,6,7}) {
+        for(int index=1;index<=16;++index) {
+            const auto entry=record.find("talk_"+std::to_string(group)+"_"+std::to_string(index));
+            if(entry!=record.end() && !trim(entry->second).empty()) {
+                stage.negative_possession_talk=std::array{static_cast<std::uint16_t>(group),
+                    static_cast<std::uint16_t>(index)};
+                break;
+            }
+        }
+        if(stage.negative_possession_talk) break;
+    }
     stage.player_count_choices=player_choices(required(record,"plyNum"));
     if (stage.player_selection==0 || std::find(stage.player_count_choices.begin(),stage.player_count_choices.end(),
         stage.player_selection)==stage.player_count_choices.end()) throw CodecError("richonline_stage_player_selection_invalid");

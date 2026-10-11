@@ -171,7 +171,7 @@ struct RichonlineBossTurnRules {
     std::shared_ptr<LuaServer> script{};
     std::string script_map{};
     LuaNative script_database{};
-    // 只在持久胜利已锁定后调用；true表示落点拾取，false表示三回合用尽。
+    // 只在持久胜利已锁定后调用；true表示落点拾取，false表示奖励移动机会用尽。
     std::function<std::vector<Bytes>(bool)> finish_boss_chest{};
     // 4010先刷新所有角色的条件装备属性，再处理回血、光环及连续攻击。
     std::function<void()> refresh_equipment{};

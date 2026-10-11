@@ -107,6 +107,21 @@ Bytes encode_richonline_research_card_success(std::uint16_t game,const Richonlin
     else {wire.push_back(r.poison_activation);wire.push_back(r.opaque7);}
     return wire;
 }
+void plan_richonline_fire_area(RichonlineGroundMap& after,std::int16_t center,
+    const RichonlineResearchTrapMap& map,const RichonlineResearchTrapRules& rules) {
+    rules_valid(rules);
+    const auto count=static_cast<std::uint32_t>(map.width)*map.height;
+    if(!map.width || !map.height || count>32768 || !map.cell || center<0 ||
+        static_cast<std::uint32_t>(center)>=count || map.fire_owner<-1 || map.fire_owner>=8)
+        throw CodecError("richonline_fire_area_invalid");
+    const int x=center%map.width,y=center/map.width,radius=rules.fire_radius;
+    for(int row=std::max(0,y-radius);row<=std::min(static_cast<int>(map.height)-1,y+radius);++row)
+        for(int col=std::max(0,x-radius);col<=std::min(static_cast<int>(map.width)-1,x+radius);++col) {
+            const auto position=static_cast<std::int16_t>(row*map.width+col);const auto cell=map.cell(position);
+            if(!cell.walkable || cell.actor_occupied || forbidden(cell.static_type) || after.contains(position)) continue;
+            after.emplace(position,RichonlineGroundObject{26,static_cast<std::uint8_t>(map.fire_owner),rules.fire_rounds});
+        }
+}
 RichonlineResearchTrapPlan plan_richonline_research_trap(const RichonlineResearchCardRequest& r,
     const RichonlineResearchCardContext& context,const RichonlineResearchTrapMap& map,
     const RichonlineResearchTrapRules& rules,const RichonlineChanceInventory& inventory,const RichonlineGroundSnapshot& ground) {
@@ -124,13 +139,7 @@ RichonlineResearchTrapPlan plan_richonline_research_trap(const RichonlineResearc
         after.emplace(*r.position,RichonlineGroundObject{25,255,255});
     } else {
         if(map.fire_owner!=context.actor && map.fire_owner!=-1) throw CodecError("richonline_research_fire_owner");
-        const int x=*r.position%map.width,y=*r.position/map.width,radius=rules.fire_radius;
-        for(int row=std::max(0,y-radius);row<=std::min(static_cast<int>(map.height)-1,y+radius);++row)
-            for(int col=std::max(0,x-radius);col<=std::min(static_cast<int>(map.width)-1,x+radius);++col) {
-                const auto position=static_cast<std::int16_t>(row*map.width+col);const auto cell=map.cell(position);
-                if(!cell.walkable || cell.actor_occupied || forbidden(cell.static_type) || after.contains(position)) continue;
-                after.emplace(position,RichonlineGroundObject{26,static_cast<std::uint8_t>(map.fire_owner),rules.fire_rounds});
-            }
+        plan_richonline_fire_area(after,*r.position,map,rules);
         // NEW consumes the card even if every cell in the chosen square is excluded.
     }
     return {ground,std::move(after),inventory,std::move(after_inventory),encode_richonline_research_card_success(context.game,r)};

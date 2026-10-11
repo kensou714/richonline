@@ -48,6 +48,8 @@ struct RichonlineBossStage {
     // Absent keys stay absent. Static67 consumers must not invent a fee/reward.
     std::optional<std::uint32_t> invest_base, invest_return;
     std::vector<RichonlineBossDrop> chest_drops;
+    // 原资源中非空的受负面神明影响台词；缺少第5组时回退到实际存在的台词。
+    std::optional<std::array<std::uint16_t,2>> negative_possession_talk{};
 };
 
 RichonlineBossStage parse_richonline_boss_stage(std::string_view bosswar_text,

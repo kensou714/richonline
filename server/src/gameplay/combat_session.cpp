@@ -340,7 +340,10 @@ RichonlineCombatTurnPlan prepare_richonline_boss_combat_turn(const RichonlineCom
     for (const auto roll:randomness.rolls)
         if (roll>=100) throw CodecError("richonline_combat_session_roll_invalid");
     bool changed=false;
-    for (std::size_t i=0;i<4;++i) {
+    if(policy.turn_probabilities) for(const auto chance:*policy.turn_probabilities)
+        if(chance>100) throw CodecError("richonline_boss_probability_invalid");
+    const auto attempts=policy.turn_probabilities ? 3U : 4U;
+    for (std::size_t i=0;i<attempts;++i) {
         auto& attempt=plan.boss_attempts[i];
         const auto& actor=*plan.after.actors[boss];
         if (!actor.active) { attempt.outcome=RichonlineCombatAttemptOutcome::actor_eliminated; continue; }
@@ -350,7 +353,10 @@ RichonlineCombatTurnPlan prepare_richonline_boss_combat_turn(const RichonlineCom
         }
         const auto roll=randomness.rolls[i];
         std::optional<RichonlineCombatEffect> selected;
-        if(policy.select_attack) selected=policy.select_attack(roll,randomness.bounded);
+        if(policy.turn_probabilities) {
+            constexpr std::array effects{RichonlineCombatEffect::mine,RichonlineCombatEffect::missile,RichonlineCombatEffect::nuclear};
+            if(roll<(*policy.turn_probabilities)[i]) selected=effects[i];
+        } else if(policy.select_attack) selected=policy.select_attack(roll,randomness.bounded);
         else if(roll>=80) selected=roll<90?RichonlineCombatEffect::mine:
             policy.projectiles[policy.projectiles.size()==1?0:select(randomness,policy.projectiles.size())];
         if(!selected) continue;
@@ -377,8 +383,49 @@ RichonlineCombatTurnPlan prepare_richonline_boss_combat_turn(const RichonlineCom
             plan.after.mines=plan_richonline_mine_placement(plan.after.mines,target,static_cast<std::int8_t>(boss),true);
         else projectile(plan,world,boss,effect,target);
         changed=true;
+        // 同一回合后续武器不能继续攻击已死亡的玩家，也不能越过宝箱/结算入口。
+        if(std::ranges::any_of(plan.after.actors,[&](const auto& target) {
+            return target && !target->active && before.actors[target->slot]->active;
+        })) break;
     }
     finish(plan,changed);
+    return plan;
+}
+RichonlineCombatTurnPlan prepare_richonline_boss_mine_burst(const RichonlineCombatSessionView& before,
+    const RichonlineCombatWorld& world,std::uint8_t boss,std::uint8_t count,
+    const std::function<std::size_t(std::size_t)>& random) {
+    auto plan=initial(before,world);
+    if(boss>=8 || !before.actors[boss] || !before.actors[boss]->active || count<5 || count>7 ||
+        !richonline_combat_action_allowed(before.actors[boss]->status) || before.actors[boss]->status.possession==7 ||
+        !world.mine_burst_targets || !random ||
+        !world.mine_burst_talk || (*world.mine_burst_talk)[0]<1 || (*world.mine_burst_talk)[0]>7 ||
+        (*world.mine_burst_talk)[1]<1 || (*world.mine_burst_talk)[1]>16)
+        throw CodecError("richonline_boss_mine_burst_invalid");
+    auto candidates=world.mine_burst_targets(before);
+    std::set<std::int16_t> unique;
+    for(const auto position:candidates)
+        if(position<0 || static_cast<std::uint32_t>(position)>=static_cast<std::uint32_t>(world.width)*world.height ||
+            !unique.insert(position).second) throw CodecError("richonline_boss_mine_burst_targets_invalid");
+    std::erase_if(candidates,[&](const auto position) {
+        return mine_exists(before,position) || std::ranges::any_of(before.dynamic_npcs,
+            [&](const auto& object){return object.position==position;});
+    });
+    // 600A类别1读取当前关卡实际存在的BossWar台词，角色槽指向BOSS。
+    Bytes talk;append_le(talk,0x600a,2);append_le(talk,(*world.mine_burst_talk)[0],2);
+    append_le(talk,(*world.mine_burst_talk)[1],2);
+    append_le(talk,0,2);append_le(talk,1,4);talk.push_back(boss);talk.resize(16,0);
+    plan.packets.push_back(std::move(talk));
+    for(std::uint8_t i=0;i<count && !candidates.empty();++i) {
+        const auto draw=random(candidates.size());
+        if(draw>=candidates.size()) throw CodecError("richonline_boss_mine_burst_random_invalid");
+        const auto position=candidates[draw];
+        candidates.erase(candidates.begin()+static_cast<std::ptrdiff_t>(draw));
+        plan.after.mines=plan_richonline_mine_placement(plan.after.mines,position,static_cast<std::int8_t>(boss),true);
+        Bytes spawn;append_le(spawn,0x401c,2);append_le(spawn,before.game_id,2);
+        append_le(spawn,static_cast<std::uint16_t>(position),2);spawn.push_back(12);spawn.push_back(boss);spawn.push_back(3);
+        plan.packets.push_back(std::move(spawn));
+    }
+    finish(plan,plan.after.mines!=before.mines);
     return plan;
 }
 RichonlineCombatTurnPlan prepare_richonline_combat_mine_day(const RichonlineCombatSessionView& before,

@@ -54,6 +54,7 @@ struct Turns {
     std::array<RichonlineActorStatus,2> status{};
     std::uint16_t active_counter=0;
     std::uint64_t turn_sequence=0;
+    std::optional<std::uint64_t> boss_attack_turn{};
     struct PaidMove { std::uint16_t counter; std::uint8_t die; };
     std::optional<PaidMove> accepted_paid_move{};
     struct PendingLanding { std::int16_t position; std::uint8_t heading; std::uint16_t counter; bool sent_stop; };
@@ -92,6 +93,62 @@ struct Turns {
     std::uint8_t chest_turns_left=0;
     std::vector<std::array<std::uint16_t,2>> chest_stops{};
 
+    LuaValue boss_skill(const char* event) {
+        if(!rules.script) return nullptr;
+        return rules.script->call("boss.skill",{{"map",rules.script_map},{"event",event},
+            {"npc",status[1].possession.value_or(-1)},
+            {"sleepwalking",status[1].sleepwalking!=0 || status[1].possession==7},
+            {"frozen",status[1].frozen!=0}},{{"random",[this](const LuaValue& args) {
+                const auto upper=args.at("upper").get<int>();
+                if(upper!=3 && upper!=100) throw CodecError("richonline_boss_skill_random_bound_invalid");
+                const auto draw=rules.random(static_cast<std::size_t>(upper));
+                if(draw>=static_cast<std::size_t>(upper)) throw CodecError("richonline_boss_skill_random_invalid");
+                return LuaValue(draw+1);
+            }}});
+    }
+    void boss_possession_skill(std::vector<Bytes>& messages,std::uint8_t target) {
+        if(target!=1 || !active[1] || boss_chest || !rules.combat || !rules.script ||
+            !rules.ledger || !rules.ledger->snapshot(1).funds.cash) return;
+        const auto selected=boss_skill("negative_possession");
+        if(!selected.is_number_integer() || (selected!=0 && (selected<5 || selected>7)))
+            throw CodecError("lua_boss_mine_burst_count_invalid");
+        if(selected==0) return;
+        messages.reserve(messages.size()+8);
+        auto refs=combat_refs();
+        auto burst=rules.combat->boss_mine_burst(refs,1,selected.get<std::uint8_t>(),rules.random);
+        if(rules.log) rules.log("richonline_boss_mine_burst npc="+std::to_string(status[1].possession.value_or(-1))+
+            " requested="+std::to_string(selected.get<int>())+" placed="+std::to_string(burst.packets.size()-1));
+        messages.insert(messages.end(),std::make_move_iterator(burst.packets.begin()),std::make_move_iterator(burst.packets.end()));
+    }
+    void boss_fire_skill(std::vector<Bytes>& messages) {
+        if(actor!=1 || !active[1] || boss_chest || !rules.script || !rules.fire_traps || !rules.ground) return;
+        const auto selected=boss_skill("fire");
+        if(!selected.is_boolean()) throw CodecError("lua_boss_fire_selection_invalid");
+        if(!selected.get<bool>()) return;
+        const auto before=rules.ground->snapshot();auto after=before.objects;
+        const RichonlineResearchTrapMap map{static_cast<std::uint16_t>(topology.width()),
+            static_cast<std::uint16_t>(topology.height()),true,[this](std::int16_t position) {
+                const auto& cell=topology.cell(position);
+                return RichonlineResearchTrapCell{cell.walkable,placement_occupied(position),cell.static_type};
+            },1};
+        std::vector<Bytes> packets;
+        // 401C的type26不是单格写入：7CEF30展开资源半径并登记火焰时钟。
+        // 用同样的区域规则覆盖全图合法空路；已有物件、角色和宠物所在格均保留。
+        for(const auto& cell:topology.cells()) {
+            if(!cell.walkable || after.contains(cell.position) || placement_occupied(cell.position) ||
+                cell.static_type==28 || cell.static_type==58 || cell.static_type==61) continue;
+            plan_richonline_fire_area(after,cell.position,map,rules.fire_traps->traps);
+            Bytes packet;append_le(packet,0x401c,2);append_le(packet,init.game_server_id,2);
+            append_le(packet,static_cast<std::uint16_t>(cell.position),2);
+            packet.push_back(26);packet.push_back(1);packet.push_back(rules.fire_traps->traps.fire_rounds);
+            packets.push_back(std::move(packet));
+        }
+        messages.reserve(messages.size()+packets.size());
+        if(!rules.ground->commit(before,after)) throw CodecError("richonline_boss_fire_ground_stale");
+        if(rules.log) rules.log("richonline_boss_fire placed="+std::to_string(after.size()-before.objects.size()));
+        messages.insert(messages.end(),std::make_move_iterator(packets.begin()),std::make_move_iterator(packets.end()));
+    }
+
     std::vector<Bytes> finish_chest(std::vector<Bytes> messages,bool picked) {
         auto result=rules.finish_boss_chest(picked);
         messages.insert(messages.end(),std::make_move_iterator(result.begin()),std::make_move_iterator(result.end()));
@@ -103,41 +160,13 @@ struct Turns {
     std::vector<Bytes> open_chest(std::vector<Bytes> messages) {
         if(!rules.finish_boss_chest || !rules.ground || !rules.cards || !active[0] || active[1])
             throw CodecError("richonline_boss_chest_context_invalid");
-        // 有邻格的道路也可能属于另一座孤岛。先从玩家位置遍历道路连通分量，
-        // 成对传送点是额外的连通边；这里只限制可到达区域，不保证三回合必能拾取。
-        const auto start=init.participants[0].position;
-        if(!topology.cell(start).walkable) throw CodecError("richonline_boss_chest_start_invalid");
-        std::vector<bool> reachable(topology.cells().size(),false);
-        std::vector<std::int16_t> pending{start};
-        reachable[static_cast<std::size_t>(start)]=true;
-        const auto visit=[&](std::int16_t position) {
-            const auto index=static_cast<std::size_t>(position);
-            if(!reachable[index]) {reachable[index]=true;pending.push_back(position);}
-        };
-        for(std::size_t cursor=0;cursor<pending.size();++cursor) {
-            const auto position=pending[cursor];
-            for(const auto next:topology.cell(position).neighbors) if(next) visit(*next);
-            if(const auto exit=topology.portal_destination(position)) visit(*exit);
-        }
-        std::vector<std::int16_t> candidates;
-        for(const auto& cell:topology.cells())
-            if(cell.walkable && reachable[static_cast<std::size_t>(cell.position)] && cell.position!=start &&
-                std::any_of(cell.neighbors.begin(),cell.neighbors.end(),[](const auto& next){return next.has_value();}))
-                candidates.push_back(cell.position);
-        if(candidates.empty()) throw CodecError("richonline_boss_chest_no_road");
-        const auto chosen=rules.random(candidates.size());
-        if(chosen>=candidates.size()) throw CodecError("richonline_boss_chest_random_invalid");
-        const auto position=candidates[chosen];
+        // 死亡前的移动已提交到participants；玩家远程击杀时BOSS位置保持原格。
+        // 用户规则要求原格落箱，不能按可达性重新随机，亦不能排除与玩家同格。
+        const auto position=init.participants[1].position;
+        if(!topology.cell(position).walkable) throw CodecError("richonline_boss_chest_position_invalid");
         if(rules.script) {
-            // 核心只抽一次且保留结果；Lua选择候选位置，不能扩池、重抽或提前写地面。
-            bool sampled=false;
-            const auto selected=rules.script->call("boss.chest_spawn",{{"positions",candidates}},
-                {{"boss.chest_position_random",[&](const LuaValue& args) {
-                    if(sampled || args!=LuaValue{{"bound",candidates.size()}})
-                        throw CodecError("richonline_boss_chest_spawn_random_invalid");
-                    sampled=true;return LuaValue(chosen);
-                }}});
-            if(!sampled || !selected.is_number_integer() || selected!=position)
+            const auto selected=rules.script->call("boss.chest_spawn",{{"death_position",position}});
+            if(!selected.is_number_integer() || selected!=position)
                 throw CodecError("richonline_boss_chest_spawn_selection_invalid");
         }
         auto ground=rules.ground->prepare(rules.ground->snapshot(),{{position,{32,255,255}}});
@@ -162,9 +191,9 @@ struct Turns {
         relations1472={};
         retire_decision();npc_landing.reset();npc_deadline.reset();npc_pending_counter.reset();
         controlled_roll_deadline.reset();frozen_deadline.reset();jail_deadline.reset();pending_mine_day.reset();
-        boss_chest=position;chest_turns_left=3;phase=Phase::chest_ready;route={};
+        boss_chest=position;chest_turns_left=1;phase=Phase::chest_ready;route={};
         if(rules.log) rules.log("richonline_boss_chest_open position="+std::to_string(position)+
-            " candidates="+std::to_string(candidates.size())+" lua="+std::to_string(static_cast<bool>(rules.script))+" turns=3");
+            " source=boss_death_position lua="+std::to_string(static_cast<bool>(rules.script))+" turns=1");
         return messages;
     }
 
@@ -445,11 +474,16 @@ struct Turns {
         return commit_move(std::move(prepared));
     }
     std::vector<Bytes> playable_turn(std::vector<Bytes> messages,bool action_already_queued=false) {
+        const bool first_boss_action=actor==1 && boss_attack_turn!=turn_sequence;
+        if(first_boss_action) {
+            boss_attack_turn=turn_sequence;
+            boss_fire_skill(messages);
+        }
         bool script_attack=true;
         if(!boss_chest && actor==1 && rules.combat && rules.script)
             script_attack=rules.script->call("boss.can_attack",{{"map",rules.script_map},
                 {"actionable",richonline_combat_action_allowed(status[actor])}}).get<bool>();
-        if(!boss_chest && actor==1 && rules.combat && script_attack) {
+        if(!boss_chest && first_boss_action && rules.combat && script_attack) {
             auto refs=combat_refs();auto attack=rules.combat->boss_turn(refs,actor,rules.combat_random(),rules.log);
             messages.insert(messages.end(),std::make_move_iterator(attack.packets.begin()),
                 std::make_move_iterator(attack.packets.end()));
@@ -685,7 +719,7 @@ struct Turns {
         std::vector<Bytes> messages{
             encode_richonline_turn4010({init.game_server_id,static_cast<std::int8_t>(actor),1,0},rules.opaque_turn7)};
         if(boss_chest) {
-            // 保留已淘汰BOSS的anchor1：客户端2次日历倒计时不介入，服务端数满3个玩家回合。
+            // 保留已淘汰BOSS的anchor1；当前单真人宿主只允许一次奖励移动。
             if(equipment_heal) {
                 const auto before=rules.ledger->snapshot(actor);auto after=before.funds;
                 if(after.cash>0x7fffffffU-equipment_heal) throw CodecError("richonline_equipment_healing_cash_overflow");
@@ -804,6 +838,7 @@ struct Turns {
             if(result.temple_change->summon && *result.temple_change->summon>=0 && *result.temple_change->summon<4) {
                 auto summon=rules.npcs->temple_summon(landing_context(init.participants[actor].position),
                     landing_counter,*result.temple_change->summon,status[actor]);
+                if(summon.wait!=RichonlineNpcWait::settlement) boss_possession_skill(summon.messages,actor);
                 retire_decision();
                 result.messages.insert(result.messages.end(),std::make_move_iterator(summon.messages.begin()),
                     std::make_move_iterator(summon.messages.end()));
@@ -813,6 +848,7 @@ struct Turns {
             auto change=rules.npcs->prepare_temple_change(actor,*result.temple_change);
             if(!rules.npcs->commit_status_change(change,status[actor]))
                 throw CodecError("richonline_boss_temple_clock_changed");
+            if(result.temple_change->summon) boss_possession_skill(result.messages,actor);
         }
         if (result.status_change) {
             if (status[actor]!=result.status_change->expected)
@@ -1461,9 +1497,15 @@ struct Turns {
                 return terminal(std::move(messages),std::move(explosion.bankrupt_actors),RichonlineTerminalReason::stepped_mine);
         }
         if(rules.npcs) {
+            const auto before_npc=rules.ground->snapshot();
+            const auto source_npc=before_npc.objects.find(landing.position);
+            const auto attached=source_npc!=before_npc.objects.end() && source_npc->second.npc>=0 &&
+                source_npc->second.npc<=7 ? std::optional{source_npc->second.npc} : std::nullopt;
             auto event=rules.npcs->landing(landing_context(landing.position),landing.counter,status[actor],
                 rules.npc_landing_preflight);
             if(event) {
+                if(attached && status[actor].possession==attached && event->wait!=RichonlineNpcWait::settlement)
+                    boss_possession_skill(event->messages,actor);
                 // A timed explosion or stepped mine already supplied this stop.
                 if(landing.sent_stop && event->sent_stop4013) {
                     std::erase_if(event->messages,[&](const Bytes& packet) {
@@ -2660,6 +2702,9 @@ struct Turns {
                 rules.cards->inventory()!=script_consumption->source_inventory)
                 throw CodecError("lua_summon_snapshot_changed");
             auto result=rules.npcs->commit_deity_card(*script_summon,status[snapshot.target]);
+            if(result.summoned && status[snapshot.target].possession==result.summoned->id &&
+                result.wait!=RichonlineNpcWait::settlement)
+                boss_possession_skill(result.messages,snapshot.target);
             if(result.wait==RichonlineNpcWait::roulette34) {
                 npc_pending_counter=active_counter;npc_retired_counter.reset();
                 npc_deadline=script_summon_deadline;phase=Phase::npc;
@@ -2989,6 +3034,8 @@ struct Turns {
             }
             auto result=rules.npcs->deity_card(plain,source,active_counter,status[target],raw_available(target),
                 candidates,[](std::size_t) {return std::size_t{0};});
+            if(result.summoned && status[target].possession==result.summoned->id &&
+                result.wait!=RichonlineNpcWait::settlement) boss_possession_skill(result.messages,target);
             if(result.summoned && rules.log) {
                 const auto& god=*result.summoned;
                 rules.log("richonline_summon_selected actor="+std::to_string(actor)+
@@ -3470,7 +3517,8 @@ struct Turns {
                 append_le(stop,static_cast<std::uint16_t>(endpoint),2);
                 std::vector<Bytes> messages{std::move(stop)};
                 if(endpoint==*boss_chest) return finish_chest(std::move(messages),true);
-                return resolve({std::move(messages),RichonlineLandingProgress::complete});
+                // 唯一一次移动结束即结算，不进入普通岔路选择或第二次行动。
+                return advance(std::move(messages));
             }
             auto progress=!stationary ? prepare_timed_progress(0x11,request.calendar_counter,request.endpoint) : std::nullopt;
             auto ground_progress=!stationary && !progress ? prepare_ground_progress(route.landings.size()-1) : std::nullopt;

@@ -351,8 +351,12 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             return RichonlineTurnTerminalResult{terminal->pending_game_messages(),
                 terminal->phase()!=RichonlineTerminalPhase::bonus};
         };
-        if(chest_enabled) rules.finish_boss_chest=[terminal=policy.terminal,claim=policy.claim_boss_chest](bool picked) {
+        if(chest_enabled) rules.finish_boss_chest=[terminal=policy.terminal,claim=policy.claim_boss_chest,delivery](bool picked) {
             std::vector<Bytes> messages;
+            // 客户端串行播放领奖3600ms、胜利2700ms、可选BOSS台词1800ms、结束提示2700ms、结果4000ms。
+            // 原6000ms仅从socket发送计时，会让大厅58先于队列播放结束。额外余量覆盖本地记录调度；
+            // 这是服务端显示策略，并非客户端已回报动画完成。
+            delivery->require_display_delay(std::chrono::milliseconds{picked ? 18000 : 14000});
             if(picked) messages.push_back(claim());
             terminal->finish_bonus();
             auto remaining=terminal->pending_game_messages();
@@ -472,8 +476,8 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
             return capabilities(actor,status,true);
         };
     }
-    if(rules.combat && rules.terminal && rules.cards && ground && policy.ground_card_visible && chance &&
-        chance->automatic_card_eligible(stage.map_name,1183))
+    // BOSS技能不消耗玩家火焰卡，也不受该卡随机赠卡准入控制。
+    if(rules.combat && rules.terminal && rules.cards && ground && policy.ground_card_visible)
         rules.fire_traps=std::make_shared<const RichonlineFireTrapRules>(RichonlineFireTrapRules::load(resources));
     if(rules.combat && rules.terminal && rules.cards && policy.hibernate_raw_actor && chance &&
         chance->automatic_card_eligible(stage.map_name,1182)) {
