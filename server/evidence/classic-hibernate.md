@@ -53,5 +53,21 @@ Lua和外部只读证明完成后再次比较回合、玩家卡牌对象身份�
 并非客户端播放完成ACK。发送完成也不证明UI已播放；不伪造移动结束报文。
 计数降至0时不再进入冰冻等待，继续正常停走/梦游/掷骰流程。
 
-固定快照编译、Git提交与本机同代交付在完成后补记。
+## 固定构建与本机交付
+
+源码提交`c27bd3f61786e38b298845a2019ee40a2283d6c9`，固定tree
+`6238e9eaf4c00f54c2a1e304f8be51bdc2280e3a`，已推送并核对GitHub main。
+后续本文回执提交不改变该二进制源码身份。
+
+从固定tree导出`server/build-classic-hibernate-source/server`，独立构建到
+`server/build-classic-hibernate-fixed`。Clang22、Ninja、Release、BUILD_TESTING=OFF；
+RichOnline.Server构建退出0，包含全部178个Lua模块语法编译，静态diff检查通过。
+
+交付前检查目标本机EXE未运行，旧EXE备份到
+`server/build-classic-hibernate-fixed/RichOnline.Server.before-c27bd3f.exe`，
+再更新`server/RichOnline.Server.exe`。固定构建与交付EXE SHA256均为
+`5C53CF813E08F4F44D675103B43A140079ED7B2198A5CC0291A37D805F7DDF90`。
+178个本机Lua文件与固定源码、构建输出逐项哈希一致，数量一致。
+
 按用户要求不新增或运行测试、不启动服务或游戏、不部署或重启线上。
+编译通过不等于多人冬眠实机验收；完整服务端goal仍待继续。
