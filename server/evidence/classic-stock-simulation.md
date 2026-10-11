@@ -31,3 +31,15 @@
 
 生产经典完整services仍未装配；此轮提供可显式启用的会话策略，不解除生产准入门。
 本轮只静态分析和编译，不新增/运行测试，不启动服务或游戏，不部署或重启线上。
+
+## 固定构建与本机交付
+
+源码提交`522acb571fb287593b60d4be97ce87b3da189a0d`已推送，GitHub引用核对一致；
+tree为`63e0f79d6b75e730cabff523da1942b59d354d68`。固定源码目录
+`server/build-classic-stock-simulation-source/server`，构建目录
+`server/build-classic-stock-simulation-fixed`。Release目标构建退出0，179个Lua模块
+语法编译完成，固定源码/构建产物/本机scripts逐项哈希一致。
+交付前CIM未发现RichOnline.Server.exe运行，本机EXE已替换，SHA256为
+`96c9bb63da6a14d040e6144192eeeab8985685e9590c77a174c549b24a6c2e22`。
+旧EXE保存在构建目录的`RichOnline.Server.before-522acb5.exe`。没有启动服务、运行测试
+或改动线上服务。本轮新增传送卡与装备问题另行调查，不能把本次行情构建当作它们的修复。
