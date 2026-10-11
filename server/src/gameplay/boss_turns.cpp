@@ -143,29 +143,33 @@ struct Turns {
     void boss_fire_skill(std::vector<Bytes>& messages) {
         if(actor!=1 || !active[1] || boss_chest || !rules.script || !rules.fire_traps || !rules.ground) return;
         const auto selected=boss_skill("fire");
-        if(!selected.is_boolean()) throw CodecError("lua_boss_fire_selection_invalid");
-        if(!selected.get<bool>()) return;
+        if(!selected.is_number_integer() || (selected!=0 && (selected<5 || selected>7)))
+            throw CodecError("lua_boss_fire_selection_invalid");
+        if(selected==0) return;
         const auto before=rules.ground->snapshot();auto after=before.objects;
-        const RichonlineResearchTrapMap map{static_cast<std::uint16_t>(topology.width()),
-            static_cast<std::uint16_t>(topology.height()),true,[this](std::int16_t position) {
-                const auto& cell=topology.cell(position);
-                return RichonlineResearchTrapCell{cell.walkable,placement_occupied(position),cell.static_type};
-            },1};
+        std::vector<std::int16_t> candidates;
         std::vector<Bytes> packets;
-        // 401C的type26不是单格写入：7CEF30展开资源半径并登记火焰时钟。
-        // 用同样的区域规则覆盖全图合法空路；已有物件、角色和宠物所在格均保留。
         for(const auto& cell:topology.cells()) {
             if(!cell.walkable || after.contains(cell.position) || placement_occupied(cell.position) ||
                 cell.static_type==28 || cell.static_type==58 || cell.static_type==61) continue;
-            plan_richonline_fire_area(after,cell.position,map,rules.fire_traps->traps);
-            Bytes packet;append_le(packet,0x401c,2);append_le(packet,init.game_server_id,2);
-            append_le(packet,static_cast<std::uint16_t>(cell.position),2);
-            packet.push_back(26);packet.push_back(1);packet.push_back(rules.fire_traps->traps.fire_rounds);
-            packets.push_back(std::move(packet));
+            candidates.push_back(cell.position);
         }
+        // 601A ->7E2380只写一格，不扩散且不登记原生火焰时钟。
+        // 服务器在轮首同步这些格子的寿命；普通火焰卡仍由原生区域路径计时。
+        for(int i=0;i<selected.get<int>() && !candidates.empty();++i) {
+            const auto draw=rules.random(candidates.size());
+            if(draw>=candidates.size()) throw CodecError("richonline_boss_fire_random_invalid");
+            const auto position=candidates[draw];
+            const RichonlineGroundObject fire{26,1,rules.fire_traps->traps.fire_rounds,true};
+            after.emplace(position,fire);
+            packets.push_back(encode_richonline_fire_cell601a(position,fire));
+            candidates.erase(candidates.begin()+static_cast<std::ptrdiff_t>(draw));
+        }
+        auto ground=rules.ground->prepare(before,after);
         messages.reserve(messages.size()+packets.size());
-        if(!rules.ground->commit(before,after)) throw CodecError("richonline_boss_fire_ground_stale");
-        if(rules.log) rules.log("richonline_boss_fire placed="+std::to_string(after.size()-before.objects.size()));
+        if(!rules.ground->commit_prepared(ground)) throw CodecError("richonline_boss_fire_ground_stale");
+        if(rules.log) rules.log("richonline_boss_fire requested="+std::to_string(selected.get<int>())+
+            " placed="+std::to_string(packets.size()));
         messages.insert(messages.end(),std::make_move_iterator(packets.begin()),std::make_move_iterator(packets.end()));
     }
 
@@ -809,8 +813,19 @@ struct Turns {
         sync_boss_frenzy(messages,true);
         if(rules.fire_traps) {
             const auto tick=plan_richonline_fire_trap_tick(rules.ground->snapshot(),actor,actor==1,active);
+            std::vector<Bytes> packets;
+            for(const auto& [position,object]:tick.expected_ground.objects) {
+                if(!object.server_timed_fire) continue;
+                const auto after=tick.after_ground.find(position);
+                if(after==tick.after_ground.end())
+                    packets.push_back(encode_richonline_fire_cell601a(position,std::nullopt));
+                else if(after->second!=object)
+                    packets.push_back(encode_richonline_fire_cell601a(position,after->second));
+            }
             auto ground=rules.ground->prepare(tick.expected_ground,tick.after_ground);
+            messages.reserve(messages.size()+packets.size());
             if(!rules.ground->commit_prepared(ground)) throw CodecError("richonline_boss_fire_clock_stale");
+            messages.insert(messages.end(),std::make_move_iterator(packets.begin()),std::make_move_iterator(packets.end()));
         }
         if(actor==1 && rules.combat) {
             if(pending_mine_day) {

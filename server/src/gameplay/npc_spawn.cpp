@@ -8,6 +8,8 @@ namespace {
 bool population(std::int8_t npc) { return (npc>=0 && npc<=7) || npc==9; }
 void valid_object(RichonlineGroundObject object) {
     if(object.npc<0 || object.npc>32) throw CodecError("richonline_ground_npc_out_of_range");
+    if(object.server_timed_fire && (object.npc!=26 || object.byte7>=8 || !object.byte8 || object.byte8>127))
+        throw CodecError("richonline_ground_server_fire_invalid");
 }
 std::size_t count(const RichonlineGroundMap& map) {
     return static_cast<std::size_t>(std::count_if(map.begin(),map.end(),[](const auto& p) {return population(p.second.npc);}));
@@ -99,6 +101,19 @@ bool RichonlineGroundObjects::consume(std::int16_t position,RichonlineGroundObje
     const auto before=snapshot(); auto after=before.objects; const auto found=after.find(position);
     if(found==after.end() || found->second!=expected) return false;
     after.erase(found); return commit(before,after);
+}
+Bytes encode_richonline_fire_cell601a(std::int16_t position,std::optional<RichonlineGroundObject> object) {
+    if(position<0) throw CodecError("richonline_fire_cell_position_invalid");
+    if(object) {
+        valid_object(*object);
+        if(!object->server_timed_fire) throw CodecError("richonline_fire_cell_clock_required");
+    }
+    Bytes bytes;append_le(bytes,0x601a,2);append_le(bytes,static_cast<std::uint16_t>(position),2);
+    bytes.push_back(object ? 26 : 255);
+    bytes.push_back(object ? object->byte7 : 255);
+    bytes.push_back(object ? object->byte8 : 255);
+    bytes.push_back(0);
+    return bytes;
 }
 Bytes encode_richonline_npc_spawn401c(std::uint16_t game,std::int16_t position,RichonlineGroundObject object) {
     valid_object(object);

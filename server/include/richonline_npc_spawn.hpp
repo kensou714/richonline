@@ -9,6 +9,8 @@ struct RichonlineGroundObject {
     std::int8_t npc;
     // 401C passes these bytes to the map record; meaning depends on NPC kind.
     std::uint8_t byte7,byte8;
+    // 601A writes one fire cell without registering the client's fire clock.
+    bool server_timed_fire=false;
     bool operator==(const RichonlineGroundObject&) const = default;
 };
 using RichonlineGroundMap=std::map<std::int16_t,RichonlineGroundObject>;
@@ -49,6 +51,7 @@ private:
     std::uint64_t revision_=0;
 };
 Bytes encode_richonline_npc_spawn401c(std::uint16_t game,std::int16_t position,RichonlineGroundObject);
+Bytes encode_richonline_fire_cell601a(std::int16_t position,std::optional<RichonlineGroundObject>);
 struct RichonlineNpcSpawnPolicy {
     std::size_t initial_gods,initial_chests,minimum_objects,maximum_objects;
     std::uint64_t refresh_every_rounds;

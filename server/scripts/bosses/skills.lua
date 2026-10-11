@@ -13,8 +13,9 @@ function M.plan(request)
         return 4 + core.call("random", {upper = 3})
     end
     if request.event == "fire" then
-        if map.boss == "heibeibei" or request.sleepwalking or request.frozen then return false end
-        return core.call("random", {upper = 100}) <= 20
+        if map.boss == "heibeibei" or request.sleepwalking or request.frozen then return 0 end
+        if core.call("random", {upper = 100}) > 20 then return 0 end
+        return 4 + core.call("random", {upper = 3})
     end
     error("未注册BOSS技能")
 end

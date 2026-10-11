@@ -181,6 +181,7 @@ bool RichonlineBossProperty::validate_landing(const RichonlineLandingContext& ct
     if (!cell.walkable || ctx.static_type != cell.static_type ||
         ctx.property_ref != cell.property_ref || degree != ctx.road_degree) return false;
     if (deadline_) throw CodecError("richonline_property_decision_already_pending");
+    if(boss && ctx.actor_status.frozen && property.owner==ctx.actor_slot) return true;
     if (property.owner && property.building.kind==16 && property.building.level>0) {
         const bool friendly=*property.owner==ctx.actor_slot;
         if(!temple_supported(ctx,property.building,friendly)) return false;
@@ -200,7 +201,7 @@ std::optional<RichonlineLandingResult> RichonlineBossProperty::land(const Richon
     auto& property=properties_.at(ctx.property_ref);
     // NEW7C6640 skips an unowned purchase under control. Owned land remains
     // observable: players wait for 0x37/0x38, while the synthetic BOSS builds automatically.
-    // 受控状态只跳过未归属地产的购买；已归属地产必须继续区分玩家等待与 BOSS 自动建设。
+    // 已归属地产继续区分玩家等待与BOSS自动建设；owned_land另行拦截冰冻BOSS。
     if(!property.owner && richonline_landing_controlled(ctx.actor_status)) {
         Bytes stop; append_le(stop,0x4013,2); append_le(stop,game_id_,2);
         append_le(stop,static_cast<std::uint16_t>(ctx.position),2);

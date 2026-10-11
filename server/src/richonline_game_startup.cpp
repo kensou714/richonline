@@ -37,9 +37,27 @@ struct Startup {
         std::vector<Frame> result;
         auto next_counter = action_counter;
         for (const auto& plain : messages) {
-            if (plain.size() < 4 || read_le(View(plain).subspan(2,2)) != plan->init.game_server_id)
+            if (plain.size() < 4)
                 throw CodecError("richonline_game_response_instance_mismatch");
             const auto opcode = read_le(View(plain).first(2));
+            // These two native queue records have no game field. The outer 299
+            // envelope binds them to this plan; validate their exact supported shapes.
+            if(opcode==0x600a) {
+                if(plain.size()!=16 || read_le(View(plain).subspan(2,2))<1 ||
+                    read_le(View(plain).subspan(2,2))>7 || read_le(View(plain).subspan(4,2))<1 ||
+                    read_le(View(plain).subspan(4,2))>16 || read_le(View(plain).subspan(6,2))!=0 ||
+                    read_le(View(plain).subspan(8,4))!=1 || plain[12]>=plan->init.participants.size() ||
+                    plan->init.participants[plain[12]].lobby_identity!=-1 ||
+                    plain[13]!=0 || plain[14]!=0 || plain[15]!=0)
+                    throw CodecError("richonline_game_boss_talk_invalid");
+            } else if(opcode==0x601a) {
+                if(plain.size()!=8 || read_le(View(plain).subspan(2,2))>32767 || plain[7]!=0 ||
+                    !((plain[4]==26 && plain[5]<plan->init.participants.size() && plain[6]>0 && plain[6]<=127) ||
+                      (plain[4]==255 && plain[5]==255 && plain[6]==255)))
+                    throw CodecError("richonline_game_fire_cell_invalid");
+            } else if(read_le(View(plain).subspan(2,2))!=plan->init.game_server_id) {
+                throw CodecError("richonline_game_response_instance_mismatch");
+            }
             if (opcode == 0x4000) throw CodecError("richonline_game_duplicate_initialization");
             if (opcode == 0x4004) {
                 if (plain.size() != 12+12*plan->init.participants.size())

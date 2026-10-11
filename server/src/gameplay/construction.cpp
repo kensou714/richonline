@@ -92,6 +92,8 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
     append_le(stop,0x4013,2); append_le(stop,game_id_,2);
     append_le(stop,static_cast<std::uint16_t>(ctx.position),2);
     RichonlineLandingResult result{{std::move(stop)},RichonlineLandingProgress::complete};
+    // 落点冰陷阱在地产续接前生效，不能仅依赖轮首的冰冻跳过。
+    if(ctx.synthetic_actor && ctx.actor_status.frozen) return result;
     const bool empty=property.building.level==0;
     // NEW7ACBC0 reads zero caps for kinds2..6 in the supported single-BOSS stage.
     if(!empty && property.building.kind>=2 && property.building.kind<=6) return result;
