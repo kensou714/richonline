@@ -51,6 +51,13 @@ std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_conservative_spawns
 std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_spawns(
     const RichonlineRoadTopology& topology,RichonlineMapSpawnPolicy policy,
     const std::function<std::size_t(std::size_t)>& random) {
+    const auto result=choose_richonline_map_player_spawns(topology,policy,2,random);
+    return {result[0],result[1]};
+}
+std::vector<RichonlineMapSpawnChoice> choose_richonline_map_player_spawns(
+    const RichonlineRoadTopology& topology,RichonlineMapSpawnPolicy policy,std::size_t count,
+    const std::function<std::size_t(std::size_t)>& random) {
+    if(count==0 || count>8) throw CodecError("richonline_map_rules_spawn_count_invalid");
     if(policy!=RichonlineMapSpawnPolicy::all_candidates_connected &&
         policy!=RichonlineMapSpawnPolicy::largest_adjacent_component)
         throw CodecError("richonline_map_rules_spawn_policy_invalid");
@@ -82,7 +89,7 @@ std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_spawns(
                 candidates.push_back({cell.position,direction}); break;
             }
     }
-    if(candidates.size()<2) throw CodecError("richonline_map_rules_spawn_candidates_missing");
+    if(candidates.size()<std::max(count,std::size_t{2})) throw CodecError("richonline_map_rules_spawn_candidates_missing");
     std::vector<std::int32_t> distances(topology.cells().size(),-1);
     std::queue<std::int16_t> pending;
     pending.push(candidates.front().position); distances[static_cast<std::size_t>(pending.front())]=0;
@@ -102,13 +109,44 @@ std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_spawns(
             farthest=candidate;
     }
     if(random) {
-        const auto first=random(candidates.size());
-        const auto second=random(candidates.size()-1);
-        if(first>=candidates.size() || second>=candidates.size()-1)
-            throw CodecError("richonline_map_rules_spawn_random_invalid");
-        return {candidates[first],candidates[second+(second>=first ? 1U : 0U)]};
+        std::vector<RichonlineMapSpawnChoice> result;
+        for(std::size_t i=0;i<count;++i) {
+            const auto chosen=random(candidates.size());
+            if(chosen>=candidates.size()) throw CodecError("richonline_map_rules_spawn_random_invalid");
+            result.push_back(candidates[chosen]);
+            candidates.erase(candidates.begin()+static_cast<std::ptrdiff_t>(chosen));
+        }
+        return result;
     }
-    return {candidates.front(),farthest};
+    std::vector<RichonlineMapSpawnChoice> result{candidates.front()};
+    if(count==1) return result;
+    result.push_back(farthest);
+    // 每次选择距已有出生点集合最远的候选；等距时沿原地图顺序。
+    // 这是服务端出生政策，不声称是原服的随机分布。
+    auto nearest=distances;
+    while(result.size()<count) {
+        std::fill(distances.begin(),distances.end(),-1);
+        pending.push(result.back().position);
+        distances[static_cast<std::size_t>(pending.front())]=0;
+        while(!pending.empty()) {
+            const auto position=pending.front();pending.pop();
+            for(const auto next:topology.cell(position).neighbors)
+                if(next && distances[static_cast<std::size_t>(*next)]<0) {
+                    distances[static_cast<std::size_t>(*next)]=distances[static_cast<std::size_t>(position)]+1;
+                    pending.push(*next);
+                }
+        }
+        std::optional<RichonlineMapSpawnChoice> chosen;
+        for(const auto& candidate:candidates) {
+            const auto index=static_cast<std::size_t>(candidate.position);
+            nearest[index]=std::min(nearest[index],distances[index]);
+            if(std::find(result.begin(),result.end(),candidate)!=result.end()) continue;
+            if(!chosen || nearest[index]>nearest[static_cast<std::size_t>(chosen->position)]) chosen=candidate;
+        }
+        if(!chosen) throw CodecError("richonline_map_rules_spawn_candidates_missing");
+        result.push_back(*chosen);
+    }
+    return result;
 }
 RichonlineMapRuleResources load_richonline_map_rule_resources(const std::filesystem::path& root,
     const RichonlineMapPackage& package,std::uint32_t category) {

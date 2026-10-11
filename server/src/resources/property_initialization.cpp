@@ -29,7 +29,7 @@ std::optional<std::int16_t> coordinate(const OriginalEmp& emp,std::int32_t x,std
 }
 void validate_layout(const OriginalEmp& emp) {
     const auto count=static_cast<std::uint64_t>(emp.width)*emp.height;
-    if (emp.version!=3 || emp.width==0 || emp.height==0 || count>32768 ||
+    if (emp.version<1 || emp.version>3 || emp.width==0 || emp.height==0 || count>32768 ||
         emp.terrain_offset<16 || emp.terrain_offset>emp.payload.size() || count>(emp.payload.size()-emp.terrain_offset)/64U ||
         emp.tile_types_offset<emp.terrain_offset+64U*count+4U ||
         emp.tile_types_offset>emp.payload.size() || count>(emp.payload.size()-emp.tile_types_offset)/4U ||

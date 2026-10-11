@@ -77,4 +77,8 @@ std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_conservative_spawns
 std::array<RichonlineMapSpawnChoice,2> choose_richonline_map_spawns(
     const RichonlineRoadTopology& topology,RichonlineMapSpawnPolicy policy,
     const std::function<std::size_t(std::size_t)>& random = {});
+// 多人出生点互不重叠；两角色调用保留原有随机次数和候选顺序。
+std::vector<RichonlineMapSpawnChoice> choose_richonline_map_player_spawns(
+    const RichonlineRoadTopology& topology,RichonlineMapSpawnPolicy policy,std::size_t count,
+    const std::function<std::size_t(std::size_t)>& random = {});
 }
