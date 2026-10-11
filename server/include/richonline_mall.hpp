@@ -6,6 +6,9 @@
 
 namespace richnet {
 struct RichonlineMallPurchase18 { std::uint32_t encoded_item; };
+struct RichonlineMallUse41 { std::uint32_t owned_key,target; };
+RichonlineMallUse41 decode_richonline_mall_use41(View payload);
+using RichonlineMallUsePrepare=std::function<void(const std::vector<std::uint32_t>&)>;
 RichonlineMallPurchase18 decode_richonline_mall_purchase18(View payload);
 struct RichonlineMallActivate63 { RichonlineMallCurrency currency; std::uint32_t owned_key; };
 RichonlineMallActivate63 decode_richonline_mall_activate63(View payload);

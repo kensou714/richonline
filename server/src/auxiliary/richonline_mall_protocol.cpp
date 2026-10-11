@@ -3,6 +3,12 @@
 #include <cmath>
 
 namespace richnet {
+RichonlineMallUse41 decode_richonline_mall_use41(View payload) {
+    // NEW8A2EF0 writes three DWORDs: complete owned key, count=1, target.
+    if(payload.size()!=12 || read_le(payload.subspan(4,4))!=1)
+        throw CodecError("mall_use41_request_invalid");
+    return {read_le(payload.first(4)),read_le(payload.subspan(8,4))};
+}
 RichonlineMallActivate63 decode_richonline_mall_activate63(View payload) {
     if(payload.size()!=8)throw CodecError("mall_activate63_size_invalid");
     const auto mode=read_le(payload.first(4));

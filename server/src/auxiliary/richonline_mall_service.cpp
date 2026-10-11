@@ -17,8 +17,9 @@ RichonlineMallService::RichonlineMallService(const RichonlineMallCatalog& catalo
     script_=LuaServer::create();
 }
 std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage& storage,const std::string& username,
-    std::int64_t role,const Frame& frame,std::int64_t now,const RichonlineMallActivationPrepare& prepare_activation) {
-    if(frame.wire_type!=16&&frame.wire_type!=18&&frame.wire_type!=63)return {};
+    std::int64_t role,const Frame& frame,std::int64_t now,const RichonlineMallActivationPrepare& prepare_activation,
+    const RichonlineMallUsePrepare& prepare_use) {
+    if(frame.wire_type!=16&&frame.wire_type!=18&&frame.wire_type!=41&&frame.wire_type!=63)return {};
     storage.require_inventory_date_version(policy_.date_version);
     if(frame.wire_type==16) {
         operation_=0;
@@ -32,6 +33,29 @@ std::optional<RichonlineMallServiceReply> RichonlineMallService::request(Storage
     const auto reject=[&](const std::string& reason) {
         reply.frames.push_back(std::move(refused));reply.diagnostic=reason;return reply;
     };
+    if(frame.wire_type==41) {
+        try {
+            const auto request=decode_richonline_mall_use41(frame.payload);
+            if(!script_) return reject("mall_consumable_policy_unavailable");
+            const auto plan=script_->call("mall.consumable_policy",{{"product",request.owned_key&4095U}});
+            if(!plan.at("allowed").get<bool>()) return reject("mall_consumable_effect_unimplemented");
+            const auto& amount=plan.at("gold");
+            if(!amount.is_number_integer() || amount<=0 || amount>100000)
+                throw CodecError("mall_consumable_reward_invalid");
+            if(role<0 || role>std::numeric_limits<std::uint32_t>::max()) throw CodecError("mall_use_role_invalid");
+            // NEW212: actor, complete owned key, target. The local callback removes
+            // one object; it does not credit gold, so authoritative19 precedes it.
+            Frame used{212,{}};
+            append_le(used.payload,static_cast<std::uint32_t>(role),4);
+            append_le(used.payload,request.owned_key,4);append_le(used.payload,request.target,4);
+            if(sequence_==std::numeric_limits<std::uint64_t>::max()) throw CodecError("mall_operation_sequence_exhausted");
+            reply.diagnostic="gold_voucher_used";
+            auto current=storage.use_mall_gold_voucher(username,role,catalog_,request,amount.get<std::uint32_t>(),
+                now,policy_.date_version,operation_prefix_+":"+std::to_string(++sequence_),prepare_use);
+            reply.frames.push_back(std::move(used));reply.role_refresh=std::move(current);
+            reply.inventory_consumed=true;return reply;
+        } catch(const std::exception& error) {return reject(error.what());}
+    }
     if(frame.wire_type==63) {
         const auto request=decode_richonline_mall_activate63(frame.payload);
         Frame notification{213,Bytes(20)}; //allocate before any DB commit

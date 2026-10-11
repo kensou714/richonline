@@ -3,7 +3,7 @@
 local mall = require("mall.service")
 local M = {}
 function M.request(request)
-    if request.opcode == 16 or request.opcode == 18 or request.opcode == 63 then
+    if request.opcode == 16 or request.opcode == 18 or request.opcode == 41 or request.opcode == 63 then
         return mall.request(request)
     end
     return core.call("lobby.native")

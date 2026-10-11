@@ -23,6 +23,7 @@ struct RichonlineMallServiceReply {
     //213 applies a client-side debit: its authoritative refresh must be AFTER.
     bool role_refresh_after_frames=false;
     bool activation_committed=false;
+    bool inventory_consumed=false;
 };
 class RichonlineMallService final {
 public:
@@ -30,7 +31,8 @@ public:
         RichonlineMallCompatibilityPolicy policy);
     std::optional<RichonlineMallServiceReply> request(Storage& storage,const std::string& username,
         std::int64_t role_id,const Frame& request,std::int64_t unix_now,
-        const RichonlineMallActivationPrepare& prepare_activation={});
+        const RichonlineMallActivationPrepare& prepare_activation={},
+        const RichonlineMallUsePrepare& prepare_use={});
 private:
     const RichonlineMallCatalog& catalog_;
     std::string operation_prefix_;

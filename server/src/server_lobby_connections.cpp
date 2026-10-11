@@ -356,7 +356,7 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                     return std::vector<Frame>{richonline_lobby_failure(frame.wire_type,-13)};
                 }
             }
-            if(frame.wire_type==16||frame.wire_type==18||frame.wire_type==63) {
+            if(frame.wire_type==16||frame.wire_type==18||frame.wire_type==41||frame.wire_type==63) {
                 const auto log_mall=[&](const std::string& reason,std::size_t frames) {
                     if(!log_) return;
                     nlohmann::json detail{{"connection",connection},{"wire_type",frame.wire_type},
@@ -366,6 +366,10 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                         const auto key=read_le(View(frame.payload).subspan(offset,4));
                         detail["item_key"]=key;detail["product"]=key&4095U;
                         detail["currency"]=frame.wire_type==18 ? (key>>12U)&15U : read_le(View(frame.payload).first(4));
+                    }
+                    if(frame.wire_type==41 && frame.payload.size()==12) {
+                        const auto key=read_le(View(frame.payload).first(4));
+                        detail["item_key"]=key;detail["product"]=key&4095U;
                     }
                     if(blobs_.richonline_mall_policy)
                         detail["date_epoch"]=static_cast<std::uint16_t>(blobs_.richonline_mall_policy->date_version);
@@ -421,8 +425,22 @@ LobbyCallbacks ServerLobbyAdapter::callbacks() {
                         }
                         connections->prepare_delivery(activation_deliveries);
                     };
-                    auto reply=peer.mall->request(storage_,login.username_utf8,*peer.selected_role,frame,now,prepare_activation);
+                    std::vector<RichonlineRoomDispatch> use_deliveries;
+                    const auto prepare_use=[&](const std::vector<std::uint32_t>& items) {
+                        if(items.size()>4096) throw CodecError("mall_use_inventory_capacity_exceeded");
+                        Frame inventory{21,{}};append_le(inventory.payload,static_cast<std::uint32_t>(items.size()),4);
+                        for(const auto key:items) {append_le(inventory.payload,key,4);append_le(inventory.payload,0,4);}
+                        for(const auto& [id,online]:connections->peers) {
+                            if(id==connection || !online.actor || online.username!=login.username_utf8) continue;
+                            auto* target=connections->directory(id);
+                            if(!target || target->game_pending(id)) throw CodecError("mall_use_account_busy");
+                            use_deliveries.push_back({id,inventory});
+                        }
+                        connections->prepare_delivery(use_deliveries);
+                    };
+                    auto reply=peer.mall->request(storage_,login.username_utf8,*peer.selected_role,frame,now,prepare_activation,prepare_use);
                     if(!reply) throw CodecError("mall_service_wire_not_routed");
+                    if(reply->inventory_consumed) connections->deliver(std::move(use_deliveries));
                     if(reply->activation_committed) {
                         for(auto& [target,prepared]:equipment_refreshes) target->commit_equipment_refresh(prepared);
                         connections->deliver(std::move(activation_deliveries));

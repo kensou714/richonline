@@ -135,6 +135,53 @@ void Storage::require_inventory_date_version(RichonlineInventoryDateVersion vers
     if(profile_!=ClientProfile::richonline)throw StorageError("mall_profile_invalid");
     const std::lock_guard lock(mutex_);date_mode(db_,version);
 }
+nlohmann::json Storage::use_mall_gold_voucher(const std::string& username,std::int64_t role_id,
+    const RichonlineMallCatalog& catalog,const RichonlineMallUse41& request,std::uint32_t gold,
+    std::int64_t now,RichonlineInventoryDateVersion version,const std::string& operation,
+    const RichonlineMallUsePrepare& prepare) {
+    if(profile_!=ClientProfile::richonline || now<0 || operation.empty() || operation.size()>256 ||
+       operation.find('\0')!=std::string::npos || gold==0 || gold>100000)
+        throw StorageError("mall_use_context_invalid");
+    const auto id=static_cast<std::uint16_t>(request.owned_key&4095U);
+    const auto found=catalog.products().find(id);
+    if(id<100 || id>104 || found==catalog.products().end() || !found->second.enabled ||
+       found->second.type!="FUNC" || found->second.subtype!="FUNC_DT" ||
+       (request.owned_key&0x40010000U)!=0)
+        throw StorageError("mall_use_product_unavailable");
+    const std::lock_guard lock(mutex_);Transaction transaction(db_);date_mode(db_,version);
+    auto current=role(db_,username,role_id);
+    Statement prior(db_,"SELECT 1 FROM audit WHERE operation_id=? AND source='native-mall' LIMIT 1");
+    prior.bind(1,operation);
+    if(prior.row()) throw StorageError("mall_use_operation_reused");
+    if(current.at("level").get<std::int64_t>()<found->second.level)
+        throw StorageError("mall_use_level_insufficient");
+    Statement owned(db_,"SELECT inventory_id,expires_at FROM lobby_inventory WHERE username=? AND encoded_item=? AND (expires_at=0 OR expires_at>?) ORDER BY inventory_id LIMIT 1");
+    owned.bind(1,username);owned.bind(2,request.owned_key);owned.bind(3,now);
+    if(!owned.row()) throw StorageError("mall_use_item_missing_or_expired");
+    const auto instance=owned.integer(0);
+    validate_key_date(request.owned_key,owned.integer(1),version);
+    Statement equipped(db_,"SELECT 1 FROM lobby_equipment e JOIN roles r ON r.role_id=e.role_id WHERE r.username=? AND e.encoded_item=? LIMIT 1");
+    equipped.bind(1,username);equipped.bind(2,request.owned_key);
+    if(equipped.row()) throw StorageError("mall_use_item_equipped");
+    const auto before=current.at("gold").get<double>(),after=before+gold;
+    if(!std::isfinite(before) || before<0 || !std::isfinite(after) || after-before!=gold)
+        throw StorageError("mall_use_balance_invalid");
+    current["gold"]=after;
+    validate_role(current,profile_);
+    std::vector<std::uint32_t> inventory;
+    Statement items(db_,"SELECT inventory_id,encoded_item FROM lobby_inventory WHERE username=? AND (expires_at=0 OR expires_at>?) ORDER BY inventory_id");
+    items.bind(1,username);items.bind(2,now);
+    while(items.row()) if(items.integer(0)!=instance) inventory.push_back(static_cast<std::uint32_t>(items.integer(1)));
+    if(prepare) prepare(inventory);
+    Statement update(db_,"UPDATE roles SET gold=? WHERE username=? AND role_id=?");
+    update.bind(1,after);update.bind(2,username);update.bind(3,role_id);update.row();
+    Statement remove(db_,"DELETE FROM lobby_inventory WHERE username=? AND inventory_id=?");
+    remove.bind(1,username);remove.bind(2,instance);remove.row();
+    if(sqlite3_changes(db_)!=1) throw StorageError("mall_use_inventory_changed");
+    audit(db_,username,role_id,operation,"gold",before,after,"mall-gold-voucher-use-v1");
+    audit(db_,username,role_id,operation,"lobby_inventory.consumed_instance",instance,nullptr,"mall-gold-voucher-use-v1");
+    transaction.commit();return current;
+}
 RichonlineMallActivationResult Storage::activate_mall_item(const std::string& username,std::int64_t role_id,
     const RichonlineMallCatalog& catalog,const RichonlineMallActivate63& request,std::int64_t now,
     RichonlineInventoryDateVersion version,const std::string& operation,const std::string& evidence,

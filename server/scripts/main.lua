@@ -24,6 +24,7 @@ local rent_transfer = require("cards.card_1056")
 local forced_sale = require("cards.card_1124")
 local subscription = require("cards.card_1123")
 local mall_purchase = require("mall.purchase")
+local mall_consumables = require("mall.consumables")
 local equipment = require("mall.equipment")
 local equipment_effects = require("mall.equipment_effects")
 local handlers = {
@@ -59,6 +60,7 @@ local handlers = {
     ["boss.chest_select"] = boss_chest.select,
     ["boss.chest_spawn"] = boss_chest.spawn,
     ["mall.purchase_policy"] = mall_purchase.plan,
+    ["mall.consumable_policy"] = mall_consumables.plan,
     ["mall.equipment_policy"] = equipment.plan,
     ["mall.equipment_healing"] = equipment_effects.healing,
 }
