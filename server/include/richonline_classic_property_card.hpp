@@ -4,7 +4,7 @@
 #include "lua_server.hpp"
 
 namespace richnet {
-// 96购地/97换地/98换屋/100查封/101拆屋/102怪兽：目标WORD为地产索引，不能当道路格号。
+// 96购地/97换地/98换屋/100查封/101拆屋/102怪兽/119涨价；仅97/98/101带目标地产WORD。
 class RichonlineClassicPropertyCardPlan final {
 public:
     const Bytes& response() const noexcept {return response_;}
@@ -30,7 +30,7 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View,
     std::int16_t current_property,std::int32_t land_equipment,const RichonlinePlayerCards&,
     const RichonlineClassicProperty&,const RichonlineGameLedger&,std::span<const std::uint8_t> active,
     const std::shared_ptr<LuaServer>& script={});
-// 购地同时提交现金、库存、产权；查封提交整个街区，其余四卡提交一至两块地产。
+// 购地同时提交现金、库存、产权；查封/涨价提交街区，交换/拆除提交一至两块地产。
 bool commit_richonline_classic_property_card(RichonlinePlayerCards&,RichonlineClassicProperty&,
     RichonlineGameLedger&,std::span<const std::uint8_t> active,const RichonlineClassicPropertyCardPlan&);
 }

@@ -54,7 +54,7 @@ RichonlineClassicProperty::RichonlineClassicProperty(std::uint16_t game_id,Richo
             throw CodecError("richonline_classic_property_duplicate");
         districts_.emplace(property.id,property.district);
         if(property.kind!=8 && property.kind!=9 && property.kind!=10)
-            seal_properties_.push_back(property.id);
+            ordinary_properties_.push_back(property.id);
     }
     for(const auto& cell:topology_.cells())
         if(cell.walkable && cell.property_ref>=0 && !properties_.contains(cell.property_ref))
@@ -104,14 +104,22 @@ RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_de
     CardChange plan;plan.owner_=this;
     plan.before_={before};plan.after_={disaster.after()};return plan;
 }
-RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_seal(std::int16_t property) const {
-    if(pending_) throw CodecError("richonline_classic_seal_choice_pending");
-    static_cast<void>(snapshot(property));
+RichonlineClassicProperty::CardChange RichonlineClassicProperty::prepare_card_street(
+    std::int16_t property,StreetEffect effect) const {
+    if(pending_) throw CodecError("richonline_classic_street_choice_pending");
+    if(effect!=StreetEffect::seal && effect!=StreetEffect::price_rise)
+        throw CodecError("richonline_classic_street_effect_invalid");
+    const auto source=snapshot(property);
+    if(effect==StreetEffect::price_rise && (source.kind==8 || source.kind==9 || source.kind==10))
+        throw CodecError("richonline_classic_price_rise_target_protected");
     const auto district=districts_.at(property);
     CardChange plan;plan.owner_=this;
-    for(const auto id:seal_properties_) if(districts_.at(id)==district) {
+    for(const auto id:ordinary_properties_) if(districts_.at(id)==district) {
         const auto& state=properties_.at(id);
-        plan.before_.push_back(state);auto after=state;after.sealed_days=5;plan.after_.push_back(after);
+        plan.before_.push_back(state);auto after=state;
+        if(effect==StreetEffect::seal) after.sealed_days=5;
+        else after.price_rise_days=5;
+        plan.after_.push_back(after);
     }
     return plan;
 }
@@ -130,17 +138,18 @@ bool RichonlineClassicProperty::commit_card_change(const CardChange& plan) noexc
     for(const auto& after:plan.after()) properties_.find(after.id)->second=after;
     return true;
 }
-void RichonlineClassicProperty::advance_seals(std::uint64_t completed_rounds) {
-    if(pending_ || !completed_rounds) throw CodecError("richonline_classic_seal_round_invalid");
-    if(completed_rounds==last_seal_round_) return;
-    if(last_seal_round_==std::numeric_limits<std::uint64_t>::max() || completed_rounds!=last_seal_round_+1)
-        throw CodecError("richonline_classic_seal_round_invalid");
-    // 7E3480只递减正数；计时变更与日历同属共享会话串行状态，不发额外查封包。
-    for(const auto id:seal_properties_) {
+void RichonlineClassicProperty::advance_street_effects(std::uint64_t completed_rounds) {
+    if(pending_ || !completed_rounds) throw CodecError("richonline_classic_street_round_invalid");
+    if(completed_rounds==last_street_round_) return;
+    if(last_street_round_==std::numeric_limits<std::uint64_t>::max() || completed_rounds!=last_street_round_+1)
+        throw CodecError("richonline_classic_street_round_invalid");
+    // 7E3480/7E35E0只递减正数；两个计时独立，均随日历推进，不发额外动画包。
+    for(const auto id:ordinary_properties_) {
         auto& state=properties_.at(id);
         if(state.sealed_days) --state.sealed_days;
+        if(state.price_rise_days) --state.price_rise_days;
     }
-    last_seal_round_=completed_rounds;
+    last_street_round_=completed_rounds;
 }
 std::vector<std::uint64_t> RichonlineClassicProperty::asset_values(
     const std::function<std::uint64_t(const RichonlineClassicPropertyState&)>& valuation) const {
@@ -168,11 +177,13 @@ std::int32_t RichonlineClassicProperty::rent_quote(std::int16_t property,std::ui
             (target.kind==0 && districts_.at(id)!=districts_.at(property))) continue;
         if(item.level>=coefficients.size()) throw CodecError("richonline_classic_rent_level_invalid");
         // unsigned乘法保留低32位；转为signed后逐块除1000，不能先累加再整除。
-        const auto part=target.kind==0 ? static_cast<std::uint32_t>(
+        auto part=target.kind==0 ? static_cast<std::uint32_t>(
             std::bit_cast<std::int32_t>(item.price*monetary_scale*coefficients[item.level])/1000) :
             monetary_scale*4000U;
+        // 7E4140在有符号除法之后按该块D+5翻倍；7E42B0商店计数不读D+5。
+        if(target.kind==0 && item.price_rise_days) part*=2U;
         total+=part;
-        items.push_back({{"price",item.price},{"level",item.level}});
+        items.push_back({{"price",item.price},{"level",item.level},{"price_rise_days",item.price_rise_days}});
     }
     const auto quote=std::bit_cast<std::int32_t>(total);
     if(script_) {

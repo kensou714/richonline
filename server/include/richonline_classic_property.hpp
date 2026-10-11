@@ -31,6 +31,8 @@ struct RichonlineClassicPropertyState {
     std::uint32_t price;
     // D+4查封剩余天数，属于地块本身，不随换地/换屋转移。
     std::uint8_t sealed_days=0;
+    // D+5涨价剩余天数，与查封独立；只影响住宅逐块租金贡献。
+    std::uint8_t price_rise_days=0;
     bool operator==(const RichonlineClassicPropertyState&) const = default;
 };
 struct RichonlineClassicPropertyEntry {
@@ -85,17 +87,18 @@ public:
     CardChange prepare_card_swap(std::int16_t source,std::int16_t target,bool buildings) const;
     CardChange prepare_card_destruction(std::int16_t property,std::uint8_t levels) const;
     // 同街区普通地产表成员重设5天，不限所有权/等级；初始kind8/9/10不在此表。
-    CardChange prepare_card_seal(std::int16_t property) const;
+    enum class StreetEffect { seal, price_rise };
+    CardChange prepare_card_street(std::int16_t property,StreetEffect effect) const;
     bool matches(const CardChange&) const noexcept;
     bool commit_card_change(const CardChange&) noexcept;
     // 只在4010实际推进日期时调用；首次轮首和同日其余玩家不递减。
     // completed_rounds从1开始连续递增，重复同轮不再扣天数。
-    void advance_seals(std::uint64_t completed_rounds);
+    void advance_street_effects(std::uint64_t completed_rounds);
     // 只将当前实际归属的地产交给只读估值策略；禁止未决交易期间冻结排名。
     // 策略须另有估值依据，不能把购地花费、租金或升级费用自动当作资产价格。
     std::vector<std::uint64_t> asset_values(
         const std::function<std::uint64_t(const RichonlineClassicPropertyState&)>& valuation) const;
-    // 只用于本对象持有的普通住宅/同类地产；落点查封在收租入口拦截，加倍卡尚无写入口。
+    // 住宅按每块涨价标记翻倍；商店不读该标记。落点查封在收租入口拦截。
     // 按NEW的32位乘法、逐块有符号除法和累加顺序返回报价，负值不能当无租金。
     std::int32_t rent_quote(std::int16_t property,std::uint32_t monetary_scale) const;
     class Retirement final {
@@ -154,9 +157,9 @@ private:
     std::map<std::int16_t,RichonlineClassicPropertyState> properties_;
     std::map<std::int16_t,std::int16_t> districts_;
     // 7DF010载入时构造Map+46C表；后续建筑变化不重算成员资格。
-    std::vector<std::int16_t> seal_properties_;
+    std::vector<std::int16_t> ordinary_properties_;
     std::optional<Pending> pending_;
-    std::uint64_t last_seal_round_=0;
+    std::uint64_t last_street_round_=0;
     void validate_entry(const RichonlineClassicPropertyEntry&) const;
     void validate_pending(const RichonlineClassicPropertyEntry&) const;
     RichonlineClassicPropertyResult finish(bool requested,bool timed_out);

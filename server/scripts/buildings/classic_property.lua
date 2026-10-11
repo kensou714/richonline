@@ -55,6 +55,8 @@ function M.rent_quote(request)
         if request.kind == 0 then
             local product = signed32(signed32(item.price * request.scale) * coefficients[item.level + 1])
             amount = product >= 0 and product // 1000 or -((-product) // 1000)
+            -- D+5只翻倍这块住宅的贡献，先除后倍，不能把整个街区结果统一翻倍。
+            if item.price_rise_days > 0 then amount = signed32(amount * 2) end
         else
             amount = signed32(request.scale * 4000)
         end

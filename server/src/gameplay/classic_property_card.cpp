@@ -11,7 +11,7 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
     if(packet.size()<6) throw CodecError("richonline_classic_property_card_wire_invalid");
     const auto opcode=read_le(packet.first(2));
     const bool has_target=opcode==97 || opcode==98 || opcode==101;
-    if((opcode!=96 && opcode!=97 && opcode!=98 && opcode!=100 && opcode!=101 && opcode!=102) ||
+    if((opcode!=96 && opcode!=97 && opcode!=98 && opcode!=100 && opcode!=101 && opcode!=102 && opcode!=119) ||
         packet.size()!=(has_target?8U:6U) || read_le(packet.subspan(2,2))!=calendar || packet[4]>=8 || packet[5]!=0)
         throw CodecError("richonline_classic_property_card_wire_invalid");
     const auto actor=cards.actor_slot();
@@ -19,7 +19,7 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
         active.size()<2 || active.size()>4 || active.size()!=ledger.actor_count() || actor>=active.size() ||
         !active[actor] || std::ranges::any_of(active,[](auto value){return value>1;}))
         throw CodecError("richonline_classic_property_card_context_invalid");
-    const auto card_id=static_cast<std::int16_t>(opcode+935);
+    const auto card_id=static_cast<std::int16_t>(opcode==119 ? 1058 : opcode+935);
     const auto consumed=cards.prepare_consumption(static_cast<std::int8_t>(packet[4]),card_id);
     if(!consumed) throw CodecError("richonline_classic_property_card_not_owned");
     const auto target=has_target ? std::bit_cast<std::int16_t>(static_cast<std::uint16_t>(read_le(packet.subspan(6,2)))) :
@@ -40,9 +40,10 @@ RichonlineClassicPropertyCardPlan prepare_richonline_classic_property_card(View 
         auto after=before.funds;after.cash-=price;
         plan.funds_=RichonlineGameFundsUpdate{actor,before,after};
         operation={{"operation","purchase"}};
-    } else if(opcode==100) {
-        plan.change_=property.prepare_card_seal(current_property);
-        operation={{"operation","seal"}};
+    } else if(opcode==100 || opcode==119) {
+        plan.change_=property.prepare_card_street(current_property,opcode==100 ?
+            RichonlineClassicProperty::StreetEffect::seal : RichonlineClassicProperty::StreetEffect::price_rise);
+        operation={{"operation",opcode==100 ? "seal" : "price_rise"}};
     } else if(opcode==97 || opcode==98) {
         plan.change_=property.prepare_card_swap(current_property,target,opcode==98);
         operation={{"operation","swap"},{"property",target},{"buildings",opcode==98}};

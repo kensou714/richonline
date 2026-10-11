@@ -381,8 +381,8 @@ struct Session {
         phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
         confinement_exit_roll_requested=false;
         calendar_roll_requested=false;
-        // 7C0C50轮首先推进日期再递减查封；初始锚点只初始化日历，不进入递减块。
-        if(actor==round_anchor && completed_rounds) world.property->advance_seals(completed_rounds);
+        // 7C0C50轮首先推进日期再递减查封/涨价；初始锚点只初始化日历，不进入递减块。
+        if(actor==round_anchor && completed_rounds) world.property->advance_street_effects(completed_rounds);
         apply_monthly_interest();
         return begin_feast(std::move(messages));
     }
@@ -878,7 +878,7 @@ struct Session {
             !owner_raw.kidnapped1497 || !owner_status.possession || !statuses[actor].possession)
             throw CodecError("richonline_classic_rent_state_unknown");
         // 7C94xx读取地主的状态，而1472/1480关系由付款者按地主索引读取。
-        // 本会话尚未开放关系卡和加倍写入口；查封读取落脚地产，不排除其他地块的联排贡献。
+        // 关系卡尚未开放；查封读取落脚地产，涨价在报价内逐块处理，不排除其他查封地块的贡献。
         // 7E4140的联排报价本身不检查查封，7C6640在租金入口检查目标D+4。
         const bool suppressed=property.sealed_days || owner_status.possession==7 || owner_status.sleepwalking || owner_status.frozen ||
             *owner_raw.hotel1493!=-1 || *owner_raw.hospital1494!=-1 ||
@@ -2211,7 +2211,8 @@ struct Session {
             if(opcode==116) return theft_card(request);
             if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
             if(opcode==142) return weapon_treaty(request);
-            if(opcode==96 || opcode==97 || opcode==98 || opcode==100 || opcode==101 || opcode==102) return property_card(request);
+            if(opcode==96 || opcode==97 || opcode==98 || opcode==100 || opcode==101 || opcode==102 || opcode==119)
+                return property_card(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103 || (opcode>=137 && opcode<=140)) return immediate_move_card(request);
             if((opcode>=104 && opcode<=107) || opcode==136 || opcode==141) return motion_card(request);
