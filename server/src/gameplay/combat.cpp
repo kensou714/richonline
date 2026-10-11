@@ -252,7 +252,9 @@ std::uint32_t richonline_mixed_mine_chain_damage(std::uint32_t adjusted,std::uin
     return static_cast<std::uint32_t>(result);
 }
 bool richonline_combat_action_allowed(const RichonlineActorStatus& status) noexcept {
-    return status.sleepwalking==0 && status.frozen==0;
+    // 梦游卡与睡神附身共用受控移动，两者均不能主动攻击。NPC7是睡神，
+    // 不与造成随机转向的幽灵NPC混同；新闻能否触发由落点入口单独判断。
+    return status.sleepwalking==0 && status.possession!=7 && status.frozen==0;
 }
 RichonlineMineChainPlan plan_richonline_mine_chain(std::int16_t root,
     std::span<const RichonlineMine> mines,std::uint8_t range,const RichonlineCombatStep& step) {

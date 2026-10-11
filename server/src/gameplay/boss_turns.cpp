@@ -130,7 +130,8 @@ struct Turns {
     }
     void boss_possession_skill(std::vector<Bytes>& messages,std::uint8_t target) {
         if(target!=1 || !active[1] || boss_chest || !rules.combat || !rules.script ||
-            !rules.ledger || !rules.ledger->snapshot(1).funds.cash) return;
+            !rules.ledger || !rules.ledger->snapshot(1).funds.cash ||
+            !richonline_combat_action_allowed(status[1])) return;
         const auto selected=boss_skill("negative_possession");
         if(!selected.is_number_integer() || (selected!=0 && (selected<5 || selected>7)))
             throw CodecError("lua_boss_mine_burst_count_invalid");
@@ -143,7 +144,8 @@ struct Turns {
         messages.insert(messages.end(),std::make_move_iterator(burst.packets.begin()),std::make_move_iterator(burst.packets.end()));
     }
     void boss_fire_skill(std::vector<Bytes>& messages) {
-        if(actor!=1 || !active[1] || boss_chest || !rules.script || !rules.fire_traps || !rules.ground) return;
+        if(actor!=1 || !active[1] || boss_chest || !rules.script || !rules.fire_traps || !rules.ground ||
+            !richonline_combat_action_allowed(status[1])) return;
         const auto selected=boss_skill("fire");
         if(!selected.is_number_integer() || (selected!=0 && (selected<5 || selected>7)))
             throw CodecError("lua_boss_fire_selection_invalid");
@@ -571,7 +573,8 @@ struct Turns {
         if(!boss_chest && actor==1 && rules.combat && rules.script)
             script_attack=rules.script->call("boss.can_attack",{{"map",rules.script_map},
                 {"actionable",richonline_combat_action_allowed(status[actor])}}).get<bool>();
-        if(!boss_chest && first_boss_action && rules.combat && script_attack) {
+        if(!boss_chest && first_boss_action && rules.combat && script_attack &&
+            richonline_combat_action_allowed(status[actor])) {
             auto refs=combat_refs();auto attack=rules.combat->boss_turn(refs,actor,rules.combat_random(),rules.log);
             messages.insert(messages.end(),std::make_move_iterator(attack.packets.begin()),
                 std::make_move_iterator(attack.packets.end()));

@@ -9,11 +9,12 @@ namespace richnet {
 inline bool richonline_landing_controlled(const RichonlineActorStatus& status) noexcept {
     return status.possession==7 || status.sleepwalking!=0 || status.frozen!=0;
 }
-// 新闻属于服务端事件：BOSS 梦游仍触发三色新闻；其他角色及控制状态沿用原限制。
+// 新闻属于服务端事件：BOSS的梦游卡/睡神附身仍触发三色新闻。
+// 冰冻以及真人受控落点保留原限制；不能复用“允许攻击”的判断来决定新闻。
 inline bool richonline_news_landing_allowed(const RichonlineLandingContext& context) noexcept {
     const auto& status=context.actor_status;
     return context.game_mode==3 && context.static_type>=68 && context.static_type<=70 &&
-        status.possession!=7 && !status.frozen && (!status.sleepwalking || context.synthetic_actor);
+        !status.frozen && (context.synthetic_actor || (!status.sleepwalking && status.possession!=7));
 }
 // 动态地面效果和碰撞之后检查静态格跳过规则；梦游 BOSS 新闻交给新闻事务。
 // 地产收费和地面 NPC 效果不在此处跳过。
