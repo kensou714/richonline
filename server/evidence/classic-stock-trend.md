@@ -53,3 +53,17 @@ BOSS模式沿用原生拒绝；随机奖励开关尚保持关闭，不能把经�
 普通行情生成、大盘公式、波动频率、初始历史以及完整经典生产准入仍需继续接入；
 本次完成共享行情卡事务和日期接入口，不宣称经典玩法或实机联机已全部通过。
 不部署或重启线上。固定构建与本机交付结果在完成后单独记录。
+
+## 固定构建与本机交付
+
+源码提交`286dad2db97d118f3dc41f7a855a67b4c53d9a7b`已推送，GitHub main引用核对一致。
+固定tree为`75ab47cedc514b19cfaacb1e9e15bb1d4c35f382`，源码目录
+`server/build-classic-stock-trend-source/server`，独立Release构建目录
+`server/build-classic-stock-trend-fixed`。RichOnline.Server目标构建退出0，
+包括179个Lua模块语法编译；静态diff检查通过，没有新增或运行测试。
+
+交付前CIM未发现RichOnline.Server.exe进程，本机EXE已更新，SHA256为
+`70764E48A8D8F7F92DEAD324A65C8F711F6F7A33FCA523FD596BE871FEF93508`。
+179个Lua在固定源码、构建输出和本机scripts之间逐项哈希一致。旧EXE备份为
+`server/build-classic-stock-trend-fixed/RichOnline.Server.before-286dad2.exe`。
+没有启动服务/游戏，没有部署或重启线上，也没有声称完成实机验收。
