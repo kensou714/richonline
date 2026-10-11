@@ -82,6 +82,24 @@ RichonlineStockQuote RichonlineStockMarket::quote(std::uint16_t slot) const {
     if(slot>=quotes_.size()) throw CodecError("richonline_stock_slot_invalid");
     return quotes_[slot];
 }
+RichonlineStockTrend RichonlineStockMarket::trend(std::uint16_t slot) const {
+    if(slot>=quotes_.size()) throw CodecError("richonline_stock_slot_invalid");
+    return trends_[slot];
+}
+std::optional<float> RichonlineStockMarket::forced_trend_price(std::uint16_t slot) const {
+    const auto state=trend(slot);
+    if(!state.remaining) return std::nullopt;
+    return next_trend_price(quotes_[slot].price,state.direction);
+}
+float RichonlineStockMarket::next_trend_price(float before,std::int8_t direction) const {
+    const auto percent=direction>0 ? rise_limit_ : fall_limit_;
+    // 一次高精度运算后写回协议float；这是用户确定的新服务端规则。
+    const auto price=static_cast<float>(static_cast<double>(before)*(1.0+static_cast<double>(percent)/100.0));
+    valid_price(price);
+    if((direction>0 && price<=before) || (direction<0 && price>=before))
+        throw CodecError("richonline_stock_forced_trend_price_unrepresentable");
+    return price;
+}
 std::uint64_t RichonlineStockMarket::market_value(std::uint8_t actor) const {
     if(actor>=ledger_->actor_count()) throw CodecError("richonline_stock_holding_invalid");
     constexpr auto limit=static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
@@ -141,7 +159,12 @@ Bytes RichonlineStockMarket::change_price(std::uint16_t slot,float price) {
 RichonlineStockMarket::QuoteUpdate RichonlineStockMarket::prepare_price(std::uint16_t slot,float price) const {
     const auto before=quote(slot);available_revision(revision_);
     const auto change=quote_change(before.price,price,rise_limit_,fall_limit_);
+    auto future=price;
+    for(unsigned wave=0;wave<trends_[slot].remaining;++wave)
+        future=next_trend_price(future,trends_[slot].direction);
     QuoteUpdate result;result.owner_=this;result.revision_=revision_;result.index_=index_;result.quotes_=quotes_;
+    // 4203是独立单股更新；不把公司等业务改价当作一次全市场波动。
+    result.trends_=trends_;
     result.quotes_[slot].price=price;result.quotes_[slot].change_percent=change;
     append_le(result.response_,0x4203,2);append_le(result.response_,game_,2);
     append_le(result.response_,slot,2);append_le(result.response_,0,2);
@@ -157,6 +180,7 @@ RichonlineStockMarket::QuoteUpdate RichonlineStockMarket::prepare_market(std::sp
     if(prices.size()!=quotes_.size()) throw CodecError("richonline_stock_market_price_count_invalid");
     available_revision(revision_);
     QuoteUpdate result;result.owner_=this;result.revision_=revision_;result.quotes_=quotes_;
+    result.trends_=trends_;
     // 4202调用80F170时前值传0，客户端以旧的大盘当前值作为新前值。
     result.index_={index_.current,current_index,factor};valid_index(result.index_);
     LuaValue rows=LuaValue::array();
@@ -164,6 +188,12 @@ RichonlineStockMarket::QuoteUpdate RichonlineStockMarket::prepare_market(std::sp
     append_le(result.response_,std::bit_cast<std::uint32_t>(current_index),4);
     append_le(result.response_,std::bit_cast<std::uint32_t>(factor),4);
     for(std::size_t slot=0;slot<prices.size();++slot) {
+        const auto trend=trends_[slot];
+        if(trend.remaining) {
+            if(prices[slot]!=*forced_trend_price(static_cast<std::uint16_t>(slot)))
+                throw CodecError("richonline_stock_forced_trend_mismatch");
+            if(--result.trends_[slot].remaining==0) result.trends_[slot].direction=0;
+        }
         result.quotes_[slot].change_percent=quote_change(quotes_[slot].price,prices[slot],rise_limit_,fall_limit_);
         result.quotes_[slot].price=prices[slot];rows.push_back(prices[slot]);
         append_le(result.response_,std::bit_cast<std::uint32_t>(prices[slot]),4);
@@ -183,7 +213,7 @@ bool RichonlineStockMarket::commit(const QuoteUpdate& update) {
     available_revision(revision_);
     // 计划来自本实例且版本未变，所有验证/Lua/分配已完成，仅写相同数量的标量。
     for(std::size_t slot=0;slot<quotes_.size();++slot) quotes_[slot]=update.quotes_[slot];
-    index_=update.index_;++revision_;return true;
+    index_=update.index_;trends_=update.trends_;++revision_;return true;
 }
 RichonlineStockMarket::Trade RichonlineStockMarket::prepare(std::uint8_t actor,const RichonlineStockRequest& request) const {
     const auto before=holding(actor,request.slot);

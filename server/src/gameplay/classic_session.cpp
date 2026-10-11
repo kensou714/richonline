@@ -446,7 +446,33 @@ struct Session {
         // 7C0C50轮首先推进日期再递减查封/涨价；初始锚点只初始化日历，不进入递减块。
         if(actor==round_anchor && completed_rounds) world.property->advance_street_effects(completed_rounds);
         apply_monthly_interest();
+        append_stock_fluctuation(messages);
         return begin_feast(std::move(messages));
+    }
+    void append_stock_fluctuation(std::vector<Bytes>& messages) {
+        if(actor!=round_anchor || !completed_rounds || !world.stocks || !rules.stocks || !rules.stocks->fluctuate) return;
+        const auto market=world.stocks;
+        const auto revision=market->revision();
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto before_actors=relocation_snapshot();
+        std::vector<RichonlineStockQuote> quotes;
+        std::vector<RichonlineStockTrend> trends;
+        std::vector<std::optional<float>> forced_prices;
+        for(std::uint16_t slot=0;slot<startup.stocks.configurations.size();++slot) {
+            quotes.push_back(market->quote(slot));trends.push_back(market->trend(slot));
+            forced_prices.push_back(market->forced_trend_price(slot));
+        }
+        const auto wave=rules.stocks->fluctuate(completed_rounds,quotes,trends,forced_prices,market->index());
+        if(world.stocks!=market || market->revision()!=revision || actor!=before_actor ||
+            calendar!=before_calendar || sequence!=before_sequence || relocation_snapshot()!=before_actors)
+            throw CodecError("richonline_classic_stock_fluctuation_stale");
+        if(!wave) return;
+        auto plan=market->prepare_market(wave->prices,wave->current_index,wave->factor,wave->notify);
+        messages.push_back(plan.response());
+        if(!market->commit(plan)) throw CodecError("richonline_classic_stock_fluctuation_commit_stale");
+        if(rules.log) rules.log("richonline_classic_stock_fluctuation day="+std::to_string(completed_rounds+1));
     }
     void apply_monthly_interest() {
         if(actor!=round_anchor) return;
@@ -2566,6 +2592,38 @@ struct Session {
         // 三张卡均由确认包本地恢复操作；零现金/存款不在这里生成破产或结束回合。
         return messages;
     }
+    std::vector<Bytes> stock_trend_card(View request) {
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto before_actors=relocation_snapshot();
+        const auto owner=world.cards[actor];
+        const auto market=world.stocks;
+        std::optional<RichonlineStockMarket::TrendCard> plan;
+        try {
+            const auto& state=raw->actor(actor);
+            if(phase!=Phase::roll || !market || !rules.stocks || !rules.stocks->fluctuate || !owner ||
+                !active[actor] || richonline_landing_controlled(statuses[actor]) || statuses[actor].stay ||
+                state.hotel1493!=-1 || state.hospital1494!=-1 || state.jail1495!=-1 || state.kidnapped1497!=-1 ||
+                raw->game().scripted_event83830!=-1 || movement)
+                throw CodecError("richonline_classic_stock_trend_unavailable");
+            plan=market->prepare_trend_card(request,calendar,active,*owner);
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_stock_trend_refused actor="+std::to_string(actor)+
+                " reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        std::vector<Bytes> messages{plan->response()};
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            world.cards[actor]!=owner || world.stocks!=market || relocation_snapshot()!=before_actors || movement ||
+            raw->game().scripted_event83830!=-1)
+            throw CodecError("richonline_classic_stock_trend_stale");
+        remember(actor,request);
+        if(!market->commit(*plan,active,*owner)) throw CodecError("richonline_classic_stock_trend_commit_stale");
+        if(rules.log) rules.log("richonline_classic_stock_trend actor="+std::to_string(actor)+
+            " opcode="+std::to_string(read_le(request.first(2)))+" remaining=3 policy=replace-three");
+        return messages;
+    }
     std::vector<Bytes> stock_card(View request) {
         const auto opcode=read_le(request.first(2));
         // use只由已认证的当前行动者在roll阶段进入；与无日历的0200/0201分开。
@@ -2738,6 +2796,7 @@ struct Session {
             if(opcode==135) return clear_status_card(request);
             if(opcode==121) return alliance_card(request);
             if(opcode==161) return swap_positions_card(request);
+            if(opcode>=146 && opcode<=149) return stock_trend_card(request);
             if(opcode==96 || opcode==97 || opcode==98 || opcode==99 || opcode==100 || opcode==101 || opcode==102 ||
                 opcode==119 || opcode==120 || opcode==123 || opcode==134 || (opcode>=125 && opcode<=129))
                 return property_card(request);

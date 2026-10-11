@@ -35,6 +35,11 @@ struct RichonlineStockHolding {
 struct RichonlineStockIndex {
     float previous,current,factor;
 };
+struct RichonlineStockTrend {
+    std::int8_t direction=0; // -1下跌，0无强制走势，1上涨。
+    std::uint8_t remaining=0;
+    bool operator==(const RichonlineStockTrend&) const = default;
+};
 // 4200/4201/4202/4203共用原始涨跌计算；中间使用double，最后按客户端写回float。
 // 本函数不修饰涨跌停阈值，也不改变实际报价。
 float richonline_stock_change_percent(float previous,float current);
@@ -53,6 +58,29 @@ public:
     // 现价逐股估值：数量先写float，乘积不提前舍入，逐项截断后以64位累加。
     std::uint64_t market_value(std::uint8_t actor) const;
     RichonlineStockIndex index() const noexcept {return index_;}
+    // 行情策略读取方向后提供真实新价；原客户端确认包不携带涨跌幅。
+    RichonlineStockTrend trend(std::uint16_t slot) const;
+    // 用户确认每次使用Stock.kpd涨跌停幅度。空值表示该槽由普通行情策略定价。
+    std::optional<float> forced_trend_price(std::uint16_t slot) const;
+    std::uint64_t revision() const noexcept {return revision_;}
+    class TrendCard final {
+    public:
+        const Bytes& response() const noexcept {return response_;}
+    private:
+        const RichonlineStockMarket* owner_=nullptr;
+        const RichonlinePlayerCards* cards_=nullptr;
+        std::uint64_t revision_=0;
+        RichonlineChanceInventory inventory_before_{},inventory_after_{};
+        std::vector<std::uint8_t> active_;
+        std::array<RichonlineStockTrend,10> trends_{};
+        Bytes response_;
+        friend class RichonlineStockMarket;
+    };
+    // 服务端策略：后用卡覆盖所选股票方向，并重置为资源文案规定的三次波动。
+    // 146/147是8字节单股请求，148/149是6字节全市场请求；不即时改价。
+    TrendCard prepare_trend_card(View,std::uint16_t calendar,std::span<const std::uint8_t> active,
+        const RichonlinePlayerCards&) const;
+    bool commit(const TrendCard&,std::span<const std::uint8_t> active,RichonlinePlayerCards&) noexcept;
     class Retirement final {
     private:
         Retirement()=default;
@@ -78,10 +106,13 @@ public:
         std::uint64_t revision_=0;
         std::vector<RichonlineStockQuote> quotes_;
         RichonlineStockIndex index_{};
+        std::array<RichonlineStockTrend,10> trends_{};
         Bytes response_;
         friend class RichonlineStockMarket;
     };
     QuoteUpdate prepare_price(std::uint16_t slot,float price) const;
+    // 一次4202是一次全市场波动：核验强制方向，成功提交才递减次数。
+    // 强制槽须使用forced_trend_price；普通走势及大盘仍由行情策略提供。
     // 4202的提示标志固定在+52，缺少的股票槽填零。必须提供全部本局股票的新价。
     QuoteUpdate prepare_market(std::span<const float> prices,float current_index,float factor,bool notify) const;
     bool commit(const QuoteUpdate&);
@@ -167,12 +198,14 @@ public:
     std::uint32_t maximum_subscription_quantity(std::uint8_t buyer,std::uint8_t seller,std::uint16_t slot) const;
     bool commit(const Subscription&,std::span<const std::uint8_t> active,RichonlinePlayerCards& cards);
 private:
+    float next_trend_price(float,std::int8_t direction) const;
     std::uint16_t game_;
     std::shared_ptr<RichonlineGameLedger> ledger_;
     std::shared_ptr<LuaServer> script_;
     std::vector<RichonlineStockQuote> quotes_;
     RichonlineStockIndex index_;
     std::array<std::array<RichonlineStockHolding,10>,8> holdings_{};
+    std::array<RichonlineStockTrend,10> trends_{};
     float rise_limit_,fall_limit_;
     bool restricted_=false;
     std::uint64_t revision_=0;

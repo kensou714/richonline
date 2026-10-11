@@ -52,16 +52,28 @@ struct RichonlineClassicServices {
     // 同步原子扣费，由准入层绑定账号及同一金豆支付协调器；缺席则不开放付费刷新。
     std::function<bool(std::uint8_t,std::uint32_t)> shop_refresh;
     // 4010已排队且月初存款利息已入账；配置feasts时内置节日及出院/出狱等待已完成，
-    // 配置lottery时开奖及其排队等待也已完成。此回调只补剩余日历业务，不能重复发奖。
+    // 配置lottery时开奖及其排队等待也已完成；stocks.fluctuate已处理本日行情，不能重复波动。
+    // 此回调只补剩余日历业务，不能重复发奖。
     // complete明确表示可执行本次7E4C50扫描，
     // await_event则由既有event/poll完成日历恢复。不得自己扫描research、发420F、
     // 发第二个4010或执行落点phase6；开启研究所必须提供此检查点，不能把日历等待跳掉。
     std::function<RichonlineLandingResult(const RichonlineClassicTurnContext&)> turn_start;
 };
+struct RichonlineClassicStockFluctuation {
+    std::vector<float> prices;
+    float current_index,factor;
+    bool notify=false;
+};
 struct RichonlineClassicStockPolicy {
     std::shared_ptr<const RichonlineStockResources> resources;
     std::vector<RichonlineStockHistory> history;
     float previous_index,current_index,factor;
+    // 每个实际日期推进只调用一次；返回空表示本日不波动。只读，不改市场或其他会话状态。
+    // forced_prices有值的槽必须采用核心计算价，并据最终价格计算大盘；其余槽由策略定价。
+    // 未配置时拒绝行情卡，避免扣卡后永不生效。
+    std::function<std::optional<RichonlineClassicStockFluctuation>(std::uint64_t completed_rounds,
+        std::span<const RichonlineStockQuote>,std::span<const RichonlineStockTrend>,
+        std::span<const std::optional<float>> forced_prices,RichonlineStockIndex)> fluctuate;
 };
 struct RichonlineClassicSubscriptionContext {
     std::uint8_t buyer,seller;
