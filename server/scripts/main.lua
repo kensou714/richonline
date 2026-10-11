@@ -14,6 +14,7 @@ local feasts = require("events.feasts")
 local classic_feasts = require("events.classic_feasts")
 local tiles = require("tiles.registry")
 local classic_news = require("tiles.tile_1")
+local classic_lottery = require("tiles.tile_4")
 local bank = require("tiles.tile_9")
 local property = require("tiles.tile_12")
 local missile_base = require("buildings.missile_base")
@@ -38,6 +39,7 @@ local handlers = {
     ["feast.classic"] = classic_feasts.plan,
     ["tile.land"] = tiles.land, ["tile.news_select"] = tiles.select_news,
     ["tile.classic_kidnap_return"] = classic_news.return_kidnapped,
+    ["lottery.purchase"] = classic_lottery.purchase, ["lottery.draw"] = classic_lottery.draw,
     ["bank.open"] = bank.open, ["bank.transaction"] = bank.transaction,
     ["property.construct"] = property.construct, ["property.upgrade"] = property.upgrade,
     ["property.research"] = property.research,

@@ -23,7 +23,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,feast_exit,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,property,research,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,feast_exit,lottery_draw,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,lottery,property,research,rent_transfer,event,junction,settling,closed };
 enum class Confinement { hospital,jail };
 struct Retired {
     std::uint8_t actor;
@@ -93,7 +93,13 @@ struct Session {
     Confinement confinement=Confinement::hospital;
     std::optional<std::chrono::sys_days> last_feast_day;
     std::vector<PendingFeastExit> feast_exits;
-    bool feast_roll_requested=false;
+    bool calendar_roll_requested=false;
+    std::unique_ptr<RichonlineClassicLottery> lottery;
+    std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_lottery;
+    std::optional<std::chrono::sys_days> last_lottery_day;
+    std::optional<std::chrono::steady_clock::time_point> lottery_draw_deadline;
+    Bytes lottery_draw_packet;
+    std::vector<bool> lottery_draw_sent;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -187,6 +193,14 @@ struct Session {
             static_cast<void>(policy.resources->find({std::chrono::year{board.year},
                 std::chrono::month{board.month},std::chrono::day{board.day}}));
         }
+        if(rules.lottery) {
+            if(!rules.feasts || rules.lottery->draw_delay<std::chrono::milliseconds{6400} ||
+                rules.lottery->draw_delay>std::chrono::minutes{5} || board.year<2004 || board.year>2034)
+                throw CodecError("richonline_classic_lottery_policy_invalid");
+            lottery=std::make_unique<RichonlineClassicLottery>(board.game_server_id,world.ledger,rules.now,
+                rules.decision_timeout,rules.random,rules.lottery->draw_opaque,rules.script);
+            lottery_draw_sent.resize(count,false);
+        }
         if(rules.stocks) {
             const auto& policy=*rules.stocks;
             if(!policy.resources) throw CodecError("richonline_classic_stock_resources_missing");
@@ -212,7 +226,7 @@ struct Session {
             rules.now,rules.decision_timeout,rules.script);
         services=rules.services(world);
         if(!services.landing || !services.property_effects || !services.event || !services.poll ||
-            ((world.research || rules.feasts) && !services.turn_start)) {
+            ((world.research || rules.feasts || lottery) && !services.turn_start)) {
             release_members();
             throw CodecError("richonline_classic_session_services_incomplete");
         }
@@ -306,6 +320,10 @@ struct Session {
         if(retired.size()>64) retired.pop_front();
     }
     bool was_retired(std::uint8_t sender,View request) const {
+        if(request.size()>=2 && read_le(request.first(2))==0x29) {
+            const auto choice=decode_richonline_lottery_request(request);
+            if(std::ranges::find(retired_lottery,std::pair{sender,choice.calendar})!=retired_lottery.end()) return true;
+        }
         if(request.size()>=2 && read_le(request.first(2))==0x24) {
             const auto choice=decode_richonline_classic_research_request(request);
             if(std::ranges::find(retired_research,std::pair{sender,choice.calendar})!=retired_research.end()) return true;
@@ -349,10 +367,36 @@ struct Session {
         richonline_status_begin_active_turn(statuses[actor]);
         phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
         confinement_exit_roll_requested=false;
-        feast_roll_requested=false;
+        calendar_roll_requested=false;
         return begin_feast(std::move(messages));
     }
     std::vector<Bytes> after_feast(std::vector<Bytes> messages) {
+        // 7C0C50的selector3开奖门只有日期15、轮首和已有号码，不复用节日的脚本事件门。
+        if(lottery && actor==round_anchor) {
+            const std::chrono::sys_days start{std::chrono::year{board.year}/board.month/board.day};
+            const std::chrono::sys_days last{std::chrono::year{2034}/12/31};
+            if(completed_rounds>static_cast<std::uint64_t>((last-start).count()))
+                throw CodecError("richonline_lottery_date_unsupported");
+            const auto date=start+std::chrono::days{static_cast<std::int64_t>(completed_rounds)};
+            if(last_lottery_day!=date && std::chrono::year_month_day{date}.day()==std::chrono::day{15}) {
+                // 为报文和发送跟踪预留空间，派奖事务成功后不再因vector增长丢失回复。
+                messages.reserve(messages.size()+1);lottery_draw_packet.reserve(12);
+                if(auto draw=lottery->draw(sequence,active,news_fines)) {
+                    last_lottery_day=date;phase=Phase::lottery_draw;
+                    lottery_draw_packet=draw->message;
+                    std::fill(lottery_draw_sent.begin(),lottery_draw_sent.end(),false);
+                    lottery_draw_deadline.reset();messages.push_back(std::move(draw->message));
+                    if(rules.log) rules.log("richonline_classic_lottery_draw number="+std::to_string(draw->number)+
+                        " winner="+std::to_string(draw->winner)+" prize="+std::to_string(draw->prize)+
+                        " next_pool="+std::to_string(news_fines)+" sequence="+std::to_string(sequence));
+                    return messages;
+                }
+                last_lottery_day=date;
+            }
+        }
+        return after_lottery(std::move(messages));
+    }
+    std::vector<Bytes> after_lottery(std::vector<Bytes> messages) {
         if(services.turn_start) return turn_start_result(std::move(messages),services.turn_start(context()));
         return finish_turn_start(std::move(messages));
     }
@@ -427,7 +471,7 @@ struct Session {
     }
     static bool reserved_event(std::uint16_t opcode) noexcept {
         return opcode==0x10 || opcode==0x11 || opcode==0x14 || opcode==0x15 || opcode==0x20 || opcode==0x21 ||
-            opcode==0x23 || opcode==0x24 || opcode==0x27 || opcode==0x28 || opcode==0x34 || opcode==0x76;
+            opcode==0x23 || opcode==0x24 || opcode==0x27 || opcode==0x28 || opcode==0x29 || opcode==0x34 || opcode==0x76;
     }
     std::vector<Bytes> turn_start_result(std::vector<Bytes> prefix,RichonlineLandingResult result) {
         if((result.progress!=RichonlineLandingProgress::complete && result.progress!=RichonlineLandingProgress::await_event) ||
@@ -437,7 +481,8 @@ struct Session {
         for(const auto& packet:result.messages) {
             if(packet.size()<2) throw CodecError("richonline_classic_turn_continuation_packet_invalid");
             const auto opcode=read_le(View(packet).first(2));
-            if(opcode==0x4010 || opcode==0x420f || (rules.feasts && (opcode==0x40a0 || opcode==0x40a1)))
+            if(opcode==0x4010 || opcode==0x420f || (rules.feasts && (opcode==0x40a0 || opcode==0x40a1)) ||
+                (lottery && opcode==0x402c))
                 throw CodecError("richonline_classic_turn_continuation_packet_invalid");
         }
         append(prefix,std::move(result.messages));
@@ -513,7 +558,7 @@ struct Session {
         }
         if(rules.log) rules.log("richonline_classic_turn actor="+std::to_string(actor)+
             " sequence="+std::to_string(sequence)+" calendar="+std::to_string(calendar));
-        if(std::exchange(feast_roll_requested,false) && phase==Phase::roll) append(messages,random_move({}));
+        if(std::exchange(calendar_roll_requested,false) && phase==Phase::roll) append(messages,random_move({}));
         return messages;
     }
     bool confinement_controlled() const noexcept {
@@ -745,6 +790,7 @@ struct Session {
         if(!world.property->commit_retirement(plan.property)) std::terminate();
         if(plan.stocks && !world.stocks->commit(*plan.stocks)) std::terminate();
         if(world.research) world.research->retire(plan.property.actor());
+        if(lottery) lottery->retire(plan.property.actor());
         return true;
     }
     void validate_month_limit(std::span<const std::uint8_t> survivors) const {
@@ -1228,12 +1274,38 @@ struct Session {
         if(rules.log) rules.log(diagnostic);
         return shop_result(std::move(result));
     }
+    RichonlineLotteryEntry lottery_entry() const {
+        if(!lottery || startup.topology.cell(board.participants[actor].position).static_type!=4 ||
+            richonline_landing_controlled(statuses[actor]) || raw->game().scripted_event83830!=-1)
+            throw CodecError("richonline_classic_lottery_landing_invalid");
+        return {board.game_server_id,calendar,sequence,actor,board.participants[actor].position};
+    }
+    std::vector<Bytes> lottery_result(RichonlineLotteryPurchase result) {
+        retired_lottery.emplace_back(actor,calendar);
+        if(retired_lottery.size()>64) retired_lottery.pop_front();
+        pending_opcode.reset();
+        if(rules.log) rules.log("richonline_classic_lottery_purchase actor="+std::to_string(actor)+
+            " number="+std::to_string(result.number)+" pool="+std::to_string(news_fines)+
+            " timed_out="+std::to_string(result.timed_out)+" sequence="+std::to_string(sequence));
+        // 402B排6080 stage2，静态彩票格之后仍须地产业务/phase6，不提前换人。
+        return property_effects({std::move(result.message)});
+    }
     std::vector<Bytes> land() {
         if(collision_pending) throw CodecError("richonline_classic_phase6_already_pending");
         static_cast<void>(collision_actors());
         collision_pending=true;
         const auto current=context();
         if(auto messages=portal_landing(current.landing)) return std::move(*messages);
+        if(lottery && current.landing.static_type==4) {
+            if(current.landing.property_ref!=-1) throw CodecError("richonline_classic_lottery_property_unsupported");
+            const auto scripted=raw->game().scripted_event83830;
+            if(!scripted) throw CodecError("richonline_classic_lottery_game_unknown");
+            auto packet=stop();
+            if(*scripted!=-1 || richonline_landing_controlled(statuses[actor]) || !lottery->can_buy(actor))
+                return property_effects({std::move(packet)});
+            lottery->begin(lottery_entry());phase=Phase::lottery;pending_opcode=0x29;
+            return {std::move(packet)};
+        }
         // 先完成静态/地产业务，同格效果由complete统一在phase6执行，不能提前抢卡。
         if(auto result=services.landing(current)) return accept_result(std::move(*result));
         if(auto messages=local_reward_landing(current.landing)) return std::move(*messages);
@@ -1605,11 +1677,14 @@ struct Session {
             // 非行动者的重复节日确认也须在行动槽门之前去重。
             if(was_retired(sender,request)) return {};
         }
+        // 旧行动者的迟到选号也可能在换人后抵达；当前待决仍优先，不能吞掉同日再次购买。
+        if(opcode==0x29 && !(phase==Phase::lottery && sender==actor && pending_opcode==opcode) &&
+            was_retired(sender,request)) return {};
         if(sender!=actor) throw CodecError("richonline_classic_sender_not_active");
-        if(phase==Phase::feast_exit && opcode==0x10) {
+        if((phase==Phase::feast_exit || phase==Phase::lottery_draw) && opcode==0x10) {
             const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
             if(roll.parameter!=0) throw CodecError("richonline_classic_roll_parameter_unsupported");
-            feast_roll_requested=true;remember(sender,request);return {};
+            calendar_roll_requested=true;remember(sender,request);return {};
         }
         if(phase==Phase::turn_event && pending_opcode==opcode) {
             auto result=services.event(context(),request);remember(sender,request);
@@ -1618,6 +1693,10 @@ struct Session {
         if(phase==Phase::research && pending_opcode==opcode) {
             auto result=world.research->handle(sender,request,property_entry());remember(sender,request);
             return research_result(std::move(result));
+        }
+        if(phase==Phase::lottery && pending_opcode==opcode) {
+            auto result=lottery->handle(sender,request,lottery_entry(),news_fines);remember(sender,request);
+            return lottery_result(std::move(result));
         }
         if(opcode==0x15) {
             if(request.size()!=4) throw CodecError("richonline_classic_confinement_ack_invalid");
@@ -1717,6 +1796,15 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
+        if(phase==Phase::lottery_draw) {
+            if(!lottery_draw_deadline || rules.now()<*lottery_draw_deadline) return {};
+            lottery_draw_deadline.reset();lottery_draw_packet.clear();
+            return after_lottery({});
+        }
+        if(phase==Phase::lottery) {
+            if(auto result=lottery->poll(lottery_entry(),news_fines)) return lottery_result(std::move(*result));
+            return {};
+        }
         if(phase==Phase::feast_exit) {
             const auto now=rules.now();
             for(auto& exit:feast_exits) if(!exit.complete && now>=exit.deadline) {
@@ -1766,12 +1854,21 @@ struct Session {
         }
         return {};
     }
+    void sent(std::uint8_t sender,View packet) {
+        if(terminal) terminal->sent(sender,packet);
+        if(phase!=Phase::lottery_draw || !std::ranges::equal(packet,lottery_draw_packet)) return;
+        if(sender>=lottery_draw_sent.size()) throw CodecError("richonline_lottery_delivery_actor_invalid");
+        lottery_draw_sent[sender]=true;
+        if(!lottery_draw_deadline && std::ranges::all_of(lottery_draw_sent,[](bool value){return value;}))
+            lottery_draw_deadline=rules.now()+rules.lottery->draw_delay;
+    }
     void disconnect(std::uint8_t sender) {
         if(sender>=disconnected.size() || disconnected[sender]) return;
         disconnected[sender]=true;
         if(!terminal || !terminal->committed())phase=Phase::closed;
         movement.reset();rent_transfer.reset();kidnap_deadline.reset();confinement_deadline.reset();
-        feast_exits.clear();feast_roll_requested=false;
+        feast_exits.clear();calendar_roll_requested=false;
+        lottery_draw_deadline.reset();lottery_draw_packet.clear();
         if(raw) {raw->invalidate_actor(sender);raw->invalidate_game();}
         if(services.disconnected) services.disconnected(sender);
     }
@@ -1798,7 +1895,7 @@ RichonlineSharedCallbacks make_richonline_classic_session(const RichonlineClassi
     callbacks.retired_action=[session](std::uint8_t actor,View request) {return session->was_retired(actor,request);};
     callbacks.movement_wait=[session] {return session->movement;};
     callbacks.sent=[session](std::uint8_t actor,View plain) {
-        if(session->terminal)session->terminal->sent(actor,plain);
+        session->sent(actor,plain);
     };
     callbacks.game_finished=[session](std::uint8_t actor) {
         return session->terminal && session->terminal->game_finished(actor);
