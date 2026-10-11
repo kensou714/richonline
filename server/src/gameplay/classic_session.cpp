@@ -19,6 +19,7 @@
 #include "richonline_classic_funds_card.hpp"
 #include "richonline_classic_weapon_treaty.hpp"
 #include "richonline_classic_property_card.hpp"
+#include "richonline_classic_clear_status.hpp"
 #include "richonline_classic_trade.hpp"
 #include "richonline_classic_computer.hpp"
 #include "lua_server.hpp"
@@ -2164,6 +2165,49 @@ struct Session {
             " card="+std::to_string(plan->transferred_card())+" sequence="+std::to_string(sequence));
         return messages;
     }
+    std::vector<Bytes> clear_status_card(View request) {
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto owner=world.cards[actor];
+        const auto before_raw=raw->actor(actor);
+        const auto before_position=board.participants[actor].position;
+        const auto before_heading=board.participants[actor].direction;
+        RichonlineRawActorState target_raw{};
+        std::optional<RichonlineClassicClearStatusPlan> plan;
+        const auto available=[](const RichonlineRawActorState& state) {
+            return state.hotel1493 && state.hospital1494 && state.jail1495 && state.kidnapped1497 &&
+                *state.hotel1493==-1 && *state.hospital1494==-1 && *state.jail1495==-1 && *state.kidnapped1497==-1;
+        };
+        try {
+            if(phase!=Phase::roll || !active[actor] || !owner || owner->actor_slot()!=actor ||
+                owner->game_id()!=board.game_server_id || richonline_landing_controlled(statuses[actor]) ||
+                statuses[actor].stay || !available(before_raw) || raw->game().scripted_event83830!=-1 ||
+                request.size()!=8 || request[6]>=active.size() || !active[request[6]])
+                throw CodecError("richonline_classic_clear_status_unavailable");
+            target_raw=raw->actor(request[6]);
+            // 657410→64FF10(a5=1)允许自己，不排除冰冻/梦游目标，但排除四种收容状态。
+            if(!available(target_raw)) throw CodecError("richonline_classic_clear_status_target_unavailable");
+            plan=prepare_richonline_classic_clear_status(request,calendar,*owner,statuses,active,rules.script);
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_clear_status_refused actor="+std::to_string(actor)+
+                " reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        std::vector<Bytes> messages{plan->response()};
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            world.cards[actor]!=owner || raw->actor(actor)!=before_raw || raw->actor(plan->target())!=target_raw ||
+            board.participants[actor].position!=before_position || board.participants[actor].direction!=before_heading ||
+            raw->game().scripted_event83830!=-1)
+            throw CodecError("richonline_classic_clear_status_stale");
+        remember(actor,request);
+        if(!commit_richonline_classic_clear_status(*owner,statuses,active,*plan))
+            throw CodecError("richonline_classic_clear_status_commit_stale");
+        if(rules.log) rules.log("richonline_classic_clear_status actor="+std::to_string(actor)+
+            " target="+std::to_string(plan->target())+" sequence="+std::to_string(sequence));
+        // 40D7本地解除状态、扣卡、6006恢复操作；无需ACK，不触发目标格或推进回合。
+        return messages;
+    }
     RichonlineHibernateSnapshot hibernate_snapshot() const {
         RichonlineHibernateSnapshot snapshot{};
         snapshot.game_id=board.game_server_id;snapshot.calendar=calendar;
@@ -2598,6 +2642,7 @@ struct Session {
             if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
             if(opcode==142) return weapon_treaty(request);
             if(opcode==164) return hibernate_card(request);
+            if(opcode==135) return clear_status_card(request);
             if(opcode==96 || opcode==97 || opcode==98 || opcode==99 || opcode==100 || opcode==101 || opcode==102 ||
                 opcode==119 || opcode==120 || opcode==123 || opcode==134 || (opcode>=125 && opcode<=129))
                 return property_card(request);
