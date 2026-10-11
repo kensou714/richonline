@@ -54,9 +54,6 @@ struct RichonlineClassicSubscriptionContext {
     RichonlineGameFundsSnapshot buyer_funds,seller_funds;
 };
 struct RichonlineClassicNewsPolicy {
-    // 客户端G+C80累计项初值/完整生命周期尚待准入绑定，不从玩家现金或押金推导。
-    std::uint32_t initial_fines;
-    std::vector<std::int16_t> available_pictures;
     // 同步只读选择：自行按真实地图规则选事件及金额，不改账本/手牌/状态、不发包。
     // 当前仅接已核实的单人金额事件；概率和图片映射不得由BOSS新闻表替代。
     std::function<RichonlineClassicMoneyNews(const RichonlineClassicTurnContext&,

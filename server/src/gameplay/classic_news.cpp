@@ -2,13 +2,20 @@
 #include "richonline_boss_landing.hpp"
 #include "lua_wire.hpp"
 #include <algorithm>
+#include <array>
 #include <limits>
 
 namespace richnet {
+namespace {
+// 718DE0只向UI30的来源0数组写这29个槽；7192F0直接按报文索引访问。
+// 实际映射为other_10_*，完整索引/纹理/NP文件证据见classic-news-initialization.json。
+constexpr std::array<std::int16_t,29> news_pictures{
+    1,2,5,6,8,9,10,14,15,17,23,26,27,29,30,31,33,39,40,43,44,45,46,48,49,50,51,52,53};
+}
 RichonlineClassicNewsPlan prepare_richonline_classic_money_news(std::uint16_t game,
     const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
     const RichonlineGameFundsSnapshot& before,std::uint32_t fines,
-    std::span<const std::int16_t> available_pictures,const std::shared_ptr<LuaServer>& script) {
+    const std::shared_ptr<LuaServer>& script) {
     if(context.game_mode!=0 || context.actor_slot>=4 || context.synthetic_actor || context.static_type!=1 ||
         context.position<0 || context.property_ref!=-1 || context.road_degree==0 || context.road_degree>4 ||
         !context.actor_status.possession || richonline_landing_controlled(context.actor_status) ||
@@ -24,8 +31,7 @@ RichonlineClassicNewsPlan prepare_richonline_classic_money_news(std::uint16_t ga
     default: throw CodecError("richonline_classic_news_opcode_unsupported");
     }
     if(event.amount>32767 || pictured!=event.picture.has_value() ||
-        (event.picture && (*event.picture<0 || *event.picture>=100 ||
-            std::ranges::find(available_pictures,*event.picture)==available_pictures.end())))
+        (event.picture && std::ranges::find(news_pictures,*event.picture)==news_pictures.end()))
         throw CodecError("richonline_classic_news_parameters_invalid");
     constexpr auto maximum=static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max());
     if(!before.funds.deposit || static_cast<std::uint64_t>(before.funds.cash)+*before.funds.deposit>maximum ||

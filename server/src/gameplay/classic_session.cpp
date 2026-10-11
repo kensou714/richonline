@@ -65,7 +65,7 @@ struct Session {
     std::vector<bool> disconnected;
     std::unique_ptr<RichonlineClassicTerminal> terminal;
     std::vector<Bytes> stock_opening;
-    std::uint32_t news_fines=0;
+    std::uint32_t news_fines=richonline_classic_initial_news_fines;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -105,14 +105,8 @@ struct Session {
         }
         world.ledger=std::make_shared<RichonlineGameLedger>(std::move(funds));
         if(rules.news) {
-            if(!rules.news->select || rules.news->initial_fines>2147483647U)
+            if(!rules.news->select)
                 throw CodecError("richonline_classic_news_policy_invalid");
-            auto pictures=rules.news->available_pictures;
-            std::ranges::sort(pictures);
-            if(std::ranges::any_of(pictures,[](auto picture){return picture<0 || picture>=100;}) ||
-                std::adjacent_find(pictures.begin(),pictures.end())!=pictures.end())
-                throw CodecError("richonline_classic_news_pictures_invalid");
-            news_fines=rules.news->initial_fines;
         }
         raw=std::make_unique<RichonlineRawAuthority>(static_cast<std::uint8_t>(count),board.game_server_id);
         raw->initialize_game();
@@ -554,7 +548,7 @@ struct Session {
         const auto fines_before=news_fines;
         const auto event=rules.news->select(current,before,fines_before);
         auto plan=prepare_richonline_classic_money_news(board.game_server_id,current.landing,event,before,
-            fines_before,rules.news->available_pictures,rules.script);
+            fines_before,rules.script);
         if(statuses[actor]!=current.landing.actor_status || board.participants[actor].position!=current.landing.position)
             throw CodecError("richonline_classic_news_context_stale");
         std::optional<PreparedRetirement> retirement;
