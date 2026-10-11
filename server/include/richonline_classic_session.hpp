@@ -2,6 +2,7 @@
 
 #include "richonline_classic_startup.hpp"
 #include "richonline_classic_property.hpp"
+#include "richonline_classic_research.hpp"
 #include "richonline_player_cards.hpp"
 #include "richonline_shared_startup.hpp"
 #include "richonline_opening_hand.hpp"
@@ -19,6 +20,7 @@ struct RichonlineClassicWorld {
     std::shared_ptr<RichonlineClassicProperty> property;
     std::vector<std::shared_ptr<RichonlinePlayerCards>> cards;
     std::shared_ptr<RichonlineStockMarket> stocks;
+    std::shared_ptr<RichonlineClassicResearch> research;
 };
 struct RichonlineClassicTurnContext {
     std::uint16_t game_id,calendar;
@@ -44,6 +46,10 @@ struct RichonlineClassicServices {
     std::function<void(std::uint8_t)> disconnected;
     // 同步原子扣费，由准入层绑定账号及同一金豆支付协调器；缺席则不开放付费刷新。
     std::function<bool(std::uint8_t,std::uint32_t)> shop_refresh;
+    // 4010已排队后处理轮首日历/开奖。complete明确表示可执行本次7E4C50扫描，
+    // await_event则由既有event/poll完成日历恢复。不得自己扫描research、发420F、
+    // 发第二个4010或执行落点phase6；开启研究所必须提供此检查点，不能把日历等待跳掉。
+    std::function<RichonlineLandingResult(const RichonlineClassicTurnContext&)> turn_start;
 };
 struct RichonlineClassicStockPolicy {
     std::shared_ptr<const RichonlineStockResources> resources;
@@ -151,6 +157,7 @@ struct RichonlineClassicSessionRules {
     // 大型空地的UI13流程；group0使用world.cards，group1必须由库存准入提供无可用证明。
     std::shared_ptr<const RichonlineClassicConstructionResources> buildings;
     std::function<bool(std::uint8_t,std::int16_t)> secondary_building_licence_absent;
+    bool research=false;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。

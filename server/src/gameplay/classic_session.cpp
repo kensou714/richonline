@@ -23,7 +23,7 @@
 
 namespace richnet {
 namespace {
-enum class Phase { loading,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,property,rent_transfer,event,junction,settling,closed };
+enum class Phase { loading,turn_event,roll,stationary,kidnap_wait,confinement_wait,confinement_exit,moving,bank,shop,property,research,rent_transfer,event,junction,settling,closed };
 enum class Confinement { hospital,jail };
 struct Retired {
     std::uint8_t actor;
@@ -73,6 +73,7 @@ struct Session {
     std::vector<std::uint64_t> shop_refresh_sequence;
     std::optional<PendingRentTransfer> rent_transfer;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_rent_transfers;
+    std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_research;
     std::vector<bool> disconnected;
     std::unique_ptr<RichonlineClassicTerminal> terminal;
     std::vector<Bytes> stock_opening;
@@ -185,8 +186,12 @@ struct Session {
             rules.secondary_building_licence_absent};
         world.property=std::make_shared<RichonlineClassicProperty>(board.game_server_id,source.topology,
             source.properties,world.ledger,rules.now,rules.decision_timeout,rules.script,std::move(buildings));
+        if(rules.research) world.research=std::make_shared<RichonlineClassicResearch>(board.game_server_id,
+            source.topology,source.properties,world.property,world.cards,rules.card_resources,
+            rules.now,rules.decision_timeout,rules.script);
         services=rules.services(world);
-        if(!services.landing || !services.property_effects || !services.event || !services.poll) {
+        if(!services.landing || !services.property_effects || !services.event || !services.poll ||
+            (world.research && !services.turn_start)) {
             release_members();
             throw CodecError("richonline_classic_session_services_incomplete");
         }
@@ -280,6 +285,10 @@ struct Session {
         if(retired.size()>64) retired.pop_front();
     }
     bool was_retired(std::uint8_t sender,View request) const {
+        if(request.size()>=2 && read_le(request.first(2))==0x24) {
+            const auto choice=decode_richonline_classic_research_request(request);
+            if(std::ranges::find(retired_research,std::pair{sender,choice.calendar})!=retired_research.end()) return true;
+        }
         if(request.size()>=4) {
             const auto opcode=read_le(request.first(2));
             const auto turn=static_cast<std::uint16_t>(read_le(request.subspan(2,2)));
@@ -319,6 +328,38 @@ struct Session {
         richonline_status_begin_active_turn(statuses[actor]);
         phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
         confinement_exit_roll_requested=false;
+        if(services.turn_start) return turn_start_result(std::move(messages),services.turn_start(context()));
+        return finish_turn_start(std::move(messages));
+    }
+    static bool reserved_event(std::uint16_t opcode) noexcept {
+        return opcode==0x10 || opcode==0x11 || opcode==0x14 || opcode==0x20 || opcode==0x21 ||
+            opcode==0x23 || opcode==0x24 || opcode==0x27 || opcode==0x28 || opcode==0x34 || opcode==0x76;
+    }
+    std::vector<Bytes> turn_start_result(std::vector<Bytes> prefix,RichonlineLandingResult result) {
+        if((result.progress!=RichonlineLandingProgress::complete && result.progress!=RichonlineLandingProgress::await_event) ||
+            (result.progress==RichonlineLandingProgress::await_event)!=result.pending_opcode.has_value() ||
+            (result.pending_opcode && reserved_event(*result.pending_opcode)) || result.temple_change || result.status_change)
+            throw CodecError("richonline_classic_turn_continuation_invalid");
+        for(const auto& packet:result.messages) {
+            if(packet.size()<2 || read_le(View(packet).first(2))==0x4010 || read_le(View(packet).first(2))==0x420f)
+                throw CodecError("richonline_classic_turn_continuation_packet_invalid");
+        }
+        append(prefix,std::move(result.messages));
+        if(result.pending_opcode) {
+            phase=Phase::turn_event;pending_opcode=result.pending_opcode;return prefix;
+        }
+        return finish_turn_start(std::move(prefix));
+    }
+    std::vector<Bytes> finish_turn_start(std::vector<Bytes> messages) {
+        // 日历事件完成才同步客户端7E4C50的本次扫描；重播同一回合不会重复发卡。
+        if(world.research) {
+            const auto scan=world.research->advance(actor,sequence);
+            if(rules.log && (scan.completed || scan.cancelled))
+                rules.log("richonline_classic_research_scan actor="+std::to_string(actor)+
+                    " sequence="+std::to_string(sequence)+" completed="+std::to_string(scan.completed)+
+                    " cancelled="+std::to_string(scan.cancelled)+" discarded_full="+std::to_string(scan.discarded_full));
+        }
+        phase=Phase::roll;pending_opcode.reset();
         const auto hospital=raw->actor(actor).hospital1494;
         const auto jail=raw->actor(actor).jail1495;
         if(!hospital || !jail || (*hospital>=0 && *jail>=0))
@@ -418,9 +459,10 @@ struct Session {
         auto messages=opening_hands.synchronization;
         // 全员收齐4200及每槽4201后，共享宿主才调用stock_action；只发送一次历史。
         messages.insert(messages.end(),stock_opening.begin(),stock_opening.end());
-        append(messages,begin_turn());
+        // 轮首日历及研究奖励读取同一手牌；起手牌先入权威库存，不能最后覆盖轮首奖励。
         for(std::size_t slot=0;slot<world.cards.size();++slot)
             world.cards[slot]->commit_inventory(opening_hands.inventories[slot]);
+        append(messages,begin_turn());
         return messages;
     }
     std::vector<Bytes> advance(std::vector<Bytes> messages) {
@@ -467,10 +509,7 @@ struct Session {
             throw CodecError("richonline_classic_continuation_invalid");
         if((result.progress==RichonlineLandingProgress::await_event)!=result.pending_opcode.has_value())
             throw CodecError("richonline_classic_continuation_invalid");
-        if(result.pending_opcode && (*result.pending_opcode==0x10 || *result.pending_opcode==0x11 ||
-            *result.pending_opcode==0x14 || *result.pending_opcode==0x20 || *result.pending_opcode==0x21 ||
-            *result.pending_opcode==0x23 || *result.pending_opcode==0x27 || *result.pending_opcode==0x28 || *result.pending_opcode==0x34 ||
-            *result.pending_opcode==0x76))
+        if(result.pending_opcode && reserved_event(*result.pending_opcode))
             throw CodecError("richonline_classic_continuation_reserved_opcode");
         if(result.status_change) {
             if(result.status_change->expected!=statuses[actor])
@@ -608,6 +647,7 @@ struct Session {
             (plan.stocks && (!world.stocks || !world.stocks->matches(*plan.stocks)))) return false;
         if(!world.property->commit_retirement(plan.property)) std::terminate();
         if(plan.stocks && !world.stocks->commit(*plan.stocks)) std::terminate();
+        if(world.research) world.research->retire(plan.property.actor());
         return true;
     }
     void validate_month_limit(std::span<const std::uint8_t> survivors) const {
@@ -1110,14 +1150,21 @@ struct Session {
         }
         if(current.landing.property_ref>=0) {
             const auto property=world.property->snapshot(current.landing.property_ref);
-            if(property.kind!=0 && property.kind!=1 && !(property.sprite_type==12 && property.kind==-1))
+            if(property.kind!=0 && property.kind!=1 && !(property.sprite_type==12 && property.kind==-1) &&
+                !(property.kind==2 && world.research))
                 throw CodecError("richonline_classic_property_landing_unimplemented");
-            if(property.owner && *property.owner!=actor && property.kind!=-1)
+            if(property.owner && *property.owner!=actor && (property.kind==0 || property.kind==1))
                 return rent(property);
-            // 大型空地没有建筑租金，仍保留地产业务附加效果及同格续行。
+            // 大型空地、他人研究所不收住宅租金，仍保留附加效果及同格续行。
             if(property.owner && *property.owner!=actor) return property_effects({stop()});
             const bool purchase=!property.owner;
             auto entry=property_entry();
+            if(property.kind==2 && property.owner==actor && !entry.sealed &&
+                !richonline_landing_controlled(entry.status) && !world.research->registered(property.id,actor)) {
+                auto packet=stop();
+                world.research->begin(entry);phase=Phase::research;pending_opcode=0x24;
+                return {std::move(packet)};
+            }
             std::uint32_t cost=purchase ? property.price : property.sprite_type==11 ? 500U : 1500U;
             if(entry.land_equipment>0) cost/=2;
             const bool eligible=purchase || (property.kind!=1 && property.level<5);
@@ -1145,6 +1192,26 @@ struct Session {
         }
         if(world.property->active()) throw CodecError("richonline_classic_property_wait_remaining");
         pending_opcode.reset();return property_effects({std::move(result.message)});
+    }
+    std::vector<Bytes> research_result(RichonlineClassicResearchResult result) {
+        const auto property=world.property->snapshot(result.entry.property);
+        retired_research.emplace_back(actor,calendar);
+        if(retired_research.size()>64) retired_research.pop_front();
+        auto messages=std::vector<Bytes>{std::move(result.message)};
+        const auto entry=property_entry();
+        if(entry!=result.entry) throw CodecError("richonline_classic_research_continuation_stale");
+        if(rules.log) rules.log("richonline_classic_research_choice actor="+std::to_string(actor)+
+            " property="+std::to_string(entry.property)+" choice="+std::to_string(result.choice)+
+            " registered_slot="+(result.registered_slot ? std::to_string(*result.registered_slot) : "-1")+
+            " timed_out="+std::to_string(result.timed_out));
+        auto cost=property.sprite_type==11 ? 500U : 1500U;
+        if(entry.land_equipment>0) cost/=2;
+        // 4026自身重入stage2/selector3，先询问升级，不重新打开UI14或重发4013。
+        if(property.level<5 && world.ledger->snapshot(actor).funds.cash>cost) {
+            pending_opcode=world.property->begin(RichonlineClassicPropertyChoice::upgrade,entry);
+            phase=Phase::property;return messages;
+        }
+        pending_opcode.reset();return property_effects(std::move(messages));
     }
     struct PreparedMove { RichonlineRoute route;Bytes packet;RichonlineSharedMovementWait wait; };
     PreparedMove prepare_move(std::optional<std::uint8_t> selected={},std::int32_t charge=0,
@@ -1429,6 +1496,14 @@ struct Session {
             throw CodecError("richonline_classic_inactive_actor_request");
         }
         if(sender!=actor) throw CodecError("richonline_classic_sender_not_active");
+        if(phase==Phase::turn_event && pending_opcode==opcode) {
+            auto result=services.event(context(),request);remember(sender,request);
+            return turn_start_result({},std::move(result));
+        }
+        if(phase==Phase::research && pending_opcode==opcode) {
+            auto result=world.research->handle(sender,request,property_entry());remember(sender,request);
+            return research_result(std::move(result));
+        }
         if(opcode==0x15) {
             if(request.size()!=4) throw CodecError("richonline_classic_confinement_ack_invalid");
             if(phase==Phase::confinement_exit && !confinement_controlled()) {
@@ -1527,6 +1602,14 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
+        if(phase==Phase::turn_event) {
+            if(auto result=services.poll(context())) return turn_start_result({},std::move(*result));
+            return {};
+        }
+        if(phase==Phase::research) {
+            if(auto result=world.research->poll(property_entry())) return research_result(std::move(*result));
+            return {};
+        }
         if(phase==Phase::confinement_wait || phase==Phase::confinement_exit) {
             if(!confinement_deadline) throw CodecError("richonline_classic_confinement_deadline_missing");
             if(rules.now()<*confinement_deadline) return {};

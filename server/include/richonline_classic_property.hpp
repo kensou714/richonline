@@ -73,6 +73,8 @@ public:
     // 按NEW的32位乘法、逐块有符号除法和累加顺序返回报价，负值不能当无租金。
     std::int32_t rent_quote(std::int16_t property,std::uint32_t monetary_scale) const;
     class Retirement final {
+    public:
+        std::uint8_t actor() const noexcept {return actor_;}
     private:
         Retirement()=default;
         const RichonlineClassicProperty* owner_=nullptr;
