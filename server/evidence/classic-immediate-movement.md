@@ -46,3 +46,27 @@
 生产经典准入仍未开放；完整卡牌/NPC/动态地面与其他地图业务继续推进。本轮不是线上
 经典玩法验收。按用户要求仅静态逆向、代码审阅、Release及Lua语法编译，不新增/运行测试，
 不启动本机服务端或客户端。
+
+## 发布回执
+
+2026-10-12（本地时区）源码提交`6cbfca40f44f37039c9ab503c6d73952678caa8f`已推送GitHub
+main并核对远端引用。固定源码tree为`b06e051db1338457da8bf3434357f3f5f664ef59`。
+独立Release构建与173个Lua模块语法编译通过，BUILD_TESTING=OFF。后续文档回执提交
+不改变二进制源码身份。没有包含其他会话的测试、文档或旧利息证据改动。
+
+- 线上release `6cbfca40f44f`，实际PID `7824`，instance `7824-115682995449400`。
+  计划任务和实际进程均指向`D:\richonline\releases\6cbfca40f44f\RichOnline.Server.exe`。
+- EXE SHA256：`31DA3DB67ED0F397573E2161ED57478988169AB39B123CAED87D8AB26DCAA69C`。
+- ZIP SHA256：`6ACA73734B8200D892841745C40BF54772CB2045157B6CD4928EFAF75186814C`；
+  208个运行文件的ZIP内容、长度、哈希逐项匹配manifest。
+- 持久目录`D:\richonline\shared\data`；在线DB备份
+  `D:\richonline\shared\data\backups\accounts-1791745356513492.sqlite3`；部署备份
+  `D:\richonline\backups\20261011190236-6cbfca40f44f`。
+  旧实例经ExpectedInstance正常停止，未覆盖数据库。
+- lobby/http/gameListener/black/intro/inquiry六项Ready；18600/18602/18604/18605/18606/18680
+  公网TCP连接成功；两份大厅列表HTTP 200、CP950中文频道正常，三个频道均指向103.156.25.81:18600。
+- 商城日期兼容、全BOSS测试地图解锁及资源路径保留并核验。本机EXE已备份替换为同哈希文件，
+  173个Lua文件逐项匹配发布manifest，没有启动本机服务或客户端。
+
+验证范围是静态逆向、编译与部署健康检查，未新增或运行玩法测试。
+生产经典准入仍关闭，`gameReady=false`仍是整体能力边界。
