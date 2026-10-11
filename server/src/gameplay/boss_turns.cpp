@@ -253,6 +253,67 @@ struct Turns {
                 return true;
         return false;
     }
+    struct TeleportActor {
+        std::int16_t position,pet_position;
+        std::uint8_t heading;
+        bool active,pet_equipped;
+        std::optional<std::int16_t> pet_display;
+        RichonlineRawActorState raw;
+        bool operator==(const TeleportActor&) const = default;
+    };
+    std::array<TeleportActor,2> teleport_actors() const {
+        if(!rules.raw_authority) throw CodecError("richonline_teleport_actor_authority_required");
+        std::array<TeleportActor,2> result{};
+        for(std::uint8_t slot=0;slot<active.size();++slot) {
+            const auto& person=init.participants[slot];const auto& pet=pets[slot];
+            result[slot]={person.position,pet.follow_target,person.direction,active[slot],pet.equipped,
+                pet.known_display_position,rules.raw_authority->actor(slot)};
+        }
+        return result;
+    }
+    struct PreparedTeleport {
+        std::uint8_t source;
+        std::uint16_t calendar;
+        std::uint64_t turn;
+        std::int16_t destination;
+        std::array<TeleportActor,2> actors;
+        RichonlineActorStatus source_status;
+        RichonlineGroundObjects::Prepared ground;
+        RichonlinePetState after_pet;
+    };
+    PreparedTeleport prepare_teleport(std::int16_t position) const {
+        if(!rules.ground || !raw_available(actor) || phase!=Phase::roll || !active[actor] ||
+            status[actor].frozen || status[actor].stay || controlled_roll_actor() ||
+            rules.raw_authority->game().scripted_event83830!=-1)
+            throw CodecError("richonline_teleport_authority_required");
+        if(position<0 || static_cast<std::size_t>(position)>=topology.cells().size() || !topology.cell(position).walkable)
+            throw CodecError("richonline_teleport_card_target_invalid");
+        const auto before=rules.ground->snapshot();
+        if(before.objects.contains(position)) throw CodecError("richonline_teleport_ground_occupied");
+        const auto actors=teleport_actors();
+        for(const auto& person:actors) {
+            if(!person.active) continue;
+            if(!person.raw.kidnapped1497) throw CodecError("richonline_teleport_actor_state_unknown");
+            if(*person.raw.kidnapped1497!=-1) continue;
+            if(!person.raw.hotel1493) throw CodecError("richonline_teleport_actor_state_unknown");
+            // 7BFE20还检查住店角色P+1468备份道路格。BOSS宿主尚无饭店访问记录，
+            // 遇到住店状态必须拒绝未知占格，不能只用室内坐标假定道路为空。
+            if(*person.raw.hotel1493!=-1) throw CodecError("richonline_teleport_hotel_position_unknown");
+            if(person.pet_equipped && person.pet_position<0) throw CodecError("richonline_pet_follow_target_unknown");
+            if(person.position==position || (person.pet_equipped && person.pet_position==position))
+                throw CodecError("richonline_teleport_actor_occupied");
+        }
+        auto after_pet=pets[actor];
+        // 606C在客户端同时重置宠物；先计算，避免提交人物坐标后才遇到几何错误。
+        reset_richonline_pet(after_pet,topology,position,init.participants[actor].direction);
+        return {actor,active_counter,turn_sequence,position,actors,status[actor],
+            rules.ground->prepare(before,before.objects),after_pet};
+    }
+    bool teleport_matches(const PreparedTeleport& plan) const {
+        return phase==Phase::roll && actor==plan.source && active_counter==plan.calendar && turn_sequence==plan.turn &&
+            status[actor]==plan.source_status && teleport_actors()==plan.actors &&
+            rules.raw_authority->game().scripted_event83830==-1 && rules.ground && rules.ground->matches(plan.ground);
+    }
     void reset_pet(std::uint8_t slot) {
         const auto& person=init.participants[slot];
         reset_richonline_pet(pets[slot],topology,person.position,person.direction);
@@ -1718,6 +1779,7 @@ struct Turns {
         RichonlineChanceInventory inventory{};
         std::uint8_t target=actor;
         std::optional<RichonlineRawAuthority::PreparedJailEntry> jail_entry;
+        std::optional<PreparedTeleport> teleport;
         try {
             require_local_controls();
             const auto size=opcode==122 || opcode==142 || opcode==161 || opcode==162 ? 6U : 8U;
@@ -1792,8 +1854,7 @@ struct Turns {
                 break;
             case 143: {
                 const auto position=static_cast<std::int16_t>(read_le(plain.subspan(6,2)));
-                if(position<0 || static_cast<std::size_t>(position)>=topology.cells().size() || !topology.cell(position).walkable)
-                    throw CodecError("richonline_teleport_card_target_invalid");
+                teleport=prepare_teleport(position);
                 after_participants[actor].position=position;
                 break;
             }
@@ -1828,6 +1889,7 @@ struct Turns {
         } catch(const CodecError& error) { return refuse_card(opcode,error.what()); }
         const auto commit=[&]() {
             if(rules.cards->inventory()!=consumption->source_inventory ||
+                (teleport && !teleport_matches(*teleport)) ||
                 (ground && !rules.ground->matches(*ground)) ||
                 (jail_entry && !rules.raw_authority->matches_jail_entry(*jail_entry)) ||
                 (clock && !rules.npcs->matches_status_change(*clock,status[target]))) return false;
@@ -1836,7 +1898,7 @@ struct Turns {
             if(jail_entry && !rules.raw_authority->commit_jail_entry(*jail_entry)) std::terminate();
             status=after_status;relations1472=after_relations;
             init.participants=std::move(after_participants);rules.cards->commit_inventory(inventory);
-            if(opcode==143) reset_pet(actor);
+            if(teleport) pets[actor]=teleport->after_pet;
             if(opcode==117 && jail_entry) reset_pet(target);
             if(opcode==161) for(std::uint8_t slot=0;slot<active.size();++slot)
                 if(active[slot] && raw_available(slot) && !status[slot].frozen) reset_pet(slot);
@@ -1964,6 +2026,7 @@ struct Turns {
         struct ScriptPosition {std::uint8_t slot;std::int16_t before,after;};
         std::vector<ScriptPosition> script_positions;
         bool script_positions_prepared=false;
+        std::optional<PreparedTeleport> script_teleport;
         const auto ground_snapshot=[&]() -> const RichonlineGroundSnapshot& {
             if(!rules.ground) throw CodecError("lua_ground_authority_required");
             if(!script_ground_snapshot) script_ground_snapshot=rules.ground->snapshot();
@@ -2546,6 +2609,14 @@ struct Turns {
                 const auto& positions=args.at("positions");
                 if(!positions.is_array() || positions.empty() || positions.size()>active.size())
                     throw CodecError("lua_actor_positions_invalid");
+                if(script_consumption->card_id==1116) {
+                    if(plain.size()!=8 || read_le(plain.first(2))!=143)
+                        throw CodecError("lua_teleport_request_invalid");
+                    const auto target=static_cast<std::int16_t>(read_le(plain.subspan(6,2)));
+                    const LuaValue expected=LuaValue::array({{{"actor",actor},{"position",target}}});
+                    if(positions!=expected) throw CodecError("lua_teleport_position_mismatch");
+                    script_teleport=prepare_teleport(target);
+                }
                 std::vector<ScriptPosition> prepared;
                 prepared.reserve(positions.size());
                 for(const auto& entry:positions) {
@@ -2659,6 +2730,21 @@ struct Turns {
                 {"actor",actor},{"calendar",active_counter},{"game_id",init.game_server_id}},api);
             if(!result.is_array()||result.size()>1024) throw CodecError("lua_game_response_invalid");
             for(const auto& packet:result) messages.push_back(lua_bytes(packet));
+            if(plain.size()>=2 && read_le(plain.first(2))==143) {
+                if(!script_consumption || script_consumption->card_id!=1116 || !script_teleport ||
+                    !script_positions_prepared || script_positions.size()!=1 || called || database_called ||
+                    script_summon_snapshot || script_attack || script_hibernate_snapshot || script_motion ||
+                    script_movement || script_shuffle || script_jail || script_dismiss || script_god_card ||
+                    script_property || script_street || script_ground || script_status || script_break_alliance ||
+                    script_set_alliance || script_clear_relations || script_inventory_cleared || !script_funds.empty())
+                    throw CodecError("lua_teleport_cannot_mix_mutations");
+                Bytes expected;append_le(expected,0x40df,2);append_le(expected,init.game_server_id,2);
+                expected.insert(expected.end(),plain.begin()+4,plain.end());
+                if(messages!=std::vector<Bytes>{expected}) throw CodecError("lua_teleport_response_invalid");
+                if(script_positions.front().slot!=script_teleport->source ||
+                    script_positions.front().after!=script_teleport->destination)
+                    throw CodecError("lua_teleport_position_mismatch");
+            }
             if(script_ground && (script_positions_prepared || script_motion || script_movement))
                 throw CodecError("lua_ground_cannot_mix_movement");
             if(script_summon_snapshot) {
@@ -2837,6 +2923,7 @@ struct Turns {
             // Lua 完整返回且所有回包都分配成功后，才在同一事务提交库存与余额。
             const auto commit=[&] {
                 if(rules.cards->inventory()!=script_consumption->source_inventory ||
+                    (script_teleport && !teleport_matches(*script_teleport)) ||
                     (script_god_card && (phase!=Phase::roll || actor!=script_god_card->actor ||
                         active_counter!=script_god_card->calendar || turn_sequence!=script_god_card->turn ||
                         !active[actor] || npc_landing || npc_pending_counter ||
@@ -2926,7 +3013,8 @@ struct Turns {
                 }
                 for(const auto& position:script_positions) {
                     init.participants[position.slot].position=position.after;
-                    reset_pet(position.slot);
+                    if(script_teleport) pets[position.slot]=script_teleport->after_pet;
+                    else reset_pet(position.slot);
                 }
                 if(script_movement) static_cast<void>(commit_move(std::move(script_movement->move)));
                 rules.cards->commit_inventory(script_consumption->remaining_inventory);return true;
