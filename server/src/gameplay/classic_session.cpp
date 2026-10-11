@@ -17,6 +17,7 @@
 #include "richonline_motion_card.hpp"
 #include "richonline_card_protection.hpp"
 #include "richonline_classic_funds_card.hpp"
+#include "richonline_classic_weapon_treaty.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -1903,6 +1904,45 @@ struct Session {
             " card="+std::to_string(plan->transferred_card())+" sequence="+std::to_string(sequence));
         return messages;
     }
+    std::vector<Bytes> weapon_treaty(View request) {
+        const auto before_actor=actor;
+        const auto before_calendar=calendar;
+        const auto before_sequence=sequence;
+        const auto before_status=statuses[actor];
+        const auto before_raw=raw->actor(actor);
+        const auto before_position=board.participants[actor].position;
+        const auto before_heading=board.participants[actor].direction;
+        std::optional<RichonlineClassicWeaponTreatyPlan> plan;
+        try {
+            if(phase!=Phase::roll || !active[actor] || !world.cards[actor] ||
+                world.cards[actor]->game_id()!=board.game_server_id ||
+                richonline_landing_controlled(before_status) || before_status.stay ||
+                !before_raw.hotel1493 || *before_raw.hotel1493!=-1 ||
+                !before_raw.hospital1494 || *before_raw.hospital1494!=-1 ||
+                !before_raw.jail1495 || *before_raw.jail1495!=-1 ||
+                !before_raw.kidnapped1497 || *before_raw.kidnapped1497!=-1 ||
+                raw->game().scripted_event83830!=-1)
+                throw CodecError("richonline_classic_weapon_treaty_unavailable");
+            plan=prepare_richonline_classic_weapon_treaty(request,calendar,actor,world.cards,active,rules.script);
+        } catch(const std::exception& error) {
+            if(rules.log) rules.log("richonline_classic_weapon_treaty_refused actor="+std::to_string(actor)+
+                " reason="+error.what());
+            return {encode_richonline_dice_recovery400b(board.game_server_id)};
+        }
+        std::vector<Bytes> messages{plan->response()};
+        if(phase!=Phase::roll || actor!=before_actor || calendar!=before_calendar || sequence!=before_sequence ||
+            statuses[actor]!=before_status || raw->actor(actor)!=before_raw ||
+            board.participants[actor].position!=before_position || board.participants[actor].direction!=before_heading ||
+            raw->game().scripted_event83830!=-1)
+            throw CodecError("richonline_classic_weapon_treaty_stale");
+        remember(actor,request);
+        if(!commit_richonline_classic_weapon_treaty(world.cards,active,*plan))
+            throw CodecError("richonline_classic_weapon_treaty_commit_stale");
+        if(rules.log) rules.log("richonline_classic_weapon_treaty actor="+std::to_string(actor)+
+            " sequence="+std::to_string(sequence));
+        // 40DE自身清手牌、扣卡并恢复操作，不追加扣卡包，也不推进到下一位玩家。
+        return messages;
+    }
     std::vector<Bytes> funds_card(View request) {
         const auto before_actor=actor;
         const auto before_calendar=calendar;
@@ -2103,6 +2143,7 @@ struct Session {
             if(opcode==22) return paid_move(request);
             if(opcode==116) return theft_card(request);
             if(opcode==114 || opcode==115 || opcode==166) return funds_card(request);
+            if(opcode==142) return weapon_treaty(request);
             if(opcode==0x96 || opcode==0x97) return stock_card(request);
             if(opcode==103 || (opcode>=137 && opcode<=140)) return immediate_move_card(request);
             if((opcode>=104 && opcode<=107) || opcode==136 || opcode==141) return motion_card(request);
