@@ -16,6 +16,7 @@
 #include "richonline_card_protection.hpp"
 #include <algorithm>
 #include <bit>
+#include <string_view>
 
 namespace richnet {
 RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& resources,
@@ -184,12 +185,15 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
                     const auto& slot=cards->inventory()[static_cast<std::size_t>(index)];
                     card=slot.card_id; count=slot.count;
                 }
-                const auto price=card==-1 ? 0U : shop->card_price(card);
+                // 出售旧库存中的无价卡仍需交给商店正常关闭；诊断采样不能先抛异常断开对局。
+                const auto price_known=card!=-1 && shop->card_has_price(card);
+                const auto price=price_known ? std::optional{shop->card_price(card)} : std::nullopt;
                 const auto empty=std::count_if(cards->inventory().begin(),cards->inventory().end(),
                     [](const auto& slot) { return slot.card_id==-1; });
                 auto result=shop->handle(plain);
                 if (log) log("richonline_shop_request",{{"room",key},{"package",package_id},{"opcode",opcode},
-                    {"index",index},{"card",card},{"count",count},{"price",price},{"sale_refund",opcode==0x31 ? price/2 : 0U},
+                    {"index",index},{"card",card},{"count",count},{"price",price},{"price_known",price_known},
+                    {"sale_refund",opcode==0x31 && price && std::string_view(shop->last_decision())=="sold" ? *price/2 : 0U},
                     {"tickets_before",before},{"tickets_after",shop->points()},{"empty_slots_before",empty},
                     {"decision",shop->last_decision()},{"active",shop->active()},{"level","info"}});
                 return result;

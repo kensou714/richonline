@@ -36,6 +36,7 @@ public:
     std::uint32_t points() const { return ledger_ ? ledger_->snapshot(0).funds.tickets : points_; }
     std::uint32_t price() const { return catalog_.price(1038); }
     std::uint32_t card_price(std::int16_t card) const { return catalog_.price(card); }
+    bool card_has_price(std::int16_t card) const noexcept { return catalog_.can_sell(card); }
     const char* last_decision() const noexcept { return last_decision_; }
     std::optional<std::uint32_t> refresh_cost() const noexcept { return refresh_cost_; }
     const RichonlineShopStock& offers() const noexcept { return offers_; }
