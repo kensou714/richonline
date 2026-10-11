@@ -1,0 +1,332 @@
+{
+  "client": "RnClient.exe",
+  "client_sha256": "feeeac1bf9605690e8a774452456320125d7d3dbaa2dc73d529f8230c0677bc7",
+  "scope": "Mall bag request41, result98 display, inventory notification77 and failure UI handling; probabilities and legacy award selector not proven",
+  "functions": [
+    {
+      "entry": "0x7fe190",
+      "chunks": [
+        {
+          "start": "0x7fe190",
+          "end": "0x7fe4de",
+          "disk_matches_idb": true,
+          "sha256": "07d383fd4b383052180554bdc827ce1cf84dc74273af1b93324592a0fc620e40"
+        },
+        {
+          "start": "0xa1571d",
+          "end": "0xa15748",
+          "disk_matches_idb": true,
+          "sha256": "880e80ac619d1ae7698edefbbd65394968304dfe78e0d851d469e8e10e7643f8"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_7FE190(int *this, char *FileName)\n{\n  void *v3; // eax\n  int v4; // eax\n  int v5; // eax\n  enum ATL::COleDateTime::DateTimeStatus v6; // [esp-8h] [ebp-1D4h]\n  int v7; // [esp+4h] [ebp-1C8h]\n  void *v8; // [esp+Ch] [ebp-1C0h]\n  int v9; // [esp+14h] [ebp-1B8h]\n  char Str1[61]; // [esp+20h] [ebp-1ACh] BYREF\n  __int16 v11; // [esp+5Dh] [ebp-16Fh]\n  char v12; // [esp+5Fh] [ebp-16Dh]\n  char v13[168]; // [esp+68h] [ebp-164h] BYREF\n  char String[132]; // [esp+110h] [ebp-BCh] BYREF\n  int i; // [esp+194h] [ebp-38h]\n  int v16; // [esp+198h] [ebp-34h]\n  _BYTE v17[24]; // [esp+1A0h] [ebp-2Ch] BYREF\n  int *v18; // [esp+1B8h] [ebp-14h]\n  int v19; // [esp+1C8h] [ebp-4h]\n\n  v18 = this;\n  j_unknown_libname_665((CRect *)v17);\n  v19 = 0;\n  if ( sub_60FD9C(FileName) != 0 )\n  {\n    sub_60518A(v17);\n    v16 = 0;\n    sub_608F8D(v13);\n    LOBYTE(v19) = 1;\n    v6 = j_unknown_libname_290((ATL::COleDateTime *)v17);\n    v3 = (void *)j_unknown_libname_291(v17);\n    sub_60ACA7(2, v3, v6, 0);\n    *v18 = 0;\n    while ( sub_608335(\"AWARD\") != 0 )\n      ++*v18;\n    if ( *v18 > 0 )\n    {\n      v9 = *v18;\n      v8 = (void *)CMFCRibbonQuickAccessToolBarDefaultState::AddCommand(120 * *v18);\n      LOBYTE(v19) = 2;\n      if ( v8 != nullptr )\n      {\n        `vector constructor iterator'(v8, 0x78u, v9, sub_6010E4);\n        v7 = (int)v8;\n      }\n      else\n      {\n        v7 = 0;\n      }\n      LOBYTE(v19) = 1;\n      v18[1] = v7;\n      sub_60D524(0, 0);\n      while ( sub_608335(\"AWARD\") != 0 )\n      {\n        sub_609528(\"bagID\");\n        sub_60FDE2((int)String, 128);\n        v4 = j__atoi(String);\n        *(_DWORD *)(120 * v16 + v18[1]) = v4;\n        for ( i = 3; i <= 18; ++i )\n        {\n          j__sprintf(String, \"item%d\", i);\n          sub_609528(String);\n          sub_60FDE2((int)String, 128);\n          memset(Str1, 0, sizeof(Str1));\n          v11 = 0;\n          v12 = 0;\n          j__sscanf(String, \"%d%d%s\", 120 * v16 + v18[1] + 4 * i + 4, 120 * v16 + v18[1] + i + 80, Str1);\n          if ( Str1[0] != 0 )\n          {\n            v5 = j__strcmp(Str1, \"true\");\n            *(_BYTE *)(v18[1] + 120 * v16 + i + 99) = v5 == 0;\n          }\n        }\n        ++v16;\n      }\n    }\n    LOBYTE(v19) = 0;\n    sub_60BA26(v13);\n    v19 = -1;\n    sub_602575(v17);\n    return 1;\n  }\n  else\n  {\n    v19 = -1;\n    sub_602575(v17);\n    return 0;\n  }\n}\n"
+    },
+    {
+      "entry": "0x7fe530",
+      "chunks": [
+        {
+          "start": "0x7fe530",
+          "end": "0x7fe58f",
+          "disk_matches_idb": true,
+          "sha256": "efb4ff4759629a66020dae64d27009966588545eae9377aea8c6e2fcb317bbb2"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_7FE530(_DWORD *this, int a2)\n{\n  int i; // [esp+0h] [ebp-8h]\n\n  for ( i = 0; i < *this; ++i )\n  {\n    if ( *(_DWORD *)(120 * i + *(this + 1)) == a2 )\n      return *(this + 1) + 120 * i;\n  }\n  return 0;\n}\n"
+    },
+    {
+      "entry": "0x7fe590",
+      "chunks": [
+        {
+          "start": "0x7fe590",
+          "end": "0x7fe5e5",
+          "disk_matches_idb": true,
+          "sha256": "73ef8d94e7a95627d1a78db67a7d5bdfe7cfbd2b3c500989099938178c51cdd6"
+        }
+      ],
+      "pseudocode": "char __thiscall sub_7FE590(_DWORD *this, int a2)\n{\n  int i; // [esp+0h] [ebp-8h]\n\n  for ( i = 0; i < *this; ++i )\n  {\n    if ( *(_DWORD *)(120 * i + *(this + 1)) == a2 )\n      return 1;\n  }\n  return 0;\n}\n"
+    },
+    {
+      "entry": "0x6fcd00",
+      "chunks": [
+        {
+          "start": "0x6fcd00",
+          "end": "0x6fcd30",
+          "disk_matches_idb": true,
+          "sha256": "dcdd4f6c2e22998e782085c0379ad35e710c608b1c4cf6384f9a7662207a29c7"
+        }
+      ],
+      "pseudocode": "_DWORD *__thiscall sub_6FCD00(_DWORD *this)\n{\n  sub_605DA6();\n  *this = &off_A290D0;\n  return this;\n}\n"
+    },
+    {
+      "entry": "0x6fd060",
+      "chunks": [
+        {
+          "start": "0x6fd060",
+          "end": "0x6fd090",
+          "disk_matches_idb": true,
+          "sha256": "ad412334c64c1f6caf8161888c14e109de7b0a41adfa6aa96162a55ae6181b1b"
+        }
+      ],
+      "pseudocode": "_DWORD *__thiscall sub_6FD060(_DWORD *this)\n{\n  sub_605DA6();\n  *this = &off_A29A90;\n  return this;\n}\n"
+    },
+    {
+      "entry": "0x762a80",
+      "chunks": [
+        {
+          "start": "0x762a80",
+          "end": "0x762dea",
+          "disk_matches_idb": true,
+          "sha256": "e477a0e7136b6278fd89e0e0a97f97f732f4e2946acd5e96a20f0063d451eb75"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_762A80(_DWORD *this, int a2)\n{\n  CMFCRibbonButton *v2; // eax\n  int v4; // eax\n  int v5; // eax\n  int v6; // eax\n  int v7; // [esp-4h] [ebp-64h]\n  int TableIndexFromLocaleName; // [esp-4h] [ebp-64h]\n  int v9; // [esp-4h] [ebp-64h]\n  int v10; // [esp-4h] [ebp-64h]\n  int v11; // [esp-4h] [ebp-64h]\n  struct tagSIZE *v12; // [esp+0h] [ebp-60h]\n  int v13; // [esp+8h] [ebp-58h]\n  int v14; // [esp+Ch] [ebp-54h]\n  int v15; // [esp+10h] [ebp-50h]\n  int v16; // [esp+14h] [ebp-4Ch]\n  _DWORD v17[6]; // [esp+1Ch] [ebp-44h] BYREF\n  char v18; // [esp+34h] [ebp-2Ch]\n  int v19; // [esp+3Ch] [ebp-24h]\n  int v20; // [esp+40h] [ebp-20h]\n  int v21; // [esp+44h] [ebp-1Ch]\n  int v22; // [esp+48h] [ebp-18h]\n  wchar_t *v23; // [esp+4Ch] [ebp-14h]\n  int v24; // [esp+50h] [ebp-10h]\n  int v25; // [esp+54h] [ebp-Ch]\n  int v26; // [esp+58h] [ebp-8h]\n  _DWORD *v27; // [esp+5Ch] [ebp-4h]\n\n  v27 = this;\n  v26 = a2;\n  if ( *(_BYTE *)(a2 + 20) != 0 )\n  {\n    v27[24] = *(_DWORD *)(v26 + 16) + *(_DWORD *)(v26 + 12) + *(_DWORD *)(v26 + 8);\n    v17[0] = 3;\n    v17[1] = *(_DWORD *)(v26 + 8);\n    v17[2] = *(_DWORD *)(v26 + 12);\n    v17[3] = *(_DWORD *)(v26 + 16);\n    v2 = (CMFCRibbonButton *)sub_610297(1, 0);\n    v17[4] = j_unknown_libname_298(v2) + 60;\n    sub_610297(1, 0);\n    v17[5] = j_unknown_libname_299() + 10;\n    v18 = 0;\n    sub_60E929();\n    return sub_60F29D(0, (int)v17);\n  }\n  else\n  {\n    v27[22] = *(_DWORD *)v26;\n    GetWindowExtEx(*(HDC *)(v26 + 4), v12);\n    v27[23] = sub_5FF3D9(v7);\n    v25 = 30;\n    v24 = 3;\n    while ( v25 <= 180 )\n    {\n      v23 = *(wchar_t **)(v27[23] + 4 * v24 + 4);\n      sub_60554A();\n      v22 = sub_60F3B5(9, (int)v23, -1, -1);\n      sub_60554A();\n      v21 = sub_60C372(v22);\n      sub_60554A();\n      v20 = sub_608623(v22);\n      v19 = sub_610297(v25 + 1, 0);\n      sub_610297(v25, 0);\n      v4 = sub_610B43();\n      sub_60094B((v4 - v21) >> 1, 0);\n      sub_601251(v21);\n      sub_603C4F(v20);\n      sub_60BB48(v22);\n      v16 = sub_610297(v25 + 2, 0);\n      sub_602890();\n      v5 = sub_6092DA((int)v23);\n      (*(void (__thiscall **)(int, int))(*(_DWORD *)v16 + 144))(v16, v5);\n      TableIndexFromLocaleName = ATL::_AtlGetTableIndexFromLocaleName(v23);\n      sub_610297(v25 + 4, 0);\n      sub_60BB48(TableIndexFromLocaleName);\n      v9 = sub_60BFDF((int)v23);\n      sub_610297(v25 + 5, 0);\n      sub_60BB48(v9);\n      if ( *(_BYTE *)(v27[23] + v24 + 99) != 0 )\n      {\n        v15 = sub_610297(v25 + 3, 0);\n        (*(void (__thiscall **)(int, int))(*(_DWORD *)v15 + 200))(v15, 1);\n        sub_60554A();\n        v10 = sub_60F3B5(10, 21, 7, -1);\n        sub_610297(v25 + 3, 0);\n        sub_60BB48(v10);\n      }\n      else\n      {\n        v14 = sub_610297(v25 + 3, 0);\n        (*(void (__thiscall **)(int, _DWORD))(*(_DWORD *)v14 + 200))(v14, 0);\n      }\n      v25 += 10;\n      ++v24;\n    }\n    v13 = sub_610297(9, 0);\n    v11 = *(_DWORD *)(v26 + 4);\n    sub_602890();\n    v6 = sub_6092DA(v11);\n    return (*(int (__thiscall **)(int, int))(*(_DWORD *)v13 + 144))(v13, v6);\n  }\n}\n"
+    },
+    {
+      "entry": "0x762e10",
+      "chunks": [
+        {
+          "start": "0x762e10",
+          "end": "0x763160",
+          "disk_matches_idb": true,
+          "sha256": "b9add922f508792b0d403b6721f045f0f9bf1986454bd372d1cdd5e95d7613b7"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_762E10(_BYTE *this, int a2)\n{\n  int v2; // eax\n  int v3; // eax\n  int v4; // eax\n  unsigned int Flags; // eax\n  unsigned int v6; // eax\n  unsigned int v7; // eax\n  signed int v8; // eax\n  int v10; // [esp-Ch] [ebp-30h]\n  int v11; // [esp-4h] [ebp-28h]\n  int v12; // [esp-4h] [ebp-28h]\n  int v13; // [esp-4h] [ebp-28h]\n  int v14; // [esp-4h] [ebp-28h]\n  int TableIndexFromLocaleName; // [esp-4h] [ebp-28h]\n  int v16; // [esp-4h] [ebp-28h]\n  int v17; // [esp-4h] [ebp-28h]\n  _DWORD v18[7]; // [esp+4h] [ebp-20h] BYREF\n  _BYTE *v19; // [esp+20h] [ebp-4h]\n\n  memset(v18, 204, sizeof(v18));\n  v19 = this;\n  if ( *(this + 100) != 0 )\n  {\n    sub_610DB9();\n    if ( (unsigned __int8)sub_607534() != 0 )\n    {\n      v19[100] = 0;\n      sub_609B95();\n      sub_60278C(23, 0, 0);\n      v18[3] = sub_610297(4, 0);\n      (*(void (__thiscall **)(_DWORD, int))(*(_DWORD *)v18[3] + 200))(v18[3], 1);\n      v18[6] = *(_DWORD *)(*((_DWORD *)v19 + 23) + 4 * *((_DWORD *)v19 + 24) + 4);\n      v10 = v18[6];\n      sub_60554A();\n      v18[5] = sub_60F3B5(9, v10, -1, -1);\n      v18[4] = sub_610297(5, 0);\n      v11 = v18[5];\n      sub_60554A();\n      v2 = sub_60C372(v11);\n      sub_601251(v2);\n      v12 = v18[5];\n      sub_60554A();\n      v3 = sub_608623(v12);\n      sub_603C4F(v3);\n      sub_60BB48(v18[5]);\n      v18[2] = sub_610297(6, 0);\n      v13 = v18[6];\n      sub_602890();\n      v4 = sub_6092DA(v13);\n      (*(void (__thiscall **)(_DWORD, int))(*(_DWORD *)v18[2] + 144))(v18[2], v4);\n      sub_60554A();\n      v18[5] = sub_60F3B5(10, 31, 48, -1);\n      v14 = v18[5];\n      sub_610297(10 * *((_DWORD *)v19 + 24), 0);\n      sub_60BB48(v14);\n      TableIndexFromLocaleName = ATL::_AtlGetTableIndexFromLocaleName((const wchar_t *)v18[6]);\n      sub_610297(194, 0);\n      sub_60BB48(TableIndexFromLocaleName);\n      v16 = sub_60BFDF(v18[6]);\n      sub_610297(195, 0);\n      sub_60BB48(v16);\n      if ( *(_BYTE *)(*((_DWORD *)v19 + 23) + *((_DWORD *)v19 + 24) + 99) != 0 )\n      {\n        v18[1] = sub_610297(193, 0);\n        (*(void (__thiscall **)(_DWORD, int))(*(_DWORD *)v18[1] + 200))(v18[1], 1);\n        sub_60554A();\n        v17 = sub_60F3B5(10, 21, 7, -1);\n        sub_610297(193, 0);\n        sub_60BB48(v17);\n      }\n      else\n      {\n        v18[0] = sub_610297(193, 0);\n        (*(void (__thiscall **)(_DWORD, _DWORD))(*(_DWORD *)v18[0] + 200))(v18[0], 0);\n      }\n    }\n  }\n  if ( j_unknown_libname_299() != *((_DWORD *)v19 + 19) )\n  {\n    Flags = CMFCToolBarsCustomizeDialog::GetFlags(*((CMFCToolBarsCustomizeDialog **)v19 + 1));\n    sub_6032CC(Flags + 30, 0);\n    if ( j_unknown_libname_299() > *((_DWORD *)v19 + 19) )\n      sub_6032CC(*((_DWORD *)v19 + 19), 0);\n  }\n  v18[4] = sub_610297(4, 0);\n  if ( (unsigned __int8)sub_60A2FC() != 0 )\n  {\n    v6 = CMFCToolBarsCustomizeDialog::GetFlags((CMFCToolBarsCustomizeDialog *)v18[4]);\n    if ( v6 != *((_DWORD *)v19 + 21) )\n    {\n      v7 = CMFCToolBarsCustomizeDialog::GetFlags((CMFCToolBarsCustomizeDialog *)v18[4]);\n      sub_6032CC(v7 + 30, 0);\n      v8 = CMFCToolBarsCustomizeDialog::GetFlags((CMFCToolBarsCustomizeDialog *)v18[4]);\n      if ( v8 > *((_DWORD *)v19 + 21) )\n        sub_6032CC(*((_DWORD *)v19 + 21), 0);\n    }\n  }\n  return 0;\n}\n"
+    },
+    {
+      "entry": "0x7631c0",
+      "chunks": [
+        {
+          "start": "0x7631c0",
+          "end": "0x76332b",
+          "disk_matches_idb": true,
+          "sha256": "cbc76e745bee076f5823df95e5d0d99bf624bf3b0174cae1919b1a12e11280a5"
+        }
+      ],
+      "pseudocode": "char __thiscall sub_7631C0(_DWORD *this, _DWORD *a2, int a3)\n{\n  int v4; // [esp-10h] [ebp-50h]\n  _DWORD *v5; // [esp+8h] [ebp-38h]\n  int v6; // [esp+14h] [ebp-2Ch] BYREF\n  char v7; // [esp+18h] [ebp-28h]\n  _BYTE v8[12]; // [esp+24h] [ebp-1Ch] BYREF\n  _BYTE v9[8]; // [esp+30h] [ebp-10h] BYREF\n  int v10; // [esp+38h] [ebp-8h]\n  _DWORD *v11; // [esp+3Ch] [ebp-4h]\n\n  v11 = this;\n  v10 = j_unknown_libname_508(a2);\n  if ( v10 == 3 )\n  {\n    (*(void (__thiscall **)(_DWORD *))(*v11 + 152))(v11);\n    v4 = v11[22];\n    sub_610DB9();\n    sub_609807(v4, 1, -1, nullptr);\n    v5 = sub_610297((_DWORD *)v11[1], 2, nullptr);\n    (*(void (__thiscall **)(_DWORD *, _DWORD))(*v5 + 200))(v5, 0);\n  }\n  else if ( v10 == 7 )\n  {\n    (*(void (__thiscall **)(_DWORD *))(*v11 + 152))(v11);\n    sub_60837B();\n    CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](120);\n    sub_60837B();\n    if ( (unsigned __int8)CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::GetSize(87) != 0 )\n    {\n      sub_604FF0();\n      v9[2] = 1;\n      sub_60837B();\n      sub_6006E4(87, (int)v9);\n    }\n    sub_60837B();\n    if ( (unsigned __int8)CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::GetSize(91) != 0 )\n    {\n      sub_60E915();\n      v8[1] = 1;\n      sub_60837B();\n      sub_6006E4(91, (int)v8);\n    }\n    v6 = 19;\n    v7 = 1;\n    sub_60837B();\n    CMFCColorPickerCtrl::GetCursorPos(68, (int)&v6);\n  }\n  return 1;\n}\n"
+    },
+    {
+      "entry": "0x767860",
+      "chunks": [
+        {
+          "start": "0x767860",
+          "end": "0x767a98",
+          "disk_matches_idb": true,
+          "sha256": "a48161436bb7a4d06053faa936f92b01ae7c005dabee3e8d47f9358d2f9cd7ee"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_767860(void *this, _DWORD *a2)\n{\n  int v2; // eax\n  int v4; // [esp-4h] [ebp-28h]\n  int v5; // [esp-4h] [ebp-28h]\n  int TableIndexFromLocaleName; // [esp-4h] [ebp-28h]\n  int v7; // [esp-4h] [ebp-28h]\n  int v8; // [esp-4h] [ebp-28h]\n  _DWORD v9[6]; // [esp+4h] [ebp-20h] BYREF\n  _DWORD *v10; // [esp+1Ch] [ebp-8h]\n  void *v11; // [esp+20h] [ebp-4h]\n\n  memset(v9, 204, sizeof(v9));\n  v11 = this;\n  v10 = a2;\n  sub_609B95();\n  sub_60278C(23, 0, 0);\n  v9[5] = *a2 & 0xFFF;\n  sub_60554A();\n  v9[4] = sub_60F3B5(9, v9[5], -1, -1);\n  sub_60554A();\n  v4 = sub_60C372(v9[4]);\n  sub_610297(5, 0);\n  sub_601251(v4);\n  sub_60554A();\n  v5 = sub_608623(v9[4]);\n  sub_610297(5, 0);\n  sub_603C4F(v5);\n  sub_610297(5, 0);\n  sub_60BB48(v9[4]);\n  v9[3] = sub_610297(6, 0);\n  sub_602890();\n  v2 = sub_6092DA(v9[5]);\n  (*(void (__thiscall **)(_DWORD, int))(*(_DWORD *)v9[3] + 144))(v9[3], v2);\n  v9[2] = sub_610297(7, 0);\n  (*(void (__thiscall **)(_DWORD, int))(*(_DWORD *)v9[2] + 200))(v9[2], 1);\n  TableIndexFromLocaleName = ATL::_AtlGetTableIndexFromLocaleName((const wchar_t *)v9[5]);\n  sub_610297(194, 0);\n  sub_60BB48(TableIndexFromLocaleName);\n  v7 = sub_60BFDF(v9[5]);\n  sub_610297(195, 0);\n  sub_60BB48(v7);\n  if ( (*v10 & 0x40000000) != 0 )\n  {\n    v9[1] = sub_610297(193, 0);\n    (*(void (__thiscall **)(_DWORD, int))(*(_DWORD *)v9[1] + 200))(v9[1], 1);\n    sub_60554A();\n    v8 = sub_60F3B5(10, 21, 7, -1);\n    sub_610297(193, 0);\n    return sub_60BB48(v8);\n  }\n  else\n  {\n    v9[0] = sub_610297(193, 0);\n    return (*(int (__thiscall **)(_DWORD, _DWORD))(*(_DWORD *)v9[0] + 200))(v9[0], 0);\n  }\n}\n"
+    },
+    {
+      "entry": "0x6a7dc0",
+      "chunks": [
+        {
+          "start": "0x6a7dc0",
+          "end": "0x6a7f35",
+          "disk_matches_idb": true,
+          "sha256": "d60c17a762f8bce961f04260ea0bec317aa677a43af3190196c3e594b504161d"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_6A7DC0(void *this, int a2, int a3, int a4, char *Source)\n{\n  _DWORD v6[3]; // [esp+10h] [ebp-44h] BYREF\n  char Destination[4]; // [esp+1Ch] [ebp-38h] BYREF\n  int v8; // [esp+20h] [ebp-34h]\n  int v9; // [esp+24h] [ebp-30h]\n  int v10; // [esp+28h] [ebp-2Ch]\n  int v11; // [esp+2Ch] [ebp-28h]\n  int v12; // [esp+30h] [ebp-24h]\n  int v13; // [esp+34h] [ebp-20h]\n  int v14; // [esp+38h] [ebp-1Ch]\n  char v15; // [esp+43h] [ebp-11h]\n  int v16; // [esp+44h] [ebp-10h]\n  int v17; // [esp+48h] [ebp-Ch]\n  void *v18; // [esp+4Ch] [ebp-8h]\n\n  v18 = this;\n  v17 = a2 & 0xFFF;\n  v15 = 0;\n  if ( v17 == 1 )\n  {\n    if ( (unsigned __int8)sub_60E848() != 0 )\n    {\n      if ( (unsigned __int8)CWnd::InvalidateRect() == 0 )\n      {\n        sub_61094F();\n        v16 = sub_60FC52(713);\n        v15 = 1;\n      }\n    }\n    else\n    {\n      sub_61094F();\n      v16 = sub_60FC52(712);\n      v15 = 1;\n    }\n  }\n  if ( v15 != 0 )\n  {\n    sub_60837B();\n    sub_5FFB04(64, 1350, 0);\n    sub_60837B();\n    return CMFCColorPickerCtrl::GetCursorPos(64, v16);\n  }\n  else\n  {\n    *(_DWORD *)Destination = 0;\n    v8 = 0;\n    v9 = 0;\n    v10 = 0;\n    v11 = 0;\n    v12 = 0;\n    v13 = 0;\n    v14 = 0;\n    v6[0] = a2;\n    v6[1] = a3;\n    v6[2] = a4;\n    if ( Source != nullptr )\n      j__strcpy(Destination, Source);\n    sub_6042DA(42, (int)v6);\n    sub_60837B();\n    return CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](100);\n  }\n}\n"
+    },
+    {
+      "entry": "0x74c990",
+      "chunks": [
+        {
+          "start": "0x74c990",
+          "end": "0x74ccc7",
+          "disk_matches_idb": true,
+          "sha256": "40b3c69add7a51ccc5c9f1f2253801da25c1bd093c92eab6916a24bb08b8f895"
+        }
+      ],
+      "pseudocode": "void __thiscall CPreviewDC::MirrorFont(int ***this, int a2, int a3)\n{\n  int v3; // eax\n  const char *v4; // eax\n  int v5; // eax\n  int v6; // [esp-4h] [ebp-C8h]\n  int v7; // [esp-4h] [ebp-C8h]\n  int v8; // [esp-4h] [ebp-C8h]\n  struct tagSIZE *v9; // [esp+0h] [ebp-C4h]\n  int v10; // [esp+10h] [ebp-B4h] BYREF\n  int **v11; // [esp+18h] [ebp-ACh]\n  char Buffer[132]; // [esp+20h] [ebp-A4h] BYREF\n  int v13; // [esp+A4h] [ebp-20h]\n  HDC hdc; // [esp+A8h] [ebp-1Ch]\n  int v15; // [esp+ACh] [ebp-18h]\n  int v16; // [esp+B0h] [ebp-14h]\n  int v17; // [esp+B4h] [ebp-10h]\n  int v18; // [esp+B8h] [ebp-Ch]\n  int ***v19; // [esp+BCh] [ebp-8h]\n\n  v19 = this;\n  if ( *(this + 18) != nullptr && *v19[18] != nullptr )\n  {\n    v18 = sub_610DB9();\n    v17 = sub_602890();\n    v16 = j_unknown_libname_508();\n    v15 = **v19[18];\n    hdc = (HDC)(v15 & 0xFFF);\n    if ( a3 == 1 )\n    {\n      ((void (__thiscall *)(int ***))(*v19)[39])(v19);\n      switch ( v16 )\n      {\n        case 1:\n          v13 = sub_6128A8((int)hdc);\n          if ( *(_DWORD *)(sub_61122D() + 52) < v13 )\n          {\n            v6 = v13;\n            sub_61094F();\n            v4 = (const char *)sub_60FC52(745);\n            j__sprintf(Buffer, v4, v6);\n            sub_60837B();\n            sub_5FFB04(64, 1350, 0);\n            sub_60837B();\n            CMFCColorPickerCtrl::GetCursorPos(64, (int)Buffer);\n          }\n          else\n          {\n            v3 = sub_6033BC((int)hdc);\n            sub_605E3C(v3, v15);\n          }\n          goto LABEL_9;\n        case 2:\n          v5 = sub_6033BC((int)hdc);\n          sub_5FFCF8(v5, v15);\n          sub_60837B();\n          CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](92);\n          return;\n        case 3:\n          GetWindowExtEx(hdc, v9);\n          if ( (unsigned __int8)sub_60D7A4(v7) != 0 )\n          {\n            sub_610DB9();\n            if ( (unsigned __int8)AfxAssertFailedLine() != 0 )\n            {\n              sub_60837B();\n              sub_5FFB04(71, 0, 0);\n              sub_61094F();\n              v8 = sub_60FC52(119);\n              sub_60837B();\n              CMFCColorPickerCtrl::GetCursorPos(71, v8);\n              sub_60837B();\n              sub_6006E4(71, (int)`string');\n            }\n            else\n            {\n              sub_610DB9();\n              sub_609807(v15, 1, -1, nullptr);\n              sub_60837B();\n              sub_5FFB04(132, 0, 0);\n            }\n          }\n          else\n          {\n            sub_609807(**v19[18], 1, -1, nullptr);\n          }\n          goto LABEL_9;\n        case 4:\n          v11 = v19[18];\n          sub_60837B();\n          CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](92);\n          sub_60837B();\n          sub_5FFB04(100, 0, 0);\n          sub_60837B();\n          CMFCColorPickerCtrl::GetCursorPos(100, (int)v11);\n          return;\n        case 5:\nLABEL_9:\n          sub_60837B();\n          CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](92);\n          break;\n        case 6:\n          sub_60837B();\n          sub_5FFB04(130, 0, 0);\n          v10 = **v19[18];\n          sub_60837B();\n          sub_5FFB04(131, 0, 0);\n          sub_60837B();\n          CMFCColorPickerCtrl::GetCursorPos(131, (int)&v10);\n          break;\n        default:\n          return;\n      }\n    }\n  }\n}\n"
+    },
+    {
+      "entry": "0x840580",
+      "chunks": [
+        {
+          "start": "0x840580",
+          "end": "0x8406cc",
+          "disk_matches_idb": true,
+          "sha256": "e9a70e31a79929b5b8f81d6e42d8d636bbfe98de0a8befd8f82f7b1151a45d95"
+        },
+        {
+          "start": "0xa16830",
+          "end": "0xa16856",
+          "disk_matches_idb": true,
+          "sha256": "d8251947eadeb57632bad20ddaa35dcfb04dfb3096ee26130d363146016c61a7"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_840580(void *this, int a2)\n{\n  int v3; // [esp+Ch] [ebp-118h]\n  int v4; // [esp+Ch] [ebp-118h]\n  int v5; // [esp+104h] [ebp-20h]\n\n  if ( operator new(0x10u) != nullptr )\n    v3 = sub_600AF9();\n  else\n    v3 = 0;\n  v5 = v3;\n  if ( operator new(0x10u) != nullptr )\n    v4 = sub_60E37F((int)this, (int)sub_6057A2);\n  else\n    v4 = 0;\n  sub_60C7FA(0, v4, 1);\n  sub_60F0DB();\n  sub_60CFCA(v5);\n  sub_60F0DB();\n  sub_60E5D7((int)this + 16);\n  return sub_60F851(a2);\n}\n"
+    },
+    {
+      "entry": "0x8a2dc0",
+      "chunks": [
+        {
+          "start": "0x8a2dc0",
+          "end": "0x8a2ea8",
+          "disk_matches_idb": true,
+          "sha256": "785c3590be268df2a190205954b0d252521b7c2a82d3f6423cc73f9dd1dbc069"
+        },
+        {
+          "start": "0xa1a1c0",
+          "end": "0xa1a1d5",
+          "disk_matches_idb": true,
+          "sha256": "13190d4475a2897fb96032828faf446dc9ba1bfbc97b45959eee5fd36681b23c"
+        }
+      ],
+      "pseudocode": "int __stdcall sub_8A2DC0(int a1)\n{\n  int v1; // eax\n  int v3; // [esp-4h] [ebp-11Ch]\n\n  sub_60F0DB();\n  sub_5FFEA6(41);\n  sub_60F0DB();\n  if ( sub_606913() != 0 )\n  {\n    sub_60F0DB();\n    sub_606913();\n    sub_609776(41);\n  }\n  v1 = sub_609AEB();\n  v3 = sub_606279(v1, a1);\n  sub_60ED48();\n  sub_6005E0();\n  sub_612A88(v3);\n  return sub_60B706();\n}\n"
+    },
+    {
+      "entry": "0x8414a0",
+      "chunks": [
+        {
+          "start": "0x8414a0",
+          "end": "0x841541",
+          "disk_matches_idb": true,
+          "sha256": "903c73d51ea47e36c31e12aaa5b2685d1ede2f091eecd9ce473bd0e9c2f84f30"
+        },
+        {
+          "start": "0xa168b0",
+          "end": "0xa168cd",
+          "disk_matches_idb": true,
+          "sha256": "f9b3d8dd0d3e1375ed0cfd0406f3b6991b4dcca26458b368cc42cfd716b45715"
+        }
+      ],
+      "pseudocode": "_DWORD *__thiscall sub_8414A0(_DWORD *this)\n{\n  sub_606422();\n  *this = &off_A2F488;\n  sub_608C72();\n  `eh vector constructor iterator'(this + 11, 8u, 4, sub_5FF06E, sub_60C93F);\n  return this;\n}\n"
+    },
+    {
+      "entry": "0x841dd0",
+      "chunks": [
+        {
+          "start": "0x841dd0",
+          "end": "0x841e75",
+          "disk_matches_idb": true,
+          "sha256": "4f0d9cda7c3ddeff18ddb4afd2ce018ad4c99f1e388ef4deeb3df67c4358ca7a"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_841DD0(_DWORD *this, int a2, int a3, int a4, int a5)\n{\n  int v6; // [esp-4h] [ebp-DCh]\n\n  *(this + 10) = a2;\n  *(this + 7) = a3;\n  *(this + 8) = a4;\n  *(this + 9) = a5;\n  dword_A6779C = -1;\n  word_A677A0 = -1;\n  LOWORD(v6) = -1;\n  dword_ACB864(100, -1, v6);\n  return 0;\n}\n"
+    },
+    {
+      "entry": "0x82c0e0",
+      "chunks": [
+        {
+          "start": "0x82c0e0",
+          "end": "0x82c110",
+          "disk_matches_idb": true,
+          "sha256": "5cb6344e47d7aa35699e11c7bbbd0613788d020018fd51c1b6a2137754c0f426"
+        }
+      ],
+      "pseudocode": "char *__thiscall sub_82C0E0(char *this)\n{\n  return this + 28;\n}\n"
+    },
+    {
+      "entry": "0x6af670",
+      "chunks": [
+        {
+          "start": "0x6af670",
+          "end": "0x6af709",
+          "disk_matches_idb": true,
+          "sha256": "51c83329ebaf8bd496627332f5dbff19105d01dfd30d5aa70fd51a85e1d3dbd7"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_6AF670(void *this, int a2)\n{\n  _DWORD v3[8]; // [esp+4h] [ebp-20h] BYREF\n\n  memset(v3, 204, 16);\n  v3[6] = -858993460;\n  v3[7] = this;\n  v3[4] = -1;\n  v3[5] = -858980353;\n  v3[2] = CWnd::GetClientRect(44, -1, 0xFFFF);\n  v3[0] = *(_DWORD *)(v3[2] + 12);\n  sub_60837B();\n  return CMFCColorPickerCtrl::GetCursorPos(132, (int)v3);\n}\n"
+    },
+    {
+      "entry": "0x8407c0",
+      "chunks": [
+        {
+          "start": "0x8407c0",
+          "end": "0x840845",
+          "disk_matches_idb": true,
+          "sha256": "5c543bd3ae9350817246d6bc54b90e38368bcf4aef32cf2beaa95f7b57324e56"
+        }
+      ],
+      "pseudocode": "int __stdcall sub_8407C0(int a1)\n{\n  int v2; // [esp-4h] [ebp-DCh]\n\n  dword_A6779C = -1;\n  word_A677A0 = -1;\n  LOWORD(v2) = -1;\n  dword_ACB868(41, a1, -1, v2);\n  return 0;\n}\n"
+    },
+    {
+      "entry": "0x6b0f50",
+      "chunks": [
+        {
+          "start": "0x6b0f50",
+          "end": "0x6b0fff",
+          "disk_matches_idb": true,
+          "sha256": "1e218554bd981ee718c18257a1df0dc6bd24bfacdae08f3b33f6e271f55f9c75"
+        }
+      ],
+      "pseudocode": "int __thiscall sub_6B0F50(void *this, int a2, int a3, int a4)\n{\n  int v5; // [esp-4h] [ebp-1Ch]\n  _DWORD v6[5]; // [esp+4h] [ebp-14h] BYREF\n\n  memset(v6, 204, 16);\n  v6[4] = this;\n  sub_60837B();\n  sub_5FFB04(64, 1350, 0);\n  sub_61094F();\n  v5 = sub_60FC52(688);\n  sub_60837B();\n  CMFCColorPickerCtrl::GetCursorPos(64, v5);\n  sub_60837B();\n  CArray<CMFCRibbonInfo::XPanel *,CMFCRibbonInfo::XPanel *>::operator[](132);\n  j_unknown_libname_345(52);\n  j_unknown_libname_410(a2);\n  sub_60327C();\n  return sub_60815A((int)v6, 0);\n}\n"
+    },
+    {
+      "entry": "0x87fd30",
+      "chunks": [
+        {
+          "start": "0x87fd30",
+          "end": "0x8833d3",
+          "disk_matches_idb": true,
+          "sha256": "260c25f7ad405d7f18dc7e5bbfdf0e464deb899f6c59587f4289971fced2165a"
+        },
+        {
+          "start": "0xa18a40",
+          "end": "0xa18d81",
+          "disk_matches_idb": true,
+          "sha256": "02517e1262f88d57473b82a380fd3ca5a03f9cb12c2e07bf0986af133cf62b5b"
+        }
+      ],
+      "excerpt": "      case 100:\n        v207 = sub_609208();\n        v206 = sub_609208();\n        v205 = sub_609208();\n        v204 = sub_609208();\n        sub_60DF01();\n        v74 = sub_611D31();\n        result = (*(int (__thiscall **)(int, int, int, int, int))(*(_DWORD *)v74 + 12))(v74, v204, v207, v206, v205);\n        break;\n"
+    },
+    {
+      "entry": "0x828f60",
+      "chunks": [
+        {
+          "start": "0x828f60",
+          "end": "0x82a270",
+          "disk_matches_idb": true,
+          "sha256": "60238181b2f432ab9c9729d67d51f3f7c3e752d47129e6fdea12afea6d803131"
+        },
+        {
+          "start": "0xa15cd0",
+          "end": "0xa15d0f",
+          "disk_matches_idb": true,
+          "sha256": "21f92d59150700264725762058943f96f8caa5117b4eea7cb0728d84cbac015b"
+        }
+      ],
+      "excerpt": "    case 42:\n      sub_60ED48();\n      sub_6005E0();\n      sub_60DF01();\n      sub_611D31();\n      if ( sub_609131(*a2) != 0 )\n        sub_611A8E(a2[2]);\n      break;\n"
+    },
+    {
+      "entry": "0x82b090",
+      "chunks": [
+        {
+          "start": "0x82b090",
+          "end": "0x82b7e3",
+          "disk_matches_idb": true,
+          "sha256": "17b4c9389529eeb6df7d909c340eb8c5bcb634a9c4857a6d26bcfd8390b979a8"
+        }
+      ],
+      "excerpt": "    case 44:\n      sub_60ED48();\n      sub_6005E0();\n      sub_60DF01();\n      sub_611D31();\n      LODWORD(v3) = sub_601B4D();\n      break;\n"
+    },
+    {
+      "entry": "0x6be2e0",
+      "chunks": [
+        {
+          "start": "0x6be2e0",
+          "end": "0x6be766",
+          "disk_matches_idb": true,
+          "sha256": "558a09fa22c2a0267982a84bec634073c8462588f8e6797db25db29225407d72"
+        }
+      ],
+      "excerpt": "        case 0x64u:\n          sub_60E217((int)&a2);\n          break;\n"
+    },
+    {
+      "entry": "0x6be8d0",
+      "chunks": [
+        {
+          "start": "0x6be8d0",
+          "end": "0x6bed38",
+          "disk_matches_idb": true,
+          "sha256": "e7153919ee32eea9109535a2d9938218a3521f34550a6105ce2a698a8392f3b0"
+        }
+      ],
+      "excerpt": "        case 41:\n          LOWORD(v5) = a4;\n          sub_609BFE((int)a2, (int)a3, v5);\n          break;\n"
+    }
+  ],
+  "dispatch_note": "87FD30 lower branch adds2 before switch: case100 is wire98. Reads four DWORDs; fourth is passed first to841DD0 then placed at inventory+40; UI132 reads (inventory+28)+12."
+}
