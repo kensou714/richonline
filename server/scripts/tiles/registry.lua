@@ -1,5 +1,6 @@
 -- 道具格业务分发。未知类型沿用原生校验，不能静默当普通道路处理。
 local modules = {
+    [1] = require("tiles.tile_1"),
     [5] = require("tiles.tile_5"),
     [6] = require("tiles.tile_6"),
     [7] = require("tiles.tile_7"),

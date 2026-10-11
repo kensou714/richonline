@@ -65,6 +65,7 @@ struct Session {
     std::vector<bool> disconnected;
     std::unique_ptr<RichonlineClassicTerminal> terminal;
     std::vector<Bytes> stock_opening;
+    std::uint32_t news_fines=0;
 
     Session(const RichonlineClassicStartup& source,RichonlineClassicSessionRules policy)
         :startup(source),rules(std::move(policy)),board(first_board(source)),
@@ -103,6 +104,16 @@ struct Session {
             statuses[index].possession=-1;
         }
         world.ledger=std::make_shared<RichonlineGameLedger>(std::move(funds));
+        if(rules.news) {
+            if(!rules.news->select || rules.news->initial_fines>2147483647U)
+                throw CodecError("richonline_classic_news_policy_invalid");
+            auto pictures=rules.news->available_pictures;
+            std::ranges::sort(pictures);
+            if(std::ranges::any_of(pictures,[](auto picture){return picture<0 || picture>=100;}) ||
+                std::adjacent_find(pictures.begin(),pictures.end())!=pictures.end())
+                throw CodecError("richonline_classic_news_pictures_invalid");
+            news_fines=rules.news->initial_fines;
+        }
         raw=std::make_unique<RichonlineRawAuthority>(static_cast<std::uint8_t>(count),board.game_server_id);
         raw->initialize_game();
         for(std::uint8_t slot=0;slot<count;++slot) raw->initialize_actor(slot);
@@ -419,7 +430,7 @@ struct Session {
     std::vector<Bytes> finish_last_survivor(std::vector<Bytes> messages,std::uint8_t bankrupt) {
         if(!terminal)throw CodecError("richonline_classic_terminal_missing");
         phase=Phase::settling;collision_pending=false;movement.reset();pending_opcode.reset();
-        // 租金已进入权威账本；全员奖励和战绩原子入库后才发最后400E、胜利及战绩表。
+        // 末笔支出已进入权威账本；全员奖励和战绩原子入库后才发最后400E、胜利及战绩表。
         // 任一失败由共享层关闭业务，不重跑租金、不伪造换人，也不盲目重发动画。
         append(messages,terminal->finish(active,bankrupt));return messages;
     }
@@ -535,6 +546,43 @@ struct Session {
         if(bankrupt) {collision_pending=false;return advance(std::move(messages));}
         return property_effects(std::move(messages));
     }
+    std::vector<Bytes> money_news(const RichonlineClassicTurnContext& current) {
+        if(!rules.news || current.landing.property_ref!=-1)
+            throw CodecError("richonline_classic_news_authority_missing");
+        if(richonline_landing_controlled(statuses[actor])) return complete({stop()});
+        const auto before=world.ledger->snapshot(actor);
+        const auto fines_before=news_fines;
+        const auto event=rules.news->select(current,before,fines_before);
+        auto plan=prepare_richonline_classic_money_news(board.game_server_id,current.landing,event,before,
+            fines_before,rules.news->available_pictures,rules.script);
+        if(statuses[actor]!=current.landing.actor_status || board.participants[actor].position!=current.landing.position)
+            throw CodecError("richonline_classic_news_context_stale");
+        std::optional<PreparedRetirement> retirement;
+        if(plan.bankrupt) retirement=prepare_bankruptcy(actor);
+        if(plan.bankrupt && std::ranges::count(active,std::uint8_t{1})>2)
+            plan.messages.push_back(richonline_eliminate_actor(board.game_server_id,static_cast<std::int8_t>(actor)));
+        const auto diagnostic="richonline_classic_news actor="+std::to_string(actor)+
+            " sequence="+std::to_string(sequence)+" opcode="+std::to_string(event.opcode)+
+            " amount="+std::to_string(event.amount)+" cash="+std::to_string(plan.funds.after.cash)+
+            " deposit="+std::to_string(*plan.funds.after.deposit)+" fines="+std::to_string(plan.fines_after)+
+            " bankrupt="+std::to_string(plan.bankrupt);
+        const std::array updates{plan.funds};
+        if(!world.ledger->commit_batch(updates,[&]() {
+            if(news_fines!=plan.fines_before || statuses[actor]!=current.landing.actor_status ||
+                board.participants[actor].position!=current.landing.position) return false;
+            if(retirement && !commit_retirement(*retirement)) return false;
+            if(retirement) retire_actor(actor);
+            news_fines=plan.fines_after;return true;
+        })) throw CodecError("richonline_classic_news_commit_stale");
+        if(rules.log) rules.log(diagnostic);
+        if(plan.bankrupt) {
+            if(std::ranges::count(active,std::uint8_t{1})==1)
+                return finish_last_survivor(std::move(plan.messages),actor);
+            collision_pending=false;return advance(std::move(plan.messages));
+        }
+        // 客户端金额新闻已排stage2；无地产引用时再由统一phase6和岔路收尾。
+        return complete(std::move(plan.messages));
+    }
     std::optional<RichonlinePortalLandingPlan> portal_plan(const RichonlineLandingContext& landing) const {
         const auto scripted=raw->game().scripted_event83830;
         if(!scripted) throw CodecError("richonline_classic_portal_game_unknown");
@@ -585,6 +633,7 @@ struct Session {
         if(auto messages=portal_landing(current.landing)) return std::move(*messages);
         // 先完成静态/地产业务，同格效果由complete统一在phase6执行，不能提前抢卡。
         if(auto result=services.landing(current)) return accept_result(std::move(*result));
+        if(current.landing.static_type==1 && rules.news) return money_news(current);
         if(current.landing.static_type==9) {
             if(current.landing.property_ref!=-1)
                 throw CodecError("richonline_classic_bank_property_unimplemented");

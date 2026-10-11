@@ -6,6 +6,7 @@
 #include "richonline_shared_startup.hpp"
 #include "richonline_opening_hand.hpp"
 #include "richonline_game_bank.hpp"
+#include "richonline_classic_news.hpp"
 
 namespace richnet {
 class RichonlineShopCatalog;
@@ -52,6 +53,15 @@ struct RichonlineClassicSubscriptionContext {
     RichonlineStockHolding buyer_holding,seller_holding;
     RichonlineGameFundsSnapshot buyer_funds,seller_funds;
 };
+struct RichonlineClassicNewsPolicy {
+    // 客户端G+C80累计项初值/完整生命周期尚待准入绑定，不从玩家现金或押金推导。
+    std::uint32_t initial_fines;
+    std::vector<std::int16_t> available_pictures;
+    // 同步只读选择：自行按真实地图规则选事件及金额，不改账本/手牌/状态、不发包。
+    // 当前仅接已核实的单人金额事件；概率和图片映射不得由BOSS新闻表替代。
+    std::function<RichonlineClassicMoneyNews(const RichonlineClassicTurnContext&,
+        const RichonlineGameFundsSnapshot&,std::uint32_t)> select;
+};
 struct RichonlineClassicSessionRules {
     // 起始槽、骰数、起手牌均为显式策略；不借用BOSS先手或BOSS奖池。
     std::uint8_t first_actor,opaque_turn7;
@@ -80,6 +90,7 @@ struct RichonlineClassicSessionRules {
     // 0096没有数量字段。策略只读本次快照并返回数量，不得修改市场/账本或发包。
     // 缺席时仅支持已无持仓的40E6零数量确认；有持仓则恢复操作，不猜全量/最大数量。
     std::function<std::uint32_t(const RichonlineClassicSubscriptionContext&)> subscription_quantity;
+    std::optional<RichonlineClassicNewsPolicy> news;
 };
 // 返回一份整局业务，必须经宿主的make_richonline_shared_startups装配，不能直接
 // 将action绑定到每条连接；0011/0028由共享层全员汇合后才提交位置和落点/银行。
