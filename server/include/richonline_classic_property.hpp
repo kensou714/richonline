@@ -54,6 +54,9 @@ public:
     RichonlineClassicProperty(const RichonlineClassicProperty&)=delete;
     RichonlineClassicProperty& operator=(const RichonlineClassicProperty&)=delete;
     RichonlineClassicPropertyState snapshot(std::int16_t property) const;
+    // 只用于本对象持有的普通住宅/同类地产；当前对象尚无封闭、加倍卡写入口。
+    // 按NEW的32位乘法、逐块有符号除法和累加顺序返回报价，负值不能当无租金。
+    std::int32_t rent_quote(std::int16_t property,std::uint32_t monetary_scale) const;
     // 返回应等待的C2S opcode；不支持的选择抛错，不伪造成功或跳过落点。
     std::uint16_t begin(RichonlineClassicPropertyChoice,const RichonlineClassicPropertyEntry&);
     // sender_actor由已认证连接提供；current必须从当前权威回合读取，不能回传旧entry冒充。
@@ -76,6 +79,7 @@ private:
     std::chrono::milliseconds timeout_;
     std::shared_ptr<LuaServer> script_;
     std::map<std::int16_t,RichonlineClassicPropertyState> properties_;
+    std::map<std::int16_t,std::int16_t> districts_;
     std::optional<Pending> pending_;
     void validate_entry(const RichonlineClassicPropertyEntry&) const;
     void validate_pending(const RichonlineClassicPropertyEntry&) const;

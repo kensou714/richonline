@@ -4,8 +4,10 @@
 #include "richonline_shop_catalog.hpp"
 #include "richonline_collision.hpp"
 #include "richonline_raw_authority.hpp"
+#include "lua_server.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <deque>
 #include <limits>
 #include <utility>
@@ -253,6 +255,96 @@ struct Session {
         prefix.insert(prefix.end(),std::make_move_iterator(result.messages.begin()),std::make_move_iterator(result.messages.end()));
         result.messages=std::move(prefix);return accept_result(std::move(result));
     }
+    std::vector<Bytes> rent(const RichonlineClassicPropertyState& property) {
+        if(!property.owner || *property.owner>=statuses.size() || *property.owner==actor)
+            throw CodecError("richonline_classic_rent_owner_invalid");
+        const auto owner=*property.owner;
+        const auto& owner_raw=raw->actor(owner);
+        const auto& owner_status=statuses[owner];
+        if(!owner_raw.hotel1493 || !owner_raw.hospital1494 || !owner_raw.jail1495 ||
+            !owner_raw.kidnapped1497 || !owner_status.possession || !statuses[actor].possession)
+            throw CodecError("richonline_classic_rent_state_unknown");
+        // 7C94xx读取地主的状态，而1472/1480关系由付款者按地主索引读取。
+        // 本会话尚未开放关系卡和地产封闭/加倍写入口，沿用7F3840/地图初始化的零值；
+        // 以后接这些写入口时，必须一起扩展本处权威状态，不能只让客户端改变关系。
+        const bool suppressed=owner_status.possession==7 || owner_status.sleepwalking || owner_status.frozen ||
+            *owner_raw.hotel1493!=-1 || *owner_raw.hospital1494!=-1 ||
+            *owner_raw.jail1495!=-1 || *owner_raw.kidnapped1497!=-1;
+        const auto possession=*statuses[actor].possession;
+        const auto initial_scale=startup.recipients.front().snapshot.monetary_scale;
+        // 当前会话只从新局4004开始：首次先手回合不增日，此后每完整轮增日一次。
+        // 正基准每30次增日加1；类型19和外部4004改系数尚无写入口。
+        const auto scale=static_cast<std::uint64_t>(initial_scale)+(initial_scale ? completed_rounds/30U : 0U);
+        if(scale>static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max()))
+            throw CodecError("richonline_classic_rent_scale_unsupported");
+        const auto quote=suppressed || possession==0 ? 0 :
+            world.property->rent_quote(property.id,static_cast<std::uint32_t>(scale));
+        auto amount=possession==1 ? std::bit_cast<std::int32_t>(static_cast<std::uint32_t>(quote)*2U) : quote;
+        if(amount<0) throw CodecError("richonline_classic_rent_negative_unsupported");
+        const auto payer=world.ledger->snapshot(actor),payee=world.ledger->snapshot(owner);
+        if(!payer.funds.deposit || !payee.funds.deposit ||
+            static_cast<std::uint64_t>(payer.funds.cash)+*payer.funds.deposit>
+                static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max()))
+            throw CodecError("richonline_classic_rent_balance_unsupported");
+        const auto inventory=world.cards[actor]->inventory();
+        const bool free_eligible=rules.card_resources->automatic_card_eligible(startup.map_name,1050);
+        const bool transfer_eligible=rules.card_resources->automatic_card_eligible(startup.map_name,1056);
+        std::optional<RichonlinePlayerCards::PreparedConsumption> free_card;
+        const char* outcome="paid";
+        if(suppressed || possession==0) {amount=0;outcome="waived";}
+        else {
+            if(amount>=5000 && free_eligible) {
+                for(std::size_t index=0;index<inventory.size();++index) if(inventory[index].card_id==1050) {
+                    free_card=world.cards[actor]->prepare_consumption(static_cast<std::int8_t>(index),1050);
+                    if(!free_card) throw CodecError("richonline_classic_rent_card_invalid");
+                    outcome="free_card";break;
+                }
+            }
+            if(!free_card && ((amount>=5000 && free_eligible) || (amount>=10000 && transfer_eligible)) &&
+                (!rules.secondary_rent_cards_absent || !rules.secondary_rent_cards_absent(actor)))
+                throw CodecError("richonline_classic_rent_secondary_cards_unknown");
+            if(!free_card && amount>=10000 && transfer_eligible && std::ranges::any_of(inventory,
+                [](const auto& card){return card.card_id==1056;})) outcome="transfer_pending";
+            if(std::string_view(outcome)=="paid" && static_cast<std::uint32_t>(amount)>=
+                payer.funds.cash+*payer.funds.deposit) outcome="bankrupt";
+        }
+        if(rules.script) {
+            auto cards=LuaValue::array();
+            for(const auto& card:inventory) cards.push_back({{"card",card.card_id},{"count",card.count}});
+            const auto plan=rules.script->call("property.classic_rent_payment",{{"quote",quote},
+                {"possession",possession},{"suppressed",suppressed},{"cash",payer.funds.cash},
+                {"deposit",*payer.funds.deposit},{"inventory",std::move(cards)},
+                {"free_eligible",free_eligible},{"transfer_eligible",transfer_eligible}});
+            const LuaValue expected{{"amount",amount},{"free_slot",free_card ? static_cast<int>(free_card->slot) : -1},
+                {"outcome",outcome}};
+            if(plan!=expected || !plan.at("amount").is_number_integer() || !plan.at("free_slot").is_number_integer())
+                throw CodecError("lua_classic_rent_payment_invalid");
+        }
+        // 先识别等待/破产再提交，未实现的后继不得吞卡、扣光余额后伪造4010。
+        if(std::string_view(outcome)=="transfer_pending")
+            throw CodecError("richonline_classic_rent_transfer_unimplemented");
+        if(std::string_view(outcome)=="bankrupt")
+            throw CodecError("richonline_classic_rent_bankruptcy_unimplemented");
+        const auto charged=std::string_view(outcome)=="paid" ? static_cast<std::uint32_t>(amount) : 0U;
+        auto payer_after=payer.funds,payee_after=payee.funds;
+        if(charged>static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max())-*payee_after.deposit)
+            throw CodecError("richonline_classic_rent_recipient_overflow");
+        const auto cash_paid=std::min(charged,payer_after.cash);
+        payer_after.cash-=cash_paid;*payer_after.deposit-=charged-cash_paid;*payee_after.deposit+=charged;
+        auto messages=std::vector<Bytes>{stop()};
+        const std::array updates{RichonlineGameFundsUpdate{actor,payer,payer_after},
+            RichonlineGameFundsUpdate{owner,payee,payee_after}};
+        if(!world.ledger->commit_batch(updates,[&]() {
+            if(world.cards[actor]->inventory()!=inventory || world.property->snapshot(property.id)!=property) return false;
+            if(free_card) world.cards[actor]->commit_inventory(free_card->remaining_inventory);
+            return true;
+        })) throw CodecError("richonline_classic_rent_commit_stale");
+        // 4013已触发客户端6060/6061；只镜像账本/手牌，不发第二笔扣款或扣卡包。
+        if(rules.log) rules.log("richonline_classic_rent actor="+std::to_string(actor)+
+            " owner="+std::to_string(owner)+" property="+std::to_string(property.id)+
+            " sequence="+std::to_string(sequence)+" charged="+std::to_string(charged)+" outcome="+outcome);
+        return property_effects(std::move(messages));
+    }
     std::vector<Bytes> land() {
         if(collision_pending) throw CodecError("richonline_classic_phase6_already_pending");
         static_cast<void>(collision_actors());
@@ -271,7 +363,7 @@ struct Session {
             if(property.kind!=0 && property.kind!=1)
                 throw CodecError("richonline_classic_property_landing_unimplemented");
             if(property.owner && *property.owner!=actor)
-                throw CodecError("richonline_classic_rent_unimplemented");
+                return rent(property);
             const bool purchase=!property.owner;
             auto entry=property_entry();
             std::uint32_t cost=purchase ? property.price : property.sprite_type==11 ? 500U : 1500U;

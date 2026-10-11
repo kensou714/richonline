@@ -3,6 +3,7 @@
 #include "lua_wire.hpp"
 
 #include <limits>
+#include <bit>
 #include <utility>
 
 namespace richnet {
@@ -41,6 +42,7 @@ RichonlineClassicProperty::RichonlineClassicProperty(std::uint16_t game_id,Richo
         if(!properties_.emplace(property.id,RichonlineClassicPropertyState{property.id,property.sprite_type,
             property.kind,property.level,property.owner,property.price}).second)
             throw CodecError("richonline_classic_property_duplicate");
+        districts_.emplace(property.id,property.district);
     }
     for(const auto& cell:topology_.cells())
         if(cell.walkable && cell.property_ref>=0 && !properties_.contains(cell.property_ref))
@@ -50,6 +52,33 @@ RichonlineClassicPropertyState RichonlineClassicProperty::snapshot(std::int16_t 
     const auto found=properties_.find(property);
     if(found==properties_.end()) throw CodecError("richonline_classic_property_unknown");
     return found->second;
+}
+std::int32_t RichonlineClassicProperty::rent_quote(std::int16_t property,std::uint32_t monetary_scale) const {
+    const auto target=snapshot(property);
+    if(!target.owner || (target.kind!=0 && target.kind!=1))
+        throw CodecError("richonline_classic_rent_property_invalid");
+    constexpr std::array<std::uint32_t,6> coefficients{500,1000,2500,5000,8000,12500};
+    std::uint32_t total=0;
+    auto items=LuaValue::array();
+    for(const auto& [id,item]:properties_) {
+        if(item.sprite_type!=11 || item.kind!=target.kind || item.owner!=target.owner ||
+            (target.kind==0 && districts_.at(id)!=districts_.at(property))) continue;
+        if(item.level>=coefficients.size()) throw CodecError("richonline_classic_rent_level_invalid");
+        // unsigned乘法保留低32位；转为signed后逐块除1000，不能先累加再整除。
+        const auto part=target.kind==0 ? static_cast<std::uint32_t>(
+            std::bit_cast<std::int32_t>(item.price*monetary_scale*coefficients[item.level])/1000) :
+            monetary_scale*4000U;
+        total+=part;
+        items.push_back({{"price",item.price},{"level",item.level}});
+    }
+    const auto quote=std::bit_cast<std::int32_t>(total);
+    if(script_) {
+        const auto plan=script_->call("property.classic_rent_quote",{{"kind",target.kind},
+            {"scale",monetary_scale},{"items",std::move(items)}});
+        if(!plan.is_number_integer() || plan!=LuaValue(quote))
+            throw CodecError("lua_classic_rent_quote_invalid");
+    }
+    return quote;
 }
 void RichonlineClassicProperty::validate_entry(const RichonlineClassicPropertyEntry& entry) const {
     if(entry.game_id!=game_id_ || entry.actor>=ledger_->actor_count() || !entry.status.possession)
