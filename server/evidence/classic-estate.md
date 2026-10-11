@@ -38,3 +38,17 @@
 
 仅以静态逆向、源码核对、Release/Lua编译验证。未新增或运行玩法测试、未启动服务
 或游戏。本机固定快照构建、同代交付、GitHub提交另附回执；不重启线上实例。
+
+## 固定构建与本机交付回执
+
+2026-10-12：源码提交`dd803e8e64f440e57ab6e93b8bc4dd36d5774e86`，
+tree `e62f36f73096b181ce6763014375a5ffaa5808d1`，已推送并核对GitHub main。
+独立源码在`server/build-classic-estate-v2-source/server`；
+`server/build-classic-estate-v2-fixed`按Release、BUILD_TESTING=OFF构建，退出码0。
+177个Lua脚本与工作区逐项哈希相同，固定构建完成语法编译。
+
+确认本机无`RichOnline.Server.exe`进程后，原EXE备份至
+`server/build-classic-estate-v2-fixed/RichOnline.Server.before-dd803e8.exe`，
+固定构建EXE复制至`server/RichOnline.Server.exe`；两者SHA256均为
+`C521FF4EBECE05C7631CA1514CAAAC36C755861941204166EE00C7A2103FA11F`。
+未运行玩法测试、未启动服务或游戏、未部署或重启线上实例；此处仅为本机同代交付。
