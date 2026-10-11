@@ -128,7 +128,7 @@ RichonlineStartupPlan make_richonline_boss_session(const std::filesystem::path& 
     }
     auto property=std::make_shared<RichonlineBossProperty>(resources,startup.init.game_server_id,
         ledger,stage);
-    property->configure_construction(startup.init.participants.at(0).building_skill_caps,cards);
+    property->configure_construction(startup.init.participants.at(0).building_skill_caps,cards,script);
     property->enable_human_decisions(std::chrono::milliseconds{static_cast<std::int64_t>(stage.wait_seconds)*1000},
         [] { return RichonlineBossProperty::Clock::now(); });
     const auto package_id=std::string(package.id);

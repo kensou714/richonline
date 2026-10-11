@@ -1,6 +1,7 @@
 #include "richonline_boss_property.hpp"
 #include "richonline_boss_cards.hpp"
 #include "richonline_construction_wire.hpp"
+#include "lua_wire.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -9,9 +10,45 @@
 
 namespace richnet {
 void RichonlineBossProperty::configure_construction(std::array<std::int8_t,10> human_skills,
-    std::shared_ptr<RichonlineBossCards> cards) {
+    std::shared_ptr<RichonlineBossCards> cards,std::shared_ptr<LuaServer> script) {
+    if(pending_property_) throw CodecError("richonline_construction_configuration_pending");
     human_skills_=human_skills;
     cards_=std::move(cards);
+    construction_script_=std::move(script);
+}
+Bytes RichonlineBossProperty::construction_message(const Property& property,std::int8_t requested,
+    bool synthetic,std::int8_t resolved,int licence_slot) const {
+    auto response=richonline_construction_response(game_id_,resolved);
+    if(!construction_script_) return response;
+    auto inventory=LuaValue::array();
+    if(cards_) for(const auto& item:cards_->inventory())
+        inventory.push_back({{"card",item.card_id},{"count",item.count}});
+    const auto plan=construction_script_->call("property.construct",{{"game_id",game_id_},
+        {"selection",requested},{"synthetic",synthetic},{"owner",property.owner ? *property.owner : -1},
+        {"level",property.building.level},{"default_kind",construction_.default_kind},
+        {"caps",construction_.scenario_caps},{"licences",construction_.licence_ids},{"inventory",inventory}});
+    const LuaValue expected{{"selection",resolved},{"licence_slot",licence_slot},
+        {"message",lua_bytes(View(response))}};
+    if(plan!=expected) throw CodecError("lua_property_construction_invalid");
+    return lua_bytes(plan.at("message"));
+}
+Bytes RichonlineBossProperty::upgrade_message(const Property& property,bool requested,bool synthetic,
+    bool resolved) const {
+    auto response=richonline_upgrade_response(game_id_,resolved);
+    if(!construction_script_) return response;
+    const auto kind=property.building.kind;
+    const auto index=static_cast<std::size_t>(kind-11);
+    const auto plan=construction_script_->call("property.upgrade",{{"game_id",game_id_},
+        {"accept",requested},{"synthetic",synthetic},{"owner",property.owner ? *property.owner : -1},
+        {"kind",kind},{"level",property.building.level},{"cap",construction_.scenario_caps.at(index)},
+        {"skill",synthetic ? static_cast<int>(construction_.synthetic_skills.at(index)) :
+            static_cast<int>(human_skills_.at(index))}});
+    const char* continuation=!synthetic && kind==11 ? "research" : kind==16 ? "temple" :
+        kind==15 ? "garden" : "complete";
+    const LuaValue expected{{"accept",resolved},{"level",property.building.level+(resolved ? 1 : 0)},
+        {"continuation",continuation},{"message",lua_bytes(View(response))}};
+    if(plan!=expected) throw CodecError("lua_property_upgrade_invalid");
+    return lua_bytes(plan.at("message"));
 }
 std::optional<RichonlineBossProperty::Building> RichonlineBossProperty::building(std::int16_t ref) const noexcept {
     const auto found=properties_.find(ref);
@@ -71,8 +108,8 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
         }
     }
     if (ctx.synthetic_actor) {
-        result.messages.push_back(empty ? richonline_construction_response(game_id_,construction_.default_kind) :
-            richonline_upgrade_response(game_id_,true));
+        result.messages.push_back(empty ? construction_message(property,-1,true,construction_.default_kind,-1) :
+            upgrade_message(property,true,true,true));
         if(!empty && property.building.kind==16) {
             auto upgraded=property.building;++upgraded.level;
             result=temple_result(ctx,upgraded,true,std::move(result.messages));
@@ -104,6 +141,8 @@ RichonlineLandingResult RichonlineBossProperty::owned_land(const RichonlineLandi
 }
 RichonlineLandingResult RichonlineBossProperty::complete_construction(std::int8_t selection) {
     auto& property=properties_.at(*pending_property_);
+    const auto requested=selection;
+    int licence_slot=-1;
     // 新版 key120 请求值为 -1；显式解析为场景默认建筑，因为回复 403D(-1) 不会建造。
     if (selection==-1) selection=construction_.default_kind;
     auto inventory=cards_ ? cards_->inventory() : RichonlineChanceInventory{};
@@ -118,10 +157,15 @@ RichonlineLandingResult RichonlineBossProperty::complete_construction(std::int8_
                 return item.card_id==licence && item.count>0;
             });
             if (!cards_ || slot==inventory.end()) selection=10;
-            else { if (--slot->count==0) *slot={}; }
+            else {
+                licence_slot=static_cast<int>(slot-inventory.begin());
+                if (--slot->count==0) *slot={};
+            }
         }
     }
-    RichonlineLandingResult result{{richonline_construction_response(game_id_,selection)},RichonlineLandingProgress::complete};
+    // 许可证扣除尚在副本中；Lua计划和完整403D通过复核后才提交建筑与库存。
+    RichonlineLandingResult result{{construction_message(property,requested,false,selection,licence_slot)},
+        RichonlineLandingProgress::complete};
     if (selection!=10) {
         auto next=property;next.building={selection,1};
         const std::array changes{RichonlineBuildingBuffChange{RichonlineBuildingBuffChangeKind::construction,
@@ -144,7 +188,9 @@ RichonlineLandingResult RichonlineBossProperty::complete_upgrade(bool accept) {
     const auto index=static_cast<std::size_t>(property.building.kind-11);
     const bool upgrade=accept && property.owner==0 && property.building.level>0 &&
         property.building.level<construction_.scenario_caps.at(index) && property.building.level<human_skills_.at(index);
-    RichonlineLandingResult result{{richonline_upgrade_response(game_id_,upgrade)},RichonlineLandingProgress::complete};
+    RichonlineLandingResult result{{upgrade_message(property,accept,false,upgrade)},RichonlineLandingProgress::complete};
+    // 研究所升级后的下一个等待也先准备，时钟回调失败不能留下已升级、未续接的建筑。
+    const auto research_deadline=property.building.kind==11 ? std::optional{now_()+timeout_} : std::nullopt;
     if(property.building.kind==16) {
         if(!pending_temple_context_) throw CodecError("richonline_temple_upgrade_context_missing");
         auto building=property.building;if(upgrade) ++building.level;
@@ -155,8 +201,11 @@ RichonlineLandingResult RichonlineBossProperty::complete_upgrade(bool accept) {
         result=garden_result(0,building,std::move(result.messages));
     }
     if (upgrade) { ++property.building.level; ++property_revision_; }
-    if(property.building.kind==11)
-        return await_research(std::move(result.messages),*pending_property_);
+    if(research_deadline) {
+        deadline_=research_deadline;decision_=Decision::research;
+        result.progress=RichonlineLandingProgress::await_event;result.pending_opcode=0x39;
+        return result;
+    }
     deadline_.reset(); pending_property_.reset(); pending_temple_context_.reset();
     return result;
 }
@@ -169,6 +218,9 @@ RichonlineLandingResult RichonlineBossProperty::complete_research(std::int8_t se
     if(selection!=-1 && (property.owner!=0 || property.building.kind!=11 || selection>property.building.level))
         throw CodecError("richonline_research_choice_unavailable");
     auto next=research_jobs_;
+    auto free_slots=LuaValue::array();
+    for(std::size_t slot=0;slot<next.size();++slot) if(!next[slot]) free_slots.push_back(slot);
+    auto scheduled=LuaValue::array();
     if(selection!=-1) {
         if(!cards_) throw CodecError("richonline_research_inventory_required");
         const auto& choice=research_choices_.at(static_cast<std::size_t>(selection-1));
@@ -177,9 +229,22 @@ RichonlineLandingResult RichonlineBossProperty::complete_research(std::int8_t se
             if(free==next.end()) break;
             *free=ResearchJob{*pending_property_,selection,choice.card,
                 std::bit_cast<std::int8_t>(static_cast<std::uint8_t>(choice.days*cycle))};
+            scheduled.push_back({{"slot",free-next.begin()},{"property",*pending_property_},
+                {"choice",selection},{"card",choice.card},{"days",(*free)->days}});
         }
     }
     RichonlineLandingResult result{{richonline_research_response(game_id_,selection)},RichonlineLandingProgress::complete};
+    if(construction_script_) {
+        const auto choice=selection==-1 ? ResearchChoice{} : research_choices_.at(static_cast<std::size_t>(selection-1));
+        const auto plan=construction_script_->call("property.research",{{"game_id",game_id_},
+            {"selection",selection},{"property",*pending_property_},{"owner",property.owner ? *property.owner : -1},
+            {"kind",property.building.kind},{"level",property.building.level},
+            {"card",choice.card},{"days",choice.days},{"free_slots",free_slots}});
+        const LuaValue expected{{"selection",selection},{"jobs",scheduled},
+            {"message",lua_bytes(View(result.messages.front()))}};
+        if(plan!=expected) throw CodecError("lua_property_research_invalid");
+        result.messages.front()=lua_bytes(plan.at("message"));
+    }
     research_jobs_=next; deadline_.reset(); pending_property_.reset(); return result;
 }
 std::size_t RichonlineBossProperty::pending_research_jobs() const noexcept {

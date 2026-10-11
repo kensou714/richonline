@@ -28,7 +28,7 @@ public:
     void enable_temple_possession(std::uint8_t maximum_days,bool aura_summons=false,
         std::array<bool,4> higher_summons={});
     void configure_construction(std::array<std::int8_t,10> human_skills,
-        std::shared_ptr<RichonlineBossCards> cards = {});
+        std::shared_ptr<RichonlineBossCards> cards = {},std::shared_ptr<LuaServer> script = {});
     RichonlineLandingResult decide(View request);
     // 超时按取消建造、拒绝升级或拒绝购地结束当前选择。
     std::optional<RichonlineLandingResult> poll();
@@ -147,6 +147,10 @@ private:
     RichonlineConstructionResources construction_;
     std::array<std::int8_t,10> human_skills_{};
     std::shared_ptr<RichonlineBossCards> cards_;
+    std::shared_ptr<LuaServer> construction_script_;
+    Bytes construction_message(const Property&,std::int8_t requested,bool synthetic,
+        std::int8_t resolved,int licence_slot) const;
+    Bytes upgrade_message(const Property&,bool requested,bool synthetic,bool resolved) const;
     struct ResearchChoice { std::int16_t card; std::int8_t days; };
     struct ResearchJob { std::int16_t property; std::int8_t choice; std::int16_t card; std::int8_t days; };
     std::array<ResearchChoice,7> research_choices_{};
