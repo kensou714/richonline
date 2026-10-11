@@ -12,6 +12,7 @@
 #include "richonline_boss_shop.hpp"
 #include "richonline_combat_resources.hpp"
 #include "richonline_theft_card.hpp"
+#include "richonline_classic_interest.hpp"
 #include "lua_server.hpp"
 #include "lua_wire.hpp"
 
@@ -93,6 +94,7 @@ struct Session {
     bool confinement_exit_roll_requested=false;
     Confinement confinement=Confinement::hospital;
     std::optional<std::chrono::sys_days> last_feast_day;
+    std::optional<std::chrono::sys_days> last_interest_day;
     std::vector<PendingFeastExit> feast_exits;
     bool calendar_roll_requested=false;
     std::unique_ptr<RichonlineClassicLottery> lottery;
@@ -116,6 +118,10 @@ struct Session {
             rules.route_wire.local_reserve_charge!=0)
             throw CodecError("richonline_classic_session_policy_invalid");
         const auto& snapshot=source.recipients.front().snapshot;
+        const std::chrono::year_month_day start_date{std::chrono::year{board.year},
+            std::chrono::month{board.month},std::chrono::day{board.day}};
+        if(!start_date.ok() || board.year<2004 || board.year>2034)
+            throw CodecError("richonline_classic_interest_date_unsupported");
         if(snapshot.slots.size()!=count || snapshot.game_server_id!=board.game_server_id)
             throw CodecError("richonline_classic_session_snapshot_invalid");
         const auto expected_snapshot=encode_richonline_board_snapshot(snapshot);
@@ -369,7 +375,24 @@ struct Session {
         phase=Phase::roll;pending_opcode.reset();kidnap_deadline.reset();confinement_deadline.reset();
         confinement_exit_roll_requested=false;
         calendar_roll_requested=false;
+        apply_monthly_interest();
         return begin_feast(std::move(messages));
+    }
+    void apply_monthly_interest() {
+        if(actor!=round_anchor) return;
+        const std::chrono::sys_days start{std::chrono::year{board.year}/board.month/board.day};
+        const std::chrono::sys_days last{std::chrono::year{2034}/12/31};
+        // 客户端超出2034年会回退本机年份；没有同步依据时不可继续外推。
+        if(completed_rounds>static_cast<std::uint64_t>((last-start).count()))
+            throw CodecError("richonline_classic_interest_date_unsupported");
+        const auto date=start+std::chrono::days{static_cast<std::int64_t>(completed_rounds)};
+        if(last_interest_day==date || std::chrono::year_month_day{date}.day()!=std::chrono::day{1}) return;
+        // 首次轮首只种日历计数，不推进日期，故开局恰逢1日同样加息。
+        // 这一步先于节日且不受scripted_event门限制，所有活动角色共同入账。
+        const auto updates=prepare_richonline_classic_interest(active,*world.ledger,rules.script);
+        if(!world.ledger->commit_batch(updates,[] {return true;}))
+            throw CodecError("richonline_classic_interest_commit_rejected");
+        last_interest_day=date;
     }
     std::vector<Bytes> after_feast(std::vector<Bytes> messages) {
         // 7C0C50的selector3开奖门只有日期15、轮首和已有号码，不复用节日的脚本事件门。

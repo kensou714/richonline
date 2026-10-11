@@ -49,7 +49,7 @@ struct RichonlineClassicServices {
     std::function<void(std::uint8_t)> disconnected;
     // 同步原子扣费，由准入层绑定账号及同一金豆支付协调器；缺席则不开放付费刷新。
     std::function<bool(std::uint8_t,std::uint32_t)> shop_refresh;
-    // 4010已排队后处理轮首日历/开奖；配置feasts时内置节日及出院/出狱等待已完成，
+    // 4010已排队且月初存款利息已入账；配置feasts时内置节日及出院/出狱等待已完成，
     // 配置lottery时开奖及其排队等待也已完成。此回调只补剩余日历业务，不能重复发奖。
     // complete明确表示可执行本次7E4C50扫描，
     // await_event则由既有event/poll完成日历恢复。不得自己扫描research、发420F、
