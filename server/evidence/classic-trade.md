@@ -54,3 +54,12 @@
 本项限定diff检查通过；既有`zhao-admission/README.md`空行问题及三份测试改动不属于
 本项，保留原状，不纳入提交。固定源码构建及交付结果在后续回执记录。
 遵守当前goal不擅自中断已有服务，本轮不部署重启线上实例。
+
+固定交付已完成：源码提交`ca992634a9e3f3927c4810ddd1bd3f4f7a815af2`，
+源码tree `f1513315ec2f77ed9cc854068c0225aa842af628`。从该tree导出后在
+`server/build-classic-trade-fixed`完成独立Release构建（BUILD_TESTING=OFF），
+174个Lua模块均通过语法编译；GitHub main已核对为上述源码提交。
+本机EXE已更新，SHA256为`3A2FFAD805046534BD546D63326695D3E73F94762CD8628507F8D94C7B0D14E2`，
+174个本机Lua文件逐项与固定源码构建输出同哈希。替换前确认无本机服务进程，
+旧EXE保存在`server/build-classic-trade-fixed/RichOnline.Server.before-ca992634.exe`。
+未启动EXE、未运行玩法测试、未部署线上服务；因此线上仍不包含本次贸易中心改动。
