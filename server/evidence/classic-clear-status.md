@@ -39,4 +39,21 @@
 本卡可在自己的行动回合清除其他玩家的冬眠，使目标下次正常行动；施放者本身
 冰冻时仍不能操作卡片。不会重置未来回合序号、主动发移动包或触发目标格事件。
 
-固定构建与本机交付结果完成后另记。静态证据和编译不等于实机清除卡验收。
+## 固定构建与本机交付
+
+源码提交`d492a9ec5ae16d905c1daf886cd6c24eb400cecf`，固定tree
+`49cdc3b21ee38b194770ba928cbaf06dc5a06fab`；已推送并核对GitHub main远端引用。
+后续回执文档提交不改变该二进制源码身份。
+
+从该tree导出`server/build-classic-clear-status-source/server`，独立构建到
+`server/build-classic-clear-status-fixed`。Clang22、Ninja、Release、BUILD_TESTING=OFF；
+RichOnline.Server目标退出0，含全部178个Lua模块语法编译，静态diff检查通过。
+
+确认目标本机EXE未运行后，备份旧文件到
+`server/build-classic-clear-status-fixed/RichOnline.Server.before-d492a9e.exe`并更新
+`server/RichOnline.Server.exe`。固定构建与本机EXE SHA256均为
+`07D2C54D055DE582E5D5A1411AD5FFFE55DBC699E1859C7BA3C8E554A34B20E1`。
+178个本机Lua文件与固定源码和构建输出逐项哈希相同，数量相同。
+
+未新增或运行测试，未启动服务或游戏，未部署或重启线上；
+静态证据和编译不等于实机清除卡验收，完整goal仍需继续。
