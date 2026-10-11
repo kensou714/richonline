@@ -36,3 +36,22 @@
 
 本轮只做源码审阅、客户端静态字节核对及Release/Lua编译，不新增或运行测试，
 不启动服务或游戏，不部署或重启线上。固定构建和本机交付结果另记回执。
+
+## 固定构建与本机交付
+
+源码提交`1b48f532cf61045c2ff62a24a622718edba67918`，固定tree
+`dc57efee281ac8773110b82c384d0ca9c74b79ef`；已推送并核对GitHub main远端引用。
+后续回执提交不改变二进制源码身份。
+
+从该tree导出`server/build-classic-swap-source/server`，独立构建到
+`server/build-classic-swap-fixed`。Clang22、Ninja、Release、BUILD_TESTING=OFF；
+RichOnline.Server目标退出0，全部178个Lua模块语法编译通过，静态diff检查通过。
+
+交付时未发现RichOnline.Server.exe进程，旧EXE备份到
+`server/build-classic-swap-fixed/RichOnline.Server.before-1b48f53.exe`，本机
+`server/RichOnline.Server.exe`已更新；与固定构建SHA256相同：
+`239E28715FBCA2F18F9417F70C79EFA068040B066CCDF14E6CC43C639DD07514`。
+178个本机Lua文件与固定源码和构建输出逐项哈希相同，数量相同。
+
+未新增或运行测试，未启动服务或游戏，未部署或重启线上。
+编译和静态证据不等于实机换位验收，整体goal仍未完成。
