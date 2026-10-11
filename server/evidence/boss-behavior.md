@@ -23,3 +23,15 @@
 黑贝贝1-4低于10%血量的一次性狂暴未启用。现有4212从客户端BossWar读取倍率；该关没有配置，而7ACB00构造器将字段清零。必须先找到只改服务端也能正确同步所需倍率的原协议，不能直接发送4212或只修改服务器伤害。
 
 多人BOSS及每位真人一次宝箱机会仍未完成；现有宿主、NPC/战斗适配及库存固定一真人加一BOSS。经典模式总资产估值等完整goal事项继续保留，不在本次完成声明中。
+
+## 本次发布回执
+
+- 源码提交：`639d8be356a5b01f3afcb44bc6a37a39e1aa27c6`，源码树：`6897224bfab18c8fd4c90f309ae280ce58912b09`，已推送并核对远端main。
+- 固定提交独立Release构建成功，BUILD_TESTING=OFF；172个Lua模块通过语法编译。未运行测试、未启动本机游戏或服务。
+- 线上release：`639d8be356a5`；实际PID `11584`，instance `11584-109276832484800`；任务Running，执行路径 `D:\richonline\releases\639d8be356a5\RichOnline.Server.exe`。
+- EXE SHA256：`49DB894E578EA9BE8DD743FE53CB0ABD9FB354503B637BBD9E7F0CB3BC3E67FB`。
+- ZIP SHA256：`F2CA43FA059D4C8E49B9D0960165D458167AD678C18452532D69BF7FCFD19841`；207个文件，包含Stock与AwardLB运行资源。
+- 数据目录保留 `D:\richonline\shared\data`；在线备份 `backups\accounts-1791738950331215.sqlite3`；部署备份 `D:\richonline\backups\20261011171550-639d8be356a5`。按ExpectedInstance正常停止旧实例，无数据库覆盖。
+- 六项监听ready；18600/18602/18604/18605/18606/18680均经公网TCP连接成功；RichNetLogin.txt与RichNetServer.txt均HTTP200；既有商城日期兼容和全BOSS地图开放配置保留。
+- 本机 `server/RichOnline.Server.exe` 已与线上EXE哈希匹配，172个工作区Lua与固定发布包逐个哈希匹配。未启动本机服务。
+- 此后的发布证据提交仅更新文档，不能当作另一次二进制源版本。
