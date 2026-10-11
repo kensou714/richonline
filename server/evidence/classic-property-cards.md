@@ -37,3 +37,16 @@
 Release增量及Lua语法编译通过，BUILD_TESTING=OFF。静态复核包括本人/他人/无主地产、不同地类、空建筑/保护种类、同产权换屋、严格现金门、零/奇数价格、无地脚下拆屋、两端交换及首匹配研发取消、准备后库存/地产/资金/研发变化和Lua错误拒绝。
 
 按用户要求未新增或运行测试，未启动本机服务端或客户端。客户端字节证据和编译不能代替多人实机验收。固定提交构建、线上部署及同代本机交付另记发布回执。
+
+## 发布回执
+
+2026-10-12（本地时区）源码提交`7840b73d7b1f26120e851103e6847c17ce712816`已推送并部署，固定tree为`53662902fc037b027b9bb3212f7807997261f06b`。独立Release构建和Lua语法编译通过，BUILD_TESTING=OFF；208个包内文件逐项验证长度与SHA256，其中173个Lua模块。后续文档回执不改变二进制源版本。
+
+- release：`7840b73d7b1f`；EXE SHA256：`DB03D484F9BD5576F10658765FC2A54C60616C744A5F7DFA63693E11FCD59AE7`。
+- ZIP SHA256：`0945D12238027DA6B43D98CBF5AC142CE9B363434A3E236C95C9FBE026697911`。
+- 实际PID `1348`，instance `1348-119841663620200`；Win32_Process和Running计划任务均引用`D:\richonline\releases\7840b73d7b1f\RichOnline.Server.exe`。
+- 持久数据目录仍为`D:\richonline\shared\data`。在线DB备份`D:\richonline\shared\data\backups\accounts-1791749515180612.sqlite3`；部署备份`D:\richonline\backups\20261011201155-7840b73d7b1f`。使用既有AllowActiveSessions授权，在数据库备份成功后带ExpectedInstance正常停止旧实例，未覆盖数据库。
+- 六项Ready均true；18600/18602/18604/18605/18606/18680公网TCP通过。两个大厅列表HTTP200，CP950中文正常，各三个频道指向103.156.25.81:18600。
+- 商城日期兼容及全BOSS测试地图解锁配置保留。173个本地Lua逐项与manifest一致，本机EXE备份后替换为同哈希文件，未启动本机程序。
+
+只完成静态核验、编译及部署健康检查，不声称五张卡实机验收。经典生产准入仍关闭，完整goal仍进行中；工作区其他会话的docs、测试及利息证据未纳入本次提交。
