@@ -85,20 +85,28 @@ RichonlineRoadTopology richonline_road_topology(const OriginalEmp& emp) {
                 cells[i].neighbors[direction] = static_cast<std::int16_t>(*adjacent[direction]);
     }
     RichonlineRoadTopology result(emp.width,emp.height,std::move(cells));
-    // NEW7DF010 loads map+70/+72 from these two coordinate pairs.
-    // Maps without a jail may use unavailable coordinates; they remain playable.
-    if(emp.tail_offset<=payload.size() && payload.size()-emp.tail_offset>=48) {
-        std::array<std::int16_t,2> jail{};
-        bool available=true;
-        for(std::size_t i=0;i<jail.size();++i) {
-            const auto jx=read_le(payload.subspan(emp.tail_offset+32+8*i,4));
-            const auto jy=read_le(payload.subspan(emp.tail_offset+36+8*i,4));
-            if(jx>=emp.width || jy>=emp.height) { available=false;break; }
-            jail[i]=static_cast<std::int16_t>(jy*emp.width+jx);
-            if(!result.cell(jail[i]).walkable) { available=false;break; }
+    // 7DF010从尾部+0/+8加载医院map+64/+66，+32/+40加载监狱map+70/+72。
+    // 入口是建筑内部，原资源terrain=-1；只有出口需要道路，不能因此丢弃整对坐标。
+    const auto facility_pair=[&](std::size_t offset)->std::optional<std::array<std::int16_t,2>> {
+        if(emp.tail_offset>payload.size() || payload.size()-emp.tail_offset<offset+16) return {};
+        std::array<std::int16_t,2> pair{};
+        for(std::size_t i=0;i<pair.size();++i) {
+            const auto px=read_le(payload.subspan(emp.tail_offset+offset+8*i,4));
+            const auto py=read_le(payload.subspan(emp.tail_offset+offset+4+8*i,4));
+            if(px>=emp.width || py>=emp.height) return {};
+            pair[i]=static_cast<std::int16_t>(py*emp.width+px);
         }
-        if(available && jail[0]!=jail[1]) result.jail_=jail;
-    }
+        if(!result.cell(pair[1]).walkable) return {};
+        const auto width=static_cast<std::int32_t>(emp.width);
+        const auto dx=pair[1]%width-pair[0]%width;
+        const auto dy=pair[1]/width-pair[0]/width;
+        // 631640/631D20仅构造向下两步、向上一格、向左一格或向右两步。
+        // 按二维坐标校验，拒绝线性索引跨行造成的伪邻接。
+        if(!((dx==0 && (dy==2 || dy==-1)) || (dy==0 && (dx==-1 || dx==2)))) return {};
+        return pair;
+    };
+    result.hospital_=facility_pair(0);
+    result.jail_=facility_pair(32);
     for(const auto type:std::array<std::int8_t,2>{28,61}) {
         const auto portals=std::count_if(result.cells_.begin(),result.cells_.end(),
             [type](const auto& entry){return entry.walkable && entry.static_type==type;});

@@ -26,6 +26,8 @@ public:
     std::optional<std::int16_t> portal_destination(std::int16_t position) const;
     // 28只在末端传送，61也在途中传送；寻路仍只调用上面的61接口。
     std::optional<std::array<std::int16_t,2>> landing_portal_pair(std::int8_t type) const;
+    // 建筑内入口允许非道路；出口必须是道路，坐标差须匹配原版退出动画。
+    const std::optional<std::array<std::int16_t,2>>& hospital_positions() const noexcept { return hospital_; }
     const std::optional<std::array<std::int16_t,2>>& jail_positions() const noexcept { return jail_; }
 private:
     RichonlineRoadTopology(std::uint32_t width, std::uint32_t height,
@@ -34,6 +36,7 @@ private:
     std::vector<RichonlineRoadCell> cells_;
     std::optional<std::array<std::int16_t,2>> portals_;
     std::optional<std::array<std::int16_t,2>> landing_portals_;
+    std::optional<std::array<std::int16_t,2>> hospital_;
     std::optional<std::array<std::int16_t,2>> jail_;
     friend RichonlineRoadTopology richonline_road_topology(const OriginalEmp& emp);
 };
