@@ -1,5 +1,5 @@
 -- 经典机会/新闻格。抽取策略来自已绑定当前地图的宿主，不能套用BOSS的4096表。
--- 本文件只准备金额、停走和报文；状态、产权/股票回收、全员结算由会话统一提交。
+-- 本文件只准备金额、停走、灾难和报文；状态、地产及全员结算由会话统一提交。
 local protocol = require("core.protocol")
 local M = {}
 local income = {[0x406d] = true, [0x406e] = true}
@@ -10,6 +10,20 @@ local pictured = {[0x406e] = true, [0x4071] = true, [0x4077] = true, [0x407a] = 
 function M.land(request)
     if not request.classic_news_available then return core.call("tile.native") end
     local event = core.call("tile.classic_news.prepare")
+    if event.opcode >= 0x408b and event.opcode <= 0x408f then
+        local kind, level = event.kind, event.level
+        if level > 0 and kind ~= 8 and kind ~= 9 and kind ~= 10 then
+            level = math.max(0, level - (event.opcode == 0x408b and 1 or 5))
+            if level == 0 then kind = event.sprite == 11 and 0 or -1 end
+        end
+        -- 新闻目标是地产表索引，既不要求当前玩家所有，也不转移原有产权。
+        local payload = event.opcode == 0x408f and string.pack("<i2", event.property)
+            or string.pack("<i2i2", event.picture, event.property)
+        return {kind = kind, level = level, owner = event.owner, messages = {
+            protocol.inner(0x4013, request.game_id, string.pack("<i2", request.position)),
+            protocol.inner(event.opcode, request.game_id, payload),
+        }}
+    end
     if event.opcode == 0x4072 then
         assert(math.type(event.duration) == "integer" and event.duration >= 1 and event.duration <= 127,
             "豪雨停走必须使用GValue中的有效时长")

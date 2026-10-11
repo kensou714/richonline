@@ -104,6 +104,27 @@ bool RichonlineClassicProperty::commit_retirement(const Retirement& plan) noexce
     }
     return true;
 }
+RichonlineClassicProperty::Disaster RichonlineClassicProperty::prepare_disaster(
+    std::int16_t property,std::uint8_t levels) const {
+    if(pending_ || (levels!=1 && levels!=5))
+        throw CodecError("richonline_classic_disaster_context_invalid");
+    Disaster plan;plan.owner_=this;plan.levels_=levels;
+    plan.before_=plan.after_=snapshot(property);
+    auto& after=plan.after_;
+    if(after.level && after.kind!=8 && after.kind!=9 && after.kind!=10) {
+        // 本类已限制等级0..5，因此BYTE减法后signed<=0与这里的归零等价。
+        after.level=after.level>levels ? static_cast<std::uint8_t>(after.level-levels) : 0;
+        if(!after.level) after.kind=after.sprite_type==11 ? 0 : -1;
+        // 住宅kind1归零的7E3E60/7E3C00先清后恢复原owner，净结果不转移产权。
+    }
+    return plan;
+}
+bool RichonlineClassicProperty::commit_disaster(const Disaster& plan) noexcept {
+    if(plan.owner_!=this || pending_) return false;
+    const auto found=properties_.find(plan.before_.id);
+    if(found==properties_.end() || found->second!=plan.before_) return false;
+    found->second=plan.after_;return true;
+}
 std::uint16_t RichonlineClassicProperty::begin(RichonlineClassicPropertyChoice choice,
     const RichonlineClassicPropertyEntry& entry) {
     if(pending_) throw CodecError("richonline_classic_property_already_pending");

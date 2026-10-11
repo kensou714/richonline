@@ -569,6 +569,25 @@ struct Session {
         const auto inventory_before=world.cards[actor]->inventory();
         const auto rain_before=rain_actors();
         const auto event=rules.news->select(current,before,fines_before);
+        if(event.opcode>=0x408b && event.opcode<=0x408f) {
+            if(!event.property) throw CodecError("richonline_classic_news_property_missing");
+            const auto plan=world.property->prepare_disaster(*event.property,event.opcode==0x408b ? 1 : 5);
+            auto messages=prepare_richonline_classic_disaster_news(board.game_server_id,current.landing,
+                event,plan,rules.script);
+            const auto detail="richonline_classic_property_news actor="+std::to_string(actor)+
+                " sequence="+std::to_string(sequence)+" opcode="+std::to_string(event.opcode)+
+                " property="+std::to_string(plan.before().id)+
+                " level_before="+std::to_string(plan.before().level)+" level_after="+std::to_string(plan.after().level)+
+                " kind_before="+std::to_string(plan.before().kind)+" kind_after="+std::to_string(plan.after().kind);
+            if(active!=active_before || statuses[actor]!=current.landing.actor_status ||
+                board.participants[actor].position!=current.landing.position ||
+                !world.property->commit_disaster(plan))
+                throw CodecError("richonline_classic_news_commit_stale");
+            if(rules.log) rules.log(detail);
+            // 动画在客户端队列中先降级再stage2；仅广播事件，不再补发一次降级包。
+            return complete(std::move(messages));
+        }
+        if(event.property) throw CodecError("richonline_classic_news_parameters_invalid");
         if(event.opcode==0x4072) {
             if(event.amount!=0 || event.picture) throw CodecError("richonline_classic_news_parameters_invalid");
             if(!rules.motion_cards) throw CodecError("richonline_classic_rain_rules_missing");

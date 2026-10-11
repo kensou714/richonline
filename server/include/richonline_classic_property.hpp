@@ -69,6 +69,22 @@ public:
     bool matches(const Retirement&) const noexcept;
     // 全图产权快照须一致且不能有未决购地。提交只清owner，保留种类/等级/价格。
     bool commit_retirement(const Retirement&) noexcept;
+    class Disaster final {
+    public:
+        const RichonlineClassicPropertyState& before() const noexcept { return before_; }
+        const RichonlineClassicPropertyState& after() const noexcept { return after_; }
+        std::uint8_t levels() const noexcept { return levels_; }
+    private:
+        Disaster()=default;
+        const RichonlineClassicProperty* owner_=nullptr;
+        RichonlineClassicPropertyState before_{},after_{};
+        std::uint8_t levels_=0;
+        friend class RichonlineClassicProperty;
+    };
+    // 新闻灾难允许落在他人/无主地产；8/9/10或零级仍生成合法无效果新闻。
+    // 计划不可由业务改写，提交前核对本对象、目标快照及未决地产选择。
+    Disaster prepare_disaster(std::int16_t property,std::uint8_t levels) const;
+    bool commit_disaster(const Disaster&) noexcept;
     // 返回应等待的C2S opcode；不支持的选择抛错，不伪造成功或跳过落点。
     std::uint16_t begin(RichonlineClassicPropertyChoice,const RichonlineClassicPropertyEntry&);
     // sender_actor由已认证连接提供；current必须从当前权威回合读取，不能回传旧entry冒充。

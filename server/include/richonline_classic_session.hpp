@@ -57,6 +57,7 @@ struct RichonlineClassicNewsPolicy {
     // 同步只读选择：自行按真实地图规则选事件及金额，不改账本/手牌/状态、不发包。
     // 支持单人金额、406F并列最高存款、4078整槽变卖及4072豪雨停走。
     // 4072/4078要求amount=0且无图片；4072还须提供同代GValue的motion_cards。
+    // 408B..408F要求显式property和amount=0；408F无图，其余带已加载图索引。
     // 获奖名单、手牌与实际变卖点券由共享会话计算，不能由选择策略指定。
     // 概率和图片映射不得由BOSS新闻表替代。
     std::function<RichonlineClassicMoneyNews(const RichonlineClassicTurnContext&,

@@ -3,6 +3,7 @@
 #include "richonline_game_ledger.hpp"
 #include "richonline_chance.hpp"
 #include "richonline_raw_authority.hpp"
+#include "richonline_classic_property.hpp"
 
 namespace richnet {
 class RichonlineShopCatalog;
@@ -14,6 +15,8 @@ struct RichonlineClassicMoneyNews {
     std::uint32_t amount;
     // 只有UI30分支有图索引；UI4分支没有这个字段，不能补一个占位WORD。
     std::optional<std::int16_t> picture;
+    // 408B..408F的地产表索引；不是道路格号、角色槽或金额。
+    std::optional<std::int16_t> property{};
 };
 struct RichonlineClassicNewsPlan {
     RichonlineGameFundsUpdate funds;
@@ -43,6 +46,10 @@ struct RichonlineClassicRainNewsPlan {
     std::vector<RichonlineClassicRainActor> before,after;
     std::vector<Bytes> messages;
 };
+// 返回已验证报文；产权变更仍由会话在所有准备完成后提交。
+std::vector<Bytes> prepare_richonline_classic_disaster_news(std::uint16_t game,
+    const RichonlineLandingContext&,const RichonlineClassicMoneyNews&,
+    const RichonlineClassicProperty::Disaster&,const std::shared_ptr<LuaServer>&);
 // 4072只筛活动及四个原始收容状态；直接覆盖stay，不使用攻击卡免疫或额外加一。
 RichonlineClassicRainNewsPlan prepare_richonline_classic_rain_news(std::uint16_t game,
     const RichonlineLandingContext&,std::span<const RichonlineClassicRainActor>,
