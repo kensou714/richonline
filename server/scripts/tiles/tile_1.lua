@@ -1,6 +1,7 @@
 -- 经典机会/新闻格。抽取策略来自已绑定当前地图的宿主，不能套用BOSS的4096表。
 -- 本文件只准备金额、停走、灾难和报文；状态、地产及全员结算由会话统一提交。
 local protocol = require("core.protocol")
+local insurance = require("cards.card_1049")
 local M = {}
 local income = {[0x406d] = true, [0x406e] = true}
 local plain = {[0x406d] = true, [0x4070] = true, [0x4073] = true, [0x4074] = true,
@@ -10,6 +11,15 @@ local pictured = {[0x406e] = true, [0x4071] = true, [0x4077] = true, [0x407a] = 
 function M.land(request)
     if not request.classic_news_available then return core.call("tile.native") end
     local event = core.call("tile.classic_news.prepare")
+    if event.opcode == 0x407f or event.opcode == 0x4087 then
+        local plan = insurance.hospital(event)
+        plan.hospital, plan.stay = event.days, 0
+        plan.messages = {
+            protocol.inner(0x4013, request.game_id, string.pack("<i2", request.position)),
+            protocol.inner(event.opcode, request.game_id, string.pack("<i2b", event.picture, event.days)),
+        }
+        return plan
+    end
     if event.opcode == 0x4081 then
         assert(math.type(event.days) == "integer" and event.days >= 1 and event.days <= 127,
             "绑架天数必须为正的signed BYTE")

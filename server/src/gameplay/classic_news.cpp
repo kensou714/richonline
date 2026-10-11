@@ -34,6 +34,73 @@ Bytes prepare_richonline_classic_kidnap_return(std::uint16_t game,std::int16_t p
     }
     return packet;
 }
+RichonlineClassicHospitalNewsPlan prepare_richonline_classic_hospital_news(std::uint16_t game,
+    const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
+    const RichonlineRawActorState& raw,const RichonlineGameFundsSnapshot& funds,
+    const RichonlineChanceInventory& inventory,const RichonlineChanceResources& resources,
+    std::string_view map,bool secondary_insurance_absent,const std::shared_ptr<LuaServer>& script) {
+    validate_context(context);
+    if((event.opcode!=0x407f && event.opcode!=0x4087) || event.amount!=0 || event.property ||
+        !event.days || *event.days<1 || *event.days>127 || !event.picture ||
+        std::ranges::find(news_pictures,*event.picture)==news_pictures.end())
+        throw CodecError("richonline_classic_news_parameters_invalid");
+    if(raw.hotel1493!=-1 || raw.hospital1494!=-1 || raw.jail1495!=-1 || raw.kidnapped1497!=-1)
+        throw CodecError("richonline_classic_hospital_actor_unavailable");
+    const bool eligible=resources.automatic_card_eligible(map,1049);
+    auto remaining=inventory;
+    std::int8_t insurance=-1;
+    LuaValue slots=LuaValue::array();
+    for(std::size_t index=0;index<inventory.size();++index) {
+        const auto& slot=inventory[index];
+        if((slot.card_id==-1 && slot.count!=0) || (slot.card_id!=-1 && (slot.card_id<1 || slot.count<1)))
+            throw CodecError("richonline_classic_news_inventory_invalid");
+        slots.push_back({{"card",slot.card_id},{"count",slot.count}});
+        if(eligible && insurance==-1 && slot.card_id==1049) insurance=static_cast<std::int8_t>(index);
+    }
+    if(eligible && insurance==-1 && !secondary_insurance_absent)
+        throw CodecError("richonline_classic_hospital_secondary_insurance_unknown");
+    const auto compensation=insurance<0 ? 0U : 2500U*(*event.days-1U);
+    constexpr auto maximum=static_cast<std::uint32_t>(std::numeric_limits<std::int32_t>::max());
+    if(!funds.funds.deposit || static_cast<std::uint64_t>(funds.funds.cash)+*funds.funds.deposit+compensation>maximum)
+        throw CodecError("richonline_classic_hospital_balance_unsupported");
+    if(insurance>=0) {
+        auto& slot=remaining[static_cast<std::size_t>(insurance)];
+        if(--slot.count==0) slot={};
+    }
+    auto after_funds=funds.funds;after_funds.cash+=compensation;
+    auto after_status=context.actor_status;after_status.stay=0;
+    Bytes stop;append_le(stop,0x4013,2);append_le(stop,game,2);
+    append_le(stop,static_cast<std::uint16_t>(context.position),2);
+    Bytes packet;append_le(packet,event.opcode,2);append_le(packet,game,2);
+    append_le(packet,static_cast<std::uint16_t>(*event.picture),2);packet.push_back(*event.days);
+    RichonlineClassicHospitalNewsPlan plan{raw,context.actor_status,after_status,
+        {context.actor_slot,funds,after_funds},inventory,remaining,*event.days,insurance,compensation,
+        {std::move(stop),std::move(packet)}};
+    if(script) {
+        bool prepared=false;
+        const LuaBindings api{{"tile.classic_news.prepare",[&](const LuaValue&) {
+            if(prepared) throw CodecError("lua_classic_news_already_prepared");
+            prepared=true;
+            return LuaValue{{"opcode",event.opcode},{"picture",*event.picture},{"days",*event.days},
+                {"cash",funds.funds.cash},{"slots",slots},{"insurance_eligible",eligible},
+                {"secondary_insurance_absent",secondary_insurance_absent}};
+        }}};
+        const auto result=script->call("tile.land",{{"type",1},{"game_id",game},
+            {"position",context.position},{"actor",context.actor_slot},{"classic_news_available",true}},api);
+        LuaValue wire=LuaValue::array(),expected_inventory=LuaValue::array();
+        for(const auto& message:plan.messages) wire.push_back(lua_bytes(View(message)));
+        for(const auto& slot:remaining) expected_inventory.push_back({{"card",slot.card_id},{"count",slot.count}});
+        const LuaValue expected{{"hospital",plan.days},{"stay",0},{"cash",after_funds.cash},
+            {"insurance_slot",insurance},{"compensation",compensation},{"inventory",expected_inventory},{"messages",wire}};
+        if(!prepared || result!=expected) throw CodecError("lua_classic_hospital_plan_invalid");
+        for(const auto* key:{"hospital","stay","cash","insurance_slot","compensation"})
+            if(!result.at(key).is_number_integer()) throw CodecError("lua_classic_hospital_plan_invalid");
+        for(const auto& slot:result.at("inventory"))
+            if(!slot.at("card").is_number_integer() || !slot.at("count").is_number_integer())
+                throw CodecError("lua_classic_hospital_plan_invalid");
+    }
+    return plan;
+}
 RichonlineClassicKidnapNewsPlan prepare_richonline_classic_kidnap_news(std::uint16_t game,
     const RichonlineLandingContext& context,const RichonlineClassicMoneyNews& event,
     const RichonlineRawActorState& raw,const std::shared_ptr<LuaServer>& script) {

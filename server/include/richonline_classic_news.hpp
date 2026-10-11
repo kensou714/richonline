@@ -54,6 +54,22 @@ struct RichonlineClassicKidnapNewsPlan {
     std::uint8_t days;
     std::vector<Bytes> messages;
 };
+struct RichonlineClassicHospitalNewsPlan {
+    RichonlineRawActorState raw_before;
+    RichonlineActorStatus before,after;
+    RichonlineGameFundsUpdate funds;
+    RichonlineChanceInventory inventory_before,inventory_after;
+    std::uint8_t days;
+    std::int8_t insurance_slot;
+    std::uint32_t compensation;
+    std::vector<Bytes> messages;
+};
+// 407F/4087的动画9自动处理保险1049；不另发扣卡/加现金包以免客户端执行两次。
+// 手牌没有保险时，secondary_insurance_absent必须来自真实第二套卡槽的只读证明。
+RichonlineClassicHospitalNewsPlan prepare_richonline_classic_hospital_news(std::uint16_t game,
+    const RichonlineLandingContext&,const RichonlineClassicMoneyNews&,const RichonlineRawActorState&,
+    const RichonlineGameFundsSnapshot&,const RichonlineChanceInventory&,const RichonlineChanceResources&,
+    std::string_view map,bool secondary_insurance_absent,const std::shared_ptr<LuaServer>&);
 RichonlineClassicKidnapNewsPlan prepare_richonline_classic_kidnap_news(std::uint16_t game,
     const RichonlineLandingContext&,const RichonlineClassicMoneyNews&,
     const RichonlineRawActorState&,const std::shared_ptr<LuaServer>&);
