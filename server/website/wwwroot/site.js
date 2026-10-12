@@ -1,8 +1,10 @@
 "use strict";
 const path = location.pathname;
 const isCatalog = path === "/catalog/" || path === "/catalog";
+const isGuide = path === "/guide/" || path === "/guide";
 for (const link of document.querySelectorAll(".site-header nav a")) {
-  if (new URL(link.href).pathname === (isCatalog ? "/catalog/" : path)) link.setAttribute("aria-current", "page");
+  const linkPath = new URL(link.href).pathname;
+  if (linkPath === (isCatalog ? "/catalog/" : isGuide ? "/guide/" : path)) link.setAttribute("aria-current", "page");
 }
 if (isCatalog) {
   document.querySelector("#home").hidden = true;
@@ -23,6 +25,13 @@ if (isCatalog) {
     document.head.append(app);
   };
   document.head.append(data);
+}
+if (isGuide) {
+  document.querySelector("#home").hidden = true;
+  document.querySelector("#guide-page").hidden = false;
+  document.title = "玩法指南 · 大富翁 Online";
+  if (["#modes", "#market", "#property", "#wonders"].includes(location.hash))
+    requestAnimationFrame(() => document.getElementById(location.hash.slice(1))?.scrollIntoView());
 }
 const pages = {
   "/register": { action: "register", title: "注册游戏账号", description: "创建一个账号，就能登录游戏。", button: "注册账号", rules: ["账号为 4～20 位英文字母、数字或下划线，区分大小写。", "密码为 8～32 位英文字母、数字或常用半角符号。请不要使用其他网站的密码。"] },

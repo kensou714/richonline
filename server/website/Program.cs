@@ -120,6 +120,9 @@ app.MapPost("/api/{action}", async (string action, HttpContext ctx, IAntiforgery
 }).RequireRateLimiting("account");
 foreach (var path in new[] { "/", "/register", "/password", "/claim" })
     app.MapGet(path, () => Results.File(Path.Combine(app.Environment.WebRootPath, "index.html"), "text/html; charset=utf-8"));
+app.MapGet("/guide", (HttpContext ctx) => ctx.Request.Path.Value!.EndsWith('/')
+    ? Results.File(Path.Combine(app.Environment.WebRootPath, "index.html"), "text/html; charset=utf-8")
+    : Results.Redirect("/guide/"));
 app.MapGet("/catalog", (HttpContext ctx) => ctx.Request.Path.Value!.EndsWith('/')
     ? Results.File(Path.Combine(app.Environment.WebRootPath, "index.html"), "text/html; charset=utf-8")
     : Results.Redirect("/catalog/"));

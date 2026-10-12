@@ -47,3 +47,17 @@
 - HTTPS证书验证开启：首页、资料页、账号页、脚本/样式/地图PNG均200，旧catalog/index.html跳转成功。首页与资料返回HTML的SHA256相同，证明实际部署读取同一外壳。
 - 原生服务仍为 `e4acf83e416a`，PID9796未变；网站独立更新未重启游戏。商城卡片候选没有发布。
 - 发布材料在私有server/build-website/unified-*；增量包SHA256 `4a7b98a8d4a581a0a453813d652c57a82d7f6ea34ef06398b6302440ab46afcc`。
+
+## 旧版官网资料研究与页面信息架构（2026-10-12）
+
+浏览器直接读取旧版大宇官网：
+
+- 游戏简介：`http://richol.softstar.com.tw/gameinfo/index-gameinfo-3.aspx`。页面把传统、PK、BOSS 玩法分段介绍，并给出入场费、游戏时间和组队说明。
+- 股票系统：`http://richol.softstar.com.tw/gameinfo/index-gameinfo-2.aspx`。正文说明市场总览、单只股票、走势图、买入和卖出界面，以及价格、涨跌、交易量、玩家持有数等字段。
+- 房地产系统：`http://richol.softstar.com.tw/gameinfo/index-gameinfo-4.aspx`。正文按住宅区、连锁区、商业区及建筑类型分层，分别描述土地、建筑和费用/专属功能。
+- 奇迹技能：`http://richol.softstar.com.tw/gameinfo/index-gameinfo-8.aspx`。说明奇迹须由对应技能开放，技能等级决定建筑等级上限，并列举研发中心、飞弹基地、长城、图腾柱和金字塔等技能。
+- 同站导航还列出系统配备、操作介面和会员等级说明三个栏目；这轮未读取其正文，因此新指南不添加无内容的栏目，不编造配置数字、按键或会员权益。旧版大陆官网 `rich.9you.com` 在本次查询中无法解析。
+
+改版采用旧官网“先讲玩法，再分系统说明”的内容顺序，并保留金红框架、金色强调、白色正文与原版小尺寸游戏插画的视觉提示；不复制已失效Flash区域。首页按玩法入口、系统入口、资料图鉴和账号服务组织；`/guide/` 作为统一外壳内的玩法指南，`/catalog/` 仍沿用同一HTML、页眉、页脚与资源分类表。规则说明标明历史版本属性，避免误当成当前服务器保证。
+
+固定改动范围为 `server/website/`（`DESIGN.md`、`Program.cs`、`wwwroot/index.html`、`wwwroot/site.css`、`wwwroot/site.js`）。静态JS检查、Git差异空白检查通过；官网 .NET 8 Windows Release build 退出码0，0警告/0错误。未启动服务、未运行测试或账号流程、未做页面视觉验收。发布结果另以本轮最终记录为准。
