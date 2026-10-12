@@ -189,6 +189,7 @@ LobbyRuntime::LobbyRuntime(Storage& storage, const std::filesystem::path& bootst
     AuxiliaryOptions aux;
     aux.bind_host = options.host;
     aux.advertised_host = network.at("advertised_host").get<std::string>();
+    aux.website_url = network.value("website_url",std::string{});
     aux.http_port = port(network.at("http_port"));
     aux.black_port = port(network.at("black_port"));
     // NEW owner+MD5(account) names a store namespace; it does not authenticate

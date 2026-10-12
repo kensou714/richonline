@@ -133,6 +133,7 @@ private:
     nlohmann::json create_account_with_verifier(const std::string& username,
         const CredentialVerifier& verifier, const std::string& source);
     nlohmann::json update_account(const nlohmann::json& payload);
+    nlohmann::json website_account(const std::string& command, const nlohmann::json& payload);
     nlohmann::json get_config();
     nlohmann::json update_config(const nlohmann::json& payload);
     nlohmann::json backup();

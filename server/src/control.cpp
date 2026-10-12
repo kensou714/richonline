@@ -59,7 +59,7 @@ void run_control(const std::filesystem::path& directory, const std::wstring& pip
     const Json state{{"pid", GetCurrentProcessId()}, {"instanceId", instance}, {"protocolVersion", 1},
         {"dataDirectory", utf8_path(absolute)}, {"clientProfile", client_profile_name(profile)},
         {"gameReady", false}, {"state", "running"},
-        {"capabilities", {"accounts.list", "accounts.create", "accounts.update", "config.get", "config.update", "database.backup", "scripts.reload", "stop"}}};
+        {"capabilities", {"accounts.list", "accounts.create", "accounts.update", "website.register", "website.account", "website.password", "website.claim", "config.get", "config.update", "database.backup", "scripts.reload", "stop"}}};
     Json ready = state;
     ready.update(listeners.status());
     ready["pipe"] = std::string(pipe_name.begin(), pipe_name.end());

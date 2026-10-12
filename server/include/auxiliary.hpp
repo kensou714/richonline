@@ -35,6 +35,7 @@ struct AuxiliaryOptions {
     std::optional<std::uint32_t> lobby_type;
     ChannelCatalog channels;
     std::function<std::uint32_t(std::uint32_t)> channel_players;
+    std::string website_url;
 };
 
 struct AuxiliaryEvent {

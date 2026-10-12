@@ -73,6 +73,10 @@ void AuxiliaryService::run() {
     in_addr advertised{};
     if (inet_pton(AF_INET, options_.advertised_host.c_str(), &advertised) != 1)
         throw CodecError("auxiliary_invalid_advertised_address");
+    if (!options_.website_url.empty() &&
+        (!options_.website_url.starts_with("https://") || options_.website_url.size()>512 ||
+         options_.website_url.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-:/")!=std::string::npos))
+        throw CodecError("auxiliary_invalid_website_url");
     const auto emit = [&](const AuxiliaryEvent& event) { if (log_) log_(event); };
     OwnedSocket http(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
     OwnedSocket black(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));

@@ -150,6 +150,8 @@ nlohmann::json Storage::dispatch(std::string command,const nlohmann::json& paylo
         if (command=="accounts.list") return list_accounts(payload);
         if (command=="accounts.create") return create_account(payload);
         if (command=="accounts.update") return update_account(payload);
+        if (command=="website.register" || command=="website.account" ||
+            command=="website.password" || command=="website.claim") return website_account(command,payload);
         if (command=="config.get") { require_keys(payload,{}); return get_config(); }
         if (command=="config.update") return update_config(payload);
         if (command=="database.backup") { require_keys(payload,{}); return backup(); }

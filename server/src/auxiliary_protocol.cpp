@@ -95,6 +95,21 @@ std::optional<Response> http(View input, const AuxiliaryOptions& options) {
         return http_response(405, "Method Not Allowed", "method_not_allowed\n", "http_method_unsupported");
     const auto target = request.substr(first_space + 1, second_space - first_space - 1);
     const auto path = target.substr(0, target.find('?'));
+    if (!options.website_url.empty()) {
+        std::string route;
+        if(path=="/") route="/";
+        else if(path=="/MEMBER/LoginForms.asp") route="/register";
+        else if(path=="/gameinfo/index-gameinfo-10.aspx") route="/claim";
+        else if(path=="/MEMBER/ChangePassword.asp" || path=="/password") route="/password";
+        else if(path=="/gameinfo/News.aspx") route="/";
+        if(!route.empty()) {
+            auto base=options.website_url;
+            while(base.ends_with('/')) base.pop_back();
+            const auto reply="HTTP/1.1 302 Found\r\nLocation: "+base+route+
+                "\r\nContent-Length: 0\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n";
+            return Response{Bytes(reply.begin(),reply.end()),"website_redirect",std::nullopt};
+        }
+    }
     if (path != "/gameinfo/RichNetLogin.txt" && path != "/gameinfo/RichNetServer.txt")
         return http_response(404, "Not Found", "not_found\n", "http_route_not_found");
     return http_response(200, "OK", bootstrap_document(options), "configured_channel_list");
