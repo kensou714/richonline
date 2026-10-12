@@ -132,6 +132,7 @@ struct Session {
     std::optional<std::chrono::sys_days> last_interest_day;
     std::vector<PendingFeastExit> feast_exits;
     bool calendar_roll_requested=false;
+    std::array<std::optional<std::uint16_t>,4> accepted_controlled_rolls{};
     std::unique_ptr<RichonlineClassicLottery> lottery;
     std::deque<std::pair<std::uint8_t,std::uint16_t>> retired_lottery;
     std::optional<std::chrono::sys_days> last_lottery_day;
@@ -392,7 +393,16 @@ struct Session {
         retired.push_back({sender,Bytes(request.begin(),request.end())});
         if(retired.size()>64) retired.pop_front();
     }
+    bool controlled_roll_accepted(std::uint8_t sender,View request) const {
+        if(sender<accepted_controlled_rolls.size() && accepted_controlled_rolls[sender] &&
+            request.size()>=2 && read_le(request.first(2))==0x10) {
+            const auto roll=std::get<RichonlineMoveRequest10>(parse_richonline_movement_request(request));
+            if(roll.calendar_counter==*accepted_controlled_rolls[sender] && roll.parameter==0) return true;
+        }
+        return false;
+    }
     bool was_retired(std::uint8_t sender,View request) const {
+        if(controlled_roll_accepted(sender,request)) return true;
         if(request.size()>=2 && read_le(request.first(2))==0x26) {
             const auto day=decode_richonline_classic_hotel_request(request);
             if(std::ranges::find(retired_hotels,std::pair{sender,day})!=retired_hotels.end()) return true;
@@ -444,6 +454,7 @@ struct Session {
         if(statuses[actor].stay && movement_sequence==std::numeric_limits<std::uint64_t>::max())
             throw CodecError("richonline_classic_movement_sequence_overflow");
         ++sequence;calendar=static_cast<std::uint16_t>(calendar+1U);
+        accepted_controlled_rolls[actor].reset();
         static_cast<void>(raw->apply_verified_actor_timer_phase(actor,sequence));
         richonline_status_begin_active_turn(statuses[actor]);
         // 7C0C50日期推进块→7C01C0→7F94A0：全体活动角色一起递减，初始日不减。
@@ -1796,6 +1807,8 @@ struct Session {
         try {accepted=pay();} catch(...) {if(!request.empty())retired.pop_back();throw;}
         if(!accepted) {if(!request.empty())retired.pop_back();return {};}
         if(retired.size()>64) retired.pop_front();
+        // 自动掷骰没有实际0010可保存，仍记录发送者和日历，接纳随后到达的客户端同次掷骰。
+        if(confinement_controlled()) accepted_controlled_rolls[actor]=calendar;
         commit_move(std::move(move));return std::optional{std::move(messages)};
     }
     std::vector<Bytes> random_move(View request) {
@@ -2701,6 +2714,7 @@ struct Session {
         if(request.size()<4 || sender>=board.participants.size())
             throw CodecError("richonline_classic_request_invalid");
         const auto opcode=read_le(request.first(2));
+        if(controlled_roll_accepted(sender,request)) return {};
         // 本期日历优先处理；原协议没有请求序号，历史字节相同不能抢先吞掉新操作。
         if(read_le(request.subspan(2,2))!=calendar) {
             if(was_retired(sender,request)) return {};
@@ -2880,6 +2894,12 @@ struct Session {
     }
     std::vector<Bytes> poll() {
         healthy();
+        if(phase==Phase::roll && confinement_controlled() && !statuses[actor].frozen && !statuses[actor].stay) {
+            auto messages=random_move({});
+            if(rules.log) rules.log("richonline_classic_controlled_roll_automatic actor="+std::to_string(actor)+
+                " calendar="+std::to_string(calendar)+" policy=server_ordinary_roll");
+            return messages;
+        }
         if(phase==Phase::frozen_wait) {
             if(!frozen_deadline || rules.now()<*frozen_deadline) return {};
             frozen_deadline.reset();frozen_wait_packet.clear();return advance({});
