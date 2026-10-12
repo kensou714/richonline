@@ -12,7 +12,7 @@ ASP.NET Core 8 自包含 Windows 程序，网站源码仅放在 server/website�
 
 ## 构建与配置
 
-`tools/Publish-Website.ps1` 接收 Output、CatalogRoot（原 item-catalog/public）和 SourceCommit，从固定源码快照编译，自包含运行时一并发布。catalog 是发布时复制的私有资源，不纳入 Git；只在复制后的导航增加官网链接。源码不含证书、真实账号或运行数据库。
+`tools/Publish-Website.ps1` 接收 Output、CatalogRoot（原 item-catalog/public）和 SourceCommit，从固定源码快照编译，自包含运行时一并发布。catalog 是发布时复制的私有资源，不纳入 Git；发布副本去掉独立index.html/styles.css，/catalog/与首页、账号页都使用wwwroot/index.html，资料数据脚本与图片音频按需加载。源码不含证书、真实账号或运行数据库。
 
 运行目录 website.json（在服务器生成，不发布示例凭证）包含：PublicOrigin、BindAddress、StateDirectory、CertificateFile、PrivateKeyFile、PipeName、SourceCommit。PublicOrigin 必须为 HTTPS 来源。生产初始来源 `https://103.156.25.81:18743`，管道 `richonline-production`，进程必须与游戏服务使用同一 Windows 账号。
 

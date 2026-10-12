@@ -1,7 +1,28 @@
 "use strict";
 const path = location.pathname;
+const isCatalog = path === "/catalog/" || path === "/catalog";
 for (const link of document.querySelectorAll(".site-header nav a")) {
-  if (new URL(link.href).pathname === path) link.setAttribute("aria-current", "page");
+  if (new URL(link.href).pathname === (isCatalog ? "/catalog/" : path)) link.setAttribute("aria-current", "page");
+}
+if (isCatalog) {
+  document.querySelector("#home").hidden = true;
+  document.querySelector("#catalog-page").hidden = false;
+  document.title = "游戏资料 · 大富翁 Online";
+  const failed = () => {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.textContent = "游戏资料暂时无法加载，请稍后刷新页面。";
+    row.append(cell); document.querySelector("#card-list").replaceChildren(row);
+  };
+  const data = document.createElement("script");
+  data.src = "/catalog/catalog.js";
+  data.onerror = failed;
+  data.onload = () => {
+    const app = document.createElement("script");
+    app.src = "/catalog/app.js"; app.onerror = failed;
+    document.head.append(app);
+  };
+  document.head.append(data);
 }
 const pages = {
   "/register": { action: "register", title: "注册游戏账号", description: "创建一个账号，就能登录游戏。", button: "注册账号", rules: ["账号为 4～20 位英文字母、数字或下划线，区分大小写。", "密码为 8～32 位英文字母、数字或常用半角符号。请不要使用其他网站的密码。"] },

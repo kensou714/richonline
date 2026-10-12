@@ -1,13 +1,13 @@
 # RichOnline 官网设计契约
 
 ## 1. 来源与方向
-继承 item-catalog/DESIGN.md 的白底、浅灰表头、浅绿导航、原版图片、无动画和 16px 中文正文。官网为该资料站增加账号服务与首页，不替换八类资料表。首页以原版地图预览作为辨识图像，服务入口直接可见，不使用虚构活动、在线人数和支付文案。
+继承 item-catalog 的原版图片、八类资料表、无动画和16px中文正文。2026-10-12通过浏览器访问原版大宇官网 http://richol.softstar.com.tw/gameinfo/index-gameinfo-3.aspx ，确认玩法、股票、房地产、操作、会员与奇迹栏目，以及红黄暖色配白色正文。参考其游戏门户信息层级，采用本项目暖色令牌；不是像素复刻。旧站Flash已失效，不复制空白Flash区或历史活动。首页与资料页共用一个index.html外壳、导航与页脚，数据按路由延迟加载。
 
 ## 2. 用户任务
 老玩家从游戏跳转后领取代币或修改密码；新玩家注册后回到游戏；查资料的玩家直接进入图鉴。导航顺序：首页、游戏资料、注册账号、修改密码、领取代币。
 
 ## 3. Tokens
-颜色：background #fff、header #f5f6f7、border #e3e5e8、text #24292f、muted #626a73、accent #275b46、selected #edf4ef、danger #9b2525。字体 Microsoft YaHei / PingFang SC / system-ui；正文16px、辅助14px、三级20px、二级28px、主标题40px（手机28px）；行高1.7。间距4/8/12/16/24/32/48/64px。页面最大1120px，表单最大560px，圆角4px、表单容器8px；表面由细灰边界分隔，无阴影。按钮及输入最小44px。
+颜色：background #fff、panel #faf7f1、border #e8ddd0、text #24292f、muted #626a73、accent #982627、selected #fff1d4、gold #f5c84d、hero-start #fff8e5、row-hover #fffaf0、danger #9b2525。字体 Microsoft YaHei / PingFang SC / system-ui；正文16px、辅助14px、三级20px、二级28px、主标题40px（手机28px）；行高1.7。间距4/8/12/16/24/32/48/64px。页面最大1120px，表单最大560px，圆角4px、表单容器8px；表面由细灰边界分隔，无阴影。按钮及输入最小44px。
 
 地图预览保持240×180px展示框、object-fit:contain；图片完整展示，链接文字与原版预览并列，窄屏叠放。
 
@@ -25,3 +25,7 @@ SiteHeader/SiteFooter：各服务页共享；导航含 aria-current。ServiceLin
 
 ## 8. 验证边界
 用户仅允许静态检查和编译，不新增或运行测试、不启动本机服务。故本轮不执行 skill 的组件浏览器展示、Lighthouse 和视觉 QA，不声称这些门禁通过；后续实机反馈用于继续修正。非 React 项目不安装 React 开发依赖。
+
+## 9. 官网资料统一改版
+统一SiteHeader/SiteFooter和页面1120px宽度。GameplayLink复用三栏入口，窄屏单栏；暖色首屏与原版地图预览提供游戏识别。CatalogNav保留八分类横向滚动，Table/Pagination沿用资料表列宽、图片与音频尺寸，不另建站点导航或iframe。分类、分页滚动属于正文，账号页保持原验证和反馈状态。采用一套实际存在的导航，未开放的下载、活动、客服入口不造假。
+浏览器只用于用户要求的外部历史网站研究；按既有约束未运行本项目视觉测试、Lighthouse或账号测试，保留为验收边界。

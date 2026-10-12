@@ -75,7 +75,7 @@ app.Use(async (ctx, next) =>
     if (ctx.Request.Path.StartsWithSegments("/api")) ctx.Response.Headers.CacheControl = "no-store";
     await next();
 });
-// 图鉴作为同站子目录独立加载，大型 JSON 和音频不进入首页。
+// 资料内容在同一个官网页面呈现；大型 JSON 和音频仍只在资料页加载。
 var catalog = Path.Combine(app.Environment.ContentRootPath, "catalog");
 app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(catalog), RequestPath = "/catalog" });
 app.UseStaticFiles();
@@ -121,8 +121,9 @@ app.MapPost("/api/{action}", async (string action, HttpContext ctx, IAntiforgery
 foreach (var path in new[] { "/", "/register", "/password", "/claim" })
     app.MapGet(path, () => Results.File(Path.Combine(app.Environment.WebRootPath, "index.html"), "text/html; charset=utf-8"));
 app.MapGet("/catalog", (HttpContext ctx) => ctx.Request.Path.Value!.EndsWith('/')
-    ? Results.File(Path.Combine(catalog, "index.html"), "text/html; charset=utf-8")
+    ? Results.File(Path.Combine(app.Environment.WebRootPath, "index.html"), "text/html; charset=utf-8")
     : Results.Redirect("/catalog/"));
+app.MapGet("/catalog/index.html", () => Results.Redirect("/catalog/"));
 app.MapGet("/MEMBER/LoginForms.asp", () => Results.Redirect("/register"));
 app.MapGet("/MEMBER/ChangePassword.asp", () => Results.Redirect("/password"));
 app.MapGet("/gameinfo/index-gameinfo-10.aspx", () => Results.Redirect("/claim"));
