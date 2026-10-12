@@ -9,6 +9,7 @@
 #include "original_map.hpp"
 #include <algorithm>
 #include <iostream>
+#include <string_view>
 
 namespace {
 using namespace richnet;
@@ -107,6 +108,7 @@ struct Flow {
             std::vector<std::int16_t> positions;
             for(std::int16_t pos=0;pos<30;++pos) if(pos<=12 || pos>=20) positions.push_back(pos);
             ground=std::make_shared<RichonlineGroundObjects>(std::move(positions));
+            rules.ground=ground;
             auto npc_policy=RichonlineNpcSessionPolicy{
                 {0,0,0,5,3,{0,1,3},0x91,0x92,0x93,0x94,false},19,{1038,1044},{25,-1},
                 {load_richonline_npc_affix(root,0),load_richonline_npc_affix(root,1)},
@@ -439,7 +441,7 @@ void npc_wealth_card_waits_then_restores_roll(const std::filesystem::path& root)
 void npc_roulette_timeout_and_late_request(const std::filesystem::path& root) {
     Flow f(root,false,1,false,true);const auto slot=f.add_card(1069);
     auto use=request(130,f.counter,slot,1);use.push_back(0);f.send(use);
-    f.now+=std::chrono::milliseconds{29999};check(f.session->poll().empty(),"npc_roulette_timed_out_early");
+    f.now+=std::chrono::milliseconds{4999};check(f.session->poll().empty(),"npc_roulette_timed_out_early");
     f.now+=std::chrono::milliseconds{1};const auto paid=f.delivered(f.session->poll());
     check(paid==std::vector<Bytes>{{0x22,0x40,0x34,0x12,20,0,0}} &&
         f.session->state()==GameState::admitted && f.ledger->snapshot(0).funds.cash==1020,
@@ -448,6 +450,44 @@ void npc_roulette_timeout_and_late_request(const std::filesystem::path& root) {
     check(f.send(late).empty() && f.session->poll().empty() && f.ledger->snapshot(0).funds.cash==1020,
         "npc_roulette_late_request_recharged_or_disconnected");
     f.roll();check(f.last_move.has_value(),"npc_roulette_timeout_did_not_restore_roll");
+}
+void ground_money_npc_roulette_timeout(const std::filesystem::path& root) {
+    for(const std::int8_t npc:{std::int8_t{0},std::int8_t{1}}) {
+        Flow f(root,false,1,false,true);f.ground->place(7,{npc,0x91,0x92});
+        f.roll();const auto waiting=f.finish_move();
+        check(waiting.size()==1 && opcode(waiting[0])==0x4013 && f.landed.size()==1,
+            "ground_money_npc_did_not_wait_for_roulette");
+        const auto pending_counter=f.counter;
+        f.now+=std::chrono::milliseconds{4999};
+        check(f.poll().empty() && f.ledger->snapshot(0).funds.cash==1000,
+            "ground_money_npc_roulette_timed_out_early");
+        f.now+=std::chrono::milliseconds{1};const auto settled=f.poll();
+        check(settled.size()==4 && opcode(settled[0])==0x4022 &&
+            opcode(settled[1])==0x4010 && f.landed.size()==2 &&
+            f.landed.back().actor_status.possession==npc &&
+            f.ledger->snapshot(0).funds.cash==(npc==0 ? 1020U : 980U),
+            "ground_money_npc_timeout_did_not_continue_landing");
+        auto late=request(34,pending_counter,1,1);late.push_back(0xcc);
+        const auto cash=f.ledger->snapshot(0).funds.cash;
+        check(f.send(late).empty() && f.poll().empty() &&
+            f.ledger->snapshot(0).funds.cash==cash,
+            "ground_money_npc_late_roulette_replayed");
+    }
+}
+void native_boss_frenzy_status_does_not_reject_landing(const std::filesystem::path& root) {
+    Flow f(root,false,1,false,true);
+    f.status_transition=[](const RichonlineLandingContext& context)
+        ->std::optional<RichonlineLandingStatusChange> {
+        if(context.actor_slot!=1) return {};
+        auto after=context.actor_status;
+        after.native_boss_frenzy=std::array{3.0F,0.1F,1.0F};
+        after.protected_from_status=true;
+        return RichonlineLandingStatusChange{context.actor_status,after};
+    };
+    f.roll();f.finish_move();
+    const auto landed=f.finish_move();
+    check(!landed.empty() && f.session->state()==GameState::admitted,
+        "native_boss_frenzy_rejected_unrelated_landing_status");
 }
 void npc_summon_and_dismiss(const std::filesystem::path& root) {
     for(const auto target:{std::uint8_t{0},std::uint8_t{1}}) {
@@ -793,7 +833,16 @@ void npc_synthetic_overlap_continues_shared_landing(const std::filesystem::path&
 }
 int main(int argc,char** argv) {
     try {
-        check(argc==2,"resource_root_required");const std::filesystem::path root(argv[1]);
+        check(argc==2 || (argc==3 && std::string_view(argv[2])=="--roulette"),
+            "resource_root_required");
+        const std::filesystem::path root(argv[1]);
+        if(argc==3) {
+            npc_roulette_timeout_and_late_request(root);
+            ground_money_npc_roulette_timeout(root);
+            native_boss_frenzy_status_does_not_reject_landing(root);
+            std::cout<<"PASS money NPC roulette timeout and native BOSS landing\n";
+            return 0;
+        }
         reverse_and_self_stay(root);target_stay_waits_for_actual_stationary_report(root);
         turtle_duration_and_controlled_override(root);target_turtle_affects_boss_next_route(root);
         stationary_bank_keeps_final_junction(root);
@@ -807,6 +856,8 @@ int main(int argc,char** argv) {
         npc_rejects_unclosed_followup_before_mutation(root);
         npc_synthetic_overlap_continues_shared_landing(root);
         npc_roulette_timeout_and_late_request(root);
+        ground_money_npc_roulette_timeout(root);
+        native_boss_frenzy_status_does_not_reject_landing(root);
         npc_summon_and_dismiss(root);
         npc_sleep_accepts_real_roll_and_expires(root);npc_sleep_timeout_and_late_roll_are_once(root);
         npc_sleep_disabled_actions_preserve_stores(root);npc_sleep_skips_bank_checkpoint_and_final_junction(root);

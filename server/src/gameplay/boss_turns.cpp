@@ -386,7 +386,7 @@ struct Turns {
     bool supported_status(const RichonlineActorStatus& value) const {
         return value.sleepwalking<=127 && value.frozen<=127 && !value.attack_turns && !value.damage_turns &&
             value.attack_multiplier==1.0F && value.damage_multiplier==1.0F &&
-            !value.protected_from_status && (!value.possession || (rules.npcs &&
+            (!value.protected_from_status || value.native_boss_frenzy.has_value()) && (!value.possession || (rules.npcs &&
                 ((*value.possession>=0 && *value.possession<=3) || *value.possession==7 ||
                     (rules.npc_aura && (*value.possession==4 || *value.possession==6))))) &&
             ((!value.timed_bomb && !value.timed_bomb_owner) || (rules.timed_bombs && value.timed_bomb &&

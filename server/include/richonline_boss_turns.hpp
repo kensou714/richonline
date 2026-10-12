@@ -132,7 +132,9 @@ struct RichonlineBossTurnRules {
     // commit ground, inventory, possession or money changes.
     std::function<void(const RichonlineLandingContext&)> npc_landing_preflight{};
     // Explicit server recovery policy, not a recovered client countdown.
-    std::chrono::milliseconds npc_roulette_timeout{30000};
+    // The client countdown for the wealth/deity roulette is about five
+    // seconds.  This is also the server-side fallback when no 0034 arrives.
+    std::chrono::milliseconds npc_roulette_timeout{5000};
     // NEW654780 checks viewport locally but sends no camera or god position.
     // This named server-policy boundary supplies eligible ground candidates;
     // it does not assert synchronization with the client's camera rectangle.
