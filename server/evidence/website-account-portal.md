@@ -61,3 +61,7 @@
 改版采用旧官网“先讲玩法，再分系统说明”的内容顺序，并保留金红框架、金色强调、白色正文与原版小尺寸游戏插画的视觉提示；不复制已失效Flash区域。首页按玩法入口、系统入口、资料图鉴和账号服务组织；`/guide/` 作为统一外壳内的玩法指南，`/catalog/` 仍沿用同一HTML、页眉、页脚与资源分类表。规则说明标明历史版本属性，避免误当成当前服务器保证。
 
 固定改动范围为 `server/website/`（`DESIGN.md`、`Program.cs`、`wwwroot/index.html`、`wwwroot/site.css`、`wwwroot/site.js`）。静态JS检查、Git差异空白检查通过；官网 .NET 8 Windows Release build 退出码0，0警告/0错误。未启动服务、未运行测试或账号流程、未做页面视觉验收。发布结果另以本轮最终记录为准。
+
+本轮发布结果：源码 `626b300eeb721bb459fe9374e410b1fa180ef222` 已推送并核对远端引用。固定 tree `9096f0c8479c770615dc8d928e090687bef7b24e` 独立导出、自包含 Release 编译成功；网站 release `626b300eeb72`，PID12148，任务Running，2169文件逐一核对哈希和长度一致。首页、指南、图鉴与三个账号页面、CSS/JS、角色PNG在开启证书验证下均HTTP200，`/guide`重定向到`/guide/`，全部页面HTML哈希相同。原生服务仍为 `e4acf83e416a`、PID9796，未重启游戏。
+
+增量包SHA256 `4f6f6a2cbca8e57fefd01bbb055250014f3005f77b9ac4b3ceb9374a1db02075`；私有构建材料在 `server/build-website/guide-*` 和 `install-guide.ps1`。这次只做编译、静态检查和部署就绪检查；未启动本机服务或游戏，未运行测试、Lighthouse、视觉验收或账号变更操作。浏览器仅用于外部旧官网资料研究。
