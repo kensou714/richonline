@@ -28,8 +28,14 @@ builder.WebHost.ConfigureKestrel(k =>
     using var pem = X509Certificate2.CreateFromPemFile(
         builder.Configuration["CertificateFile"]!, builder.Configuration["PrivateKeyFile"]!);
     var certificate = new X509Certificate2(pem.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.MachineKeySet);
+    var chain = new X509Certificate2Collection();
+    chain.ImportFromPemFile(builder.Configuration["CertificateFile"]!);
     k.Listen(IPAddress.Parse(builder.Configuration["BindAddress"] ?? "127.0.0.1"), origin.Port,
-        endpoint => endpoint.UseHttps(certificate));
+        endpoint => endpoint.UseHttps(https =>
+        {
+            https.ServerCertificate = certificate;
+            https.ServerCertificateChain = chain;
+        }));
 });
 builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(stateRoot, "keys")))
     .ProtectKeysWithDpapi(protectToLocalMachine: true).SetApplicationName("RichOnline.Website");
