@@ -36,8 +36,10 @@ function M.use(request)
             end
         end
     end
-    -- 整片区域都被排除时仍按客户端规则消耗卡牌；空数组也提交版本检查，不能提前返回失败。
+    -- 中心合法但整片范围没有可放置格时，不能静默扣掉商城卡；返回400B让客户端保留卡并恢复操作。
+    assert(#objects > 0, "火焰范围没有可放置格")
     core.call("ground.prepare_batch", { objects = objects })
+    core.call("log", { event = "fire_card_plan", center = position, placed = #objects })
     return { protocol.inner(0x40ED, request.game_id, request.payload:sub(5)) }
 end
 return M
