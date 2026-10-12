@@ -35,3 +35,15 @@
 - 客户端补丁：`server/client-patches/e4acf83e416a-website/RichOnline-Website-Client.zip`，SHA256 `e6c69d3d0619fe77687838b18331ec9a722c0b28046e4ae76f9bf990b7e87cc4`。该目录含overlay、变更说明和manifest；现用客户端未直接覆盖。
 
 发布依据在私有`server/build-website/`保存，包括固定源码tree、构建日志、包清单、公网就绪结果及服务器核验脚本。无新增/执行测试，无账号注册、改密或领取变更探测；真实账号流程与视觉仍待用户实测。
+
+## 官网与资料页共用模板（2026-10-12）
+
+用户要求资料页与主站共用一套页面，并参考旧游戏官网的信息组织。浏览器实际读取大宇旧站 `http://richol.softstar.com.tw/gameinfo/index-gameinfo-3.aspx`：游戏简介、股票、房地产、操作、会员等级、奇迹技能栏目仍可读；截图显示红黄背景、白色正文与失效Flash区域。采用其玩法资料入口思路和暖色方向，不复制历史活动、不冒称像素复刻。
+
+- 首页、账号页与 `/catalog/` 统一读取 `wwwroot/index.html`；资料八类导航处于主站导航下，复用页脚、宽度和颜色令牌。移除发布副本独立的catalog/index.html和styles.css；旧index地址跳转至统一入口。
+- 保留原资料数据、图片、音频、分页和hash分类。资料脚本仅在资料路由加载，首页和账号页不加载1.2MB数据。
+- 固定tree `0e6d76e9299d5d6dd019cabc3ddc3a3995f28767` Release自包含编译退出0，JS语法、PowerShell解析和diff格式检查通过。未新增/运行测试，未启动本机服务，未执行账号变更或视觉QA。
+- 源码 `472f5167d60c33a58a190fe805063b1582462107` 已推送，线上网站release `472f5167d60c`，PID8800，任务Running，2169发布文件哈希/长度全部核验。
+- HTTPS证书验证开启：首页、资料页、账号页、脚本/样式/地图PNG均200，旧catalog/index.html跳转成功。首页与资料返回HTML的SHA256相同，证明实际部署读取同一外壳。
+- 原生服务仍为 `e4acf83e416a`，PID9796未变；网站独立更新未重启游戏。商城卡片候选没有发布。
+- 发布材料在私有server/build-website/unified-*；增量包SHA256 `4a7b98a8d4a581a0a453813d652c57a82d7f6ea34ef06398b6302440ab46afcc`。
