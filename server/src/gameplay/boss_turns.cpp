@@ -1054,8 +1054,8 @@ struct Turns {
         if(phase==Phase::roll && controlled_roll_deadline && rules.now()>=*controlled_roll_deadline) {
             if(actor!=init.local_slot || !controlled_roll_actor())
                 throw CodecError("richonline_boss_controlled_roll_state_changed");
-            if(rules.log) rules.log("richonline_controlled_roll_recovered actor="+std::to_string(actor)+
-                " counter="+std::to_string(active_counter)+" policy=server_timeout_ordinary_roll");
+            if(rules.log) rules.log("richonline_controlled_roll_automatic actor="+std::to_string(actor)+
+                " counter="+std::to_string(active_counter)+" policy=server_ordinary_roll");
             return controlled_move();
         }
         if(phase==Phase::npc && npc_deadline && rules.now()>=*npc_deadline && rules.npcs->awaiting_roulette())
@@ -3795,7 +3795,7 @@ RichonlineStartupPlan make_richonline_boss_turns(const RichonlineBossStartup& st
     if(rules.npcs && (rules.npc_roulette_timeout<=std::chrono::milliseconds{0} ||
         rules.npc_roulette_timeout>std::chrono::minutes{5}))
         throw CodecError("richonline_boss_npc_roulette_timeout_invalid");
-    if(rules.controlled_roll_timeout<=std::chrono::milliseconds{0} ||
+    if(rules.controlled_roll_timeout<std::chrono::milliseconds{0} ||
         rules.controlled_roll_timeout>std::chrono::minutes{5})
         throw CodecError("richonline_boss_controlled_roll_timeout_invalid");
     if(rules.jail_animation_delay<=std::chrono::milliseconds{0} ||

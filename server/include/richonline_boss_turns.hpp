@@ -142,10 +142,9 @@ struct RichonlineBossTurnRules {
     // Active is always overwritten from the turn owner's authoritative array.
     std::function<RichonlineCombatCapabilities(std::uint8_t,const RichonlineActorStatus&)> combat_capabilities{};
     std::function<RichonlineTurnTerminalResult(const RichonlineTurnTerminalContext&)> terminal{};
-    // A controlled local actor still sends the ordinary0010 parameter0. If
-    // that client timer never fires, recover once with the same ordinary4011.
-    // This duration is explicit server policy, not a recovered client timer.
-    std::chrono::milliseconds controlled_roll_timeout{30000};
+    // 梦游/睡神在可移动阶段由服务端自动掷骰；默认下一次poll立即推进。
+    // 迟到的客户端0010由accepted_controlled_move去重，不再等待30秒超时。
+    std::chrono::milliseconds controlled_roll_timeout{0};
     // 服务端排队策略，不是原服动画时长；正刑期、合成角色及无0015的受控出狱使用。
     std::chrono::milliseconds jail_animation_delay{1800};
     std::shared_ptr<const RichonlineTimedBombTurnPolicy> timed_bombs{};
