@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from datetime import datetime, timezone
 import hashlib
 import io
 import json
@@ -175,6 +176,17 @@ def build(client: Path, output: Path) -> dict:
     (output / "Data").mkdir(parents=True)
     for name, data in resources.items():
         (output / "Data" / name).write_bytes(data)
+    purpose = {"Prop.kpd": "宝箱物品的金豆售卖开关、价格和购买期限", "SellProp.kpd": f"新增{len(additions)}种宝箱物品的金豆商城分类引用"}
+    changed = [{"path": "Data/" + name, "purpose": purpose[name],
+                "before_sha256": digest(packed[name]), "after_sha256": digest(data),
+                "before_bytes": len(packed[name]), "after_bytes": len(data)} for name, data in resources.items()]
+    (output / "changed-files.json").write_text(json.dumps(changed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    listing = "客户端修改文件清单（路径相对于客户端根目录）\n\n"
+    for entry in changed:
+        listing += (f"{entry['path']}：{entry['purpose']}\n"
+                    f"原版 SHA256：{entry['before_sha256']}（{entry['before_bytes']}字节）\n"
+                    f"新版 SHA256：{entry['after_sha256']}（{entry['after_bytes']}字节）\n\n")
+    (output / "changed-files.txt").write_text(listing, encoding="utf-8-sig")
     (output / "catalog.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     table = io.StringIO(newline="")
     writer = csv.writer(table)
@@ -194,7 +206,8 @@ def build(client: Path, output: Path) -> dict:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--client-root", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[1] / "client-patches" /
+                        (datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S") + "-boss-mall"))
     args = parser.parse_args()
     result = build(args.client_root.resolve(), args.output.resolve())
     print(json.dumps({key: value for key, value in result.items() if key != "products"}, ensure_ascii=True))
