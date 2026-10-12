@@ -238,6 +238,7 @@ std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::enter(std::uint64_t
     if (profile.wire_type != 7 || profile.payload.size() != 272 || read_le(View(profile.payload).first(4)) != actor)
         throw CodecError("richonline_peer_profile_invalid");
     std::vector<RichonlineRoomDispatch> result;
+    const auto existing_peers = observers_.size();
     for (const auto& [peer, observer] : observers_) {
         result.push_back({connection, observer.profile});
         result.push_back({peer, profile});
@@ -252,6 +253,11 @@ std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::enter(std::uint64_t
         }
     }
     observers_.emplace(connection, Observer{actor, std::move(profile)});
+    // 频道号由目录的日志回调补充；只记录数量，便于排查不同客户端为何没有互见。
+    log("channel_peer_entered connection=" + std::to_string(connection) +
+        " existing_peers=" + std::to_string(existing_peers) +
+        " rooms=" + std::to_string(rooms_.size()) +
+        " deliveries=" + std::to_string(result.size()));
     return result;
 }
 std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::create(std::uint64_t connection, std::uint32_t actor, View payload) {
@@ -273,7 +279,8 @@ std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::create(std::uint64_
         result.push_back({item.first, richonline_room_record(10, room.description, identity)});
     rooms_.emplace(key, std::move(room));
     profile_location(connection, key, 0);
-    log("room_created key=" + std::to_string(key));
+    log("room_created key=" + std::to_string(key) +
+        " recipients=" + std::to_string(result.size()));
     return result;
 }
 std::vector<RichonlineRoomDispatch> RichonlineRoomDirectory::join(std::uint64_t connection, std::uint32_t actor, View payload) {
