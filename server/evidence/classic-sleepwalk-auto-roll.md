@@ -15,4 +15,21 @@ BOSS 会话。静态检查发现经典多人会话的 random_move 已支持受�
 - 日志 richonline_classic_controlled_roll_automatic 标记实际服务端自动投骰。
 
 按用户约束仅静态检查和 Release 编译，不新增或运行测试，不启动本机服务/游戏。
-本文件初次提交时构建和发布结果见后续发布记录；不把编译通过当作实机验证。
+编译与服务健康检查不替代客户端实机验证。
+
+## 编译与发布
+
+- 固定 tree：`f5f26cff683bf7dbaae4a47cb3cd6699a182d12b`；独立 Release 编译退出 0。
+- 源码提交：`80aab4bc7c8966a7911c15adb6bdddb87d9e526a`，已推送并核对远端 main。
+- 实际线上 release：`80aab4bc7c89`；PID `12416`，instance `12416-136016513580500`。
+- EXE SHA256：`40FBD10C5A22E88AF9C24A724636A8C1FAB074CFEADB0509CB0C571DCA9460AA`。
+- ZIP SHA256：`C13829E90EB44436DE0AC229A4F457FB1BDB6386FAE011BEB85A8CA68B8B083A`。
+- 214 个发布文件长度和哈希一致；计划任务与实际进程均指向新版本；179 个 Lua 模块。
+- 上线前数据库备份：`D:\richonline\shared\data\backups\accounts-1791765689983977.sqlite3`。
+- 配置/任务预归档：`D:\richonline\backups\20261012004107-preflight-80aab4bc7c89`。
+- 数据目录仍是 `D:\richonline\shared\data`；配置只更新资源根目录，保留商城和兑换比例。
+- 六类监听 ready=true；公网 18600/18602/18604/18605/18606/18680 连通，两个服务器列表 HTTP 200。
+- gameReady=false 保留整体能力边界，没有修改此状态冒充玩法已完整。
+- 本机 EXE 已备份后更新至同一哈希，更新前确认未运行，没有启动本机服务或游戏。
+
+商城卡入局/消耗仍是未完成候选，本次发布快照不包含这些改动，也未包含其他会话的研究或测试改动。
